@@ -1,0 +1,21 @@
+signature Vocabulary = 
+
+ unit : sort ;
+
+ one : unit ;
+
+ atom, s : type ;
+
+ string = s -> s;
+
+ outfix [ ] : atom -> string;
+
+ infix + = lambda x y z. x (y z) : string -> string -> string;
+
+ empty = lambda x. x : string;
+
+ John, Mary, I, me, you, myself, yourself, herself, himself, cook,
+ man, woman, good, a, every, be, am, are, is, find, finds, love,
+ loves, try, tries, to, who, whom : atom
+
+end

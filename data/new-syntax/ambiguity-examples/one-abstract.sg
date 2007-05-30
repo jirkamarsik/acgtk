@@ -1,0 +1,13 @@
+signature Abstract =
+	n,np,s	: type;
+
+	C_loves, C_saw, C_seeks, C_find	: np -> np -> s;
+	C_tries_to : np -> (np ->s) -> s;
+	C_sleeps : np -> s;
+	C_a, C_every	: n -> np ;
+	C_man, C_woman, C_taxi	: n ;
+	C_john, C_bill	: np ;
+	C_and : (np -> s) -> np -> np -> s ;
+	C_A, C_U : (np -> s) -> (np -> s) ;
+	C_who : (np -> s) -> n -> n 
+end

@@ -1,0 +1,27 @@
+lexicon Sem_lex(BiAbstract) : Semantics =
+
+n := e -> t ;
+np := (e -> t) -> t ;
+s := t ;
+
+D_loves := lambda s o.s(lambda x.o(lambda y. LOVE x y)) ;
+D_saw := lambda s o.s(lambda x.o(lambda y. SAW x y)) ;
+D_find := lambda s o.s(lambda x.o(lambda y. FIND x y)) ;
+D_sleeps := lambda s.s(lambda x. SLEEPS x) ;
+D_tries_to := lambda s P. s (lambda x. TRY x (lambda y. P(lambda Q.Q y))) ;
+D_seeks := lambda s o .s(lambda x. TRY x (lambda y.o(lambda u .u (lambda z. FIND y z)))) ;
+D_a := lambda P Q.Exists x. (P x)&(Q (lambda P.P x)) ;
+D_every := lambda P Q . All  x. (P x) => (Q (lambda P. P x)) ;
+D_man := MAN ;
+D_woman := WOMAN ;
+D_taxi := TAXI ;
+D_john := lambda P. P JOHN ;
+D_bill := lambda P. P BILL ;
+D_and := Lambda P x y . (P x) & (P y) ;
+
+D_A := lambda P Q s . (lambda x.ALLEGEDLY (Q P x)) s ;
+D_U := lambda P Q s . (lambda x.USUALLY (Q P x)) s ;
+
+D_who := lambda P Q. Lambda x. (P (lambda R.R x)) & (Q x)
+
+end

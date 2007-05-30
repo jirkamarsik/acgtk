@@ -1,0 +1,32 @@
+signature Abstract =
+	Na,Ns,Sa,Ss,VPa,WHs : type;
+
+	C_every,C_some	: Na;
+	C_dog,C_cat	: Na -> Ns;
+	C_barks		: VPa -> Ns -> Ss;
+	C_chases,
+	C_likes,	
+	C_loves		: Sa -> VPa -> Ns -> Ns -> Ss;
+
+	C_to_love	: Sa -> VPa -> Ns -> Ns -> Ss;
+
+	C_usually,
+	C_alledgedly,
+	C_seems		: VPa -> VPa ;
+
+	C_claims,
+	C_said,
+	C_does_think	: Ns -> Sa -> Sa ;
+
+	C_john,
+	C_mary,
+	C_paul		: Ns ;
+
+	C_who		: WHs ;
+
+	C_liked		: Sa -> VPa -> WHs -> Ns -> Ss ;
+
+	Ivp		: VPa;
+	In		: Na;
+	Is		: Sa
+end

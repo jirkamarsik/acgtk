@@ -1,0 +1,66 @@
+lexicon Sem_lex (Abstract) : Logic =
+
+  case   := unit ;
+  gender := unit ;
+  person := unit ;
+  tense := unit ;
+
+  sub   := one ;
+  obj   := one ;
+  f     := one ;
+  m     := one ;
+  p1    := one ;
+  p2    := one ;
+  p3    := one ;
+  minus := one ;
+  plus  := one ;
+ 
+  S  := (x:unit) o ;
+  N  := (x:unit) i => o ;
+  VP := (x:unit, y:unit) i -> o ;
+  NP := (x:unit, y:unit, z:unit) i ;
+
+  john := JOHN ;
+  mary := MARY ;
+
+  i   := I ;
+  me  := I ;
+  you := YOU ;
+
+  myself   := lambda f. Lambda x. f x x ;
+  yourself := lambda f. Lambda x. f x x ;
+  herself  := lambda f. Lambda x. f x x ;
+  himself  := lambda f. Lambda x. f x x ;
+
+  cook  := Lambda x. COOK x ;
+  man   := Lambda x. MAN x ;
+  woman := Lambda x. WOMAN x ;
+
+  good := lambda P. Lambda x. (P x) & (GOOD x) ;
+
+  a	:= lambda P Q. Exists x. (P x) & (Q x) ;
+  every := lambda P Q. All x. (P x) => (Q x) ;
+
+  be_0   := lambda x y. y == x ;
+  be_1   := lambda x y. y == x ;
+  be_2   := lambda x y. y == x ;
+  be_3   := lambda x y. y == x ;
+  find_0 := lambda x y. FIND y x ;
+  find_1 := lambda x y. FIND y x ;
+  find_2 := lambda x y. FIND y x ;
+  find_3 := lambda x y. FIND y x ;
+  love_0 := lambda x y. LOVE y x ;
+  love_1 := lambda x y. LOVE y x ;
+  love_2 := lambda x y. LOVE y x ;
+  love_3 := lambda x y. LOVE y x ;
+
+  try_1 := lambda x y. TRY y x ;
+  try_2 := lambda x y. TRY y x ;
+  try_3 := lambda x y. TRY y x ;
+
+  to := lambda x. x ;
+
+  who  := lambda P Q. Lambda x. (Q x) & (P x) ;
+  whom := lambda P Q. Lambda x. (Q x) & (P x)
+
+end

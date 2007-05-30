@@ -1,0 +1,84 @@
+signature Abstract   = 
+    case, gender, person, tense : type ;
+
+  sub, obj : case ;
+
+  f, m : gender ;
+
+  p1, p2, p3 : person ;
+
+  minus, plus : tense ;
+
+  S : (tense) type ;
+
+  N : (gender) type ;
+
+  VP : (gender, person) type ;
+
+  NP : (gender, person, case) type ;
+
+
+  john : (c:case) NP m p3 c ;
+  mary : (c:case) NP f p3 c ;
+
+  i   : (g:gender) NP g p1 sub ;
+  me  : (g:gender) NP g p1 obj ;
+  you : (g:gender, c:case) NP g p2 c ;
+
+  myself   : (g:gender, t:tense) 
+             (NP g p1 obj -> NP g p1 sub -> S t) -> NP g p1 sub => S t ;
+  yourself : (g:gender, t:tense) 
+             (NP g p2 obj -> NP g p2 sub -> S t ) -> NP g p2 sub => S t ;
+  herself  : (t:tense)
+             (NP f p3 obj  -> NP f p3 sub -> S t ) -> NP f p3 sub => S t ;
+  himself  : (t:tense)
+             (NP m p3 obj -> NP m p3 sub -> S t ) -> NP m p3 sub  => S t  ;
+
+  cook  : (g:gender) N g  ;
+  man   : N m ;
+  woman : N f  ;
+
+  good : (g:gender) N g  -> N g ;
+
+  a	: (g:gender, c:case, t:tense) N g  -> (NP g  p3  c -> S t ) -> S t ;
+  every : (g:gender, c:case, t:tense) N g  -> (NP g  p3  c  -> S t ) -> S t  ; 
+
+  be_0     : (g:gender, p_o:person, p_s:person)
+              NP g p_o obj  -> NP g p_s sub  -> S minus  ;
+  be_1     : (g:gender, p_o:person)
+              NP g p_o obj  -> NP g p1 sub  -> S plus  ;
+  be_2     : (g:gender, p_o:person)
+              NP g p_o obj  -> NP g p2 sub  -> S plus  ;
+  be_3     : (g:gender, p_o:person)
+              NP g p_o obj  -> NP g p3 sub  -> S plus  ;
+  find_0   : (g_o:gender, p_o:person, g_s:gender, p_s:person)
+              NP g_o p_o obj  -> NP g_s p_s sub  -> S minus  ;
+  find_1   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p1 sub  -> S plus  ;
+  find_2   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p2 sub  -> S plus  ;
+  find_3   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p3 sub  -> S plus  ;
+  love_0   : (g_o:gender, p_o:person, g_s:gender, p_s:person)
+              NP g_o p_o obj  -> NP g_s p_s sub  -> S minus  ;
+  love_1   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p1 sub  -> S plus  ;
+  love_2   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p2 sub  -> S plus ;
+  love_3   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p3 sub  -> S plus  ;
+  try_1    : (g:gender) VP g p1  -> NP g p1 sub  -> S plus  ;
+  try_2    : (g:gender) VP g p2  -> NP g p2 sub  -> S plus  ; 
+  try_3    : (g:gender) VP g p3  -> NP g p3 sub  -> S plus  ;
+
+  to : (g:gender, p:person) (NP g p sub  -> S minus ) -> VP g p  ;
+
+  who  : (g:gender) (NP g p3 sub  -> S plus ) -> N g  -> N g  ;
+  whom : (g:gender) (NP g p3 obj  -> S plus ) -> N g  -> N g  
+
+end
+
+signature Apres =
+	int : type;
+truc : int
+end

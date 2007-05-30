@@ -1,0 +1,174 @@
+signature Abstract   = 
+   case, gender, person, tense : type ;
+
+  sub, obj : case ;
+
+  f, m : gender ;
+
+  p1, p2, p3 : person ;
+
+  minus, plus : tense ;
+
+  S : (tense) type ;
+
+  N : (gender) type ;
+
+  VP : (gender, person) type ;
+
+  NP : (gender, person, case) type ;
+
+
+  john : (c:case) NP m p3 c ;
+  mary : (c:case) NP f p3 c ;
+
+  i   : (g:gender) NP g p1 sub ;
+  me  : (g:gender) NP g p1 obj ;
+  you : (g:gender, c:case) NP g p2 c ;
+
+  myself   : (g:gender, t:tense) 
+             (NP g p1 obj -> NP g p1 sub -> S t) -> NP g p1 sub => S t ;
+  yourself : (g:gender, t:tense) 
+             (NP g p2 obj -> NP g p2 sub -> S t ) -> NP g p2 sub => S t ;
+  herself  : (t:tense)
+             (NP f p3 obj  -> NP f p3 sub -> S t ) -> NP f p3 sub => S t ;
+  himself  : (t:tense)
+             (NP m p3 obj -> NP m p3 sub -> S t ) -> NP m p3 sub  => S t  ;
+
+  cook  : (g:gender) N g  ;
+  man   : N m ;
+  woman : N f  ;
+
+  good : (g:gender) N g  -> N g ;
+
+  a	: (g:gender, c:case, t:tense) N g  -> (NP g  p3  c -> S t ) -> S t ;
+  every : (g:gender, c:case, t:tense) N g  -> (NP g  p3  c  -> S t ) -> S t  ; 
+
+  be_0     : (g:gender, p_o:person, p_s:person)
+              NP g p_o obj  -> NP g p_s sub  -> S minus  ;
+  be_1     : (g:gender, p_o:person)
+              NP g p_o obj  -> NP g p1 sub  -> S plus  ;
+  be_2     : (g:gender, p_o:person)
+              NP g p_o obj  -> NP g p2 sub  -> S plus  ;
+  be_3     : (g:gender, p_o:person)
+              NP g p_o obj  -> NP g p3 sub  -> S plus  ;
+  find_0   : (g_o:gender, p_o:person, g_s:gender, p_s:person)
+              NP g_o p_o obj  -> NP g_s p_s sub  -> S minus  ;
+  find_1   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p1 sub  -> S plus  ;
+  find_2   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p2 sub  -> S plus  ;
+  find_3   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p3 sub  -> S plus  ;
+  love_0   : (g_o:gender, p_o:person, g_s:gender, p_s:person)
+              NP g_o p_o obj  -> NP g_s p_s sub  -> S minus  ;
+  love_1   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p1 sub  -> S plus  ;
+  love_2   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p2 sub  -> S plus ;
+  love_3   : (g_o:gender, p_o:person, g_s:gender)
+              NP g_o p_o obj  -> NP g_s p3 sub  -> S plus  ;
+  try_1    : (g:gender) VP g p1  -> NP g p1 sub  -> S plus  ;
+  try_2    : (g:gender) VP g p2  -> NP g p2 sub  -> S plus  ; 
+  try_3    : (g:gender) VP g p3  -> NP g p3 sub  -> S plus  ;
+
+  to : (g:gender, p:person) (NP g p sub  -> S minus ) -> VP g p  ;
+
+  who  : (g:gender) (NP g p3 sub  -> S plus ) -> N g  -> N g  ;
+  whom : (g:gender) (NP g p3 obj  -> S plus ) -> N g  -> N g  
+
+end
+
+signature Logic = 
+
+ unit : type ;
+
+ one : unit ;
+
+ i, o : type ;
+
+ infix &  : o -> o -> o ; 
+ infix => : o -> o -> o ; 
+
+ infix == : i -> i -> o ; 
+
+ binder All : (i => o) -> o ;
+
+ binder Exists : (i => o) -> o ; 
+
+ JOHN, MARY, I, YOU : i ;
+
+ COOK, MAN, WOMAN, GOOD : i -> o ;
+
+ FIND, LOVE : i -> i-> o ;
+
+ TRY : i -> (i -> o) -> o
+
+end
+
+
+lexicon Sem_lex (Abstract) : Logic =
+
+  case   := unit ;
+  gender := unit ;
+  person := unit ;
+  tense := unit ;
+
+  sub   := one ;
+  obj   := one ;
+  f     := one ;
+  m     := one ;
+  p1    := one ;
+  p2    := one ;
+  p3    := one ;
+  minus := one ;
+  plus  := one ;
+ 
+  S  := (x:unit) o ;
+  N  := (x:unit) i => o ;
+  VP := (x:unit, y:unit) i -> o ;
+  NP := (x:unit, y:unit, z:unit) i ;
+
+  john := JOHN ;
+  mary := MARY ;
+
+  i   := I ;
+  me  := I ;
+  you := YOU ;
+
+  myself   := lambda f. Lambda x. f x x ;
+  yourself := lambda f. Lambda x. f x x ;
+  herself  := lambda f. Lambda x. f x x ;
+  himself  := lambda f. Lambda x. f x x ;
+
+  cook  := Lambda x. COOK x ;
+  man   := Lambda x. MAN x ;
+  woman := Lambda x. WOMAN x ;
+
+  good := lambda P. Lambda x. (P x) & (GOOD x) ;
+
+  a	:= lambda P Q. Exists x. (P x) & (Q x) ;
+  every := lambda P Q. All x. (P x) => (Q x) ;
+
+  be_0   := lambda x y. y == x ;
+  be_1   := lambda x y. y == x ;
+  be_2   := lambda x y. y == x ;
+  be_3   := lambda x y. y == x ;
+  find_0 := lambda x y. FIND y x ;
+  find_1 := lambda x y. FIND y x ;
+  find_2 := lambda x y. FIND y x ;
+  find_3 := lambda x y. FIND y x ;
+  love_0 := lambda x y. LOVE y x ;
+  love_1 := lambda x y. LOVE y x ;
+  love_2 := lambda x y. LOVE y x ;
+  love_3 := lambda x y. LOVE y x ;
+
+  try_1 := lambda x y. TRY y x ;
+  try_2 := lambda x y. TRY y x ;
+  try_3 := lambda x y. TRY y x ;
+
+  to := lambda x. x ;
+
+  who  := lambda P Q. Lambda x. (Q x) & (P x) ;
+  whom := lambda P Q. Lambda x. (Q x) & (P x)
+
+end

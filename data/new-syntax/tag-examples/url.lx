@@ -1,0 +1,56 @@
+lexicon Sem_lex (Abstract) : Semantic_recipes =
+
+Ns	:= (e => T) -> T ;
+Ss	:= T;
+Na	:= (e => T) -> (e => T) -> T;
+Sa	:= (e => T) -> (e => T) ;
+VPa	:= T -> T ;
+
+Ivp	:=lambda x.x;
+In	:=lambda x.x;
+Is	:=lambda x.x;
+
+
+C_every		:= lambda r p. Lambda h l. Ex_h h1. Ex_l l1. Ex_l l2. Ex_l l3. Ex_e v1.
+			 (h>l2) & (l2::(All v1 l3)) & (l3::(Imp l1 h1)) & (h1 > l) & (r v1 h l1) & (p v1 h l) ;
+C_some		:= lambda r p. Lambda h l. Ex_h h1. Ex_l l1. Ex_l l2. Ex_l l3. Ex_e v1.
+			 (h>l2) & (l2::(Some v1 l3)) & (l3::(And l1 h1)) & (h1 > l) & (r v1 h l1) & (p v1 h l) ;
+
+C_dog		:= lambda q.q(Lambda x h l. (h>l) & (l::(dog x))) ;
+C_cat		:= lambda q.q(Lambda x h l. (h>l) & (l::(cat x))) ;
+
+C_barks		:= lambda a s. s(Lambda x. a(Lambda h l. (h>l) & (l::(barks x )))) ;
+
+C_chases	:= lambda b a s o. s(b(Lambda x. a(o(Lambda y h l. (h>l) & (l::(chases x y)))))) ;
+C_likes		:= lambda b a s o. s(b(Lambda x. a(o(Lambda y h l. (h>l) & (l::(likes x y)))))) ;
+C_loves		:= lambda b a s o. s(b(Lambda x. a(o(Lambda y h l. (h>l) & (l::(loves x y)))))) ;
+C_to_love	:= lambda b a o s. s(b(Lambda x. a(o(Lambda y h l. (h>l) & (l::(loves x y)))))) ;
+
+C_usually	:= lambda a. lambda r. Lambda h l. Ex_h h1. Ex_l l1.
+			 (r h l) & (h > l1) & (l1::(U h1)) & (h1 > l) & (a (Lambda h l.h>l) h l1 ) ;
+C_alledgedly	:= lambda a. lambda r. Lambda h l. Ex_h h2. Ex_l l2.
+			 (r h l) & (h > l2) & (l2::(A h2)) & (h2 > l) & (a (Lambda h l.h>l) h l2 ) ;
+C_seems		:= lambda a. lambda r. Lambda h l. Ex_h h3. Ex_l l3.
+			 (r h l) & (h > l3) & (l3::(seems h3)) & (h3 > l) & (a (Lambda h l.h>l) h l ) ;
+
+C_claims	:= lambda s p r. Lambda y. p(s(Lambda x h l. Ex_l l1. Ex_h h1.
+			 (h>l1) & (l1 :: (claims x h1)) & (r y h1 l))) ;
+C_said		:= lambda s b r. b(Lambda y. s(Lambda x h l. Ex_h h1. Ex_l l1.
+			 (h>l1) & (l1::(said x h1)) & (h1 > l) & (r y h1 l))) ;
+C_does_think	:= lambda s b r.b(Lambda y. s(Lambda x h l. Ex_h h2. Ex_l l2.
+			 (h>l2) & (l2::(does_think x h2)) & (h2 > l) & (r y h2 l))) ;
+
+C_john		:= lambda P. P john ;
+C_mary		:= lambda P. P mary ;
+C_paul		:= lambda P. P paul ;
+
+C_who		:= lambda p. Lambda h l. Ex_e v1. Ex_h h3. Ex_l l3.
+			 (h>l3) & (l3::(who v1 h3)) & (h3>l) & (p v1 h3 l) ;
+	
+C_liked		:= lambda b a o s. o(b(Lambda y. a(s(Lambda x h l. (h>l) & (l::(liked x y))))))
+
+
+
+end
+
+

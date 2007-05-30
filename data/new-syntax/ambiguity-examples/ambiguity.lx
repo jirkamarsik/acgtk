@@ -1,0 +1,26 @@
+lexicon Ambiguity (BiAbstract) : Abstract =
+n	:= n;
+np	:= np;
+s	:= s;
+
+D_loves	:= C_loves;
+D_saw	:= C_saw;
+D_seeks := lambda x P . P (lambda y. C_seeks x y);
+D_find	:= C_find;
+D_tries_to	:= C_tries_to ;
+D_sleeps:= C_sleeps;
+D_man	:= C_man;
+D_woman	:= C_woman;
+D_taxi	:= C_taxi;
+D_john	:= C_john;
+D_bill	:= C_bill;
+D_and	:= C_and;
+
+
+D_a	:= lambda x P.P (C_a x);
+D_every	:= lambda x P.P (C_every x) ;
+D_A	:= lambda P Q.Q (C_A P) ;
+D_U	:= lambda P Q.Q (C_U P) ;
+D_who	:= C_who ;
+
+end

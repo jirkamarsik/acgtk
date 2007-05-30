@@ -1,0 +1,66 @@
+lexicon Synt_lex (Abstract) : Vocabulary =
+
+  case   := unit ;
+  gender := unit ;
+  person := unit ;
+  tense := unit ;
+
+  sub   := one ;
+  obj   := one ;
+  f     := one ;
+  m     := one ;
+  p1    := one ;
+  p2    := one ;
+  p3    := one ;
+  minus := one ;
+  plus  := one ;
+ 
+  S  := (x:unit) string ;
+  N  := (x:unit) string ;
+  VP := (x:unit, y:unit) string ;
+  NP := (x:unit, y:unit, z:unit) string ;
+
+  john := [John] ;
+  mary := [Mary] ;
+
+  i   := [I] ;
+  me  := [me] ;
+  you := [you] ;
+
+  myself   := lambda f. Lambda x. f [myself] x ;
+  yourself := lambda f. Lambda x. f [yourself] x ;
+  herself  := lambda f. Lambda x. f [herself] x ;
+  himself  := lambda f. Lambda x. f [himself] x ;
+
+  cook  := [cook] ;
+  man   := [man] ;
+  woman := [woman] ;
+
+  good := lambda x. [good] + x ;
+
+  a	:= lambda x f. f ([a] + x) ;
+  every := lambda x f. f ([every] + x) ;
+
+  be_0   := lambda x y. y + [be] + x ;
+  be_1   := lambda x y. y + [am] + x ;
+  be_2   := lambda x y. y + [are] + x ;
+  be_3   := lambda x y. y + [is] + x ;
+  find_0 := lambda x y. y + [find] + x ;
+  find_1 := lambda x y. y + [find] + x ;
+  find_2 := lambda x y. y + [find] + x ;
+  find_3 := lambda x y. y + [finds] + x ;
+  love_0 := lambda x y. y + [love] + x ;
+  love_1 := lambda x y. y + [love] + x ;
+  love_2 := lambda x y. y + [love] + x ;
+  love_3 := lambda x y. y + [loves] + x ;
+
+  try_1  := lambda x y. y + [try] + x ;
+  try_2  := lambda x y. y + [try] + x ;
+  try_3  := lambda x y. y + [tries] + x ;
+
+  to     := lambda x. [to] + (x empty) ;
+
+  who  := lambda f x. x + [who] + (f empty) ;
+  whom := lambda f x. x + [whom] + (f empty)
+
+end

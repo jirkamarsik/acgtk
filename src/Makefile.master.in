@@ -1,0 +1,27 @@
+DEBUGFLAG   = -g
+OCAMLCPOPT = -p fm
+
+# All warnings are treated as errors
+WARNINGS = @OCAML09WARNINGS@ -warn-error A
+COMMONFLAGS= $(WARNINGS) @TYPES@
+BYTEFLAGS = $(COMMONFLAGS) $(DEBUGFLAG)
+OPTFLAGS = $(COMMONFLAGS)
+LFLAGS= -a
+
+
+TITLE="The ACG Development Toolkit Documentation"
+OCAMLDOC_FLAGS = -sort -keep-code -html -t $(TITLE)
+#CAMLDOC_FLAGS = -html -t $(TITLE)
+
+LIBS = camlp4.cma 
+LIBDIR = -I +camlp4
+
+OCAMLPP = -pp "@OCAMLP4@ pa_extend.cmo pa_macro.cmo $(DEBUGFLAGS) @OCAMLP4_LOC@"
+
+@SET_MAKE@
+
+# Make byte the very first target
+byte: 
+
+config:
+	pushd ../.. && ./configure && popd

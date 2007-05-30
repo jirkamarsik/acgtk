@@ -1,0 +1,15 @@
+signature Syntax =
+	atom,s : type ;
+	string = s -> s ;
+	
+	outfix [ ] : atom -> string;
+
+	infix + = lambda x y z. x (y z) : string -> string -> string;
+
+	empty = lambda x. x : string;
+
+	loves, saw, a, every, man, woman, taxi,
+	john, bill, andsodid, alledgedly, usually, sleeps, seeks,
+	who, tries_to, find :atom
+
+end

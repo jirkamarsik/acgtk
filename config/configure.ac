@@ -1,0 +1,119 @@
+AC_INIT([ACG DTK],[0.1],[sylvain.pogodalla@loria.fr])
+
+#AC_COPYRIGHT([Cecill])
+
+OCAML_REQUIRED=3.07
+
+# First look for bytecode compilers (ocamlc.opt or ocamlc) in the path
+# Fail if not present
+AC_CHECK_PROGS(OCAMLC,ocamlc.opt ocamlc,no)
+if test "$OCAMLC" = no ; then
+        AC_MSG_ERROR(Cannot find ocamlc.)
+fi
+
+# Then look at native code compilers (ocamlopt.opt or ocamlopt) in the path
+# Fail if not present
+# we first look for ocaml in the path; if not present, we fail
+AC_CHECK_PROGS(OCAMLCOPT,ocamlopt.opt ocamlopt,no)
+if test "$OCAMLCOPT" = no ; then
+        AC_MSG_ERROR(Cannot find ocamlc.opt.)
+fi
+
+# Look for the interpreter
+AC_CHECK_PROG(OCAML,ocaml,ocaml,no)
+if test "$OCAML" = no ; then
+        AC_MSG_ERROR(Cannot find ocaml.)
+fi
+
+# Look for camlp4o
+AC_CHECK_PROG(OCAMLP4,camlp4o,camlp4o,no)
+if test "$OCAMLP4" = no ; then
+        AC_MSG_ERROR(Cannot find camlp4o.)
+fi
+
+# Look for documentation generators (ocamldoc.opt or ocamldoc)
+AC_CHECK_PROGS(OCAMLDOC,ocamldoc.opt ocamldoc,no)
+if test "$OCAMLDOC" = no ; then
+        AC_MSG_ERROR(Cannot find ocamldoc.)
+fi
+
+# Look for dependency generator (ocamldep.opt or ocamldep)
+AC_CHECK_PROGS(OCAMLDEP,ocamldep.opt ocamldep,no)
+if test "$OCAMLDEP" = no ; then
+        AC_MSG_ERROR(Cannot find ocamldep.)
+fi
+
+# Look for camllex and camlyacc
+AC_CHECK_PROGS(OCAMLLEX,ocamllex.opt ocamllex,no)
+if test "$OCAMLLEX" = no ; then
+	AC_MSG_ERROR(Cannot find ocamllex)
+fi
+
+AC_CHECK_PROG(OCAMLYACC,ocamlyacc,ocamlyacc,no)
+if test "$OCAMLYACC" = no ; then
+	AC_MSG_ERROR(Cannot find ocamlyacc)
+fi
+
+# What is the OCAML version  ?
+# we extract Ocaml version number
+OCAML_VERSION=`$OCAMLC -version`
+AC_MSG_CHECKING([for $OCAMLC version])
+AC_MSG_RESULT([$OCAMLC version is $OCAML_VERSION])
+
+# Check whether the caml version checker is provided
+ML_CHECK_FILE=config/ml_check.ml
+AC_CHECK_FILE($ML_CHECK_FILE,,AC_MSG_ERROR(Cannot check versions))
+
+# check that this version is at least the one we need
+if ($OCAML $ML_CHECK_FILE -ref $OCAML_REQUIRED $OCAML_VERSION > /dev/null) ; then
+        AC_MSG_RESULT($OCAMLC version $OCAMLVERSION is ok)
+else
+        AC_MSG_ERROR($OCAMLC version $OCAMLVERSION found ; version $OCAML_NEEDED or greater is needed)
+fi
+
+# check if the dtypes option is present
+if ($OCAML $ML_CHECK_FILE -ref 3.07 $OCAML_VERSION> /dev/null) ; then
+	AC_MSG_RESULT(Compilation will be done with the -dtypes option)
+        TYPES=-dtypes
+else
+	AC_MSG_RESULT(Compilation will NOT be done with the -dtypes option)
+	TYPES=
+fi
+
+
+# check if the -w yz option is present
+# and set the _loc variable of campl4 to loc
+if ($OCAML $ML_CHECK_FILE -ref 3.09 $OCAML_VERSION > /dev/null) ; then
+        OCAML09WARNINGS="-w yz"
+	OCAMLP4_LOC="-loc loc"
+	AC_MSG_RESULT($OCAMLP4 calls will be done with the $OCAMLP4_LOC option)
+else
+	OCAML09WARNINGS=
+fi
+AC_MSG_RESULT(Compilation will be done with the $OCAML09WARNINGS option)
+
+
+
+############################
+# substitutions to perform
+AC_SUBST(OCAMLC)
+AC_SUBST(OCAMLCOPT)
+AC_SUBST(OCAMLP4)
+AC_SUBST(OCAMLDOC)
+AC_SUBST(OCAMLDEP)
+
+AC_SUBST(OCAMLLEX)
+AC_SUBST(OCAMLYACC)
+
+AC_SUBST(TYPES)
+AC_SUBST(OCAML09WARNINGS)
+AC_SUBST(OCAMLP4_LOC)
+
+AC_SUBST(SET_MAKE)
+
+AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/grammars/Makefile src/lambda/Makefile])
+
+AC_PROG_MAKE_SET
+
+AC_OUTPUT
+

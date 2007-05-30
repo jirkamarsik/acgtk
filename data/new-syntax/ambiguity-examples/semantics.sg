@@ -1,0 +1,29 @@
+signature Semantics =
+	e,t	: type;
+
+
+	
+	 infix &  : t -> t -> t ; 	
+	 infix => : t -> t -> t ; 
+	
+	 infix == : e -> e -> t ; 
+
+	 binder All : (e => t) -> t ;
+
+	 binder Exists : (e => t) -> t ; 
+
+	LOVE : e -> e -> t ;
+	SAW : e -> e -> t ;
+(*	SEEKS : e -> e -> t ; *)
+	FIND : e -> e -> t ;
+	TRY : e -> (e -> t) -> t;
+	SLEEPS : e -> t ;
+	MAN : e -> t ;
+	WOMAN : e -> t ;
+	TAXI : e -> t;
+	JOHN : e ;
+	BILL : e ;
+	ALLEGEDLY : t -> t ;
+	USUALLY : t -> t
+
+end	

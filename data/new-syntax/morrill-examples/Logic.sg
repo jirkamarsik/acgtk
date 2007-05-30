@@ -1,0 +1,17 @@
+signature Logic = 
+
+ unit : type ;
+
+ one : unit ;
+
+ i, o : type ;
+
+  JOHN, MARY, I, YOU : i ;
+
+ COOK, MAN, WOMAN, GOOD : i -> o ;
+
+ FIND, LOVE : i -> i-> o ;
+
+ TRY : i -> (i -> o) -> o
+
+end

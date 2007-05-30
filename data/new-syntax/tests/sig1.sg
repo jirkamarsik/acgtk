@@ -1,0 +1,77 @@
+signature Test = 
+
+ i, o : type ;
+ and : o -> o -> o ; 
+ Exists : (i => o) -> o ; 
+ COOK, GOOD : i -> o ;
+ FIND : i -> i-> o ;
+
+ myself  : ((i -> i -> o) -> i => o) type;
+ myselfr : myself (lambda f. Lambda x. f x x);
+ cook : (i => o) type;
+ cookr : cook (Lambda x. COOK x);
+ good : ((i => o) -> i => o) type ;
+ goodr :  good (lambda P. Lambda x. and (P x) (GOOD x));
+ a : ((i => o) -> (i -> o) -> o) type;
+ ar : a (lambda P Q. Exists (Lambda x. and (P x) (Q x)));
+ find : (i -> i -> o) type;
+ findr : find (lambda x y. FIND y x);
+ who : ((i -> o) -> (i => o) -> i => o) type;
+ whor : who (lambda P Q. Lambda x. and (Q x) (P x))
+
+end
+
+lexicon Sem_lex (Abstract) : Logic =
+
+  case   := unit ;
+  gender := unit ;
+  person := unit ;
+  tense := unit ;
+
+  sub   := one ;
+  obj   := one ;
+  f     := one ;
+  m     := one ;
+  p1    := one ;
+  p2    := one ;
+  p3    := one ;
+  minus := one ;
+  plus  := one ;
+ 
+  S  := (x:unit) o ;
+  N  := (x:unit) i => o ;
+  VP := (x:unit, y:unit) i -> o ;
+  NP := (x:unit, y:unit, z:unit) i ;
+
+  john := JOHN ;
+  mary := MARY ;
+
+  i   := I ;
+  me  := I ;
+  you := YOU ;
+
+  myself   := lambda f. Lambda x. f x x ;
+  yourself := lambda f. Lambda x. f x x ;
+  herself  := lambda f. Lambda x. f x x ;
+  himself  := lambda f. Lambda x. f x x ;
+
+  cook  := Lambda x. COOK x ;
+  man   := Lambda x. MAN x ;
+  woman := Lambda x. WOMAN x ;
+
+  find_0 := lambda x y. FIND y x ;
+  find_1 := lambda x y. FIND y x ;
+  find_2 := lambda x y. FIND y x ;
+  find_3 := lambda x y. FIND y x ;
+  love_0 := lambda x y. LOVE y x ;
+  love_1 := lambda x y. LOVE y x ;
+  love_2 := lambda x y. LOVE y x ;
+  love_3 := lambda x y. LOVE y x ;
+
+  try_1 := lambda x y. TRY y x ;
+  try_2 := lambda x y. TRY y x ;
+  try_3 := lambda x y. TRY y x ;
+
+  to := lambda x. x ;
+
+end

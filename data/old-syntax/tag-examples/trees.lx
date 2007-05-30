@@ -1,0 +1,41 @@
+lexicon Synt_lex (Abstract) : Initial_trees =
+
+Ns		:= tree;
+Ss		:= tree ;
+Na		:= tree -> tree ;
+Sa		:= tree -> tree ;
+VPa		:= tree -> tree ;
+
+Ivp		:=lambda x.x;
+In		:=lambda x.x;
+Is		:=lambda x.x;
+
+every		:= lambda x.N2 every x ;
+some		:= lambda x.N2 some x ;
+dog		:= lambda N. N (N1 dog) ;
+cat		:= lambda N. N (N1 cat) ;
+chases		:= lambda S V .lambda x y.S(S2 x (V(VP2 chases y))) ;
+loves		:= lambda S V .lambda x y.S(S2 x (V(VP2 loves y))) ;
+to_love		:= lambda S V .lambda x y.S2 y (S(S2 x (V(VP1 to_love))));
+
+usually		:= lambda V .lambda x. V(VP2 usually x) ;
+alledgedly	:= lambda V .lambda x. V(VP2 alledgedly x) ;
+seems		:= lambda V .lambda x. V(VP2 seems x) ;
+
+claims		:= lambda x S. lambda y. S (S2 x (VP2 claims y)) ;
+said		:= lambda x S. lambda y. S (S2 x (VP2 said y)) ;
+does_think	:= lambda x S. lambda y. S2 does (S (S2 x (VP2 think y))) ;
+
+john		:=N1 John;
+mary		:=N1 Mary;
+paul		:=N1 Paul;
+
+who		:= WH1 who;
+
+liked		:= lambda S V w x.S2 w (S(S2 x (V(VP1 liked))))
+
+
+
+end
+
+

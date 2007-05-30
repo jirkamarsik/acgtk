@@ -1,0 +1,15 @@
+signature BiAbstract =
+	n,np,s : type;
+
+	D_loves, D_saw, D_find	: np -> np -> s;
+	D_seeks : np -> ((np -> s ) -> s) -> s ;
+	D_tries_to : np -> (np -> s) -> s;
+	D_sleeps	: np -> s ;
+	D_a, D_every	: n -> (np ->s) -> s;
+	D_A, D_U	: (np -> s) -> ((np -> s) -> (np -> s)) -> (np -> s) ;
+	D_man, D_woman, D_taxi	: n ;
+	D_john, D_bill	: np ;
+	D_and : (np -> s) -> np -> np -> s ;
+	D_who : (np -> s) -> n -> n 
+
+end

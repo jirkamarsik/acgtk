@@ -1,0 +1,39 @@
+###############################################
+#                                             #
+# Makefile for directories with no executable #
+#                                             #
+###############################################
+
+include ../Makefile.master
+
+###############################
+#                             #
+# Set the following variables #
+#                             #
+###############################
+
+# Used libraries
+LIBS += gramlib.cma
+
+# The corresponding directories
+# (if not in the main ocaml lib directory,
+# ex.  +campl4
+LIBDIR = -I +camlp4
+
+# Directories to which the current source files depend on
+PREVIOUS_DIRS = ../utils
+
+# Source files in the right order of dependance
+#ML = lambda.ml signature.ml typing.ml syntax.ml printing.ml lexicon.ml
+ML = lambda.ml signature.ml typing.ml printing.ml lexicon.ml environment.ml
+
+# Uncomment the next line and put the name of the exe of this directory, if relevant
+# EXE_SOURCES =
+
+####################################
+#                                  #
+# End of the configuration section #
+#                                  #
+####################################
+
+include ../Makefile.common

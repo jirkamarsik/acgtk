@@ -1,0 +1,43 @@
+lexicon Synt_lex (Abstract) : Initial_trees =
+
+Ns		:= tree;
+Ss		:= tree ;
+Na		:= tree -> tree ;
+Sa		:= tree -> tree ;
+VPa		:= tree -> tree ;
+
+Ivp		:=lambda x.x;
+In		:=lambda x.x;
+Is		:=lambda x.x;
+
+C_every		:= lambda x.N2 every x ;
+C_some		:= lambda x.N2 some x ;
+C_dog		:= lambda N. N (N1 dog) ;
+C_cat		:= lambda N. N (N1 cat) ;
+C_barks		:= lambda V .lambda x.S2 x (V(VP1 barks)) ;
+C_chases	:= lambda S V .lambda x y.S(S2 x (V(VP2 chases y))) ;
+C_likes		:= lambda S V .lambda x y.S(S2 x (V(VP2 likes y))) ;
+C_loves		:= lambda S V .lambda x y.S(S2 x (V(VP2 loves y))) ;
+C_to_love	:= lambda S V .lambda x y.S2 y (S(S2 x (V(VP1 to_love))));
+
+C_usually	:= lambda V .lambda x. V(VP2 usually x) ;
+C_alledgedly	:= lambda V .lambda x. V(VP2 alledgedly x) ;
+C_seems		:= lambda V .lambda x. V(VP2 seems x) ;
+
+C_claims	:= lambda x S. lambda y. S (S2 x (VP2 claims y)) ;
+C_said		:= lambda x S. lambda y. S (S2 x (VP2 said y)) ;
+C_does_think	:= lambda x S. lambda y. S2 does (S (S2 x (VP2 think y))) ;
+
+C_john		:=N1 John;
+C_mary		:=N1 Mary;
+C_paul		:=N1 Paul;
+
+C_who		:= WH1 who;
+
+C_liked		:= lambda S V w x.S2 w (S(S2 x (V(VP1 liked))))
+
+
+
+end
+
+

@@ -1,0 +1,6 @@
+signature Toto =
+	a, e, i : type;
+
+	o, u : (a,e) type;
+end
+

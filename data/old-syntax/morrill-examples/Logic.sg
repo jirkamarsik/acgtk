@@ -1,0 +1,26 @@
+signature Logic = 
+
+ unit : sort ;
+
+ one : unit ;
+
+ i, o : type ;
+
+ infix &  : o -> o -> o ; 
+ infix => : o -> o -> o ; 
+
+ infix == : i -> i -> o ; 
+
+ binder All : (i => o) -> o ;
+
+ binder Exists : (i => o) -> o ; 
+
+ JOHN, MARY, I, YOU : i ;
+
+ COOK, MAN, WOMAN, GOOD : i -> o ;
+
+ FIND, LOVE : i -> i-> o ;
+
+ TRY : i -> (i -> o) -> o
+
+end

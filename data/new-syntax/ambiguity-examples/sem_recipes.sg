@@ -1,0 +1,31 @@
+signature Semantic_recipes =
+
+	e,h,l,t,p	: type;
+
+	T 		= h => l => t ;
+
+	infix >		: h => l => t ;
+	infix ::	: l => p -> t ; 
+	infix & 	: t -> t -> t ;
+
+	binder Ex_l 	: (l=>t)->t ;
+	binder Ex_h 	: (h =>t) -> t ;
+	binder Ex_e 	: (e=>t)->t ;
+
+	And,Imp		: l => h => p ;
+	All,Some	: e => l => p ;
+	dog,cat		: e => p ;
+
+	barks		: e => p ;
+
+	chases,likes,
+	loves,liked	: e => e => p ;
+
+	U,A,seems	: h => p ;
+
+	claims,said,
+	does_think,
+	who		: e => h => p ; 
+	john,mary,paul	: e 
+
+end

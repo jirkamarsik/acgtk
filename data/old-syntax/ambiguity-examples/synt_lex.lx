@@ -1,0 +1,25 @@
+lexicon Synt_lex (Abstract) : Syntax =
+
+n := string ;
+np := string ;
+s := string ;
+
+C_loves := lambda x y. x + [loves] + y ;
+C_saw := lambda x y. x + [saw] + y ;
+C_seeks := lambda x y. x + [seeks] + y ;
+C_tries_to	:= lambda x R . x + [tries_to] + (R empty) ;
+C_find := lambda x y. x + [find] + y ;
+C_sleeps := lambda x. x + [sleeps] ;
+C_a := lambda x. [a] + x ;
+C_every := lambda x. [every] + x ;
+C_man := [man] ;
+C_woman := [woman] ;
+C_taxi := [taxi] ;
+C_john := [john] ;
+C_bill := [bill] ;
+C_and := lambda r x y. x + (r empty) + [andsodid] + y ;
+C_A := lambda R x.x + [alledgedly] + (R empty) ;
+C_U := lambda R x.x + [usually] + (R empty) ;
+C_who := lambda R n . n + [who] + (R empty)
+
+end
