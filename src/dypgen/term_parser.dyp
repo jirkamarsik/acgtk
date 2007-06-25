@@ -1,0 +1,38 @@
+{
+  type term =
+    | Var of string
+    | Abs of (string,term)
+    | LAbs of (string,term)
+    | App of (term,term)
+
+  type abs =
+    | Linear of string
+    | Non_linear of string
+
+  let wrap abs t = match abs with
+    | Linear s -> LAbs (s,t)
+    | Non_linear s -> Abs (s,t)
+
+}
+
+%token EOI LPAREN RPAREN <string> IDENT <string> LAMBDA <string> LAMBDA0 DOT
+  
+  
+%start <term> main
+  
+%relation at<bind<app
+
+%%
+  
+  main : expr EOI {$1}
+  
+  expr :
+| binder DOT expr {wrap $1$ $3$} bind
+| IDENT {Var ($1)} at
+| LPAREN expr RPAREN {$2} at
+| expr(<=app) expr(<at) {App($1,$2)} app
+      
+      
+      binder :
+| LAMBDA {Non_linear $1}
+| LAMBDA0 {Linear $1}
