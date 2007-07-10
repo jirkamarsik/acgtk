@@ -1,7 +1,7 @@
 type token =
   | DOT
-  | LAMBDA0 of (string)
-  | LAMBDA of (string)
+  | LAMBDA0
+  | LAMBDA
   | IDENT of (string)
   | RPAREN
   | LPAREN
@@ -16,5 +16,9 @@ sig
   val bind : Dyp.priority
 end
 
-val main : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((term) * Dyp.priority) list
+val main : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abs.term option) * Dyp.priority) list
 
+# 50 "term_parser.dyp"
+     
+  val error : unit -> string
+# 250                "term_parser.ml"
