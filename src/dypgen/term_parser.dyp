@@ -1,51 +1,39 @@
 {
   open Dyp
 
-  let parse_error s = 
-    Printf.fprintf stderr "I found the error %s\m" s
-      
-  type error_description =
-      {mutable start:int;
-       mutable ending:int}
-
-  let error_loc = {start= -1;ending= -1}       
-
-  let set_error d = let () = error_loc.start <- (d.symbol_start ()) in
-		     error_loc.ending <- (d.symbol_end ())
-
-  let error_msg {start=s;ending=e} = Printf.sprintf "between %d and %d" s e
-
-  let error () = error_msg error_loc
 }
 
-%token EOI LPAREN RPAREN <string> IDENT LAMBDA  LAMBDA0 DOT
+%token EOI EQUAL SEMICOLON COLON COMMA <Lexing.position> LPAREN <Lexing.position> RPAREN DOT SIG_OPEN END_OF_DEC TYPE PREFIX INFIX BINDER LAMBDA  LAMBDA0 <string> IDENT <string> SYMBOL
   
-%start <Abs.term option> main
+%start <Abs.term list> main
   
 %relation at<bind<app
   
 %%
   
   main : 
-| expr EOI {Some $1}
-| EOI {None}
-  
-  expr :
-| LAMBDA0 idents DOT expr {let () = set_error dyp in List.fold_right (fun x t -> Abs.LAbs (x,t)) ($2:string list) ($4:Abs.term)} bind
-| LAMBDA idents DOT expr {let () = set_error dyp in List.fold_right (fun x t -> Abs.Abs (x,t)) ($2:string list) ($4:Abs.term)} bind
-| IDENT {let () = set_error dyp in Abs.Var $1} at
-| LPAREN expr RPAREN {let () = set_error dyp in $2:Abs.term} at
-| expr(<=app) expr(<=at) {let () = set_error dyp in Abs.App($1,$2)} app      
+| exprs EOI {$1}
+| EOI {[]}
+
+   exprs :
+| expr {[$1]}
+| expr SEMICOLON exprs {($1)::($3)}
+      
+      expr :
+| LAMBDA0 idents DOT expr {List.fold_right (fun x t -> Abs.LAbs (x,t)) ($2:string list) ($4:Abs.term)} bind
+| LAMBDA idents DOT expr {List.fold_right (fun x t -> Abs.Abs (x,t)) ($2:string list) ($4:Abs.term)} bind
+| IDENT {Abs.Var $1} at
+| LPAREN expr RPAREN {$2:Abs.term} at
+| expr(<=app) expr(<=at) {Abs.App($1,$2)} app      
       
       idents :
-| IDENT {let () = set_error dyp in [$1]:string list} 
-| IDENT idents {let () = set_error dyp in $1::$2}
+| IDENT {[$1]:string list} 
+| IDENT idents {$1::$2}
 
       lambda :
-| LAMBDA0 {let () = set_error dyp in Abs.Linear}
-| LAMBDA {let () = set_error dyp in Abs.Non_linear}
+| LAMBDA0 {Abs.Linear}
+| LAMBDA {Abs.Non_linear}
 
 
 
-%mli {
-  val error : unit -> string}
+%mli {}

@@ -1,10 +1,21 @@
 type token =
-  | DOT
+  | SYMBOL of (string)
+  | IDENT of (string)
   | LAMBDA0
   | LAMBDA
-  | IDENT of (string)
-  | RPAREN
-  | LPAREN
+  | BINDER
+  | INFIX
+  | PREFIX
+  | TYPE
+  | END_OF_DEC
+  | SIG_OPEN
+  | DOT
+  | RPAREN of (Lexing.position)
+  | LPAREN of (Lexing.position)
+  | COMMA
+  | COLON
+  | SEMICOLON
+  | EQUAL
   | EOI
 
 module Dyp_priority_data :
@@ -16,9 +27,5 @@ sig
   val bind : Dyp.priority
 end
 
-val main : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abs.term option) * Dyp.priority) list
+val main : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abs.term list) * Dyp.priority) list
 
-# 50 "term_parser.dyp"
-     
-  val error : unit -> string
-# 250                "term_parser.ml"
