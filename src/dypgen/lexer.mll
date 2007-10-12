@@ -4,6 +4,8 @@
   open Term_parser
 
   let pr lexbuf = Printf.printf "%s\n%!" (Lexing.lexeme lexbuf)
+
+  let loc lexbuf = Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf
 	
 }
 
@@ -19,32 +21,32 @@ let string = (letter|digit|'_')*
     parse
       | [' ' '\t'] {lexer lexbuf}
       | newline {let () = Error.update_loc lexbuf None 1 false 0 in lexer lexbuf}
-      | "(*" {comment [Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf] lexbuf}
+      | "(*" {comment [loc lexbuf] lexbuf}
       | "*)" {raise (Error (Lexer_error Unstarted_comment))}
       | eof {EOI}
-      | ['='] {EQUAL}
-      | [';'] {SEMICOLON}
-      | [':'] {COLON}
-      | [','] {COMMA}
-      | ['('] {LPAREN (Lexing.lexeme_start_p lexbuf)}
-      | [')'] {RPAREN (Lexing.lexeme_start_p lexbuf)}
-      | ['.'] {DOT}
-      | "signature" {SIG_OPEN}
-      | "end" {END_OF_DEC}
-      | "type" {TYPE}
-      | "prefix" {PREFIX}
-      | "infix" {INFIX}
-      | "binder" {BINDER}
-      | "lambda" {LAMBDA0}
-      | "Lambda" {LAMBDA}
-      | letter string {IDENT (Lexing.lexeme lexbuf)}
-      | symbol* {SYMBOL (Lexing.lexeme lexbuf)}
+      | ['='] {EQUAL(loc lexbuf)}
+      | [';'] {SEMICOLON(loc lexbuf)}
+      | [':'] {COLON(loc lexbuf)}
+      | [','] {COMMA(loc lexbuf)}
+      | ['('] {LPAREN (loc lexbuf)}
+      | [')'] {RPAREN (loc lexbuf)}
+      | ['.'] {DOT(loc lexbuf)}
+      | "signature" {SIG_OPEN(loc lexbuf)}
+      | "end" {END_OF_DEC(loc lexbuf)}
+      | "type" {TYPE(loc lexbuf)}
+      | "prefix" {PREFIX(loc lexbuf)}
+      | "infix" {INFIX(loc lexbuf)}
+      | "binder" {BINDER(loc lexbuf)}
+      | "lambda" {LAMBDA0(loc lexbuf)}
+      | "Lambda" {LAMBDA(loc lexbuf)}
+      | letter string {IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
+      | symbol* {SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
     and comment depth = parse
       | "*)" {match depth with
 		| [a] -> lexer lexbuf
 		| a::tl -> comment tl lexbuf
 		| [] -> raise (Error (Lexer_error Unstarted_comment))}
-      | "(*" {comment ((Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf)::depth) lexbuf}
+      | "(*" {comment ((loc lexbuf)::depth) lexbuf}
       | eof {raise (Error (Lexer_error (Unclosed_comment (List.hd depth))))}
       | newline {let () = Error.update_loc lexbuf None 1 false 0 in comment depth lexbuf}
       | _ {comment depth lexbuf}

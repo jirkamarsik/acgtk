@@ -1,21 +1,21 @@
 type token =
-  | SYMBOL of (string)
-  | IDENT of (string)
-  | LAMBDA0
-  | LAMBDA
-  | BINDER
-  | INFIX
-  | PREFIX
-  | TYPE
-  | END_OF_DEC
-  | SIG_OPEN
-  | DOT
-  | RPAREN of (Lexing.position)
-  | LPAREN of (Lexing.position)
-  | COMMA
-  | COLON
-  | SEMICOLON
-  | EQUAL
+  | SYMBOL of (string*(Abs.location))
+  | IDENT of (string*(Abs.location))
+  | LAMBDA0 of (Abs.location)
+  | LAMBDA of (Abs.location)
+  | BINDER of (Abs.location)
+  | INFIX of (Abs.location)
+  | PREFIX of (Abs.location)
+  | TYPE of (Abs.location)
+  | END_OF_DEC of (Abs.location)
+  | SIG_OPEN of (Abs.location)
+  | DOT of (Abs.location)
+  | RPAREN of (Abs.location)
+  | LPAREN of (Abs.location)
+  | COMMA of (Abs.location)
+  | COLON of (Abs.location)
+  | SEMICOLON of (Abs.location)
+  | EQUAL of (Abs.location)
   | EOI
 
 module Dyp_symbols =
@@ -46,62 +46,62 @@ struct
   let get_token_name t = match t with
     | SYMBOL _ -> t_SYMBOL
     | IDENT _ -> t_IDENT
-    | LAMBDA0 -> t_LAMBDA0
-    | LAMBDA -> t_LAMBDA
-    | BINDER -> t_BINDER
-    | INFIX -> t_INFIX
-    | PREFIX -> t_PREFIX
-    | TYPE -> t_TYPE
-    | END_OF_DEC -> t_END_OF_DEC
-    | SIG_OPEN -> t_SIG_OPEN
-    | DOT -> t_DOT
+    | LAMBDA0 _ -> t_LAMBDA0
+    | LAMBDA _ -> t_LAMBDA
+    | BINDER _ -> t_BINDER
+    | INFIX _ -> t_INFIX
+    | PREFIX _ -> t_PREFIX
+    | TYPE _ -> t_TYPE
+    | END_OF_DEC _ -> t_END_OF_DEC
+    | SIG_OPEN _ -> t_SIG_OPEN
+    | DOT _ -> t_DOT
     | RPAREN _ -> t_RPAREN
     | LPAREN _ -> t_LPAREN
-    | COMMA -> t_COMMA
-    | COLON -> t_COLON
-    | SEMICOLON -> t_SEMICOLON
-    | EQUAL -> t_EQUAL
+    | COMMA _ -> t_COMMA
+    | COLON _ -> t_COLON
+    | SEMICOLON _ -> t_SEMICOLON
+    | EQUAL _ -> t_EQUAL
     | EOI -> t_EOI
   let str_token t = match t with
-    | SYMBOL s -> "SYMBOL("^s^")"
-    | IDENT s -> "IDENT("^s^")"
-    | LAMBDA0 -> "LAMBDA0"
-    | LAMBDA -> "LAMBDA"
-    | BINDER -> "BINDER"
-    | INFIX -> "INFIX"
-    | PREFIX -> "PREFIX"
-    | TYPE -> "TYPE"
-    | END_OF_DEC -> "END_OF_DEC"
-    | SIG_OPEN -> "SIG_OPEN"
-    | DOT -> "DOT"
+    | SYMBOL _ -> "SYMBOL"
+    | IDENT _ -> "IDENT"
+    | LAMBDA0 _ -> "LAMBDA0"
+    | LAMBDA _ -> "LAMBDA"
+    | BINDER _ -> "BINDER"
+    | INFIX _ -> "INFIX"
+    | PREFIX _ -> "PREFIX"
+    | TYPE _ -> "TYPE"
+    | END_OF_DEC _ -> "END_OF_DEC"
+    | SIG_OPEN _ -> "SIG_OPEN"
+    | DOT _ -> "DOT"
     | RPAREN _ -> "RPAREN"
     | LPAREN _ -> "LPAREN"
-    | COMMA -> "COMMA"
-    | COLON -> "COLON"
-    | SEMICOLON -> "SEMICOLON"
-    | EQUAL -> "EQUAL"
+    | COMMA _ -> "COMMA"
+    | COLON _ -> "COLON"
+    | SEMICOLON _ -> "SEMICOLON"
+    | EQUAL _ -> "EQUAL"
     | EOI -> "EOI"
 end
 
 type ('expr,'exprs,'idents,'lambda) obj =
-  | Obj_BINDER
-  | Obj_COLON
-  | Obj_COMMA
-  | Obj_DOT
-  | Obj_END_OF_DEC
+  | Obj_BINDER of (Abs.location)
+  | Obj_COLON of (Abs.location)
+  | Obj_COMMA of (Abs.location)
+  | Obj_DOT of (Abs.location)
+  | Obj_END_OF_DEC of (Abs.location)
   | Obj_EOI
-  | Obj_EQUAL
-  | Obj_IDENT of (string)
-  | Obj_INFIX
-  | Obj_LAMBDA
-  | Obj_LAMBDA0
-  | Obj_LPAREN of (Lexing.position)
-  | Obj_PREFIX
-  | Obj_RPAREN of (Lexing.position)
-  | Obj_SEMICOLON
-  | Obj_SIG_OPEN
-  | Obj_SYMBOL of (string)
-  | Obj_TYPE
+  | Obj_EQUAL of (Abs.location)
+  | Obj_IDENT of (string*(Abs.location))
+  | Obj_INFIX of (Abs.location)
+  | Obj_LAMBDA of (Abs.location)
+  | Obj_LAMBDA0 of (Abs.location)
+  | Obj_LPAREN of (Abs.location)
+  | Obj_PREFIX of (Abs.location)
+  | Obj_RPAREN of (Abs.location)
+  | Obj_SEMICOLON of (Abs.location)
+  | Obj_SIG_OPEN of (Abs.location)
+  | Obj_SYMBOL of (string*(Abs.location))
+  | Obj_TYPE of (Abs.location)
   | Obj_expr of 'expr
   | Obj_exprs of 'exprs
   | Obj_idents of 'idents
@@ -147,7 +147,7 @@ struct
   let undef_nt = true
   let entry_points = [(Dyp_symbols.main,1)]
   let str_token_name t = Dyp_symbols_array.token_name_array.(t)
-  let priority_names = [|"default_priority";"app";"at";"bind"|]
+  let priority_names = [|"default_priority";"app";"atom";"binder"|]
   let merge_warning = false
 end
 
@@ -162,39 +162,26 @@ struct
   let get_token_value t = match t with
     | SYMBOL x -> Obj_SYMBOL x
     | IDENT x -> Obj_IDENT x
-    | LAMBDA0 -> Obj_LAMBDA0
-    | LAMBDA -> Obj_LAMBDA
-    | BINDER -> Obj_BINDER
-    | INFIX -> Obj_INFIX
-    | PREFIX -> Obj_PREFIX
-    | TYPE -> Obj_TYPE
-    | END_OF_DEC -> Obj_END_OF_DEC
-    | SIG_OPEN -> Obj_SIG_OPEN
-    | DOT -> Obj_DOT
+    | LAMBDA0 x -> Obj_LAMBDA0 x
+    | LAMBDA x -> Obj_LAMBDA x
+    | BINDER x -> Obj_BINDER x
+    | INFIX x -> Obj_INFIX x
+    | PREFIX x -> Obj_PREFIX x
+    | TYPE x -> Obj_TYPE x
+    | END_OF_DEC x -> Obj_END_OF_DEC x
+    | SIG_OPEN x -> Obj_SIG_OPEN x
+    | DOT x -> Obj_DOT x
     | RPAREN x -> Obj_RPAREN x
     | LPAREN x -> Obj_LPAREN x
-    | COMMA -> Obj_COMMA
-    | COLON -> Obj_COLON
-    | SEMICOLON -> Obj_SEMICOLON
-    | EQUAL -> Obj_EQUAL
+    | COMMA x -> Obj_COMMA x
+    | COLON x -> Obj_COLON x
+    | SEMICOLON x -> Obj_SEMICOLON x
+    | EQUAL x -> Obj_EQUAL x
     | EOI -> Obj_EOI
   let lexbuf_position lexbuf = (lexbuf.Lexing.lex_start_p,lexbuf.Lexing.lex_curr_p)
   let transform_av_list l =
     let f o = match o with
-      | Obj_BINDER -> `Dummy_obj
-      | Obj_COLON -> `Dummy_obj
-      | Obj_COMMA -> `Dummy_obj
-      | Obj_DOT -> `Dummy_obj
-      | Obj_END_OF_DEC -> `Dummy_obj
       | Obj_EOI -> `Dummy_obj
-      | Obj_EQUAL -> `Dummy_obj
-      | Obj_INFIX -> `Dummy_obj
-      | Obj_LAMBDA -> `Dummy_obj
-      | Obj_LAMBDA0 -> `Dummy_obj
-      | Obj_PREFIX -> `Dummy_obj
-      | Obj_SEMICOLON -> `Dummy_obj
-      | Obj_SIG_OPEN -> `Dummy_obj
-      | Obj_TYPE -> `Dummy_obj
       | x -> `Real_obj x
     in
     List.map f l
@@ -205,9 +192,9 @@ struct
   let priority_data, default_priority =
     Dyp.insert_priority Dyp.empty_priority_data "default_priority"
   let priority_data, app = Dyp.insert_priority priority_data "app"
-  let priority_data, at = Dyp.insert_priority priority_data "at"
-  let priority_data, bind = Dyp.insert_priority priority_data "bind"
-  let priority_data = Dyp.add_list_relations priority_data [at;bind;app]
+  let priority_data, atom = Dyp.insert_priority priority_data "atom"
+  let priority_data, binder = Dyp.insert_priority priority_data "binder"
+  let priority_data = Dyp.add_list_relations priority_data [atom;app;binder]
 end
 
 let global_data = ref 0
@@ -226,167 +213,218 @@ let dyp_merge = Dyp.keep_oldest
 
   open Dyp
 
+  module Env = Set.Make(String)
 
-# 231                "term_parser.ml"
+  let pr s = Printf.fprintf stderr "%s\n%!" s
+
+  let abs x l t = function
+    | Abs.Linear -> Abs.LAbs (x,l,t)
+    | Abs.Non_linear -> Abs.Abs (x,l,t)
+
+  let rec multiple_abs e k_a l ids t k =
+    match ids with
+      | [] -> k (t e)
+      | [a,l_a] -> k (abs a l_a (t (Env.add a e)) k_a)
+      | (a,l_a)::((_,l_b)::_ as tl) -> 
+	  let new_env = Env.add a e in
+	    multiple_abs new_env k_a l_b tl t (fun r -> abs a l r k_a)
+
+
+# 234                "term_parser.ml"
 let __dypgen_ra_list =
 [
 ((Dyp_symbols.main,[Dyp.Non_ter (Dyp_symbols.exprs,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_EOI],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_exprs ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_exprs)
-# 237                "term_parser.ml"
+# 240                "term_parser.ml"
  as _1))); _2] -> Obj_main 
-# 14 "term_parser.dyp"
+# 31 "term_parser.dyp"
 (
             (_1):Abs.term list)
-# 242                "term_parser.ml"
+# 245                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
 ((Dyp_symbols.main,[Dyp.Ter Dyp_symbols.t_EOI],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [ _1] -> Obj_main 
-# 15 "term_parser.dyp"
+# 32 "term_parser.dyp"
 (
       ([]):Abs.term list)
-# 249                "term_parser.ml"
+# 252                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
 ((Dyp_symbols.exprs,[Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_expr ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_expr)
-# 255                "term_parser.ml"
+# 258                "term_parser.ml"
  as _1)))] -> Obj_exprs 
-# 18 "term_parser.dyp"
+# 35 "term_parser.dyp"
 (
-       ([_1]):'dypgen__Obj_exprs)
-# 260                "term_parser.ml"
+       ([_1 Env.empty]):'dypgen__Obj_exprs)
+# 263                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
 ((Dyp_symbols.exprs,[Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_SEMICOLON;Dyp.Non_ter (Dyp_symbols.exprs,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_expr ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_expr)
-# 266                "term_parser.ml"
- as _1))); _2;`Real_obj (Obj_exprs ( (
+# 269                "term_parser.ml"
+ as _1)));`Real_obj (Obj_SEMICOLON  (
+# 0 "term_parser.dyp"
+(_:Abs.location)
+# 273                "term_parser.ml"
+ as _2));`Real_obj (Obj_exprs ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_exprs)
-# 270                "term_parser.ml"
+# 277                "term_parser.ml"
  as _3)))] -> Obj_exprs 
-# 19 "term_parser.dyp"
+# 36 "term_parser.dyp"
 (
-                       ((_1)::(_3)):'dypgen__Obj_exprs)
-# 275                "term_parser.ml"
+                       ((_1 Env.empty)::(_3)):'dypgen__Obj_exprs)
+# 282                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
-((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_LAMBDA0;Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_DOT;Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority )],Dyp_priority_data.bind),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [ _1;`Real_obj (Obj_idents ( (
+((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_LAMBDA0;Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_DOT;Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority )],Dyp_priority_data.binder),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA0  (
+# 0 "term_parser.dyp"
+(_:Abs.location)
+# 288                "term_parser.ml"
+ as _1));`Real_obj (Obj_idents ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_idents)
-# 281                "term_parser.ml"
- as _2))); _3;`Real_obj (Obj_expr ( (
+# 292                "term_parser.ml"
+ as _2)));`Real_obj (Obj_DOT  (
 # 0 "term_parser.dyp"
-(_:'dypgen__Obj_expr)
-# 285                "term_parser.ml"
- as _4)))] -> Obj_expr 
-# 22 "term_parser.dyp"
-(
-                          (List.fold_right (fun x t -> Abs.LAbs (x,t)) (_2:string list) (_4:Abs.term)):'dypgen__Obj_expr)
-# 290                "term_parser.ml"
- | _ -> raise Dyp.Giveup)))
-;
-((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_LAMBDA;Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_DOT;Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority )],Dyp_priority_data.bind),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [ _1;`Real_obj (Obj_idents ( (
-# 0 "term_parser.dyp"
-(_:'dypgen__Obj_idents)
+(_:Abs.location)
 # 296                "term_parser.ml"
- as _2))); _3;`Real_obj (Obj_expr ( (
+ as _3));`Real_obj (Obj_expr ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_expr)
 # 300                "term_parser.ml"
  as _4)))] -> Obj_expr 
-# 23 "term_parser.dyp"
+# 39 "term_parser.dyp"
 (
-                         (List.fold_right (fun x t -> Abs.Abs (x,t)) (_2:string list) (_4:Abs.term)):'dypgen__Obj_expr)
+                          (fun env -> multiple_abs env Abs.Linear _1 _2 _4 (fun x -> x)):'dypgen__Obj_expr)
 # 305                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
-((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.at),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
+((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_LAMBDA;Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_DOT;Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority )],Dyp_priority_data.binder),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA  (
 # 0 "term_parser.dyp"
-(_:string)
+(_:Abs.location)
 # 311                "term_parser.ml"
- as _1))] -> Obj_expr 
-# 24 "term_parser.dyp"
+ as _1));`Real_obj (Obj_idents ( (
+# 0 "term_parser.dyp"
+(_:'dypgen__Obj_idents)
+# 315                "term_parser.ml"
+ as _2)));`Real_obj (Obj_DOT  (
+# 0 "term_parser.dyp"
+(_:Abs.location)
+# 319                "term_parser.ml"
+ as _3));`Real_obj (Obj_expr ( (
+# 0 "term_parser.dyp"
+(_:'dypgen__Obj_expr)
+# 323                "term_parser.ml"
+ as _4)))] -> Obj_expr 
+# 40 "term_parser.dyp"
 (
-        (Abs.Var _1):'dypgen__Obj_expr)
-# 316                "term_parser.ml"
+                         (fun env -> multiple_abs env Abs.Non_linear _1 _2 _4 (fun x -> x)):'dypgen__Obj_expr)
+# 328                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
-((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_LPAREN;Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_RPAREN],Dyp_priority_data.at),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LPAREN  (
+((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.atom),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
-(_:Lexing.position)
-# 322                "term_parser.ml"
+(_:string*(Abs.location))
+# 334                "term_parser.ml"
+ as _1))] -> Obj_expr 
+# 41 "term_parser.dyp"
+(
+        (let id,l=_1 in
+	   fun env -> 
+	     match Env.mem id env with
+	       | true -> Abs.Var (id,l)
+	       | false -> Abs.Const (id,l)):'dypgen__Obj_expr)
+# 343                "term_parser.ml"
+ | _ -> raise Dyp.Giveup)))
+;
+((Dyp_symbols.expr,[Dyp.Ter Dyp_symbols.t_LPAREN;Dyp.Non_ter (Dyp_symbols.expr,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_RPAREN],Dyp_priority_data.atom),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LPAREN  (
+# 0 "term_parser.dyp"
+(_:Abs.location)
+# 349                "term_parser.ml"
  as _1));`Real_obj (Obj_expr ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_expr)
-# 326                "term_parser.ml"
+# 353                "term_parser.ml"
  as _2)));`Real_obj (Obj_RPAREN  (
 # 0 "term_parser.dyp"
-(_:Lexing.position)
-# 330                "term_parser.ml"
+(_:Abs.location)
+# 357                "term_parser.ml"
  as _3))] -> Obj_expr 
-# 25 "term_parser.dyp"
+# 46 "term_parser.dyp"
 (
-                     (_2:Abs.term):'dypgen__Obj_expr)
-# 335                "term_parser.ml"
+                     (_2):'dypgen__Obj_expr)
+# 362                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
-((Dyp_symbols.expr,[Dyp.Non_ter (Dyp_symbols.expr,Dyp.Lesseq_priority Dyp_priority_data.app);Dyp.Non_ter (Dyp_symbols.expr,Dyp.Lesseq_priority Dyp_priority_data.at)],Dyp_priority_data.app),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_expr ( (
+((Dyp_symbols.expr,[Dyp.Non_ter (Dyp_symbols.expr,Dyp.Lesseq_priority Dyp_priority_data.app);Dyp.Non_ter (Dyp_symbols.expr,Dyp.Lesseq_priority Dyp_priority_data.atom)],Dyp_priority_data.app),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_expr ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_expr)
-# 341                "term_parser.ml"
+# 368                "term_parser.ml"
  as _1)));`Real_obj (Obj_expr ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_expr)
-# 345                "term_parser.ml"
+# 372                "term_parser.ml"
  as _2)))] -> Obj_expr 
-# 26 "term_parser.dyp"
+# 47 "term_parser.dyp"
 (
-                         (Abs.App(_1,_2)):'dypgen__Obj_expr)
-# 350                "term_parser.ml"
+                           (fun e ->
+			    let u1 = _1 e in
+			    let u2 = _2 e in
+			      Abs.App(Abs.new_loc (Abs.get_loc u1) (Abs.get_loc u2),u1,u2)):'dypgen__Obj_expr)
+# 380                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
 ((Dyp_symbols.idents,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
-(_:string)
-# 356                "term_parser.ml"
+(_:string*(Abs.location))
+# 386                "term_parser.ml"
  as _1))] -> Obj_idents 
-# 29 "term_parser.dyp"
+# 53 "term_parser.dyp"
 (
-        ([_1]:string list):'dypgen__Obj_idents)
-# 361                "term_parser.ml"
+        ([_1]):'dypgen__Obj_idents)
+# 391                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
 ((Dyp_symbols.idents,[Dyp.Ter Dyp_symbols.t_IDENT;Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
-(_:string)
-# 367                "term_parser.ml"
+(_:string*(Abs.location))
+# 397                "term_parser.ml"
  as _1));`Real_obj (Obj_idents ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_idents)
-# 371                "term_parser.ml"
+# 401                "term_parser.ml"
  as _2)))] -> Obj_idents 
-# 30 "term_parser.dyp"
+# 54 "term_parser.dyp"
 (
                (_1::_2):'dypgen__Obj_idents)
-# 376                "term_parser.ml"
+# 406                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
-((Dyp_symbols.lambda,[Dyp.Ter Dyp_symbols.t_LAMBDA0],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [ _1] -> Obj_lambda 
-# 33 "term_parser.dyp"
+((Dyp_symbols.lambda,[Dyp.Ter Dyp_symbols.t_LAMBDA0],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA0  (
+# 0 "term_parser.dyp"
+(_:Abs.location)
+# 412                "term_parser.ml"
+ as _1))] -> Obj_lambda 
+# 57 "term_parser.dyp"
 (
           (Abs.Linear):'dypgen__Obj_lambda)
-# 383                "term_parser.ml"
+# 417                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))
 ;
-((Dyp_symbols.lambda,[Dyp.Ter Dyp_symbols.t_LAMBDA],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [ _1] -> Obj_lambda 
-# 34 "term_parser.dyp"
+((Dyp_symbols.lambda,[Dyp.Ter Dyp_symbols.t_LAMBDA],Dyp_priority_data.default_priority),Dyp_runtime.Tools.transform_action  (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA  (
+# 0 "term_parser.dyp"
+(_:Abs.location)
+# 423                "term_parser.ml"
+ as _1))] -> Obj_lambda 
+# 58 "term_parser.dyp"
 (
          (Abs.Non_linear):'dypgen__Obj_lambda)
-# 390                "term_parser.ml"
+# 428                "term_parser.ml"
  | _ -> raise Dyp.Giveup)))]
 
 let dyp_merge_expr ol o =

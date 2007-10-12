@@ -1,13 +1,30 @@
 {
   open Dyp
 
+  module Env = Set.Make(String)
+
+  let pr s = Printf.fprintf stderr "%s\n%!" s
+
+  let abs x l t = function
+    | Abs.Linear -> Abs.LAbs (x,l,t)
+    | Abs.Non_linear -> Abs.Abs (x,l,t)
+
+  let rec multiple_abs e k_a l ids t k =
+    match ids with
+      | [] -> k (t e)
+      | [a,l_a] -> k (abs a l_a (t (Env.add a e)) k_a)
+      | (a,l_a)::((_,l_b)::_ as tl) -> 
+	  let new_env = Env.add a e in
+	    multiple_abs new_env k_a l_b tl t (fun r -> abs a l r k_a)
+
 }
 
-%token EOI EQUAL SEMICOLON COLON COMMA <Lexing.position> LPAREN <Lexing.position> RPAREN DOT SIG_OPEN END_OF_DEC TYPE PREFIX INFIX BINDER LAMBDA  LAMBDA0 <string> IDENT <string> SYMBOL
+
+%token EOI <Abs.location> EQUAL <Abs.location> SEMICOLON <Abs.location> COLON <Abs.location> COMMA <Abs.location> LPAREN <Abs.location> RPAREN <Abs.location> DOT <Abs.location> SIG_OPEN <Abs.location> END_OF_DEC <Abs.location> TYPE <Abs.location> PREFIX <Abs.location> INFIX <Abs.location> BINDER <Abs.location> LAMBDA  <Abs.location> LAMBDA0 <string*(Abs.location)> IDENT <string*(Abs.location)> SYMBOL
   
 %start <Abs.term list> main
   
-%relation at<bind<app
+%relation atom<app<binder
   
 %%
   
@@ -15,19 +32,26 @@
 | exprs EOI {$1}
 | EOI {[]}
 
-   exprs :
-| expr {[$1]}
-| expr SEMICOLON exprs {($1)::($3)}
+      exprs :
+| expr {[$1 Env.empty]}
+| expr SEMICOLON exprs {($1 Env.empty)::($3)}
       
       expr :
-| LAMBDA0 idents DOT expr {List.fold_right (fun x t -> Abs.LAbs (x,t)) ($2:string list) ($4:Abs.term)} bind
-| LAMBDA idents DOT expr {List.fold_right (fun x t -> Abs.Abs (x,t)) ($2:string list) ($4:Abs.term)} bind
-| IDENT {Abs.Var $1} at
-| LPAREN expr RPAREN {$2:Abs.term} at
-| expr(<=app) expr(<=at) {Abs.App($1,$2)} app      
+| LAMBDA0 idents DOT expr {fun env -> multiple_abs env Abs.Linear $1 $2 $4 (fun x -> x)} binder
+| LAMBDA idents DOT expr {fun env -> multiple_abs env Abs.Non_linear $1 $2 $4 (fun x -> x)} binder
+| IDENT {let id,l=$1 in
+	   fun env -> 
+	     match Env.mem id env with
+	       | true -> Abs.Var (id,l)
+	       | false -> Abs.Const (id,l)} atom
+| LPAREN expr RPAREN {$2} atom
+| expr(<=app) expr(<=atom) {fun e ->
+			    let u1 = $1 e in
+			    let u2 = $2 e in
+			      Abs.App(Abs.new_loc (Abs.get_loc u1) (Abs.get_loc u2),u1,u2)} app
       
       idents :
-| IDENT {[$1]:string list} 
+| IDENT {[$1]} 
 | IDENT idents {$1::$2}
 
       lambda :
@@ -35,5 +59,3 @@
 | LAMBDA {Abs.Non_linear}
 
 
-
-%mli {}
