@@ -27,5 +27,5 @@ sig
   val binder : Dyp.priority
 end
 
-val main : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abs.term list) * Dyp.priority) list
+val signature : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abs.term list) * Dyp.priority) list
 

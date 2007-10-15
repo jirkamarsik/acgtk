@@ -22,30 +22,39 @@
 
 %token EOI <Abs.location> EQUAL <Abs.location> SEMICOLON <Abs.location> COLON <Abs.location> COMMA <Abs.location> LPAREN <Abs.location> RPAREN <Abs.location> DOT <Abs.location> SIG_OPEN <Abs.location> END_OF_DEC <Abs.location> TYPE <Abs.location> PREFIX <Abs.location> INFIX <Abs.location> BINDER <Abs.location> LAMBDA  <Abs.location> LAMBDA0 <string*(Abs.location)> IDENT <string*(Abs.location)> SYMBOL
   
-%start <Abs.term list> main
+%start <Abs.term list> signature
   
 %relation atom<app<binder
   
 %%
   
-  main : 
-| exprs EOI {$1}
-| EOI {[]}
-
-      exprs :
-| expr {[$1 Env.empty]}
-| expr SEMICOLON exprs {($1 Env.empty)::($3)}
+  signature : 
+| SIG_OPEN IDENT EQUAL sig_entries END_OF_DEC {$4 (Abs.Abstract_sig.empty $2)}
       
-      expr :
-| LAMBDA0 idents DOT expr {fun env -> multiple_abs env Abs.Linear $1 $2 $4 (fun x -> x)} binder
-| LAMBDA idents DOT expr {fun env -> multiple_abs env Abs.Non_linear $1 $2 $4 (fun x -> x)} binder
+      sig_entries :
+| sig_entry {fun s -> add_sig_entry $1 s}
+| sig_entry SEMICOLON sig_entries {fun s -> $3 (add_sig_entry $1 s)}
+      
+      sig_entry :
+| type_declaration {fun s -> Type_decl ()}
+| type_definition {}
+| derm_declaration {}
+| term_definition {}
+	  
+	  term_declaration :
+| term  {$1}
+	  
+	  
+	  term :
+| LAMBDA0 idents DOT term {fun env -> multiple_abs env Abs.Linear $1 $2 $4 (fun x -> x)} binder
+| LAMBDA idents DOT term {fun env -> multiple_abs env Abs.Non_linear $1 $2 $4 (fun x -> x)} binder
 | IDENT {let id,l=$1 in
 	   fun env -> 
 	     match Env.mem id env with
 	       | true -> Abs.Var (id,l)
 	       | false -> Abs.Const (id,l)} atom
-| LPAREN expr RPAREN {$2} atom
-| expr(<=app) expr(<=atom) {fun e ->
+| LPAREN term RPAREN {$2} atom
+| term(<=app) term(<=atom) {fun e ->
 			    let u1 = $1 e in
 			    let u2 = $2 e in
 			      Abs.App(Abs.new_loc (Abs.get_loc u1) (Abs.get_loc u2),u1,u2)} app

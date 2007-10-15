@@ -62,7 +62,7 @@ sig
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its kind *)
     | Term_decl of (string * location * type_def)
-	(** The first parameter ([string]) is the name of the constat,
+	(** The first parameter ([string]) is the name of the constant,
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its type *)
 
