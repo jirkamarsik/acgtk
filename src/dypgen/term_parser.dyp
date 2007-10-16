@@ -1,13 +1,14 @@
 {
   open Dyp
+  open Abstract_syntax
 
   module Env = Set.Make(String)
 
   let pr s = Printf.fprintf stderr "%s\n%!" s
 
   let abs x l t = function
-    | Abs.Linear -> Abs.LAbs (x,l,t)
-    | Abs.Non_linear -> Abs.Abs (x,l,t)
+    | Abstract_sig.Linear -> Abstract_sig.LAbs (x,t,l)
+(*    | Abstract_sig.Non_linear -> Abstract_sig.Abs (x,l,t) *)
 
   let rec multiple_abs e k_a l ids t k =
     match ids with
@@ -17,54 +18,138 @@
 	  let new_env = Env.add a e in
 	    multiple_abs new_env k_a l_b tl t (fun r -> abs a l r k_a)
 
+  let parse_error e = raise (Error.Error (Error.Parse_error e))
+
 }
 
 
-%token EOI <Abs.location> EQUAL <Abs.location> SEMICOLON <Abs.location> COLON <Abs.location> COMMA <Abs.location> LPAREN <Abs.location> RPAREN <Abs.location> DOT <Abs.location> SIG_OPEN <Abs.location> END_OF_DEC <Abs.location> TYPE <Abs.location> PREFIX <Abs.location> INFIX <Abs.location> BINDER <Abs.location> LAMBDA  <Abs.location> LAMBDA0 <string*(Abs.location)> IDENT <string*(Abs.location)> SYMBOL
+%token
+  EOI
+<Abstract_syntax.Abstract_sig.location> EQUAL
+<Abstract_syntax.Abstract_sig.location> SEMICOLON
+<Abstract_syntax.Abstract_sig.location> COLON
+<Abstract_syntax.Abstract_sig.location> COMMA
+<Abstract_syntax.Abstract_sig.location> LPAREN
+<Abstract_syntax.Abstract_sig.location> RPAREN
+<Abstract_syntax.Abstract_sig.location> DOT
+<Abstract_syntax.Abstract_sig.location> SIG_OPEN
+<Abstract_syntax.Abstract_sig.location> END_OF_DEC
+<Abstract_syntax.Abstract_sig.location> TYPE
+<Abstract_syntax.Abstract_sig.location> PREFIX
+<Abstract_syntax.Abstract_sig.location> INFIX
+<Abstract_syntax.Abstract_sig.location> BINDER
+<Abstract_syntax.Abstract_sig.location> LAMBDA
+<Abstract_syntax.Abstract_sig.location> LAMBDA0
+<Abstract_syntax.Abstract_sig.location> ARROW
+<Abstract_syntax.Abstract_sig.location> LIN_ARROW
+<string*(Abstract_syntax.Abstract_sig.location)> IDENT
+<string*(Abstract_syntax.Abstract_sig.location)> SYMBOL
   
-%start <Abs.term list> signature
+%start <Abstract_syntax.Abstract_sig.t> signature
   
-%relation atom<app<binder
+%relation atom<app<binder atom_type<arrow_type
   
 %%
   
   signature : 
-| SIG_OPEN IDENT EQUAL sig_entries END_OF_DEC {$4 (Abs.Abstract_sig.empty $2)}
+| SIG_OPEN IDENT EQUAL sig_entries END_OF_DEC {$4 (Abstract_sig.empty (fst $2))}
+| SIG_OPEN IDENT EQUAL sig_entries SEMICOLON END_OF_DEC {$4 (Abstract_sig.empty (fst $2))}
       
       sig_entries :
-| sig_entry {fun s -> add_sig_entry $1 s}
-| sig_entry SEMICOLON sig_entries {fun s -> $3 (add_sig_entry $1 s)}
+| sig_entry {fun s -> $1 s}
+| sig_entry SEMICOLON sig_entries {fun s -> $3 ($1 s)}
       
       sig_entry :
-| type_declaration {fun s -> Type_decl ()}
-| type_definition {}
-| derm_declaration {}
-| term_definition {}
+| type_declaration {$1}
+| type_definition {$1}
+| term_declaration {$1}
+| term_definition {$1}
+      
+      type_declaration :
+| comma_ids COLON TYPE {fun s -> 
+			  List.fold_left
+			    (fun acc id ->
+			       try
+				 Abstract_sig.add_entry (Abstract_sig.Type_decl (fst id,snd id,Abstract_sig.K [])) acc
+			       with
+				 | Abstract_sig.Duplicate_type_definition -> 
+					      let pos1,pos2= snd id in
+					      parse_error (Error.Duplicated_type (fst id,pos1,pos2)))
+			    s
+			    $1}
+
+	  comma_ids :
+| IDENT {[$1]}
+| IDENT COMMA comma_ids {$1::$3}
+
+      type_definition :
+| IDENT EQUAL type_expression COLON TYPE {fun s ->
+					    try
+					      Abstract_sig.add_entry (Abstract_sig.Type_def (fst $1,snd $1,fst $3)) s
+					    with
+					      |Abstract_sig.Duplicate_type_definition -> 
+					      let pos1,pos2= snd $1 in
+						parse_error (Error.Duplicated_type (fst $1,pos1,pos2))}
 	  
-	  term_declaration :
-| term  {$1}
+	  type_expression :
+| atomic_type {$1} atom_type
+| atomic_type (<= atom_type) LIN_ARROW type_expression (<=arrow_type)  {let new_loc = Abstract_sig.new_loc (snd $1) (snd $3) in Abstract_sig.Linear_arrow (fst $1,fst $3,new_loc),new_loc} arrow_type
+      
+      atomic_type :
+| IDENT {Abstract_sig.Type_atom (fst $1,snd $1,[]),snd $1} atom_type
+| LPAREN type_expression RPAREN {fst $2,Abstract_sig.new_loc $1 $3} atom_type
+      
+      term_declaration :
+| term_dec_start COLON type_expression  {fun s ->
+					   List.fold_left
+					     (fun acc (id,kind,loc) -> 
+						try
+						  Abstract_sig.add_entry (Abstract_sig.Term_decl (id,kind,loc,fst $3)) acc
+						with
+						  | Abstract_sig.Duplicate_term_definition -> 
+						      let pos1,pos2= loc in
+							parse_error (Error.Duplicated_term (id,pos1,pos2)))
+					     s
+					     $1}
+
+	  term_dec_start : 
+| comma_ids {List.map (fun (id,loc) -> (id,Abstract_sig.Default,loc)) $1}
+| PREFIX IDENT {[fst $2,Abstract_sig.Prefix,snd $2]}
+| INFIX IDENT {[fst $2,Abstract_sig.Infix,snd $2]}
+| BINDER IDENT {[fst $2,Abstract_sig.Binder,snd $2]}
+
+	  term_def_start : 
+| IDENT {fst $1,Abstract_sig.Default,snd $1}
+| PREFIX IDENT {fst $2,Abstract_sig.Prefix,snd $2}
+| INFIX IDENT {fst $2,Abstract_sig.Infix,snd $2}
+| BINDER IDENT {fst $2,Abstract_sig.Binder,snd $2}
+
+      term_definition :
+| term_def_start EQUAL term COLON type_expression {
+    let id,k,l = $1 in
+      fun s -> Abstract_sig.add_entry (Abstract_sig.Term_def (id,k,l,$3 Env.empty,fst $5)) s}
 	  
 	  
 	  term :
-| LAMBDA0 idents DOT term {fun env -> multiple_abs env Abs.Linear $1 $2 $4 (fun x -> x)} binder
-| LAMBDA idents DOT term {fun env -> multiple_abs env Abs.Non_linear $1 $2 $4 (fun x -> x)} binder
+| LAMBDA0 idents DOT term {fun env -> multiple_abs env Abstract_sig.Linear $1 $2 $4 (fun x -> x)} binder
+/* | LAMBDA idents DOT term {fun env -> multiple_abs env Abstract_sig.Non_linear $1 $2 $4 (fun x -> x)} binder */
 | IDENT {let id,l=$1 in
 	   fun env -> 
 	     match Env.mem id env with
-	       | true -> Abs.Var (id,l)
-	       | false -> Abs.Const (id,l)} atom
+	       | true -> Abstract_sig.Var (id,l)
+	       | false -> Abstract_sig.Const (id,l)} atom
 | LPAREN term RPAREN {$2} atom
 | term(<=app) term(<=atom) {fun e ->
-			    let u1 = $1 e in
-			    let u2 = $2 e in
-			      Abs.App(Abs.new_loc (Abs.get_loc u1) (Abs.get_loc u2),u1,u2)} app
+			      let u1 = $1 e in
+			      let u2 = $2 e in
+				Abstract_sig.App(u1,u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))} app
       
       idents :
 | IDENT {[$1]} 
 | IDENT idents {$1::$2}
 
       lambda :
-| LAMBDA0 {Abs.Linear}
-| LAMBDA {Abs.Non_linear}
+| LAMBDA0 {Abstract_sig.Linear}
+/*| LAMBDA {Abstract_sig.Non_linear} */
 
 

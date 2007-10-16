@@ -39,6 +39,7 @@ let string = (letter|digit|'_')*
       | "binder" {BINDER(loc lexbuf)}
       | "lambda" {LAMBDA0(loc lexbuf)}
       | "Lambda" {LAMBDA(loc lexbuf)}
+      | "->" {LIN_ARROW(loc lexbuf)}
       | letter string {IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
       | symbol* {SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
     and comment depth = parse
