@@ -42,8 +42,8 @@
 <Abstract_syntax.Abstract_sig.location> LAMBDA0
 <Abstract_syntax.Abstract_sig.location> ARROW
 <Abstract_syntax.Abstract_sig.location> LIN_ARROW
-<string*(Abstract_syntax.Abstract_sig.location)> IDENT
-<string*(Abstract_syntax.Abstract_sig.location)> SYMBOL
+<(string*Abstract_syntax.Abstract_sig.location)> IDENT
+<(string*Abstract_syntax.Abstract_sig.location)> SYMBOL
   
 %start <Abstract_syntax.Abstract_sig.t> signature
   

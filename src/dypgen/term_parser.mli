@@ -1,6 +1,7 @@
+
 type token =
-  | SYMBOL of (string*(Abstract_syntax.Abstract_sig.location))
-  | IDENT of (string*(Abstract_syntax.Abstract_sig.location))
+  | SYMBOL of ((string*Abstract_syntax.Abstract_sig.location))
+  | IDENT of ((string*Abstract_syntax.Abstract_sig.location))
   | LIN_ARROW of (Abstract_syntax.Abstract_sig.location)
   | ARROW of (Abstract_syntax.Abstract_sig.location)
   | LAMBDA0 of (Abstract_syntax.Abstract_sig.location)
@@ -31,5 +32,5 @@ sig
   val binder : Dyp.priority
 end
 
-val signature : (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abstract_syntax.Abstract_sig.t) * Dyp.priority) list
+val signature : ?global_data:unit -> ?local_data:unit -> (Lexing.lexbuf -> token) -> Lexing.lexbuf -> ((Abstract_syntax.Abstract_sig.t) * Dyp.priority) list
 
