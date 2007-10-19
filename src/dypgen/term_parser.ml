@@ -24,9 +24,9 @@ type token =
 module Dyp_symbols =
 struct
   let atomic_type = 1
-  let comma_ids = 2
-  let idents = 3
-  let lambda = 4
+  let binder = 2
+  let comma_ids = 3
+  let idents = 4
   let sig_entries = 5
   let sig_entry = 6
   let signature = 7
@@ -132,7 +132,7 @@ struct
      String_ter_map.empty ter_string_list
 end
 
-type ('a_Obj_atomic_type, 'a_Obj_comma_ids, 'a_Obj_idents, 'a_Obj_lambda, 'a_Obj_sig_entries, 'a_Obj_sig_entry, 'a_Obj_term, 'a_Obj_term_dec_start, 'a_Obj_term_declaration, 'a_Obj_term_def_start, 'a_Obj_term_definition, 'a_Obj_type_declaration, 'a_Obj_type_definition, 'a_Obj_type_expression) obj =
+type ('a_Obj_atomic_type, 'a_Obj_binder, 'a_Obj_comma_ids, 'a_Obj_idents, 'a_Obj_sig_entries, 'a_Obj_sig_entry, 'a_Obj_term, 'a_Obj_term_dec_start, 'a_Obj_term_declaration, 'a_Obj_term_def_start, 'a_Obj_term_definition, 'a_Obj_type_declaration, 'a_Obj_type_definition, 'a_Obj_type_expression) obj =
   | Obj_ARROW of Abstract_syntax.Abstract_sig.location
   | Obj_BINDER of Abstract_syntax.Abstract_sig.location
   | Obj_COLON of Abstract_syntax.Abstract_sig.location
@@ -154,9 +154,9 @@ type ('a_Obj_atomic_type, 'a_Obj_comma_ids, 'a_Obj_idents, 'a_Obj_lambda, 'a_Obj
   | Obj_SYMBOL of (string*Abstract_syntax.Abstract_sig.location)
   | Obj_TYPE of Abstract_syntax.Abstract_sig.location
   | Obj_atomic_type of 'a_Obj_atomic_type
+  | Obj_binder of 'a_Obj_binder
   | Obj_comma_ids of 'a_Obj_comma_ids
   | Obj_idents of 'a_Obj_idents
-  | Obj_lambda of 'a_Obj_lambda
   | Obj_sig_entries of 'a_Obj_sig_entries
   | Obj_sig_entry of 'a_Obj_sig_entry
   | Obj_signature of Abstract_syntax.Abstract_sig.t
@@ -174,9 +174,9 @@ struct
   let str_non_ter =
   [|"S'";
     "atomic_type";
+    "binder";
     "comma_ids";
     "idents";
-    "lambda";
     "sig_entries";
     "sig_entry";
     "signature";
@@ -256,9 +256,9 @@ struct
     | Obj_SYMBOL _ -> "Obj_SYMBOL"
     | Obj_TYPE _ -> "Obj_TYPE"
     | Obj_atomic_type _ -> "Obj_atomic_type"
+    | Obj_binder _ -> "Obj_binder"
     | Obj_comma_ids _ -> "Obj_comma_ids"
     | Obj_idents _ -> "Obj_idents"
-    | Obj_lambda _ -> "Obj_lambda"
     | Obj_sig_entries _ -> "Obj_sig_entries"
     | Obj_sig_entry _ -> "Obj_sig_entry"
     | Obj_signature _ -> "Obj_signature"
@@ -290,9 +290,9 @@ module Dyp_aux_functions =
 struct
   let datadyn = Dyp_runtime.Tools.init_datadyn [
     "atomic_type",19,"Obj_atomic_type";
-    "comma_ids",20,"Obj_comma_ids";
-    "idents",21,"Obj_idents";
-    "lambda",22,"Obj_lambda";
+    "binder",20,"Obj_binder";
+    "comma_ids",21,"Obj_comma_ids";
+    "idents",22,"Obj_idents";
     "sig_entries",23,"Obj_sig_entries";
     "sig_entry",24,"Obj_sig_entry";
     "signature",25,"Obj_signature";
@@ -325,9 +325,9 @@ struct
     "Obj_SYMBOL";
     "Obj_TYPE";
     "Obj_atomic_type";
+    "Obj_binder";
     "Obj_comma_ids";
     "Obj_idents";
-    "Obj_lambda";
     "Obj_sig_entries";
     "Obj_sig_entry";
     "Obj_signature";
@@ -407,9 +407,9 @@ let dyp_merge_Obj_SIG_OPEN = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_SYMBOL = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_TYPE = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_atomic_type = Dyp_runtime.Tools.keep_zero
+let dyp_merge_Obj_binder = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_comma_ids = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_idents = Dyp_runtime.Tools.keep_zero
-let dyp_merge_Obj_lambda = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_sig_entries = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_sig_entry = Dyp_runtime.Tools.keep_zero
 let dyp_merge_Obj_signature = Dyp_runtime.Tools.keep_zero
@@ -439,163 +439,166 @@ let dyp_merge = Dyp.keep_one
   let rec multiple_abs e k_a l ids t k =
     match ids with
       | [] -> k (t e)
-      | [a,l_a] -> k (abs a l_a (t (Env.add a e)) k_a)
+      | [a,l_a] ->
+	  let () = Printf.fprintf stderr "I build abstraction on %s\n%!" a in
+	    k (abs a l_a (t (Env.add a e)) k_a)
       | (a,l_a)::((_,l_b)::_ as tl) -> 
+	  let () = Printf.fprintf stderr "I build abstraction on %s\n%!" a in
 	  let new_env = Env.add a e in
 	    multiple_abs new_env k_a l_b tl t (fun r -> abs a l r k_a)
 
   let parse_error e = raise (Error.Error (Error.Parse_error e))
 
 
-# 451                "term_parser.ml"
+# 454                "term_parser.ml"
 let __dypgen_ra_list =
 [
 ((Dyp_symbols.signature,[Dyp.Ter Dyp_symbols.t_SIG_OPEN;Dyp.Ter Dyp_symbols.t_IDENT;Dyp.Ter Dyp_symbols.t_EQUAL;Dyp.Non_ter (Dyp_symbols.sig_entries,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_END_OF_DEC],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_SIG_OPEN  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 457                "term_parser.ml"
+# 460                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 461                "term_parser.ml"
+# 464                "term_parser.ml"
  as _2));`Real_obj (Obj_EQUAL  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 465                "term_parser.ml"
+# 468                "term_parser.ml"
  as _3));`Real_obj (Obj_sig_entries ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_sig_entries)
-# 469                "term_parser.ml"
+# 472                "term_parser.ml"
  as _4)));`Real_obj (Obj_END_OF_DEC  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 473                "term_parser.ml"
+# 476                "term_parser.ml"
  as _5))] -> Obj_signature 
-# 54 "term_parser.dyp"
+# 57 "term_parser.dyp"
 (
                                               (_4 (Abstract_sig.empty (fst _2))):Abstract_syntax.Abstract_sig.t)
-# 478                "term_parser.ml"
+# 481                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.signature,[Dyp.Ter Dyp_symbols.t_SIG_OPEN;Dyp.Ter Dyp_symbols.t_IDENT;Dyp.Ter Dyp_symbols.t_EQUAL;Dyp.Non_ter (Dyp_symbols.sig_entries,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_SEMICOLON;Dyp.Ter Dyp_symbols.t_END_OF_DEC],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_SIG_OPEN  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 484                "term_parser.ml"
+# 487                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 488                "term_parser.ml"
+# 491                "term_parser.ml"
  as _2));`Real_obj (Obj_EQUAL  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 492                "term_parser.ml"
+# 495                "term_parser.ml"
  as _3));`Real_obj (Obj_sig_entries ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_sig_entries)
-# 496                "term_parser.ml"
+# 499                "term_parser.ml"
  as _4)));`Real_obj (Obj_SEMICOLON  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 500                "term_parser.ml"
+# 503                "term_parser.ml"
  as _5));`Real_obj (Obj_END_OF_DEC  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 504                "term_parser.ml"
+# 507                "term_parser.ml"
  as _6))] -> Obj_signature 
-# 55 "term_parser.dyp"
+# 58 "term_parser.dyp"
 (
                                                         (_4 (Abstract_sig.empty (fst _2))):Abstract_syntax.Abstract_sig.t)
-# 509                "term_parser.ml"
+# 512                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.sig_entries,[Dyp.Non_ter (Dyp_symbols.sig_entry,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_sig_entry ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_sig_entry)
-# 515                "term_parser.ml"
+# 518                "term_parser.ml"
  as _1)))] -> Obj_sig_entries 
-# 58 "term_parser.dyp"
+# 61 "term_parser.dyp"
 (
             (fun s -> _1 s):'dypgen__Obj_sig_entries)
-# 520                "term_parser.ml"
+# 523                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.sig_entries,[Dyp.Non_ter (Dyp_symbols.sig_entry,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_SEMICOLON;Dyp.Non_ter (Dyp_symbols.sig_entries,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_sig_entry ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_sig_entry)
-# 526                "term_parser.ml"
+# 529                "term_parser.ml"
  as _1)));`Real_obj (Obj_SEMICOLON  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 530                "term_parser.ml"
+# 533                "term_parser.ml"
  as _2));`Real_obj (Obj_sig_entries ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_sig_entries)
-# 534                "term_parser.ml"
+# 537                "term_parser.ml"
  as _3)))] -> Obj_sig_entries 
-# 59 "term_parser.dyp"
+# 62 "term_parser.dyp"
 (
                                   (fun s -> _3 (_1 s)):'dypgen__Obj_sig_entries)
-# 539                "term_parser.ml"
+# 542                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.sig_entry,[Dyp.Non_ter (Dyp_symbols.type_declaration,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_type_declaration ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_declaration)
-# 545                "term_parser.ml"
+# 548                "term_parser.ml"
  as _1)))] -> Obj_sig_entry 
-# 62 "term_parser.dyp"
+# 65 "term_parser.dyp"
 (
                    (_1):'dypgen__Obj_sig_entry)
-# 550                "term_parser.ml"
+# 553                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.sig_entry,[Dyp.Non_ter (Dyp_symbols.type_definition,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_type_definition ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_definition)
-# 556                "term_parser.ml"
+# 559                "term_parser.ml"
  as _1)))] -> Obj_sig_entry 
-# 63 "term_parser.dyp"
+# 66 "term_parser.dyp"
 (
                   (_1):'dypgen__Obj_sig_entry)
-# 561                "term_parser.ml"
+# 564                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.sig_entry,[Dyp.Non_ter (Dyp_symbols.term_declaration,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_term_declaration ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term_declaration)
-# 567                "term_parser.ml"
+# 570                "term_parser.ml"
  as _1)))] -> Obj_sig_entry 
-# 64 "term_parser.dyp"
+# 67 "term_parser.dyp"
 (
                    (_1):'dypgen__Obj_sig_entry)
-# 572                "term_parser.ml"
+# 575                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.sig_entry,[Dyp.Non_ter (Dyp_symbols.term_definition,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_term_definition ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term_definition)
-# 578                "term_parser.ml"
+# 581                "term_parser.ml"
  as _1)))] -> Obj_sig_entry 
-# 65 "term_parser.dyp"
+# 68 "term_parser.dyp"
 (
                   (_1):'dypgen__Obj_sig_entry)
-# 583                "term_parser.ml"
+# 586                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.type_declaration,[Dyp.Non_ter (Dyp_symbols.comma_ids,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_COLON;Dyp.Ter Dyp_symbols.t_TYPE],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_comma_ids ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_comma_ids)
-# 589                "term_parser.ml"
+# 592                "term_parser.ml"
  as _1)));`Real_obj (Obj_COLON  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 593                "term_parser.ml"
+# 596                "term_parser.ml"
  as _2));`Real_obj (Obj_TYPE  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 597                "term_parser.ml"
+# 600                "term_parser.ml"
  as _3))] -> Obj_type_declaration 
-# 68 "term_parser.dyp"
+# 71 "term_parser.dyp"
 (
                        (fun s -> 
 			  List.fold_left
@@ -608,61 +611,61 @@ let __dypgen_ra_list =
 					      parse_error (Error.Duplicated_type (fst id,pos1,pos2)))
 			    s
 			    _1):'dypgen__Obj_type_declaration)
-# 612                "term_parser.ml"
+# 615                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.comma_ids,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 618                "term_parser.ml"
+# 621                "term_parser.ml"
  as _1))] -> Obj_comma_ids 
-# 81 "term_parser.dyp"
+# 84 "term_parser.dyp"
 (
         ([_1]):'dypgen__Obj_comma_ids)
-# 623                "term_parser.ml"
+# 626                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.comma_ids,[Dyp.Ter Dyp_symbols.t_IDENT;Dyp.Ter Dyp_symbols.t_COMMA;Dyp.Non_ter (Dyp_symbols.comma_ids,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 629                "term_parser.ml"
+# 632                "term_parser.ml"
  as _1));`Real_obj (Obj_COMMA  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 633                "term_parser.ml"
+# 636                "term_parser.ml"
  as _2));`Real_obj (Obj_comma_ids ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_comma_ids)
-# 637                "term_parser.ml"
+# 640                "term_parser.ml"
  as _3)))] -> Obj_comma_ids 
-# 82 "term_parser.dyp"
+# 85 "term_parser.dyp"
 (
                         (_1::_3):'dypgen__Obj_comma_ids)
-# 642                "term_parser.ml"
+# 645                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.type_definition,[Dyp.Ter Dyp_symbols.t_IDENT;Dyp.Ter Dyp_symbols.t_EQUAL;Dyp.Non_ter (Dyp_symbols.type_expression,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_COLON;Dyp.Ter Dyp_symbols.t_TYPE],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 648                "term_parser.ml"
+# 651                "term_parser.ml"
  as _1));`Real_obj (Obj_EQUAL  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 652                "term_parser.ml"
+# 655                "term_parser.ml"
  as _2));`Real_obj (Obj_type_expression ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_expression)
-# 656                "term_parser.ml"
+# 659                "term_parser.ml"
  as _3)));`Real_obj (Obj_COLON  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 660                "term_parser.ml"
+# 663                "term_parser.ml"
  as _4));`Real_obj (Obj_TYPE  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 664                "term_parser.ml"
+# 667                "term_parser.ml"
  as _5))] -> Obj_type_definition 
-# 85 "term_parser.dyp"
+# 88 "term_parser.dyp"
 (
                                          (fun s ->
 					    try
@@ -671,83 +674,83 @@ let __dypgen_ra_list =
 					      |Abstract_sig.Duplicate_type_definition -> 
 					      let pos1,pos2= snd _1 in
 						parse_error (Error.Duplicated_type (fst _1,pos1,pos2))):'dypgen__Obj_type_definition)
-# 675                "term_parser.ml"
+# 678                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.type_expression,[Dyp.Non_ter (Dyp_symbols.atomic_type,Dyp.No_priority )],Dyp_priority_data.atom_type),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_atomic_type ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_atomic_type)
-# 681                "term_parser.ml"
+# 684                "term_parser.ml"
  as _1)))] -> Obj_type_expression 
-# 94 "term_parser.dyp"
+# 97 "term_parser.dyp"
 (
               (_1):'dypgen__Obj_type_expression)
-# 686                "term_parser.ml"
+# 689                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.type_expression,[Dyp.Non_ter (Dyp_symbols.atomic_type,Dyp.Lesseq_priority Dyp_priority_data.atom_type);Dyp.Ter Dyp_symbols.t_LIN_ARROW;Dyp.Non_ter (Dyp_symbols.type_expression,Dyp.Lesseq_priority Dyp_priority_data.arrow_type)],Dyp_priority_data.arrow_type),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_atomic_type ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_atomic_type)
-# 692                "term_parser.ml"
+# 695                "term_parser.ml"
  as _1)));`Real_obj (Obj_LIN_ARROW  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 696                "term_parser.ml"
+# 699                "term_parser.ml"
  as _2));`Real_obj (Obj_type_expression ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_expression)
-# 700                "term_parser.ml"
+# 703                "term_parser.ml"
  as _3)))] -> Obj_type_expression 
-# 95 "term_parser.dyp"
+# 98 "term_parser.dyp"
 (
                                                                        (let new_loc = Abstract_sig.new_loc (snd _1) (snd _3) in Abstract_sig.Linear_arrow (fst _1,fst _3,new_loc),new_loc):'dypgen__Obj_type_expression)
-# 705                "term_parser.ml"
+# 708                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.atomic_type,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.atom_type),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 711                "term_parser.ml"
+# 714                "term_parser.ml"
  as _1))] -> Obj_atomic_type 
-# 98 "term_parser.dyp"
+# 101 "term_parser.dyp"
 (
         (Abstract_sig.Type_atom (fst _1,snd _1,[]),snd _1):'dypgen__Obj_atomic_type)
-# 716                "term_parser.ml"
+# 719                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.atomic_type,[Dyp.Ter Dyp_symbols.t_LPAREN;Dyp.Non_ter (Dyp_symbols.type_expression,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_RPAREN],Dyp_priority_data.atom_type),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LPAREN  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 722                "term_parser.ml"
+# 725                "term_parser.ml"
  as _1));`Real_obj (Obj_type_expression ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_expression)
-# 726                "term_parser.ml"
+# 729                "term_parser.ml"
  as _2)));`Real_obj (Obj_RPAREN  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 730                "term_parser.ml"
+# 733                "term_parser.ml"
  as _3))] -> Obj_atomic_type 
-# 99 "term_parser.dyp"
+# 102 "term_parser.dyp"
 (
                                 (fst _2,Abstract_sig.new_loc _1 _3):'dypgen__Obj_atomic_type)
-# 735                "term_parser.ml"
+# 738                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_declaration,[Dyp.Non_ter (Dyp_symbols.term_dec_start,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_COLON;Dyp.Non_ter (Dyp_symbols.type_expression,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_term_dec_start ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term_dec_start)
-# 741                "term_parser.ml"
+# 744                "term_parser.ml"
  as _1)));`Real_obj (Obj_COLON  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 745                "term_parser.ml"
+# 748                "term_parser.ml"
  as _2));`Real_obj (Obj_type_expression ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_expression)
-# 749                "term_parser.ml"
+# 752                "term_parser.ml"
  as _3)))] -> Obj_term_declaration 
-# 102 "term_parser.dyp"
+# 105 "term_parser.dyp"
 (
                                         (fun s ->
 					   List.fold_left
@@ -760,233 +763,230 @@ let __dypgen_ra_list =
 							parse_error (Error.Duplicated_term (id,pos1,pos2)))
 					     s
 					     _1):'dypgen__Obj_term_declaration)
-# 764                "term_parser.ml"
+# 767                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_dec_start,[Dyp.Non_ter (Dyp_symbols.comma_ids,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_comma_ids ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_comma_ids)
-# 770                "term_parser.ml"
+# 773                "term_parser.ml"
  as _1)))] -> Obj_term_dec_start 
-# 115 "term_parser.dyp"
+# 118 "term_parser.dyp"
 (
             (List.map (fun (id,loc) -> (id,Abstract_sig.Default,loc)) _1):'dypgen__Obj_term_dec_start)
-# 775                "term_parser.ml"
+# 778                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_dec_start,[Dyp.Ter Dyp_symbols.t_PREFIX;Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_PREFIX  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 781                "term_parser.ml"
+# 784                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 785                "term_parser.ml"
+# 788                "term_parser.ml"
  as _2))] -> Obj_term_dec_start 
-# 116 "term_parser.dyp"
+# 119 "term_parser.dyp"
 (
                ([fst _2,Abstract_sig.Prefix,snd _2]):'dypgen__Obj_term_dec_start)
-# 790                "term_parser.ml"
+# 793                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_dec_start,[Dyp.Ter Dyp_symbols.t_INFIX;Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_INFIX  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 796                "term_parser.ml"
+# 799                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 800                "term_parser.ml"
+# 803                "term_parser.ml"
  as _2))] -> Obj_term_dec_start 
-# 117 "term_parser.dyp"
+# 120 "term_parser.dyp"
 (
               ([fst _2,Abstract_sig.Infix,snd _2]):'dypgen__Obj_term_dec_start)
-# 805                "term_parser.ml"
+# 808                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_dec_start,[Dyp.Ter Dyp_symbols.t_BINDER;Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_BINDER  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 811                "term_parser.ml"
+# 814                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 815                "term_parser.ml"
+# 818                "term_parser.ml"
  as _2))] -> Obj_term_dec_start 
-# 118 "term_parser.dyp"
+# 121 "term_parser.dyp"
 (
                ([fst _2,Abstract_sig.Binder,snd _2]):'dypgen__Obj_term_dec_start)
-# 820                "term_parser.ml"
+# 823                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_def_start,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 826                "term_parser.ml"
+# 829                "term_parser.ml"
  as _1))] -> Obj_term_def_start 
-# 121 "term_parser.dyp"
+# 124 "term_parser.dyp"
 (
         (fst _1,Abstract_sig.Default,snd _1):'dypgen__Obj_term_def_start)
-# 831                "term_parser.ml"
+# 834                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_def_start,[Dyp.Ter Dyp_symbols.t_PREFIX;Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_PREFIX  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 837                "term_parser.ml"
+# 840                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 841                "term_parser.ml"
+# 844                "term_parser.ml"
  as _2))] -> Obj_term_def_start 
-# 122 "term_parser.dyp"
+# 125 "term_parser.dyp"
 (
                (fst _2,Abstract_sig.Prefix,snd _2):'dypgen__Obj_term_def_start)
-# 846                "term_parser.ml"
+# 849                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_def_start,[Dyp.Ter Dyp_symbols.t_INFIX;Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_INFIX  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 852                "term_parser.ml"
+# 855                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 856                "term_parser.ml"
+# 859                "term_parser.ml"
  as _2))] -> Obj_term_def_start 
-# 123 "term_parser.dyp"
+# 126 "term_parser.dyp"
 (
               (fst _2,Abstract_sig.Infix,snd _2):'dypgen__Obj_term_def_start)
-# 861                "term_parser.ml"
+# 864                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_def_start,[Dyp.Ter Dyp_symbols.t_BINDER;Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_BINDER  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 867                "term_parser.ml"
+# 870                "term_parser.ml"
  as _1));`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 871                "term_parser.ml"
+# 874                "term_parser.ml"
  as _2))] -> Obj_term_def_start 
-# 124 "term_parser.dyp"
+# 127 "term_parser.dyp"
 (
                (fst _2,Abstract_sig.Binder,snd _2):'dypgen__Obj_term_def_start)
-# 876                "term_parser.ml"
+# 879                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term_definition,[Dyp.Non_ter (Dyp_symbols.term_def_start,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_EQUAL;Dyp.Non_ter (Dyp_symbols.term,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_COLON;Dyp.Non_ter (Dyp_symbols.type_expression,Dyp.No_priority )],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_term_def_start ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term_def_start)
-# 882                "term_parser.ml"
+# 885                "term_parser.ml"
  as _1)));`Real_obj (Obj_EQUAL  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 886                "term_parser.ml"
+# 889                "term_parser.ml"
  as _2));`Real_obj (Obj_term ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term)
-# 890                "term_parser.ml"
+# 893                "term_parser.ml"
  as _3)));`Real_obj (Obj_COLON  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 894                "term_parser.ml"
+# 897                "term_parser.ml"
  as _4));`Real_obj (Obj_type_expression ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_type_expression)
-# 898                "term_parser.ml"
+# 901                "term_parser.ml"
  as _5)))] -> Obj_term_definition 
-# 127 "term_parser.dyp"
+# 130 "term_parser.dyp"
 (
                                                   (
     let id,k,l = _1 in
       fun s -> Abstract_sig.add_entry (Abstract_sig.Term_def (id,k,l,_3 Env.empty,fst _5)) s):'dypgen__Obj_term_definition)
-# 905                "term_parser.ml"
+# 908                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
-((Dyp_symbols.term,[Dyp.Ter Dyp_symbols.t_LAMBDA0;Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_DOT;Dyp.Non_ter (Dyp_symbols.term,Dyp.No_priority )],Dyp_priority_data.binder),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA0  (
+((Dyp_symbols.term,[Dyp.Non_ter (Dyp_symbols.binder,Dyp.No_priority );Dyp.Non_ter (Dyp_symbols.idents,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_DOT;Dyp.Non_ter (Dyp_symbols.term,Dyp.No_priority )],Dyp_priority_data.binder),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_binder ( (
 # 0 "term_parser.dyp"
-(_:Abstract_syntax.Abstract_sig.location)
-# 911                "term_parser.ml"
- as _1));`Real_obj (Obj_idents ( (
+(_:'dypgen__Obj_binder)
+# 914                "term_parser.ml"
+ as _1)));`Real_obj (Obj_idents ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_idents)
-# 915                "term_parser.ml"
+# 918                "term_parser.ml"
  as _2)));`Real_obj (Obj_DOT  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 919                "term_parser.ml"
+# 922                "term_parser.ml"
  as _3));`Real_obj (Obj_term ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term)
-# 923                "term_parser.ml"
+# 926                "term_parser.ml"
  as _4)))] -> Obj_term 
-# 133 "term_parser.dyp"
+# 136 "term_parser.dyp"
 (
-                          (fun env -> multiple_abs env Abstract_sig.Linear _1 _2 _4 (fun x -> x)):'dypgen__Obj_term)
-# 928                "term_parser.ml"
+                         (
+    let () = Printf.fprintf stderr "I found the ids: %s\n%!" (Utils.string_of_list " " (fun (x,_) -> x) _2) in fun env -> _1 _2 _4 env):'dypgen__Obj_term)
+# 932                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.atom),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
 # 0 "term_parser.dyp"
 (_:(string*Abstract_syntax.Abstract_sig.location))
-# 934                "term_parser.ml"
+# 938                "term_parser.ml"
  as _1))] -> Obj_term 
-# 135 "term_parser.dyp"
+# 140 "term_parser.dyp"
 (
         (let id,l=_1 in
 	   fun env -> 
 	     match Env.mem id env with
 	       | true -> Abstract_sig.Var (id,l)
 	       | false -> Abstract_sig.Const (id,l)):'dypgen__Obj_term)
-# 943                "term_parser.ml"
+# 947                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term,[Dyp.Ter Dyp_symbols.t_LPAREN;Dyp.Non_ter (Dyp_symbols.term,Dyp.No_priority );Dyp.Ter Dyp_symbols.t_RPAREN],Dyp_priority_data.atom),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LPAREN  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 949                "term_parser.ml"
+# 953                "term_parser.ml"
  as _1));`Real_obj (Obj_term ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term)
-# 953                "term_parser.ml"
+# 957                "term_parser.ml"
  as _2)));`Real_obj (Obj_RPAREN  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
-# 957                "term_parser.ml"
+# 961                "term_parser.ml"
  as _3))] -> Obj_term 
-# 140 "term_parser.dyp"
+# 145 "term_parser.dyp"
 (
                      (_2):'dypgen__Obj_term)
-# 962                "term_parser.ml"
+# 966                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
 ((Dyp_symbols.term,[Dyp.Non_ter (Dyp_symbols.term,Dyp.Lesseq_priority Dyp_priority_data.app);Dyp.Non_ter (Dyp_symbols.term,Dyp.Lesseq_priority Dyp_priority_data.atom)],Dyp_priority_data.app),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_term ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term)
-# 968                "term_parser.ml"
+# 972                "term_parser.ml"
  as _1)));`Real_obj (Obj_term ( (
 # 0 "term_parser.dyp"
 (_:'dypgen__Obj_term)
-# 972                "term_parser.ml"
+# 976                "term_parser.ml"
  as _2)))] -> Obj_term 
-# 141 "term_parser.dyp"
+# 146 "term_parser.dyp"
 (
                            (fun e ->
 			      let u1 = _1 e in
 			      let u2 = _2 e in
 				Abstract_sig.App(u1,u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))):'dypgen__Obj_term)
-# 980                "term_parser.ml"
+# 984                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
-((Dyp_symbols.idents,[Dyp.Ter Dyp_symbols.t_IDENT],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_IDENT  (
-# 0 "term_parser.dyp"
-(_:(string*Abstract_syntax.Abstract_sig.location))
-# 986                "term_parser.ml"
- as _1))] -> Obj_idents 
-# 147 "term_parser.dyp"
+((Dyp_symbols.idents,[],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [] -> Obj_idents 
+# 152 "term_parser.dyp"
 (
-        ([_1]):'dypgen__Obj_idents)
+  ([]):'dypgen__Obj_idents)
 # 991                "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
@@ -999,20 +999,20 @@ let __dypgen_ra_list =
 (_:'dypgen__Obj_idents)
 # 1001               "term_parser.ml"
  as _2)))] -> Obj_idents 
-# 148 "term_parser.dyp"
+# 154 "term_parser.dyp"
 (
                (_1::_2):'dypgen__Obj_idents)
 # 1006               "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))
 ;
-((Dyp_symbols.lambda,[Dyp.Ter Dyp_symbols.t_LAMBDA0],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA0  (
+((Dyp_symbols.binder,[Dyp.Ter Dyp_symbols.t_LAMBDA0],Dyp_priority_data.default_priority),Dyp.Dyp_special_types.Dypgen_action (fun a b c d e f g h -> match (Dyp_runtime.Tools.transform_action (fun dyp __dypgen_av_list -> (match (Dyp_aux_functions.transform_av_list __dypgen_av_list) with [`Real_obj (Obj_LAMBDA0  (
 # 0 "term_parser.dyp"
 (_:Abstract_syntax.Abstract_sig.location)
 # 1012               "term_parser.ml"
- as _1))] -> Obj_lambda 
-# 151 "term_parser.dyp"
+ as _1))] -> Obj_binder 
+# 157 "term_parser.dyp"
 (
-          (Abstract_sig.Linear):'dypgen__Obj_lambda)
+          (fun ids t env -> multiple_abs env Abstract_sig.Linear _1 ids t (fun x -> x)):'dypgen__Obj_binder)
 # 1017               "term_parser.ml"
 ,[] | _ -> raise Dyp.Giveup))) with Dyp.Dyp_special_types.Dypgen_action ac_fun -> ac_fun a b c d e f g h))]
 
@@ -1096,16 +1096,16 @@ let dyp_merge_Obj_atomic_type l =
   match dyp_merge_Obj_atomic_type l with
     | ([],_,_) -> dyp_merge l
     | res -> res
+let dyp_merge_Obj_binder l =
+  match dyp_merge_Obj_binder l with
+    | ([],_,_) -> dyp_merge l
+    | res -> res
 let dyp_merge_Obj_comma_ids l =
   match dyp_merge_Obj_comma_ids l with
     | ([],_,_) -> dyp_merge l
     | res -> res
 let dyp_merge_Obj_idents l =
   match dyp_merge_Obj_idents l with
-    | ([],_,_) -> dyp_merge l
-    | res -> res
-let dyp_merge_Obj_lambda l =
-  match dyp_merge_Obj_lambda l with
     | ([],_,_) -> dyp_merge l
     | res -> res
 let dyp_merge_Obj_sig_entries l =
@@ -1314,6 +1314,14 @@ let __dypgen_merge_list = [(fun l -> (
   let f2 o = Obj_atomic_type o in
   (List.map f2 ol, gd, ld)));
 (fun l -> (
+  let f1 (o,gd,ld) = match o with Obj_binder ob -> (ob,gd,ld)
+    | _ -> failwith "type error, bad obj in dyp_merge_Obj_binder"
+  in
+  let l = List.map f1 l in
+  let (ol,gd,ld) = dyp_merge_Obj_binder l in
+  let f2 o = Obj_binder o in
+  (List.map f2 ol, gd, ld)));
+(fun l -> (
   let f1 (o,gd,ld) = match o with Obj_comma_ids ob -> (ob,gd,ld)
     | _ -> failwith "type error, bad obj in dyp_merge_Obj_comma_ids"
   in
@@ -1328,14 +1336,6 @@ let __dypgen_merge_list = [(fun l -> (
   let l = List.map f1 l in
   let (ol,gd,ld) = dyp_merge_Obj_idents l in
   let f2 o = Obj_idents o in
-  (List.map f2 ol, gd, ld)));
-(fun l -> (
-  let f1 (o,gd,ld) = match o with Obj_lambda ob -> (ob,gd,ld)
-    | _ -> failwith "type error, bad obj in dyp_merge_Obj_lambda"
-  in
-  let l = List.map f1 l in
-  let (ol,gd,ld) = dyp_merge_Obj_lambda l in
-  let f2 o = Obj_lambda o in
   (List.map f2 ol, gd, ld)));
 (fun l -> (
   let f1 (o,gd,ld) = match o with Obj_sig_entries ob -> (ob,gd,ld)
@@ -1449,9 +1449,9 @@ let __dypgen_test_cons =  [|
   (fun x -> match x with Obj_SYMBOL _ -> true | _ -> false);
   (fun x -> match x with Obj_TYPE _ -> true | _ -> false);
   (fun x -> match x with Obj_atomic_type _ -> true | _ -> false);
+  (fun x -> match x with Obj_binder _ -> true | _ -> false);
   (fun x -> match x with Obj_comma_ids _ -> true | _ -> false);
   (fun x -> match x with Obj_idents _ -> true | _ -> false);
-  (fun x -> match x with Obj_lambda _ -> true | _ -> false);
   (fun x -> match x with Obj_sig_entries _ -> true | _ -> false);
   (fun x -> match x with Obj_sig_entry _ -> true | _ -> false);
   (fun x -> match x with Obj_signature _ -> true | _ -> false);

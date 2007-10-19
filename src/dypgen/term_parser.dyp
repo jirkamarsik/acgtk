@@ -13,8 +13,11 @@
   let rec multiple_abs e k_a l ids t k =
     match ids with
       | [] -> k (t e)
-      | [a,l_a] -> k (abs a l_a (t (Env.add a e)) k_a)
+      | [a,l_a] ->
+	  let () = Printf.fprintf stderr "I build abstraction on %s\n%!" a in
+	    k (abs a l_a (t (Env.add a e)) k_a)
       | (a,l_a)::((_,l_b)::_ as tl) -> 
+	  let () = Printf.fprintf stderr "I build abstraction on %s\n%!" a in
 	  let new_env = Env.add a e in
 	    multiple_abs new_env k_a l_b tl t (fun r -> abs a l r k_a)
 
@@ -131,7 +134,9 @@
 	  
 	  
 	  term :
-| LAMBDA0 idents DOT term {fun env -> multiple_abs env Abstract_sig.Linear $1 $2 $4 (fun x -> x)} binder
+| binder idents DOT term {
+    let () = Printf.fprintf stderr "I found the ids: %s\n%!" (Utils.string_of_list " " (fun (x,_) -> x) $2) in fun env -> $1 $2 $4 env} binder
+/*| LAMBDA0 idents DOT term {fun env -> multiple_abs env Abstract_sig.Linear $1 $2 $4 (fun x -> x)} binder */
 /* | LAMBDA idents DOT term {fun env -> multiple_abs env Abstract_sig.Non_linear $1 $2 $4 (fun x -> x)} binder */
 | IDENT {let id,l=$1 in
 	   fun env -> 
@@ -145,11 +150,12 @@
 				Abstract_sig.App(u1,u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))} app
       
       idents :
-| IDENT {[$1]} 
+| {[]}
+/*| IDENT {[$1]} */
 | IDENT idents {$1::$2}
 
-      lambda :
-| LAMBDA0 {Abstract_sig.Linear}
+      binder :
+| LAMBDA0 {fun ids t env -> multiple_abs env Abstract_sig.Linear $1 ids t (fun x -> x)}
 /*| LAMBDA {Abstract_sig.Non_linear} */
 
 
