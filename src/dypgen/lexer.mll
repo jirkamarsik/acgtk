@@ -41,7 +41,7 @@ let string = (letter|digit|'_')*
       | "Lambda" {LAMBDA(loc lexbuf)}
       | "->" {LIN_ARROW(loc lexbuf)}
       | letter string {IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
-      | symbol* {SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
+      | symbol {SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
     and comment depth = parse
       | "*)" {match depth with
 		| [a] -> lexer lexbuf
