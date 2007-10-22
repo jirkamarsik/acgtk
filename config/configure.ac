@@ -54,7 +54,7 @@ fi
 #	AC_MSG_ERROR(Cannot find ocamlyacc)
 #fi
 
-AC_CHECK_PROG(DYPGEN,dypgen.opt,dypgen,no)
+AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
 if test "$DYPGEN" = no ; then
 	AC_MSG_ERROR(Cannot find dypgen)
 fi
