@@ -1,9 +1,10 @@
 type lex_error =
   | Unstarted_comment
+  | Unstarted_bracket
+  | Mismatch_parentheses of (Lexing.position * Lexing.position)
   | Unclosed_comment  of (Lexing.position * Lexing.position)
 
 type parse_error =
-  | Mismatch_parentheses
   | Illformed_term
   | Duplicated_term of (string * Lexing.position * Lexing.position)
   | Duplicated_type of (string * Lexing.position * Lexing.position)
