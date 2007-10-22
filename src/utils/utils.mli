@@ -12,6 +12,12 @@ module StringMap : Map.S with type key = String.t
     length greater than 2) *)
 val string_of_list : string -> ('a -> string) -> ('a list) -> string
 
+(** [string_of_list_rev sep to_string [a_1;...;a_n]] returns a string
+    made of the strings [to_string a_n] ... [to_string a_1]
+    concatenated with the separator [sep] between each of the elements
+    (if the list is of length greater than 2) *)
+val string_of_list_rev : string -> ('a -> string) -> ('a list) -> string
+
 (** [error_msg loc file msg] returns a string describing a error
     message [msg] with the location informations extracted from [loc] and
     [file] *)

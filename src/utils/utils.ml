@@ -2,11 +2,38 @@ module StringSet = Set.Make (String)
 
 module StringMap = Map.Make (String)
 
+
+let string_of_list sep to_string = function
+  | [] -> ""
+  | [a] -> to_string a
+  | a::tl ->
+      let buf = Buffer.create 16 in
+      let () = Buffer.add_string buf (to_string a) in
+      let () =
+	List.iter
+	  (fun s -> Buffer.add_string buf (Printf.sprintf "%s%s" sep (to_string s)))
+	  tl in
+	Buffer.contents buf
+
+
+let string_of_list_rev sep to_string lst =
+  let buf = Buffer.create 16 in
+  let rec string_of_list_rev_rec k = function
+    | [] -> k ()
+    | [a] -> let () = Buffer.add_string buf (to_string a) in k()
+    | a::tl ->
+	string_of_list_rev_rec (fun () -> let () = 
+				  Buffer.add_string buf (Printf.sprintf "%s%s" sep (to_string a))
+				in k()) tl in
+  let () = string_of_list_rev_rec (fun () -> ()) lst in
+    Buffer.contents buf
+
+(*
 let rec string_of_list sep to_string = function
   | [] -> ""
   | [a] -> to_string a
   | a::tl -> Printf.sprintf "%s%s%s" (to_string a) sep (string_of_list sep to_string tl)
-
+*)
 
 
 let error_msg loc file msg =
