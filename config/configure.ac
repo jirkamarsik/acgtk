@@ -49,9 +49,14 @@ if test "$OCAMLLEX" = no ; then
 	AC_MSG_ERROR(Cannot find ocamllex)
 fi
 
-AC_CHECK_PROG(OCAMLYACC,ocamlyacc,ocamlyacc,no)
-if test "$OCAMLYACC" = no ; then
-	AC_MSG_ERROR(Cannot find ocamlyacc)
+#AC_CHECK_PROG(OCAMLYACC,ocamlyacc,ocamlyacc,no)
+#if test "$OCAMLYACC" = no ; then
+#	AC_MSG_ERROR(Cannot find ocamlyacc)
+#fi
+
+AC_CHECK_PROG(DYPGEN,dypgen.opt,dypgen,no)
+if test "$DYPGEN" = no ; then
+	AC_MSG_ERROR(Cannot find dypgen)
 fi
 
 # What is the OCAML version  ?
@@ -103,7 +108,8 @@ AC_SUBST(OCAMLDOC)
 AC_SUBST(OCAMLDEP)
 
 AC_SUBST(OCAMLLEX)
-AC_SUBST(OCAMLYACC)
+#AC_SUBST(OCAMLYACC)
+AC_SUBST(DYPGEN)
 
 AC_SUBST(TYPES)
 AC_SUBST(OCAML09WARNINGS)
