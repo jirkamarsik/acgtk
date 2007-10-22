@@ -1,0 +1,11 @@
+signature toto =
+	a:type;
+	b,c:type ; 
+	t,toto :a -> a -> b ;
+	u : (b ->c) -> a;
+	binder All = t : b -> c;  
+	prefix CONST : a -> a;
+	infix + : a -> a; 
+	v = t u u : a -> a;
+	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(CONST CONST t) (z + v + t)) v) x : a -> a 
+end

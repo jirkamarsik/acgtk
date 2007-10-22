@@ -1,7 +1,6 @@
 {
   open Error
-  open Abs
-  open Term_parser
+  open Parser
 
   let pr lexbuf = Printf.printf "%s\n%!" (Lexing.lexeme lexbuf)
 
