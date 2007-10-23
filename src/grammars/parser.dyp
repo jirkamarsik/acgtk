@@ -2,6 +2,8 @@
   open Dyp
   open Abstract_syntax
 
+(*  let () = dypgen_verbose :=2 *)
+
   module Env = Set.Make(String)
 
   let pr s = Printf.fprintf stderr "%s\n%!" s
@@ -59,12 +61,16 @@
 <(string*Abstract_syntax.Abstract_sig.location)> IDENT
 <(string*Abstract_syntax.Abstract_sig.location)> SYMBOL
   
-%start <Abstract_syntax.Abstract_sig.t> signature
+%start <Abstract_syntax.Abstract_sig.t list> signatures
   
 %relation atom<app<binder atom_type<arrow_type
   
 %%
   
+  signatures :
+| EOI {[]}
+| signature signatures {$1::$2}
+
   signature : 
 | SIG_OPEN IDENT EQUAL sig_entries END_OF_DEC {$4 (Abstract_sig.empty (fst $2))}
 | SIG_OPEN IDENT EQUAL sig_entries SEMICOLON END_OF_DEC {$4 (Abstract_sig.empty (fst $2))}
