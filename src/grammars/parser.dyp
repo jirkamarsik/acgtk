@@ -136,9 +136,9 @@
 
 	  term_dec_start : 
 | comma_ids {List.map (fun (id,loc) -> (id,Abstract_sig.Default,loc)) $1}
-| PREFIX IDENT {[fst $2,Abstract_sig.Prefix,snd $2]}
+| PREFIX SYMBOL {[fst $2,Abstract_sig.Prefix,snd $2]}
 | INFIX SYMBOL {[fst $2,Abstract_sig.Infix,snd $2]}
-| BINDER SYMBOL {[fst $2,Abstract_sig.Binder,snd $2]}
+| BINDER IDENT {[fst $2,Abstract_sig.Binder,snd $2]}
 
       term_def_start : 
 | IDENT {fst $1,Abstract_sig.Default,snd $1}
@@ -163,17 +163,17 @@
 		      | true,_ -> Abstract_sig.Const (id,l)
 		      | false,_ -> parse_error (Error.Unknown_constant (id,fst l,snd l)))} atom
 | LPAREN term RPAREN {$2} atom
-| term(<=app) term(<=atom) {fun s e ->
-			      let u1 = $1 s e in
-			      let u2 = $2 s e in
-				Abstract_sig.App(u1,u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))} app
 | SYMBOL term {fun sg env -> 
 		 let id,((pos1,pos2) as l) = $1 in
 		   match Abstract_sig.is_constant id sg with
 		     | true,Some (Abstract_sig.Prefix) -> 
 			 let u2 = $2 sg env in
 			   Abstract_sig.App(Abstract_sig.Const(id,l),u2,Abstract_sig.new_loc l (Abstract_sig.get_term_location u2))
-		     | _ -> raise Dyp.Giveup}
+		     | _ -> raise Dyp.Giveup} 
+| term(<=app) term(<=atom) {fun s e ->
+			      let u1 = $1 s e in
+			      let u2 = $2 s e in
+				Abstract_sig.App(u1,u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))} app
 
 | term SYMBOL term {fun sg env -> 
 		      let id,((pos1,pos2) as l) = $2 in
