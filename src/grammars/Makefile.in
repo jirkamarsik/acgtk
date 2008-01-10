@@ -24,7 +24,7 @@ LIBDIR = -I +dypgen -I +camlp4
 PREVIOUS_DIRS = ../utils
 
 # Source files in the right order of dependance
-ML = error.ml abstract_syntax.ml parser.ml lexer.ml
+ML = error.ml typechecker.ml abstract_syntax.ml parser.ml lexer.ml
 EXE_SOURCES = test.ml
 
 ####################################
