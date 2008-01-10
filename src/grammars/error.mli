@@ -12,10 +12,15 @@ type parse_error =
   | Unknown_constant of (string * Lexing.position * Lexing.position)
   | Unknown_type of (string * Lexing.position * Lexing.position)
 
+type type_error =
+  | Already_defined_var of (string * Lexing.position * Lexing.position)
+  | Not_defined_var of (string * Lexing.position * Lexing.position)
+  | Other
 
 type error = 
   | Parse_error of parse_error
   | Lexer_error of lex_error
+  | Type_error of type_error
 
 
 exception Error of error

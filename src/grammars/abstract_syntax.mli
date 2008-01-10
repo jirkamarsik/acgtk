@@ -151,6 +151,7 @@ sig
       syntactic behaviour [b] if [id] is the name of a constant in [s]
       and [false,None] oterwise *)
   val is_constant : string -> t -> bool * term_kind option
+  val display : t -> unit
 end
   (*
     module Abstract_lexicon :
@@ -211,3 +212,95 @@ end
 end
 
 *)
+
+module Abstract_typ :
+sig
+      
+
+  exception Duplicate_type_definition
+  exception Duplicate_term_definition
+
+
+  type term_kind =
+    | Default
+    | Prefix
+    | Infix
+    | Binder
+
+  type type_of_definition =
+    | Declared
+    | Defined
+
+  type abs =
+    | Linear
+(*    | Non_linear *)
+
+  type term =
+    | Var of int
+	(** If the term is variable (bound by a binder)*)
+    | Const of string
+	(** If the term is a constant (not bound by a binder) *)
+(*    | Abs of string * term
+	(** If the term is a intuitionistic abstraction *) *)
+    | LAbs of string * term
+	(** If the term is a linear abstraction *)
+    | App of term * term
+	(** If the term is an application *)	
+
+  type type_def = (*Abstract_sig.type_def*)
+    | Type_atom of string * term list
+	(** If the type is atomic. The third parameter is the terms to
+	    which the type is applied in case of a dependent type. The
+	    list is empty if the type does not depend on any type *)
+    | Linear_arrow of type_def * type_def
+	(** If the type is described with a linear abstraction *)
+(*    | Arrow of type_def * type_def * location
+	(** If the type is described with a intuitionistic abstraction
+	*)
+    | Dep of (string * location * type_def) * type_def * location
+	(** If the type is a dependent type *)
+    | Type_Abs of (string * location * type_def)  * location
+	(** If the type is a dependent type build with an abstraction *) *)
+
+  (** The type of kinds as found in the signature files *)
+  type kind = K of type_def list
+
+  type sig_entry = 
+    | Type_decl of (string * kind)
+	(** The first parameter ([string]) is the name of the type,
+	    the second parameter is the place in the file where it was
+	    defined and the last parameter is its kind *)
+    | Type_def of (string * type_def)
+	(** Tthe first parameter ([string]) is the name of the defined type,
+	    the second parameter is the place in the file where it was
+	    defined and the last parameter is its value *)
+    | Term_decl of (string * term_kind * type_def)
+	(** The first parameter ([string]) is the name of the constant,
+	    the second parameter is the place in the file where it was
+	    defined and the last parameter is its type *)
+    | Term_def of (string * term_kind * term * type_def)
+	(** The first parameter ([string]) is the name of the constant,
+	    the second parameter is the place in the file where it was
+	    defined and the last parameter is its value *)
+
+  type sig_content = (*Abstract_sig.sig_entry*)
+      {entries:sig_entry list;
+       type_definitions: type_of_definition StringMap.t;
+       term_definitions: (type_of_definition*term_kind) StringMap.t}
+
+  type t = (*Abstract_sig.t*)
+      Signature of string * sig_content (** The first string is the name of the signature *)
+
+
+  (** [to_string sg] returns a string describing the signature
+      [sg]. Should be parsable *)
+  val to_string : t -> string
+    
+  (** [term_to_string t sg] returns a string describing the term [t]. *)
+  val term_to_string : term -> t -> string
+
+  (** [type_def_to_string t sg ] returns a string describing the type definition [t] *)
+  val type_def_to_string : type_def -> t -> string
+
+
+  end

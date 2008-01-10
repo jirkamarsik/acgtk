@@ -26,9 +26,15 @@ type parse_error =
   | Unknown_constant of (string * Lexing.position * Lexing.position)
   | Unknown_type of (string * Lexing.position * Lexing.position)
 
+type type_error =
+  | Already_defined_var of (string * Lexing.position * Lexing.position)
+  | Not_defined_var of (string * Lexing.position * Lexing.position)
+  | Other
+
 type error = 
   | Parse_error of parse_error
   | Lexer_error of lex_error
+  | Type_error of type_error
 
 exception Error of error
 
@@ -66,23 +72,35 @@ let parse_error_to_string = function
   | Unknown_constant (id,_,_) -> Printf.sprintf "Unknown constant \"%s\"\n" id
   | Unknown_type (id,_,_) -> Printf.sprintf "Unknown atomic type \"%s\"\n" id
 
+let type_error_to_string = function
+  | Already_defined_var(s,_,_) ->
+      Printf.sprintf "Var \"%s\" has already been defined\n" s
+  | Not_defined_var(s,_,_) -> 
+      Printf.sprintf "Var \"%s\" is not defined\n" s
+  | Other -> "Other"
+
 let error_to_string = function
   | Parse_error e -> parse_error_to_string e
   | Lexer_error e -> lex_error_to_string e
+  | Type_error e -> type_error_to_string e
 
 let error_msg e lexbuf input_file =
   let msg = error_to_string e in
   let pos1,pos2 = match e with
-    | Parse_error Illformed_term -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
-    | Parse_error (Duplicated_term (_,s,e)) -> s,e
-    | Parse_error (Duplicated_type (_,s,e)) -> s,e
-    | Parse_error (Binder_expected (_,s,e)) -> s,e
-    | Parse_error (Unknown_constant (_,s,e)) -> s,e
-    | Parse_error (Unknown_type (_,s,e)) -> s,e
-    | Lexer_error (Unclosed_comment (s,e)) -> s,e
-    | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
-    | Lexer_error Unstarted_bracket -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
-    | Lexer_error Unstarted_comment -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p in
+  | Type_error (Already_defined_var(_,s,e)) -> s,e
+  | Type_error (Not_defined_var(_,s,e)) -> s,e
+  | Type_error Other -> 
+      Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
+  | Parse_error Illformed_term -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
+  | Parse_error (Duplicated_term (_,s,e)) -> s,e
+  | Parse_error (Duplicated_type (_,s,e)) -> s,e
+  | Parse_error (Binder_expected (_,s,e)) -> s,e
+  | Parse_error (Unknown_constant (_,s,e)) -> s,e
+  | Parse_error (Unknown_type (_,s,e)) -> s,e
+  | Lexer_error (Unclosed_comment (s,e)) -> s,e
+  | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
+  | Lexer_error Unstarted_bracket -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
+  | Lexer_error Unstarted_comment -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p in
   let line2 = pos2.Lexing.pos_lnum in
   let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
   let pos1 = pos1 in
