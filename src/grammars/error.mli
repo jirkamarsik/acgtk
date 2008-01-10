@@ -15,7 +15,10 @@ type parse_error =
 type type_error =
   | Already_defined_var of (string * Lexing.position * Lexing.position)
   | Not_defined_var of (string * Lexing.position * Lexing.position)
-  | Other
+  | Not_defined_const of (string * Lexing.position * Lexing.position)
+  | Not_well_typed_term of (string * Lexing.position * Lexing.position)
+  | Not_well_kinded_type of (string * Lexing.position * Lexing.position)
+  | Other of (Lexing.position * Lexing.position)
 
 type error = 
   | Parse_error of parse_error

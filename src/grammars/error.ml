@@ -29,7 +29,10 @@ type parse_error =
 type type_error =
   | Already_defined_var of (string * Lexing.position * Lexing.position)
   | Not_defined_var of (string * Lexing.position * Lexing.position)
-  | Other
+  | Not_defined_const of (string * Lexing.position * Lexing.position)
+  | Not_well_typed_term of (string * Lexing.position * Lexing.position)
+  | Not_well_kinded_type of (string * Lexing.position * Lexing.position)
+  | Other of (Lexing.position * Lexing.position)
 
 type error = 
   | Parse_error of parse_error
@@ -74,10 +77,16 @@ let parse_error_to_string = function
 
 let type_error_to_string = function
   | Already_defined_var(s,_,_) ->
-      Printf.sprintf "Var \"%s\" has already been defined\n" s
+      Printf.sprintf "Var \"%s\" is already defined\n" s
   | Not_defined_var(s,_,_) -> 
       Printf.sprintf "Var \"%s\" is not defined\n" s
-  | Other -> "Other"
+  | Not_defined_const(s,_,_) -> 
+      Printf.sprintf "Const \"%s\" is not defined\n" s
+  | Not_well_typed_term(s,_,_) ->
+      Printf.sprintf "Term \"%s\" not well typed\n" s
+  | Not_well_kinded_type(s,_,_) ->
+      Printf.sprintf "Type \"%s\" not well kinded\n" s
+  | Other(_,_) -> "Not yet implemented"
 
 let error_to_string = function
   | Parse_error e -> parse_error_to_string e
@@ -89,8 +98,10 @@ let error_msg e lexbuf input_file =
   let pos1,pos2 = match e with
   | Type_error (Already_defined_var(_,s,e)) -> s,e
   | Type_error (Not_defined_var(_,s,e)) -> s,e
-  | Type_error Other -> 
-      Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
+  | Type_error (Not_defined_const(_,s,e)) -> s,e
+  | Type_error (Not_well_typed_term(_,s,e)) -> s,e
+  | Type_error (Not_well_kinded_type(_,s,e)) -> s,e
+  | Type_error (Other(s,e)) -> s,e
   | Parse_error Illformed_term -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
   | Parse_error (Duplicated_term (_,s,e)) -> s,e
   | Parse_error (Duplicated_type (_,s,e)) -> s,e
