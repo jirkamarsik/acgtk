@@ -1,6 +1,7 @@
 open Utils
 open Printf
 open Tries
+open Table
 	
 module Abstract_sig =
 struct
@@ -386,72 +387,23 @@ struct
 
   end
 
-(*
-module Abstract_lexicon =
-struct
 
-  type term = Abstract_sig.term
-  type type_def = Abstract_sig.type_def
-  type location = Abstract_sig.location
+module rec Abstract_typ : 
 
-(*  
-  type t = Lexicon of string * string * string * lex_content
-  and lex_content = lex_assignment list
-  and lex_assignment = 
-    | Type_assgt of string * location * type_def
-    | Const_assgt of string * location * term
-	
-  let empty name abs_sg obg_sg = Lexicon (name,abs_sg,obg_sg,[])
-
-  let add_type_assgt id ty loc (Lexicon(name,abs_sg,obg_sg,lst)) =
-      Lexicon (name,abs_sg,obg_sg,(Type_assgt (id,loc,ty))::lst)
-
-  let add_const_assgt id cst loc (Lexicon(name,abs_sg,obg_sg,lst)) =
-      Lexicon (name,abs_sg,obg_sg,(Const_assgt (id,loc,cst))::lst)
-*)
-
-  type t = Lexicon of string * string * string * lex_content
-  and lex_content = lex_assignment Tries.t
-  and lex_assignment = 
-    | Type_assgt of string * location * type_def
-    | Const_assgt of string * location * term
-	
-  let empty name abs_sg obg_sg = Lexicon (name,abs_sg,obg_sg,Tries.empty)
-
-  let add_type_assgt id ty loc (Lexicon(name,abs_sg,obg_sg,tr)) =
-      Lexicon (name,abs_sg,obg_sg,Tries.insert id (Type_assgt (id,loc,ty)) tr)
-
-  let add_const_assgt id cst loc (Lexicon(name,abs_sg,obg_sg,tr)) =
-      Lexicon (name,abs_sg,obg_sg,Tries.insert id (Const_assgt (id,loc,cst)) tr)
-
-  let to_string (Lexicon (name,abs_sg,obg_sg,tr)) = 
-    sprintf
-      "lexicon %s(%s): %s = \n%s\nend"
-      name
-      abs_sg
-      obg_sg
-      (Utils.string_of_list
-	 "\n"
-	 (function
-	    | Type_assgt (id,_,ty) -> sprintf "\t%s:= %s;" id (Abstract_sig.type_def_to_string ty)
-	    | Const_assgt (id,_,t) -> sprintf "\t%s:= %s;" id (Abstract_sig.term_to_string t))
-	 (Tries.content tr))
-
-end
-*)
-
-module Abstract_typ =
-struct
+sig
       
 
   exception Duplicate_type_definition
   exception Duplicate_term_definition
 
-  type term_kind =
-    | Default
-    | Prefix
-    | Infix
-    | Binder
+ module Table : TABLE
+
+
+(*   type term_kind = *)
+(*     | Default *)
+(*     | Prefix *)
+(*     | Infix *)
+(*     | Binder *)
 
   type type_of_definition =
     | Declared
@@ -464,7 +416,7 @@ struct
   type term =
     | Var of int
 	(** If the term is variable (bound by a binder)*)
-    | Const of string
+    | Const of int
 	(** If the term is a constant (not bound by a binder) *)
 (*    | Abs of string * term
 	(** If the term is a intuitionistic abstraction *) *)
@@ -474,7 +426,100 @@ struct
 	(** If the term is an application *)	
 
   type type_def = 
-    | Type_atom of string * term list
+    | Type_atom of int * term list
+	(** If the type is atomic. The third parameter is the terms to
+	    which the type is applied in case of a dependent type. The
+	    list is empty if the type does not depend on any type *)
+    | Linear_arrow of type_def * type_def
+	(** If the type is described with a linear abstraction *)
+(*    | Arrow of type_def * type_def * location
+	(** If the type is described with a intuitionistic abstraction
+	*)
+    | Dep of (string * location * type_def) * type_def * location
+	(** If the type is a dependent type *)
+    | Type_Abs of (string * location * type_def)  * location
+	(** If the type is a dependent type build with an abstraction *) *)
+
+  (** The type of kinds as found in the signature files *)
+  type kind = K of type_def list
+
+  type sig_entry = 
+    | Type_decl of (string * int * kind)
+	(** The first parameter ([string]) is the name of the type,
+	    the second parameter its indexd and the last parameter is
+	    its kind *)
+    | Type_def of (string * int * type_def)
+	(** The first parameter ([string]) is the name of the defined
+	    type, the second parameter its index and the last
+	    parameter is its value *)
+    | Term_decl of (string * int * Abstract_sig.term_kind * type_def)
+	(** The first parameter ([string]) is the name of the
+	    constant, the second parameter is its index and the last
+	    parameter is its type *)
+    | Term_def of (string * int * Abstract_sig.term_kind * term * type_def)
+	(** The first parameter ([string]) is the name of the
+	    constant, the second parameter is its index and the last
+	    parameter is its value *)
+
+
+  type sig_content = 
+      {type_definitions: Abstract_sig.type_of_definition StringMap.t;
+       term_definitions: (Abstract_sig.type_of_definition*Abstract_sig.term_kind) StringMap.t}
+
+  val content2content : Abstract_sig.sig_content -> sig_content
+
+  type t = Signature of string * int * sig_entry Table.t * sig_entry
+      Tries.t * sig_content (** The first string is the name of the
+      signature and the int is its size *)
+
+ 
+  (** [to_string sg] returns a string describing the signature
+      [sg]. Should be parsable *)
+  val to_string : t -> string
+    
+  (** [term_to_string t sg] returns a string describing the term [t]. *)
+  val term_to_string : term -> t -> string
+
+  (** [type_def_to_string t sg ] returns a string describing the type definition [t] *)
+  val type_def_to_string : type_def -> t -> string
+
+
+  end
+=
+struct
+      
+
+  exception Duplicate_type_definition
+  exception Duplicate_term_definition
+
+(*   type term_kind = *)
+(*     | Default *)
+(*     | Prefix *)
+(*     | Infix *)
+(*     | Binder *)
+
+  type type_of_definition =
+    | Declared
+    | Defined
+
+  type abs =
+    | Linear
+(*    | Non_linear *)
+
+  type term =
+    | Var of int
+	(** If the term is variable (bound by a binder)*)
+    | Const of int
+	(** If the term is a constant (not bound by a binder) *)
+(*    | Abs of string * term
+	(** If the term is a intuitionistic abstraction *) *)
+    | LAbs of string * term
+	(** If the term is a linear abstraction *)
+    | App of term * term
+	(** If the term is an application *)	
+
+  type type_def = 
+    | Type_atom of int * term list
 	(** If the type is atomic. The third parameter is the terms to
 	    which the type is applied in case of a dependent type. The
 	    list is empty if the type does not depend on any type *)
@@ -491,49 +536,59 @@ struct
   type kind = K of type_def list
 
   type sig_entry = 
-    | Type_decl of (string * kind)
+    | Type_decl of (string * int * kind)
 	(** The first parameter ([string]) is the name of the type,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its kind *)
-    | Type_def of (string * type_def)
-	(** Tthe first parameter ([string]) is the name of the defined type,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its value *)
-    | Term_decl of (string * term_kind * type_def)
-	(** The first parameter ([string]) is the name of the constant,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its type *)
-    | Term_def of (string * term_kind * term * type_def)
-	(** The first parameter ([string]) is the name of the constant,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its value *)
+	    the second parameter its indexd and the last parameter is
+	    its kind *)
+    | Type_def of (string * int * type_def)
+	(** The first parameter ([string]) is the name of the defined
+	    type, the second parameter its index and the last
+	    parameter is its value *)
+    | Term_decl of (string * int * Abstract_sig.term_kind * type_def)
+	(** The first parameter ([string]) is the name of the
+	    constant, the second parameter is its index and the last
+	    parameter is its type *)
+    | Term_def of (string * int * Abstract_sig.term_kind * term * type_def)
+	(** The first parameter ([string]) is the name of the
+	    constant, the second parameter is its index and the last
+	    parameter is its value *)
+
+
+  module Table = Make_table (struct let b = 10 end)
+
 
   type sig_content = 
-      {entries:sig_entry list;
-       type_definitions: type_of_definition StringMap.t;
-       term_definitions: (type_of_definition*term_kind) StringMap.t}
+      {type_definitions: Abstract_sig.type_of_definition StringMap.t;
+       term_definitions: (Abstract_sig.type_of_definition*Abstract_sig.term_kind) StringMap.t}
 
-  type t = 
-      Signature of string * sig_content (** The first string is the name of the signature *)
+  let content2content (content : Abstract_sig.sig_content) =
 
-  let is_infix id (Signature (_,{entries=_;type_definitions=_;term_definitions=defs})) =
+    {type_definitions = content.Abstract_sig.type_definitions;
+     term_definitions = content.Abstract_sig.term_definitions}
+ 
+
+  type t = Signature of string * int * sig_entry Table.t * sig_entry
+      Tries.t * sig_content (** The first string is the name of the
+      signature and the int is its size *)
+
+  let is_infix id (Signature (_, _, _, _, {type_definitions=_;term_definitions=defs})) =
     try
       let _,t = StringMap.find id defs in
-      (t=Infix)
+      (t=Abstract_sig.Infix)
     with
       | Not_found -> false
 
-  let is_binder id (Signature (_,{entries=_;type_definitions=_;term_definitions=defs})) =
+  let is_binder id (Signature (_, _, _, _, {type_definitions=_;term_definitions=defs})) =
     try
       let _,t = StringMap.find id defs in
-	t = Binder
+	t = Abstract_sig.Binder
     with
       | Not_found -> false
 
-  let rec term_to_string t sg = 
+  let rec term_to_string t (sg:t) = 
     match t with
-    | Var(i) -> string_of_int i
-      | Const (s) -> s
+    | Var(i) -> Signature.string_of_const i sg
+      | Const (i) -> Signature.string_of_const i sg
 	  (*    | Abs (s,t,_) -> 
 		let vars,u=unfold_abs [s] t in
 		sprintf
@@ -546,18 +601,19 @@ struct
 	      "(lambda %s. %s)"
 	      (Utils.string_of_list " " (fun x -> x) (List.rev vars))
 	      (term_to_string u sg)
-      | App (Const (s),(LAbs(x,u) as t)) when is_binder s sg ->
+      | App (Const (i),(LAbs(x,u) as t)) when is_binder (Signature.string_of_const i sg) sg ->
+	  let s = string_of_int i in
 	  let vars,u= unfold_binder s sg [x] u in
 	  sprintf
 	    "(%s %s. %s)"
 	    s
 	    (Utils.string_of_list " " (fun x -> x) (List.rev vars))
 	    (term_to_string u sg) 
-      | App ((App (Const (s),t1)),t2) when is_infix s sg ->
+      | App ((App (Const (i),t1)),t2) when is_infix (Signature.string_of_const i sg) sg ->
 	  sprintf
 	    "(%s %s %s)"
 	    (term_to_string t1 sg)
-	    s
+	    (string_of_int i)
 	    (term_to_string t2 sg)
       | App (t1,t2) ->
 	  sprintf
@@ -574,7 +630,7 @@ struct
     | App (t1,t2) -> unfold_app (t2::acc) t1
     | t -> acc,t
   and unfold_binder binder sg acc = function
-    | App (Const (s),(LAbs(x,u) as t)) when (is_binder s sg)&&(s=binder) -> unfold_binder binder sg (x::acc) u
+    | App (Const (i),(LAbs(x,u) as t)) when let s = (Signature.string_of_const i sg) in (is_binder s sg)&&(s=binder) -> unfold_binder binder sg (x::acc) u
     | t -> acc,t
 	
   let rec is_atomic_type = function
@@ -586,12 +642,12 @@ struct
 (*    | Arrow _ -> true *)
     | Linear_arrow _ -> true
     | _ -> false
-	
+
   let rec type_def_to_string def sg = match def with
-    | Type_atom (s,terms) ->
+    | Type_atom (i,terms) ->
 	(match terms with
-             [] -> s
-           | _  -> sprintf "%s %s" s (Utils.string_of_list " " (fun x -> sprintf "(%s)" (term_to_string x sg )) terms))
+             [] -> (string_of_int i)
+           | _  -> sprintf "%i %s" i (Utils.string_of_list " " (fun x -> sprintf "(%s)" (term_to_string x sg )) terms))
     | Linear_arrow (t1,t2) ->
 	let arrows,u = unfold_linear_arrow [t1] t2 in
 	let u_string = if (is_atomic_type u)||(is_arrow u) then type_def_to_string u sg  else sprintf "(%s)" (type_def_to_string u sg ) in
@@ -643,33 +699,204 @@ struct
 	
 (*  let empty s = Abstract_sig.Signature (s,{entries=[];type_definitions=StringMap.empty;term_definitions=StringMap.empty})
     *)
+(*  type t = Signature of string * int * sig_entry Table.t * sig_entry
+      Tries.t * sig_content*)
 
-  let to_string ((Signature (name,dec)) as sg) =
+  let to_string ((Signature (name,_,_,trie,content)) as sg) =
     sprintf
       "signature %s = \n%s\nend"
       name
       (Utils.string_of_list_rev
 	 "\n"
 	 (function
-	   | Type_decl (id,K types) -> 
+	   | Type_decl (id,_,K types) -> 
                 (match types 
                  with [] -> sprintf "\t%s: type;" id
                    | _  -> sprintf "\t%s: (%s)type;" id (Utils.string_of_list "," (fun s -> type_def_to_string s sg) types))
-	    | Type_def (id,value) -> sprintf "\t%s = %s: type;" id (type_def_to_string value sg)
-	    | Term_decl (id,_,ty) -> 
-		let t = match snd (StringMap.find id dec.term_definitions) with
-		  | Default -> ""
-		  | Infix -> "infix "
-		  | Prefix -> "prefix "
-		  | Binder -> "binder " in
+	    | Type_def (id,_,value) -> sprintf "\t%s = %s: type;" id (type_def_to_string value sg)
+	    | Term_decl (id,_,_,ty) -> 
+		let t = match snd (StringMap.find id content.term_definitions) with
+		  | Abstract_sig.Default -> ""
+		  | Abstract_sig.Infix -> "infix "
+		  | Abstract_sig.Prefix -> "prefix "
+		  | Abstract_sig.Binder -> "binder " in
 		  sprintf "\t%s%s: %s;" t id (type_def_to_string ty sg)
-	    | Term_def (id,_,value,type_of) -> 
-		let t = match snd (StringMap.find id dec.term_definitions) with
-		  | Default -> ""
-		  | Infix -> "infix "
-		  | Prefix -> "prefix "
-		  | Binder -> "binder " in
+	    | Term_def (id,_,_,value,type_of) -> 
+		let t = match snd (StringMap.find id content.term_definitions) with
+		  | Abstract_sig.Default -> ""
+		  | Abstract_sig.Infix -> "infix "
+		  | Abstract_sig.Prefix -> "prefix "
+		  | Abstract_sig.Binder -> "binder " in
 		  sprintf "\t%s%s = %s: %s;" t id (term_to_string value sg) (type_def_to_string type_of sg))
-	 dec.entries)
+	 (Tries.content trie))
+
+end
+
+
+
+and Signature :     sig
+      
+      val create : string * Abstract_typ.sig_content -> Abstract_typ.t
+       
+    val size : Abstract_typ.t -> int
+
+    val insert_type_dcl : string -> Abstract_typ.kind ->
+      Abstract_typ.t -> Abstract_typ.t
+
+    val insert_term_dcl : string -> Abstract_sig.term_kind ->
+      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+
+    val insert_var : string -> Abstract_sig.term_kind ->
+      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+
+    val insert_term_def : string -> Abstract_sig.term_kind ->
+      Abstract_typ.term ->
+      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+
+    val lookup : int -> Abstract_typ.t -> Abstract_typ.sig_entry
+
+    val get_const : Abstract_typ.t -> string -> int *
+	Abstract_sig.term_kind * Abstract_typ.type_def
+
+    val get_const_ind : Abstract_typ.t -> string -> int 
+
+    val get_atom : Abstract_typ.t -> string -> int *
+        Abstract_typ.kind
+	  
+    val get_atom_ind : Abstract_typ.t -> string -> int
+	  
+    val string_of_const : int -> Abstract_typ.t -> string 
+
+    val string_of_atom : int -> Abstract_typ.t -> string 
+
+(*
+    let kind_of_atom i (Signature (_, tb)) =
+      match Table.lookup i tb with
+        Type_declaration (_, ki) -> ki
+      | Term_declaration _       -> raise (Failure "Signature.kind_of_atom")
+  
+*)  
+
+(*     let is_a_cst id (Signature (_, _, _, tr, _)) = *)
+(*       try *)
+(* 	match (Tries.lookup id tr) with *)
+(*           | Term_decl _ -> true *)
+(* 	  | _ -> false *)
+(*       with *)
+(* 	| Tries.Not_found -> false *)
+
+
+(*     let is_a_type id (Signature (_, _, _, tr, _)) = *)
+(*       try *)
+(* 	match (Tries.lookup id tr) with *)
+(*           | Type_decl _ -> true *)
+(* 	  | _ -> false *)
+(*       with *)
+(* 	| Tries.Not_found -> false *)
 
   end
+= 
+
+  struct
+open Abstract_typ 
+   let create(name, content) = Signature (name,0, Abstract_typ.Table.create(), Tries.empty,content)
+
+    let size (Signature (_, n, _, _, _)) = n
+
+    let insert_type_dcl id ki (Signature (name,size, tb, tr,content)) =
+      let e = Type_decl (id, size , ki)
+      in
+      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr, content)
+
+    let insert_term_dcl id tk ty (Signature (name,size, tb, tr,content)) =
+      let e = Term_decl (id, size, tk, ty)
+      in 
+      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr, content)
+	
+    let insert_term_def id tk te ty 
+	(Signature (name,size, tb, tr,content)) =
+      let e = Term_def (id, size, tk, te, ty)
+      in 
+      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr, content)
+	
+    let insert_var id tk ty 
+	(Signature (name,size, tb, tr,content)) =
+      let e = Term_def (id, size, tk, Var(size), ty)
+      in 
+      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr, content)
+	
+    let lookup i (Signature (_, _, tb, _, _)) = Table.lookup i tb
+
+    let get_const (Signature (_, _, _, tr, _)) id =
+      try
+      (match (Tries.lookup id tr) with
+        Term_decl (_, i, tk, ty) -> (i, tk, ty)
+      | Term_def (_, i, tk, _, ty) -> (i, tk, ty)
+      | _                          -> raise Not_found)
+      with Tries.Not_found -> raise Not_found
+
+    let get_const_ind (Signature (_, _, _, tr, _)) id =
+      try
+      (match (Tries.lookup id tr) with
+        Term_decl (_, i, _, _) -> i
+      | Term_def (_, i, _, _, _) -> i
+      | _                          -> raise Not_found)
+      with Tries.Not_found -> raise Not_found
+
+    let get_atom (Signature (_, _ , _, tr,_)) id =
+      try
+      (match (Tries.lookup id tr) with
+        Type_decl (_, i, ki) -> (i, ki)
+       | _                          -> raise Not_found)
+      with Tries.Not_found -> raise Not_found
+	  
+    let get_atom_ind (Signature (_, _ , _, tr,_)) id =
+      try
+      (match (Tries.lookup id tr) with
+        Type_decl (_, i, _) -> i
+       | _                          -> raise Not_found)
+      with Tries.Not_found -> raise Not_found
+	  
+    let string_of_const i (Signature (_, _, tb, _, _)) =
+      match Table.lookup i tb with
+        Type_decl _ -> raise (Failure "Signature.string_of_const")
+      | Term_decl (x, _, _, _) -> x
+      | Term_def (x, _, _, _, _) -> x
+      | _ -> raise (Failure "string_of_const Not yet implemented")
+
+    let string_of_atom i (Signature (_, _, tb, _, _)) =
+      match Table.lookup i tb with
+        Type_decl (x, _, _) -> x 
+      | Term_decl _ -> raise (Failure "Signature.string_of_atom")
+      | Term_def _ -> raise (Failure "Signature.string_of_atom")
+      | _ -> raise (Failure "string_of_atom Not yet implemented")
+
+(*
+    let kind_of_atom i (Signature (_, tb)) =
+      match Table.lookup i tb with
+        Type_declaration (_, ki) -> ki
+      | Term_declaration _       -> raise (Failure "Signature.kind_of_atom")
+  
+*)  
+
+    let is_a_cst id (Signature (_, _, _, tr, _)) =
+      try
+	match (Tries.lookup id tr) with
+	| Term_decl _ -> true
+	| Term_def _ -> true
+	| _ -> false
+      with
+	| Tries.Not_found -> false
+
+
+    let is_a_type id (Signature (_, _, _, tr, _)) =
+      try
+	match (Tries.lookup id tr) with
+          | Type_decl _ -> true
+	  | _ -> false
+      with
+	| Tries.Not_found -> false
+
+  end
+
+

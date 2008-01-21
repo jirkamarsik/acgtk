@@ -1,9 +1,10 @@
 open Utils
 open Tries
+open Table
 
 (** This modules implements the abstract syntax and the build function for the signatures *)
 
-module Abstract_sig :
+module Abstract_sig : 
 sig
 
   (** The type of location in the signature files *)
@@ -153,79 +154,23 @@ sig
   val is_constant : string -> t -> bool * term_kind option
   val display : t -> unit
 end
-  (*
-    module Abstract_lexicon :
-    sig
 
 
-  (** The type of location in the signature files *)
-  type location = Token.flocation
-      
-      
-  (** The type of terms provided by the parser. Note their is no
-      distinction between variables and constants, as we require this to
-      be made by the signature *)
-  type term = Abstract_sig.term
-
-	
-  (** The type of types as found in the signature files *)
-  type type_def = Abstract_sig.type_def
-
-  (** The type of the signature as abstract object *)
-  type t = Lexicon of string * string * string * lex_content
-    (** The first string is the name of the lexicon, the second is the
-	name of the abstract signature and the last one is the name of the
-	object signature *)
-  and lex_content = lex_assignment Tries.t
-  and lex_assignment = 
-    | Type_assgt of string * location * type_def
-	(** The first parameter of type [string] is the name of the
-	    abstract type, the second parameter is the place where it is
-	    defined, and the third parameter is its realization as type in
-	    the object signature *)
-    | Const_assgt of string * location * term
-	(** The first parameter of type [string] is the name of the
-	    abstract constant, the second parameter is the place where it
-	    is defined, and the third parameter is its realization as term
-	    in the object signature *)
-	
-
-  (** [empty name abs_sig obj_sig] returns the empty lexicon of name
-      [name] from the abstract signature [abs_sig] to the object signature
-      [obj_sig] *)
-  val empty : string -> string -> string -> t
-    
-  (** [add_type_assgt id type loc lex] returns a lexicon where the
-      type [id] has been assigned the type [type] at place [loc] to the
-      lexicon [lex] *)
-  val add_type_assgt : string -> type_def -> location -> t -> t
-    
-
-  (** [add_cst_assgt id t loc lex] returns a lexicon where the
-      constant [id] has been assigned the term [t] at place [loc] to the
-      lexicon [lex] *)
-  val add_const_assgt : string ->  term -> location -> t -> t
-
-  (** [to_string sg] returns a string describing the signature. Should
-      be parsable *)
-  val to_string : t -> string
-end
-
-*)
-
-module Abstract_typ :
+module rec Abstract_typ :
 sig
       
 
   exception Duplicate_type_definition
   exception Duplicate_term_definition
 
+ module Table : TABLE
 
-  type term_kind =
-    | Default
-    | Prefix
-    | Infix
-    | Binder
+
+(*   type term_kind = *)
+(*     | Default *)
+(*     | Prefix *)
+(*     | Infix *)
+(*     | Binder *)
 
   type type_of_definition =
     | Declared
@@ -238,7 +183,7 @@ sig
   type term =
     | Var of int
 	(** If the term is variable (bound by a binder)*)
-    | Const of string
+    | Const of int
 	(** If the term is a constant (not bound by a binder) *)
 (*    | Abs of string * term
 	(** If the term is a intuitionistic abstraction *) *)
@@ -247,8 +192,8 @@ sig
     | App of term * term
 	(** If the term is an application *)	
 
-  type type_def = (*Abstract_sig.type_def*)
-    | Type_atom of string * term list
+  type type_def = 
+    | Type_atom of int * term list
 	(** If the type is atomic. The third parameter is the terms to
 	    which the type is applied in case of a dependent type. The
 	    list is empty if the type does not depend on any type *)
@@ -266,32 +211,35 @@ sig
   type kind = K of type_def list
 
   type sig_entry = 
-    | Type_decl of (string * kind)
+    | Type_decl of (string * int * kind)
 	(** The first parameter ([string]) is the name of the type,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its kind *)
-    | Type_def of (string * type_def)
-	(** Tthe first parameter ([string]) is the name of the defined type,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its value *)
-    | Term_decl of (string * term_kind * type_def)
-	(** The first parameter ([string]) is the name of the constant,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its type *)
-    | Term_def of (string * term_kind * term * type_def)
-	(** The first parameter ([string]) is the name of the constant,
-	    the second parameter is the place in the file where it was
-	    defined and the last parameter is its value *)
-
-  type sig_content = (*Abstract_sig.sig_entry*)
-      {entries:sig_entry list;
-       type_definitions: type_of_definition StringMap.t;
-       term_definitions: (type_of_definition*term_kind) StringMap.t}
-
-  type t = (*Abstract_sig.t*)
-      Signature of string * sig_content (** The first string is the name of the signature *)
+	    the second parameter its indexd and the last parameter is
+	    its kind *)
+    | Type_def of (string * int * type_def)
+	(** The first parameter ([string]) is the name of the defined
+	    type, the second parameter its index and the last
+	    parameter is its value *)
+    | Term_decl of (string * int * Abstract_sig.term_kind * type_def)
+	(** The first parameter ([string]) is the name of the
+	    constant, the second parameter is its index and the last
+	    parameter is its type *)
+    | Term_def of (string * int * Abstract_sig.term_kind * term * type_def)
+	(** The first parameter ([string]) is the name of the
+	    constant, the second parameter is its index and the last
+	    parameter is its value *)
 
 
+  type sig_content = 
+      {type_definitions: Abstract_sig.type_of_definition StringMap.t;
+       term_definitions: (Abstract_sig.type_of_definition*Abstract_sig.term_kind) StringMap.t}
+
+val content2content : Abstract_sig.sig_content -> sig_content
+
+  type t = Signature of string * int * sig_entry Table.t * sig_entry
+      Tries.t * sig_content (** The first string is the name of the
+      signature and the int is its size *)
+
+ 
   (** [to_string sg] returns a string describing the signature
       [sg]. Should be parsable *)
   val to_string : t -> string
@@ -304,3 +252,69 @@ sig
 
 
   end
+
+
+and Signature :
+
+    sig
+      
+      val create : string * Abstract_typ.sig_content -> Abstract_typ.t
+       
+    val size : Abstract_typ.t -> int
+
+    val insert_type_dcl : string -> Abstract_typ.kind ->
+      Abstract_typ.t -> Abstract_typ.t
+
+    val insert_term_dcl : string -> Abstract_sig.term_kind ->
+      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+
+    val insert_var : string -> Abstract_sig.term_kind ->
+      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+
+    val insert_term_def : string -> Abstract_sig.term_kind ->
+      Abstract_typ.term ->
+      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+
+    val lookup : int -> Abstract_typ.t -> Abstract_typ.sig_entry
+
+    val get_const : Abstract_typ.t -> string -> int *
+	Abstract_sig.term_kind * Abstract_typ.type_def
+
+    val get_const_ind : Abstract_typ.t -> string -> int 
+
+    val get_atom : Abstract_typ.t -> string -> int *
+        Abstract_typ.kind
+	  
+    val get_atom_ind : Abstract_typ.t -> string -> int
+	  
+    val string_of_const : int -> Abstract_typ.t -> string 
+
+    val string_of_atom : int -> Abstract_typ.t -> string 
+
+(*
+    let kind_of_atom i (Signature (_, tb)) =
+      match Table.lookup i tb with
+        Type_declaration (_, ki) -> ki
+      | Term_declaration _       -> raise (Failure "Signature.kind_of_atom")
+  
+*)  
+
+(*     let is_a_cst id (Signature (_, _, _, tr, _)) = *)
+(*       try *)
+(* 	match (Tries.lookup id tr) with *)
+(*           | Term_decl _ -> true *)
+(* 	  | _ -> false *)
+(*       with *)
+(* 	| Tries.Not_found -> false *)
+
+
+(*     let is_a_type id (Signature (_, _, _, tr, _)) = *)
+(*       try *)
+(* 	match (Tries.lookup id tr) with *)
+(*           | Type_decl _ -> true *)
+(* 	  | _ -> false *)
+(*       with *)
+(* 	| Tries.Not_found -> false *)
+
+  end
+

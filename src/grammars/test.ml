@@ -14,33 +14,36 @@ let parse filename =
 	  in 
 	  Printf.printf "\n\n" ; 
 	  print_string "\nResultat typecheck : \n";
-	  let Abstract_syntax.Abstract_sig.Signature(_,y) = sg in
-	  let (_,_,t) = 
+	  let Abstract_syntax.Abstract_sig.Signature(name,y) = sg in
+	  let t = 
 	    (Typechecker.typecheck 
-	       y.Abstract_syntax.Abstract_sig.entries) in
+	       (name,y)) in
+	  let Abstract_syntax.Abstract_typ.Signature
+	      (name,size,_,trie,content) = t in
+	  let list_decl = Tries.Tries.content trie in
 	  print_string "[";
 	  List.iter
 	    (fun x -> (match x with
-	      Abstract_syntax.Abstract_typ.Term_def(s,kd,wf,typ) -> 
+	      Abstract_syntax.Abstract_typ.Term_def(s,i,kd,wf,typ) -> 
 		print_string (s^" = ");
-		Typechecker.display_wfterm wf;
+		Typechecker.display_wfterm t wf;
 		print_string " : ";
-		Typechecker.display_typ_tdef typ;
+		Typechecker.display_typ_tdef t typ;
 		print_string " ;\n ";
-	    | Abstract_syntax.Abstract_typ.Term_decl(s,kd,typ) -> 
+	    | Abstract_syntax.Abstract_typ.Term_decl(s,i,kd,typ) -> 
 		print_string (s^" : ");
-		Typechecker.display_typ_tdef typ;
+		Typechecker.display_typ_tdef t typ;
 		print_string " ;\n ";
-	    | Abstract_syntax.Abstract_typ.Type_def(s,typ) -> 
+	    | Abstract_syntax.Abstract_typ.Type_def(s,i,typ) -> 
 		print_string (s^" : ");
-		Typechecker.display_typ_tdef typ;
+		Typechecker.display_typ_tdef t typ;
 		print_string " ;\n ";
 	    | Abstract_syntax.Abstract_typ.Type_decl
-		(s,Abstract_syntax.Abstract_typ.K tdl) -> 
+		(s,i,Abstract_syntax.Abstract_typ.K tdl) -> 
 		print_string (s^" : K[");
-		List.iter (Typechecker.display_typ_tdef) tdl;
+		List.iter (Typechecker.display_typ_tdef t) tdl;
 		print_string "] ;\n ";))
-	    t;
+	    list_decl;
 	  print_string"]\n";
 	  x) sgs)
     with
