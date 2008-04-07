@@ -1,37 +1,17 @@
 signature toto =
 	a:type;
+	t1,t2: a-> a;
 	b,c:type ; 
 	t,toto,aa,bb,cc :a -> a -> b ;
 	u : (b ->c) -> a;
-	binder All = t : b -> c;  
-	prefix - : a -> a;
-	infix + : a -> a;
-	v = t + aa + bb + cc : a -> a;
-	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ;
+	binder All = t : a -> a -> b;  
+	prefix - : a -> a; 
+	infix + : a -> a; 
+(*	v = t : a -> a;    *)
+	vv = lambda x . t1 (t2 x) : a -> a ; 
+(*	v = t1 - t2 : a  ;  
+	vvv = t1 + t2 : a  ;   *)
+(*	vv = t bb : a -> a -> a -> a; *)
+(*	v = t + aa + bb + cc : a -> a; *)
+(*	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ; *)
 end
-
-
-signature tutu =
-	a:type;
-	b,c:type ; 
-	t,toto,aa,bb,cc :a -> a -> b ;
-	u : (b ->c) -> a;
-	binder All = t : b -> c;  
-	prefix - : a -> a;
-	infix + : a -> a;
-	v = t + aa + bb + cc : a -> a;
-	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ;
-end
-
-signature titi =
-	a:type;
-	b,c:type ; 
-	t,toto,aa,bb,cc :a -> a -> b ;
-	u : (b ->c) -> a;
-	binder All = t : b -> c;  
-	prefix - : a -> a;
-	infix + : a -> a;
-	v = t + aa + bb + cc : a -> a;
-	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ;
-end
-
