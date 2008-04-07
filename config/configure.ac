@@ -117,7 +117,7 @@ AC_SUBST(OCAMLP4_LOC)
 
 AC_SUBST(SET_MAKE)
 
-AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/grammars/Makefile src/lambda/Makefile])
+AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/grammars/Makefile src/lambdas/Makefile])
 
 AC_PROG_MAKE_SET
 

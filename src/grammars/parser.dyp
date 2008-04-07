@@ -74,7 +74,6 @@
   let empty_sig = Abstract_sig.empty ""
 
   let set e (s,_) = Entry.set e s
-
 }
 
 
