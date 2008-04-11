@@ -62,7 +62,8 @@ struct
   type t = Signature of string * sig_content (** The first string is the name of the signature *)
   and sig_content = {entries:sig_entry list;
 		     type_definitions: type_of_definition StringMap.t;
-		     term_definitions: (type_of_definition*term_kind) StringMap.t}
+		     term_definitions: (type_of_definition*term_kind) StringMap.t;
+		     warnings: Error.warning list}
   and sig_entry = 
     | Type_decl of (string * location * kind)
 	(** The first parameter ([string]) is the name of the type,
@@ -80,6 +81,9 @@ struct
 	(** The first parameter ([string]) is the name of the constant,
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its value *)
+    
+
+  let name (Signature(n,_)) = n
     
     
   let is_atomic_term = function
@@ -251,14 +255,14 @@ struct
 	    | Type_Abs ((s,_,t),_) -> unfold_type_abs (s::acc) t
 	    | t -> acc,t *)
 	
-  let empty s = Signature (s,{entries=[];type_definitions=StringMap.empty;term_definitions=StringMap.empty})
+  let empty s = Signature (s,{entries=[];type_definitions=StringMap.empty;term_definitions=StringMap.empty;warnings=[]})
     
   let add_type_decl id types loc (Signature (name,content)) =
     try
       let _ = StringMap.find id content.type_definitions in
 	raise Duplicate_type_definition
     with
-      | Not_found -> Signature (name,{entries = (Type_decl (id,loc,K types))::content.entries;
+      | Not_found -> Signature (name,{content with entries = (Type_decl (id,loc,K types))::content.entries;
 				      type_definitions = StringMap.add id Declared content.type_definitions;
 				      term_definitions = content.term_definitions})
       
@@ -267,7 +271,7 @@ struct
       let _ = StringMap.find id content.type_definitions in
 	raise Duplicate_type_definition
     with
-      | Not_found -> Signature (name,{entries = Type_def (id,loc,def)::content.entries;
+      | Not_found -> Signature (name,{content with entries = Type_def (id,loc,def)::content.entries;
 				      type_definitions = StringMap.add id Defined content.type_definitions;
 				      term_definitions = content.term_definitions})
       
@@ -277,7 +281,7 @@ struct
 	raise Duplicate_term_definition
     with
       | Not_found -> 
-	  Signature (name,{entries = (Term_decl (id,k,loc,ty))::content.entries;
+	  Signature (name,{content with entries = (Term_decl (id,k,loc,ty))::content.entries;
 			   type_definitions = content.type_definitions;
 			   term_definitions = StringMap.add id (Defined,k) content.term_definitions})
 
@@ -287,7 +291,7 @@ struct
 	raise Duplicate_term_definition
     with
       | Not_found -> 
-	  Signature (name,{entries = Term_def (id,kind_of,loc,t,type_of_t)::content.entries;
+	  Signature (name,{content with entries = Term_def (id,kind_of,loc,t,type_of_t)::content.entries;
 			   type_definitions = content.type_definitions;
 			   term_definitions = StringMap.add id (Defined,kind_of) content.term_definitions})
 
@@ -296,6 +300,11 @@ struct
     | Type_def (id,l,def) -> add_type_def id def l sg
     | Term_decl (id,k,l,type_of) -> add_term_decl id k type_of l sg
     | Term_def (id,k,l,t,type_of) -> add_term_def id k (t,type_of) l sg
+
+  let add_warnings ws (Signature (name,content)) = 
+      Signature(name,{content with warnings=ws@content.warnings})
+
+  let get_warnings (Signature (_,{warnings=ws})) = ws
       
   let to_string ((Signature (name,dec)) as sg) =
     sprintf
@@ -377,19 +386,19 @@ struct
 	    | Prefix -> "prefix "
 	    | Binder -> "binder " in
 	    printf "\t%s, " t ); term_display value sg;print_string ", "; type_def_display type_of sg ; print_string ")")
-
+	  
       and decl_display dec = 
 	match dec with
-	  [] -> ()
-	| d::de -> dec_display d; print_newline(); decl_display de
+	    [] -> ()
+	  | d::de -> dec_display d; print_newline(); decl_display de
       in
       decl_display dec.entries;
-
-  end
-
-
+	  
+end
+  
+  
 module rec Abstract_typ : 
-
+  
 sig
       
 
@@ -896,6 +905,8 @@ open Abstract_typ
 	  | _ -> false
       with
 	| Tries.Not_found -> false
+
+	    
 
   end
 
