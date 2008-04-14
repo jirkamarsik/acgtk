@@ -4,6 +4,7 @@ open Tries
 open Table
 open Abstract_syntax
 open Error
+open Signature
 
 exception Typing_error of string
 exception Not_yet_implemented of string

@@ -24,7 +24,7 @@ LIBDIR = -I +dypgen -I +camlp4
 PREVIOUS_DIRS = ../utils ../grammars
 
 # Source files in the right order of dependance
-ML = typechecker.ml
+ML = signature.ml typechecker.ml
 EXE_SOURCES = test.ml
 
 ####################################
