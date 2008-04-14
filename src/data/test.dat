@@ -1,17 +1,18 @@
 signature toto =
-	a:type;
+	a:type ;
 	t1,t2: a-> a;
 	b,c:type ; 
 	t,toto,aa,bb,cc :a -> a -> b ;
+	string = a -> a : type;
 	u : (b ->c) -> a;
 	binder All = t : a -> a -> b;  
 	prefix - : a -> a; 
 	infix + : a -> a; 
-(*	v = t : a -> a;    *)
+	v1 = t : a -> a;    
 	vv = lambda x . t1 (t2 x) : a -> a ; 
-(*	v = t1 - t2 : a  ;  
-	vvv = t1 + t2 : a  ;   *)
-(*	vv = t bb : a -> a -> a -> a; *)
-(*	v = t + aa + bb + cc : a -> a; *)
-(*	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ; *)
+	v = t1 - t2 : a  ;
+	vvv = t1 + t2 : a  ;   
+	vv1 = t bb : a -> a -> a -> a; 
+	v2 = t + aa + bb + cc : a -> a; 
+	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ; 
 end
