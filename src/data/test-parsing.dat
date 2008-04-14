@@ -1,3 +1,8 @@
+(* Fichier d'essais d'erreurs de parsing pour les messages *)
+(* voir /home/pogodall/import/ocaml/dypgen-20070803/generators/dypgen/dypgen.ml 
+	et dypgen_lexer.mll pour s'inspirer de la méthode.
+	En particulier, donner le type d'expression attendue *)
+
 signature essai =
 	a: type ;
 
@@ -15,7 +20,7 @@ signature essai =
 
 (* messages incompréhensibles *)
 (*	infix - : a -> ; *)
-	infix - : -> a ; 
+(*	infix - : -> a ; *)
 
 
 end
