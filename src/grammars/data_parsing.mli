@@ -1,5 +1,7 @@
+open Abstract_syntax
+
 module Data_parsing :
   sig 
-    val signature : string -> Parser.content
-    val term : string -> Abstract_syntax.Abstract_sig.t -> Abstract_syntax.Abstract_sig.term
+    val signature : string -> Environment.content
+    val term : string -> Abstract_sig.t -> Abstract_sig.term option
   end

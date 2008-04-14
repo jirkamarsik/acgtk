@@ -1,17 +1,15 @@
 %mltop {
+  open Abstract_syntax
   module Env = Set.Make(String)
-  module Environment = Map.Make(String)
 }
 {
   open Dyp
-  open Abstract_syntax
   open Entry
 
   exception No_sig
 
 (*  let () = dypgen_verbose :=2 *)
 
-  type content = Abstract_sig.t Environment.t
 
   let local_data = None
 
@@ -60,39 +58,39 @@
 
 %token
   EOI
-<Abstract_syntax.Abstract_sig.location> EQUAL
-<Abstract_syntax.Abstract_sig.location> SEMICOLON
-<Abstract_syntax.Abstract_sig.location> COLON
-<Abstract_syntax.Abstract_sig.location> COMMA
-<Abstract_syntax.Abstract_sig.location> LPAREN
-<Abstract_syntax.Abstract_sig.location> RPAREN
-<Abstract_syntax.Abstract_sig.location> DOT
-<Abstract_syntax.Abstract_sig.location> SIG_OPEN
-<Abstract_syntax.Abstract_sig.location> END_OF_DEC
-<Abstract_syntax.Abstract_sig.location> TYPE
-<Abstract_syntax.Abstract_sig.location> PREFIX
-<Abstract_syntax.Abstract_sig.location> INFIX
-<Abstract_syntax.Abstract_sig.location> BINDER
-<Abstract_syntax.Abstract_sig.location> LAMBDA
-<Abstract_syntax.Abstract_sig.location> LAMBDA0
-<Abstract_syntax.Abstract_sig.location> ARROW
-<Abstract_syntax.Abstract_sig.location> LIN_ARROW
-<(string*Abstract_syntax.Abstract_sig.location)> IDENT
-<(string*Abstract_syntax.Abstract_sig.location)> SYMBOL
+<Abstract_sig.location> EQUAL
+<Abstract_sig.location> SEMICOLON
+<Abstract_sig.location> COLON
+<Abstract_sig.location> COMMA
+<Abstract_sig.location> LPAREN
+<Abstract_sig.location> RPAREN
+<Abstract_sig.location> DOT
+<Abstract_sig.location> SIG_OPEN
+<Abstract_sig.location> END_OF_DEC
+<Abstract_sig.location> TYPE
+<Abstract_sig.location> PREFIX
+<Abstract_sig.location> INFIX
+<Abstract_sig.location> BINDER
+<Abstract_sig.location> LAMBDA
+<Abstract_sig.location> LAMBDA0
+<Abstract_sig.location> ARROW
+<Abstract_sig.location> LIN_ARROW
+<(string*Abstract_sig.location)> IDENT
+<(string*Abstract_sig.location)> SYMBOL
   
-%start <Abstract_syntax.Abstract_sig.t Environment.t> signatures
-%start <(Env.t -> Error.warning list -> (Abstract_syntax.Abstract_sig.term * Error.warning list))> term
-%start <Abstract_syntax.Abstract_sig.term> term_alone
+%start <Environment.content> signatures
+%start <(Env.t -> Error.warning list -> (Abstract_sig.term * Error.warning list))> term
+%start <Abstract_sig.term> term_alone
   
 %relation atom<app<binder atom_type<arrow_type
 
-%local_data_type <(Abstract_syntax.Abstract_sig.t option)>
+%local_data_type <(Abstract_sig.t option)>
   
 %%
   
   signatures :
-| EOI {Environment.empty}
-| signature signatures {Entry.set Entry.Signatures empty_output ; Environment.add (Abstract_sig.name $1) $1 $2}
+| EOI {Environment.Env.empty}
+| signature signatures {Entry.set Entry.Signatures empty_output ; Environment.Env.add (Abstract_sig.name $1) $1 $2}
 
       signature : 
 | SIG_OPEN ident EQUAL sig_entries END_OF_DEC {set Entry.Signature $2 ; $4}
@@ -268,7 +266,4 @@
 %mlitop {
   open Abstract_syntax
   module Env : Set. S with type elt = String.t
-  module Environment : Map.S with type key = String.t
-    
-  type content = Abstract_sig.t Environment.t
 }

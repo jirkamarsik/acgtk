@@ -25,6 +25,9 @@ type error =
   | Lexer_error of lex_error
   | Type_error of type_error
 
+type warning =
+  | Variable_or_constant of (string * Lexing.position * Lexing.position)
+
 
 exception Error of error
 
@@ -33,3 +36,9 @@ val update_loc : Lexing.lexbuf -> string option -> int -> bool -> int -> unit
 val error_msg : error -> Lexing.lexbuf -> string -> string
 
 val error : Lexing.lexbuf -> string -> string
+
+val emit_parse_error : parse_error -> exn
+
+val emit_warning : warning -> string -> string
+
+val warnings_to_string : string -> warning list -> string
