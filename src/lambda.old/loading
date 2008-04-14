@@ -1,0 +1,17 @@
+ledit ocaml -I ../grammars -I ../utils odyl.cma camlp4o.cma pa_extend.cmo 
+#load "utils.cmo";;
+#load "abstract_sig.cmo";;
+#load "gram_sig.cmo";;
+#load "table.cmo";;
+#load "tries.cmo";;
+#use "lambda.ml";;
+#use "signature.ml";;
+#use "typing.ml";;
+#use "syntax.ml";;
+#use "printing.ml";;
+
+let sg::_ = Gram_sig.Gram_sig.parse "../../data/morrill-examples/Abstract_new_syntax.sg";;  
+let csg = Syntax.generate_signature sg;;
+Print.print_signature csg ;;
+
+
