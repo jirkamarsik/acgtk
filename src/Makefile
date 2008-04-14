@@ -1,6 +1,6 @@
 PHONY: test
 
-SUBDIRS= utils grammars lambdas
+SUBDIRS= utils grammars lambda
 
 test:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -r -S -C $(dir) byte;)
