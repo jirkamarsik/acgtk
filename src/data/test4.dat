@@ -1,6 +1,8 @@
 signature toto =
 	a:type;
 	t: a;
+(*	x : a ; *)
 	infix + : a -> a -> a ;
 	c = lambda x.t + x : a -> a;
+	v = c t : a;
 end
