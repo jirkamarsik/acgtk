@@ -1,11 +1,11 @@
 type lex_error =
-  | Unstarted_comment
-  | Unstarted_bracket
+  | Unstarted_comment of (Lexing.position * Lexing.position)
+  | Unstarted_bracket of (Lexing.position * Lexing.position)
   | Mismatch_parentheses of (Lexing.position * Lexing.position)
   | Unclosed_comment  of (Lexing.position * Lexing.position)
 
 type parse_error =
-  | Illformed_term
+(*  | Illformed_term *)
   | Duplicated_term of (string * Lexing.position * Lexing.position)
   | Duplicated_type of (string * Lexing.position * Lexing.position)
   | Binder_expected of (string * Lexing.position * Lexing.position)
@@ -33,7 +33,7 @@ exception Error of error
 
 val update_loc : Lexing.lexbuf -> string option -> int -> bool -> int -> unit
 
-val error_msg : error -> Lexing.lexbuf -> string -> string
+val error_msg : error -> string -> string
 
 val error : Lexing.lexbuf -> string -> string
 

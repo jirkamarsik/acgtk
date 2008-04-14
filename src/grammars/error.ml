@@ -13,13 +13,13 @@ let update_loc lexbuf file line absolute chars =
 			 }
 
 type lex_error =
-  | Unstarted_comment
-  | Unstarted_bracket
+  | Unstarted_comment of (position * position)
+  | Unstarted_bracket of (position * position)
   | Mismatch_parentheses of (position * position)
   | Unclosed_comment of (position * position)
 
 type parse_error =
-  | Illformed_term
+(*  | Illformed_term *)
   | Duplicated_term of (string * Lexing.position * Lexing.position)
   | Duplicated_type of (string * Lexing.position * Lexing.position)
   | Binder_expected of (string * Lexing.position * Lexing.position)
@@ -45,13 +45,13 @@ type warning =
 exception Error of error
 
 let lex_error_to_string = function
-  | Unstarted_comment -> "No comment opened before this closing of comment"
-  | Unstarted_bracket -> "No bracket opened before this right bracket"
+  | Unstarted_comment (_,_) -> "No comment opened before this closing of comment"
+  | Unstarted_bracket (_,_) -> "No bracket opened before this right bracket"
   | Unclosed_comment (_,_) -> "Unclosed comment "
   | Mismatch_parentheses (_,_) -> "Unclosed parenthesis"
 
 let parse_error_to_string = function
-  | Illformed_term -> "Ill-formed term"
+(*  | Illformed_term -> "Ill-formed term" *)
   | Duplicated_type (ty,_,_) ->  Printf.sprintf "Type \"%s\" has already been defined\n" ty
   | Duplicated_term (te,_,_) ->  Printf.sprintf "Term \"%s\" has already been defined\n" te
   | Binder_expected (id,_,_) -> Printf.sprintf "Unknown binder \"%s\"\n" id
@@ -80,7 +80,7 @@ let warning_to_string w =
   match w with
     | Variable_or_constant (s,pos1,pos2) -> Printf.sprintf "\"%s\" is a variable here, but is also declared as constant in the signature" s
 	      
-let error_msg e lexbuf input_file =
+let error_msg e (*lexbuf*) input_file =
   let msg = error_to_string e in
   let pos1,pos2 = match e with
   | Type_error (Already_defined_var(_,s,e)) -> s,e
@@ -89,7 +89,7 @@ let error_msg e lexbuf input_file =
   | Type_error (Not_well_typed_term(_,s,e)) -> s,e
   | Type_error (Not_well_kinded_type(_,s,e)) -> s,e
   | Type_error (Other(s,e)) -> s,e
-  | Parse_error Illformed_term -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
+(*  | Parse_error Illformed_term -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p  *)
   | Parse_error (Duplicated_term (_,s,e)) -> s,e
   | Parse_error (Duplicated_type (_,s,e)) -> s,e
   | Parse_error (Binder_expected (_,s,e)) -> s,e
@@ -97,8 +97,8 @@ let error_msg e lexbuf input_file =
   | Parse_error (Unknown_type (_,s,e)) -> s,e
   | Lexer_error (Unclosed_comment (s,e)) -> s,e
   | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
-  | Lexer_error Unstarted_bracket -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p 
-  | Lexer_error Unstarted_comment -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p in
+  | Lexer_error (Unstarted_bracket (s,e)) -> s,e (*Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p *)
+  | Lexer_error (Unstarted_comment (s,e)) -> s,e (*Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p *) in
   let line2 = pos2.Lexing.pos_lnum in
   let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
   let pos1 = pos1 in

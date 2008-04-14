@@ -26,8 +26,9 @@ signature titi =
 	infix - : a -> a; 
 	prefix + : a -> a; 
 	vv = lambda x . t1 (t2 x) : a -> a ; 
-	v = t1 - t2 : a  ;  
-	vvv = t1 + t2 : a  ;   
+(*	v = t1 - t2 : a  ;   *)
+(*	vvv = t1 + t2 : a  ;   *)
+	v4 = lambda x . t1 x : a ; 
 (*	vv = t bb : a -> a -> a -> a; *)
 (*	v = t + aa + bb + cc : a -> a; *)
 (*	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ; *)

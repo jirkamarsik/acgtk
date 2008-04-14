@@ -10,8 +10,8 @@
 
   let add_bracket loc = brackets:=loc::!brackets
 
-  let remove_bracket () = match !brackets with
-    | [] -> raise (Error (Lexer_error Unstarted_bracket))
+  let remove_bracket l = match !brackets with
+    | [] -> raise (Error (Lexer_error (Unstarted_bracket l)))
     | _::tl -> brackets := tl
 
   let check_brackets () =
@@ -34,7 +34,7 @@ let string = (letter|digit|'_')*
       | [' ' '\t'] {lexer lexbuf}
       | newline {let () = Error.update_loc lexbuf None 1 false 0 in lexer lexbuf}
       | "(*" {comment [loc lexbuf] lexbuf}
-      | "*)" {raise (Error (Lexer_error Unstarted_comment))}
+      | "*)" {raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
       | eof {EOI}
       | ['='] {let () = check_brackets () in EQUAL(loc lexbuf)}
       | [';'] {let () = check_brackets () in SEMICOLON(loc lexbuf)}
@@ -43,8 +43,9 @@ let string = (letter|digit|'_')*
       | ['('] {let l = loc lexbuf in
 	       let () = add_bracket l in
 	       LPAREN l}
-      | [')'] {let () = remove_bracket ()
-	       in RPAREN (loc lexbuf)}
+      | [')'] {let brac_loc = loc lexbuf in
+	       let () = remove_bracket brac_loc in
+	       RPAREN brac_loc}
       | ['.'] {DOT(loc lexbuf)}
       | "signature" {let () = check_brackets () in SIG_OPEN(loc lexbuf)}
       | "end" {let () = check_brackets () in END_OF_DEC(loc lexbuf)}
@@ -61,7 +62,7 @@ let string = (letter|digit|'_')*
       | "*)" {match depth with
 		| [a] -> lexer lexbuf
 		| a::tl -> comment tl lexbuf
-		| [] -> raise (Error (Lexer_error Unstarted_comment))}
+		| [] -> raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
       | "(*" {comment ((loc lexbuf)::depth) lexbuf}
       | eof {raise (Error (Lexer_error (Unclosed_comment (List.hd depth))))}
       | newline {let () = Error.update_loc lexbuf None 1 false 0 in comment depth lexbuf}

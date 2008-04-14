@@ -18,7 +18,7 @@ struct
 	  sgs
       with
 	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e lexbuf filename) in
+	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename) in
 	      Environment.Env.empty
 	| Dyp.Syntax_error -> 
 	    let () = Printf.fprintf stderr "Dyp: %s\n" (Error.error lexbuf filename) in
@@ -31,8 +31,12 @@ struct
 	let () = Printf.printf "I read: %s\n" (Abstract_sig.term_to_string abs_term sg) in
 	  Some abs_term
       with
-	| Error.Error e -> let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e lexbuf "stdin") in None
-	| Dyp.Syntax_error -> let () = Printf.fprintf stderr "Dyp: %s\n" (Error.error lexbuf "stdin") in None
+	| Error.Error e -> 
+	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e "stdin") in
+	      None
+	| Dyp.Syntax_error -> 
+	    let () = Printf.fprintf stderr "Dyp: %s\n" (Error.error lexbuf "stdin") in 
+	      None
 	| End_of_file -> None
     
 

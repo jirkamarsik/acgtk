@@ -22,7 +22,7 @@ signature titi =
 	prefix + : a -> a; 
 	qqqqq = lambda x . t1 - ( +  (t2 x))  : a -> a ;
 	vv = lambda x . t1 (t2 x) : a -> a ; 
-	v = t1 - t2 : a  ;  
+	v = lambda x. (t1 x) - (t2 x) : a  ;  
 	vvv = t1 + t2 : a  ;   
 (*	vv = t bb : a -> a -> a -> a; *)
 (*	v = t + aa + bb + cc : a -> a; *)
