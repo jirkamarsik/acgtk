@@ -51,7 +51,6 @@ let lex_error_to_string = function
   | Mismatch_parentheses (_,_) -> "Unclosed parenthesis"
 
 let parse_error_to_string = function
-(*  | Illformed_term -> "Ill-formed term" *)
   | Duplicated_type (ty,_,_) ->  Printf.sprintf "Type \"%s\" has already been defined\n" ty
   | Duplicated_term (te,_,_) ->  Printf.sprintf "Term \"%s\" has already been defined\n" te
   | Binder_expected (id,_,_) -> Printf.sprintf "Unknown binder \"%s\"\n" id
@@ -89,7 +88,6 @@ let error_msg e (*lexbuf*) input_file =
   | Type_error (Not_well_typed_term(_,s,e)) -> s,e
   | Type_error (Not_well_kinded_type(_,s,e)) -> s,e
   | Type_error (Other(s,e)) -> s,e
-(*  | Parse_error Illformed_term -> Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p  *)
   | Parse_error (Duplicated_term (_,s,e)) -> s,e
   | Parse_error (Duplicated_type (_,s,e)) -> s,e
   | Parse_error (Binder_expected (_,s,e)) -> s,e
@@ -97,8 +95,8 @@ let error_msg e (*lexbuf*) input_file =
   | Parse_error (Unknown_type (_,s,e)) -> s,e
   | Lexer_error (Unclosed_comment (s,e)) -> s,e
   | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
-  | Lexer_error (Unstarted_bracket (s,e)) -> s,e (*Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p *)
-  | Lexer_error (Unstarted_comment (s,e)) -> s,e (*Lexing.lexeme_start_p lexbuf,lexbuf.Lexing.lex_curr_p *) in
+  | Lexer_error (Unstarted_bracket (s,e)) -> s,e
+  | Lexer_error (Unstarted_comment (s,e)) -> s,e in
   let line2 = pos2.Lexing.pos_lnum in
   let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
   let pos1 = pos1 in
