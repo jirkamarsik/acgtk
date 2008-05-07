@@ -3,6 +3,7 @@ type lex_error =
   | Unstarted_bracket of (Lexing.position * Lexing.position)
   | Mismatch_parentheses of (Lexing.position * Lexing.position)
   | Unclosed_comment  of (Lexing.position * Lexing.position)
+  | Expect of (string * Lexing.position * Lexing.position)
 
 type parse_error =
 (*  | Illformed_term *)

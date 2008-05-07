@@ -6,7 +6,7 @@ struct
     let in_ch = open_in filename in
     let lexbuf = Lexing.from_channel in_ch in
       try
-	let () = Printf.printf "Parsing \"%s\"..." filename in
+	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
 	let sgs = fst (List.hd (Parser.signatures Lexer.lexer lexbuf)) in
 	let () = Printf.printf " Done.\n" in
 	let () =

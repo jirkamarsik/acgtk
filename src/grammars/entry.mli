@@ -1,25 +1,30 @@
 module Entry :
 sig
-  type t =
-    | Signatures
-    | Signature
-    | Sig_entries
-    | Sig_entry
-    | Type_decl
-    | Type_def
-    | Term_decl
-    | Term_def
-    | Comma_ids
-    | Type_exp
-    | Atomic_type
-    | Term_dec_start
-    | Term_def_start
-    | Term
-    | Binder
-    | Idents
-    | Atomic_term
-    | Application
-	
-  val set : t -> string -> unit
+  type data
+
+  type valuation =
+    | Sig_kwd
+    | Id
+    | Equal
+    | Comma
+    | Colon
+    | Type_kwd
+    | End_kwd
+    | Semi_colon
+    | Type_or_term
+    | Prefix_kwd
+    | Infix_kwd
+    | Binder_kwd
+    | Sym
+
+ 
+  exception Expect of valuation list
+
+  val start_data : unit -> data
+
+  val transition : data -> valuation -> data
+
+  val valuation_to_string : valuation -> string
+
       
 end

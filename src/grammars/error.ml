@@ -17,6 +17,7 @@ type lex_error =
   | Unstarted_bracket of (position * position)
   | Mismatch_parentheses of (position * position)
   | Unclosed_comment of (position * position)
+  | Expect of (string * Lexing.position * Lexing.position)
 
 type parse_error =
 (*  | Illformed_term *)
@@ -25,6 +26,7 @@ type parse_error =
   | Binder_expected of (string * Lexing.position * Lexing.position)
   | Unknown_constant of (string * Lexing.position * Lexing.position)
   | Unknown_type of (string * Lexing.position * Lexing.position)
+(*  | Infix_in_prefix_pos of (string * Lexing.position * Lexing.position) *)
 
 type type_error =
   | Already_defined_var of (string * Lexing.position * Lexing.position)
@@ -47,8 +49,9 @@ exception Error of error
 let lex_error_to_string = function
   | Unstarted_comment (_,_) -> "No comment opened before this closing of comment"
   | Unstarted_bracket (_,_) -> "No bracket opened before this right bracket"
-  | Unclosed_comment (_,_) -> "Unclosed comment "
+  | Unclosed_comment (_,_) -> "Unclosed comment"
   | Mismatch_parentheses (_,_) -> "Unclosed parenthesis"
+  | Expect (s,_,_) -> Printf.sprintf "%s is expected" s
 
 let parse_error_to_string = function
   | Duplicated_type (ty,_,_) ->  Printf.sprintf "Type \"%s\" has already been defined\n" ty
@@ -95,6 +98,7 @@ let error_msg e (*lexbuf*) input_file =
   | Parse_error (Unknown_type (_,s,e)) -> s,e
   | Lexer_error (Unclosed_comment (s,e)) -> s,e
   | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
+  | Lexer_error (Expect (_,s,e)) -> s,e
   | Lexer_error (Unstarted_bracket (s,e)) -> s,e
   | Lexer_error (Unstarted_comment (s,e)) -> s,e in
   let line2 = pos2.Lexing.pos_lnum in
