@@ -8,7 +8,7 @@ struct
       try
 	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
 	let sgs = fst (List.hd (Parser.signatures Lexer.lexer lexbuf)) in
-	let () = Printf.printf " Done.\n" in
+	let () = Printf.printf "Done.\n" in
 	let () =
 	  Environment.Env.iter 
 	    (fun _ sg -> 

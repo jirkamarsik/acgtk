@@ -153,7 +153,7 @@
       sig_entry :
 | type_declaration @{$1,[Local_data dyp.last_local_data]}
 | type_definition @{$1,[Local_data dyp.last_local_data]}
-| term_declaration @{$1,[Local_data dyp.last_local_data;Keep_grammar true;Next_grammar stdout]}
+| term_declaration @{$1,[Local_data dyp.last_local_data;Keep_grammar true]}
 | term_definition @{$1,[Local_data dyp.last_local_data;Keep_grammar true]}
 
       

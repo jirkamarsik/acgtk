@@ -64,15 +64,15 @@ let parse_error_to_string = function
 
 let type_error_to_string = function
   | Already_defined_var(s,_,_) ->
-      Printf.sprintf "Var \"%s\" is already defined\n" s
+      Printf.sprintf "Var \"%s\" is already defined" s
   | Not_defined_var(s,_,_) -> 
-      Printf.sprintf "Var \"%s\" is not defined\n" s
+      Printf.sprintf "Var \"%s\" is not defined" s
   | Not_defined_const(s,_,_) -> 
-      Printf.sprintf "Const \"%s\" is not defined\n" s
+      Printf.sprintf "Const \"%s\" is not defined" s
   | Not_well_typed_term(s,_,_) ->
-      Printf.sprintf "Term \"%s\" not well typed\n" s
+      Printf.sprintf "Term \"%s\" not well typed" s
   | Not_well_kinded_type(s,_,_) ->
-      Printf.sprintf "Type \"%s\" not well kinded\n" s
+      Printf.sprintf "Type \"%s\" not well kinded" s
   | Other(_,_) -> "Not yet implemented"
 
 let error_to_string = function
@@ -110,10 +110,10 @@ let error_msg e (*lexbuf*) input_file =
   let line1 = pos1.Lexing.pos_lnum in
   let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
     if line1=line2 then
-      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nSyntax error: %s\n"
+      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nSyntax error: %s"
         input_file line2 col1 col2 msg
     else
-      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nSyntax error: %s\n"
+      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nSyntax error: %s"
         input_file line1 col1 line2 col2 msg
 
 let error lexbuf input_file =
@@ -123,10 +123,10 @@ let error lexbuf input_file =
   let line1 = pos1.Lexing.pos_lnum in
   let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
     if line1=line2 then
-      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nSyntax error\n"
+      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nSyntax error"
         input_file line2 col1 col2
     else
-      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nSyntax error\n"
+      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nSyntax error"
         input_file line1 col1 line2 col2
 
 
@@ -143,10 +143,10 @@ let error lexbuf input_file =
 	  let line1 = pos1.Lexing.pos_lnum in
 	  let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
 	    if line1=line2 then
-	      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nWarning: %s\n"
+	      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nWarning: %s"
 		input_file line2 col1 col2 msg
 	    else
-	      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nWarning: %s\n"
+	      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nWarning: %s"
 		input_file line1 col1 line2 col2 msg
 
   let warnings_to_string input_file ws = Utils.string_of_list "\n" (fun w -> emit_warning w input_file) ws
