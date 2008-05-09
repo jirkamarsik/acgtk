@@ -42,6 +42,7 @@ struct
 
 
   type valuation =
+    | EOI
     | Sig_kwd
     | Id
     | Equal
@@ -58,6 +59,7 @@ struct
 
 
   let valuation_to_string = function
+    | EOI -> "End of input"
     | Sig_kwd -> "\"signature\""
     | Id -> "Identifier"
     | Equal -> "\"=\""
@@ -68,7 +70,7 @@ struct
     | Semi_colon -> "\";\""
     | Type_or_term -> "type or term"
     | Prefix_kwd -> "\"prefix\""
-    | Infix_kwd -> "\"Infix\""
+    | Infix_kwd -> "\"infix\""
     | Binder_kwd -> "\"binder\""
     | Sym -> "symbol"
 
@@ -77,6 +79,8 @@ struct
   let start_data () = No_sig_dec
 
   let transition q v = match q,v with
+    | No_sig_dec , EOI ->
+	No_sig_dec
     | No_sig_dec , Sig_kwd ->
 	Sig No_sig_dec_id
     | No_sig_dec , _ -> 
@@ -194,6 +198,7 @@ struct
 
     | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term)))), _ ->
 	raise (Expect [End_kwd;Semi_colon])
+
 
 
 

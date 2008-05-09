@@ -1,0 +1,9 @@
+signature toto =
+	a:type ;
+	t1,t2:a;
+	prefix - : a -> a; 
+	v = t1 - t2 : a  ;
+	infix + : a -> a -> a;
+	vv = t1 + t2 + - t2 : a;
+
+end

@@ -26,6 +26,7 @@ type parse_error =
   | Binder_expected of (string * Lexing.position * Lexing.position)
   | Unknown_constant of (string * Lexing.position * Lexing.position)
   | Unknown_type of (string * Lexing.position * Lexing.position)
+  | Missing_arg_of_Infix of (string * Lexing.position * Lexing.position)
 (*  | Infix_in_prefix_pos of (string * Lexing.position * Lexing.position) *)
 
 type type_error =
@@ -54,11 +55,12 @@ let lex_error_to_string = function
   | Expect (s,_,_) -> Printf.sprintf "%s is expected" s
 
 let parse_error_to_string = function
-  | Duplicated_type (ty,_,_) ->  Printf.sprintf "Type \"%s\" has already been defined\n" ty
-  | Duplicated_term (te,_,_) ->  Printf.sprintf "Term \"%s\" has already been defined\n" te
-  | Binder_expected (id,_,_) -> Printf.sprintf "Unknown binder \"%s\"\n" id
-  | Unknown_constant (id,_,_) -> Printf.sprintf "Unknown constant \"%s\"\n" id
-  | Unknown_type (id,_,_) -> Printf.sprintf "Unknown atomic type \"%s\"\n" id
+  | Duplicated_type (ty,_,_) ->  Printf.sprintf "Type \"%s\" has already been defined" ty
+  | Duplicated_term (te,_,_) ->  Printf.sprintf "Term \"%s\" has already been defined" te
+  | Binder_expected (id,_,_) -> Printf.sprintf "Unknown binder \"%s\"" id
+  | Unknown_constant (id,_,_) -> Printf.sprintf "Unknown constant \"%s\"" id
+  | Unknown_type (id,_,_) -> Printf.sprintf "Unknown atomic type \"%s\"" id
+  | Missing_arg_of_Infix  (id,_,_) -> Printf.sprintf "\"%s\" is defined as infix but used here with less than two arguments" id
 
 let type_error_to_string = function
   | Already_defined_var(s,_,_) ->
@@ -96,6 +98,7 @@ let error_msg e (*lexbuf*) input_file =
   | Parse_error (Binder_expected (_,s,e)) -> s,e
   | Parse_error (Unknown_constant (_,s,e)) -> s,e
   | Parse_error (Unknown_type (_,s,e)) -> s,e
+  | Parse_error (Missing_arg_of_Infix (_,s,e)) -> s,e
   | Lexer_error (Unclosed_comment (s,e)) -> s,e
   | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
   | Lexer_error (Expect (_,s,e)) -> s,e

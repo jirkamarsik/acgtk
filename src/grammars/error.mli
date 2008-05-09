@@ -12,6 +12,7 @@ type parse_error =
   | Binder_expected of (string * Lexing.position * Lexing.position)
   | Unknown_constant of (string * Lexing.position * Lexing.position)
   | Unknown_type of (string * Lexing.position * Lexing.position)
+  | Missing_arg_of_Infix of (string * Lexing.position * Lexing.position)
 
 type type_error =
   | Already_defined_var of (string * Lexing.position * Lexing.position)

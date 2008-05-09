@@ -49,7 +49,8 @@ let string = (letter|digit|'_')*
       | newline {let () = Error.update_loc lexbuf None 1 false 0 in lexer lexbuf}
       | "(*" {comment [loc lexbuf] lexbuf}
       | "*)" {raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
-      | eof {EOI}
+      | eof {let () = update_data Entry.EOI (loc lexbuf) in
+	       EOI}
       | ['='] {let () = update_data Entry.Equal (loc lexbuf) in
 	       let () = check_brackets () in
 		 EQUAL(loc lexbuf)}

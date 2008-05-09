@@ -4,22 +4,24 @@
 	En particulier, donner le type d'expression attendue *)
 
 signature essai =
-	a: type ;
+	a,b: type ;
+	c: a ;
 
 (* message incompréhensible : manque ":type" *)
-(*	string = a -> a ; *)
+	string = a -> a : type;
+	concat = c : b ;
 
 
 (* message incompréhensible : dire que + est infix, idem prefix *)
 	infix + : a -> a -> a;
-(*	c = lambda x . x + : a *)
-(*	c = lambda x.  + x : a *)
+(*	c = lambda x . x + : a  *)
+	c = lambda x.  + x : a 
 
 (* dire binder expected, pas reconnu *)
-(*	c = labda x.x : a->a ; *)
+(*	c = labda x.x : a->a ;  *)
 
 (* messages incompréhensibles *)
-(*	infix - : a -> ; *)
+	infix - : a -> ; 
 (*	infix - : -> a ; *)
 
 

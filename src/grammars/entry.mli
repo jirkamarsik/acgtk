@@ -3,6 +3,7 @@ sig
   type data
 
   type valuation =
+    | EOI
     | Sig_kwd
     | Id
     | Equal
