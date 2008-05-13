@@ -52,7 +52,7 @@ let lex_error_to_string = function
   | Unstarted_bracket (_,_) -> "No bracket opened before this right bracket"
   | Unclosed_comment (_,_) -> "Unclosed comment"
   | Mismatch_parentheses (_,_) -> "Unclosed parenthesis"
-  | Expect (s,_,_) -> Printf.sprintf "%s is expected" s
+  | Expect (s,_,_) -> Printf.sprintf "%s expected" s
 
 let parse_error_to_string = function
   | Duplicated_type (ty,_,_) ->  Printf.sprintf "Type \"%s\" has already been defined" ty

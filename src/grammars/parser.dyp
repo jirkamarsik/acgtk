@@ -51,6 +51,7 @@
     let s = Entry.valuation_to_string v in
       raise (Error.Error (Error.Lexer_error ((Error.Expect (s,p1,p2)))))
 
+(*
   let add_prefix_rule sym =
     Dyp_symbols.atomic_term,
      [Ter Dyp_symbols.t_SYMBOL;
@@ -99,7 +100,7 @@
 		       (Abstract_sig.App (Abstract_sig.App(Abstract_sig.Const(id,l),u1,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) l),u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))),ws2),[])
 	   | true,_ -> raise Dyp.Giveup
 	   | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2))))
-
+*)
 }
 
 
@@ -223,14 +224,18 @@
 
 	  term_dec_start : 
 | comma_ids {List.map (fun (id,loc) -> (id,Abstract_sig.Default,loc)) $1}
-| PREFIX SYMBOL[sym,l] @{[sym,Abstract_sig.Prefix,l],[Add_rules [(add_prefix_rule sym,add_prefix_action sym)]]} 
-| INFIX SYMBOL[sym,l] @{[sym,Abstract_sig.Infix,l],[Add_rules [(add_infix_rule sym,add_infix_action sym)]]}
+/*| PREFIX SYMBOL[sym,l] @{[sym,Abstract_sig.Prefix,l],[Add_rules [(add_prefix_rule sym,add_prefix_action sym)]]} 
+| INFIX SYMBOL[sym,l] @{[sym,Abstract_sig.Infix,l],[Add_rules [(add_infix_rule sym,add_infix_action sym)]]} */
+| PREFIX SYMBOL[sym,l] {[sym,Abstract_sig.Prefix,l]} 
+| INFIX SYMBOL[sym,l] {[sym,Abstract_sig.Infix,l]}
 | BINDER IDENT {[fst $2,Abstract_sig.Binder,snd $2]}
 
       term_def_start : 
 | IDENT {fst $1,Abstract_sig.Default,snd $1}
-| PREFIX SYMBOL[sym,l] @{(sym,Abstract_sig.Prefix,l),[Add_rules [(add_prefix_rule sym,add_prefix_action sym)]]}
-| INFIX SYMBOL[sym,l] @{(sym,Abstract_sig.Infix,l),[Add_rules [(add_infix_rule sym,add_infix_action sym)]]}
+/*| PREFIX SYMBOL[sym,l] @{(sym,Abstract_sig.Prefix,l),[Add_rules [(add_prefix_rule sym,add_prefix_action sym)]]}
+| INFIX SYMBOL[sym,l] @{(sym,Abstract_sig.Infix,l),[Add_rules [(add_infix_rule sym,add_infix_action sym)]]}*/
+| PREFIX SYMBOL[sym,l] {(sym,Abstract_sig.Prefix,l)}
+| INFIX SYMBOL[sym,l] {(sym,Abstract_sig.Infix,l)}
 | BINDER IDENT {fst $2,Abstract_sig.Binder,snd $2}
 
 
@@ -251,7 +256,18 @@
 | term EOI {fst ($1 Env.empty [])}	  
 
 	  term :
-| binder idents DOT term {fun env ws -> $1 $2 $4 env ws } binder 
+/*| binder idents DOT term {fun env ws -> $1 $2 $4 env ws } binder */
+| LAMBDA0  idents DOT term {
+    let sg = get_value dyp.last_local_data in
+      fun env ws -> multiple_abs env ws Abstract_sig.Linear $1 $2 $4 (fun x -> x)} binder
+| IDENT  idents DOT term {
+    let sg = get_value dyp.last_local_data in
+    let binder,((p1,p2) as l) = $1 in
+      fun env ws -> 
+	match Abstract_sig.is_constant binder sg with
+	  | true,Some Abstract_sig.Binder -> multiple_bind env ws (Abstract_sig.Const(binder,l)) (snd $1) $2 $4 (fun x -> x)
+	  | _ -> raise (Error.emit_parse_error (Error.Binder_expected (binder,p1,p2)))
+	  (*| _ -> raise Dyp.Giveup*) } binder 
 | application(<=app) {$1} app 
 | atomic_term (<=atom) SYMBOL term (<=app) {let sg = get_value dyp.last_local_data in
 					     let id,((pos1,pos2) as l) = $2 in
@@ -275,7 +291,7 @@
 	       | false,true -> Abstract_sig.Const (id,l),ws
 	       | false,false ->raise (Error.emit_parse_error (Error.Unknown_constant (id,fst l,snd l)))} atom
 | LPAREN term RPAREN {$2} atom
-/*| SYMBOL term {let sg = get_value dyp.last_local_data in
+| SYMBOL term {let sg = get_value dyp.last_local_data in
 	       let id,((pos1,pos2) as l) = $1 in
 		 match Abstract_sig.is_constant id sg with
 		   | true,Some (Abstract_sig.Prefix) -> 
@@ -283,7 +299,7 @@
 			  let u2,ws2 = $2 env ws in
 			    (Abstract_sig.App(Abstract_sig.Const(id,l),u2,Abstract_sig.new_loc l (Abstract_sig.get_term_location u2))),ws2)
 		   | true,_ -> raise Dyp.Giveup
-		   | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2)))} atom */
+		   | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2)))} atom 
       
       application :
 | atomic_term(<=atom) {$1} app
@@ -297,14 +313,11 @@
 | IDENT idents {$1::$2}
 
       binder :
-| LAMBDA0 {let sg = get_value dyp.last_local_data in fun ids t env ws -> (multiple_abs env ws Abstract_sig.Linear $1 ids t (fun x -> x))}
+| LAMBDA0 {let sg = get_value dyp.last_local_data in fun ids t env ws -> (multiple_abs env ws Abstract_sig.Linear $1 ids t (fun x -> x))} binder
 | IDENT {let sg = get_value dyp.last_local_data in let binder,((p1,p2) as l) = $1 in
 	   match Abstract_sig.is_constant binder sg with
 	     | true,Some Abstract_sig.Binder -> (fun ids t env ws-> (multiple_bind env ws (Abstract_sig.Const(binder,l)) (snd $1) ids t (fun x -> x)))
-	     | _ -> raise Dyp.Giveup
-(*	     | true,_ -> raise Dyp.Giveup
-	     | _  -> raise (Error.emit_parse_error (Error.Binder_expected (binder,p1,p2))) *)} 
-    /*| LAMBDA {Abstract_sig.Non_linear} */ 
+	     | _ -> raise Dyp.Giveup } binder
 
 
 %mlitop {

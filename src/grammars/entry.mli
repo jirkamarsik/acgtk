@@ -14,14 +14,23 @@ sig
     | Type_kwd
     | End_kwd
     | Semi_colon
-    | Type_or_term
+    | Type_or_term of type_or_term_tokens
     | Prefix_kwd
     | Infix_kwd
     | Binder_kwd
     | Sym
+  and type_or_term_tokens =
+    | LPAR
+    | RPAR
+    | DOT
+    | LAMBDA
+    | ARROW
+
 
  
   exception Expect of valuation list
+
+(*  exception Unexpected_token of type_or_term_kind *)
 
   val start_data : unit -> data
 

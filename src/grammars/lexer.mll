@@ -76,15 +76,15 @@ let string = (letter|digit|'_')*
       | [','] {let () = update_data Entry.Comma (loc lexbuf) in
 	       let () = check_brackets () in
 		 COMMA(loc lexbuf)}
-      | ['('] {let () = update_data Entry.Type_or_term (loc lexbuf) in
+      | ['('] {let () = update_data (Entry.Type_or_term Entry.LPAR) (loc lexbuf) in
 	       let l = loc lexbuf in
 	       let () = add_bracket l in
 		 LPAREN l}
-      | [')'] {let () = update_data Entry.Type_or_term (loc lexbuf) in
+      | [')'] {let () = update_data (Entry.Type_or_term Entry.RPAR) (loc lexbuf) in
 	       let brac_loc = loc lexbuf in
 	       let () = remove_bracket brac_loc in
 		 RPAREN brac_loc}
-      | ['.'] {let () = update_data Entry.Type_or_term (loc lexbuf) in
+      | ['.'] {let () = update_data (Entry.Type_or_term Entry.DOT) (loc lexbuf) in
 		 DOT(loc lexbuf)}
       | "signature" {let () = update_data Entry.Sig_kwd (loc lexbuf) in
 		     let () = check_brackets () in
@@ -104,11 +104,11 @@ let string = (letter|digit|'_')*
       | "binder" {let () = update_data Entry.Binder_kwd (loc lexbuf) in
 		  let () = check_brackets () in
 		    BINDER(loc lexbuf)}
-      | "lambda" {let () = update_data Entry.Type_or_term (loc lexbuf) in
+      | "lambda" {let () = update_data (Entry.Type_or_term Entry.LAMBDA) (loc lexbuf) in
 		    LAMBDA0(loc lexbuf)}
-      | "Lambda" {let () = update_data Entry.Type_or_term (loc lexbuf) in
+      | "Lambda" {let () = update_data (Entry.Type_or_term Entry.LAMBDA) (loc lexbuf) in
 		    LAMBDA(loc lexbuf)}
-      | "->" {let () = update_data Entry.Type_or_term (loc lexbuf) in
+      | "->" {let () = update_data (Entry.Type_or_term Entry.ARROW) (loc lexbuf) in
 		LIN_ARROW(loc lexbuf)}
       | letter string {let () = update_data Entry.Id (loc lexbuf) in
 			 IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
