@@ -7,7 +7,8 @@ struct
     let lexbuf = Lexing.from_channel in_ch in
       try
 	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
-	let sgs = fst (List.hd (Parser.signatures Lexer.lexer lexbuf)) in
+	let () = Lexer.set_to_data () in
+	let sgs = (fst (List.hd (Parser.signatures Lexer.lexer lexbuf))) (Environment.Env.empty) in
 	let () = Printf.printf "Done.\n" in
 	let () =
 	  Environment.Env.iter 
@@ -27,6 +28,7 @@ struct
   let term t sg = 
     let lexbuf = Lexing.from_string t in
       try 
+	let () = Lexer.set_to_term () in
 	let abs_term = fst (List.hd(Parser.term_alone ~local_data:(Some sg) Lexer.lexer lexbuf)) in
 	let () = Printf.printf "I read: %s\n" (Abstract_sig.term_to_string abs_term sg) in
 	  Some abs_term

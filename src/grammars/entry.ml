@@ -40,6 +40,7 @@ struct
     | No_type_or_term_in_def
     | Type_or_term_in_def
 
+  type term = type_or_term_in_def
 
   type valuation =
     | EOI
@@ -78,7 +79,21 @@ struct
 
   let start_data () = No_sig_dec
 
-  let transition q v = match q,v with
+  let start_term () = No_type_or_term_in_def
+
+
+  let term_transition q v = match q,v with
+    | No_type_or_term_in_def , Id -> Type_or_term_in_def
+    | No_type_or_term_in_def , Type_or_term -> Type_or_term_in_def
+    | No_type_or_term_in_def , Sym -> Type_or_term_in_def
+    | No_type_or_term_in_def , _ -> raise (Expect [Type_or_term])
+    | Type_or_term_in_def , Id -> Type_or_term_in_def
+    | type_or_term_in_def , Type_or_term -> Type_or_term_in_def
+    | type_or_term_in_def , Sym -> Type_or_term_in_def
+    | type_or_term_in_def , EOI -> No_type_or_term_in_def
+    | type_or_term_in_def , _ -> raise (Expect [Type_or_term])
+
+  let data_transition q v = match q,v with
     | No_sig_dec , EOI ->
 	No_sig_dec
     | No_sig_dec , Sig_kwd ->

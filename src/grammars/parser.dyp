@@ -125,7 +125,7 @@
 <(string*Abstract_sig.location)> IDENT
 <(string*Abstract_sig.location)> SYMBOL
   
-%start <Environment.content> signatures
+%start <(Environment.content -> Environment.content)> signatures
 %start <(Env.t -> Error.warning list -> (Abstract_sig.term * Error.warning list))> term
 %start <Abstract_sig.term> term_alone
   
@@ -136,8 +136,8 @@
 %%
   
   signatures :
-| EOI {Environment.Env.empty}
-| signature signatures {Environment.Env.add (Abstract_sig.name $1) $1 $2}
+| EOI {fun env -> env}
+| signature[s] signatures[e] {fun env -> e (Environment.Env.add (Abstract_sig.name s) s env)}
 
       signature : 
 | SIG_OPEN ident EQUAL sig_entries END_OF_DEC {$4}

@@ -2,6 +2,8 @@ module Entry :
 sig
   type data
 
+  type term
+
   type valuation =
     | EOI
     | Sig_kwd
@@ -23,7 +25,11 @@ sig
 
   val start_data : unit -> data
 
-  val transition : data -> valuation -> data
+  val start_term : unit -> term
+
+  val data_transition : data -> valuation -> data
+
+  val term_transition : term -> valuation -> term
 
   val valuation_to_string : valuation -> string
 

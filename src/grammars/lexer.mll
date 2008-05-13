@@ -3,6 +3,11 @@
   open Entry
   open Parser
 
+
+  type lexing_of =
+    | Data of Entry.data
+    | Term of Entry.term
+
   let pr lexbuf = Printf.printf "%s\n%!" (Lexing.lexeme lexbuf)
 
   let loc lexbuf = Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf
@@ -21,12 +26,20 @@
       | (p1,p2)::__ -> raise (Error (Lexer_error (Mismatch_parentheses (p1,p2))))
 	
 	  
-  let data = ref (Entry.start_data ())
+  let data = ref (Data (Entry.start_data ()))
+
+  let set_to_data () =
+    data := Data (Entry.start_data ())
+
+  let set_to_term () =
+    data := Term (Entry.start_term ())
 
 
   let update_data v (p1,p2) =
     try
-      data := Entry.transition !data v
+      match !data with
+	| Data d -> data := Data (Entry.data_transition d v)
+	| Term t -> data := Term (Entry.term_transition t v)
     with
       | Entry.Expect l -> 
 	  let s = Utils.string_of_list " or " Entry.valuation_to_string l in
