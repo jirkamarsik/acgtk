@@ -338,15 +338,7 @@ struct
 		  | (Unset|Type),(Id|Type_or_term LPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term k_o_t)))))
 		  | _ -> raise (Expect [Type_or_term ARROW]))
 	   | Type_or_term DOT -> raise (Expect [Type_or_term ARROW])
-	       (*		   (match k_o_t with
-				   | Type,_ -> raise (Expect [Type_or_term ARROW])
-				   | Unset|Term -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term Term)))))
-				   | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))*)
 	   | Type_or_term LAMBDA -> raise (Expect [Type_or_term ARROW])
-	       (*		   (match k_o_t with
-				   | Type,_ -> raise (Expect [Type_or_term ARROW])
-				   | Unset|Term -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term Term)))))
-				   | Nothing,_ -> raise (Expect [End_kwd;Semi_colon])) *)
 	   | Type_or_term ARROW as a-> 
 	       (match k_o_t with
 		  | Term,_ -> raise (Expect [Type_or_term DOT])
@@ -354,141 +346,12 @@ struct
 		  | (Unset|Type),_ -> raise (Expect [Id;Type_or_term ARROW])
 		  | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
 	   | Sym -> raise (Expect [Type_or_term ARROW])
-	       (*		   (match k_o_t with
-				   | Type,_ -> raise (Expect [Type_or_term ARROW])
-				   | Unset|Term -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term Term)))))
-				   | Nothing,_ -> raise (Expect [End_kwd;Semi_colon])) *)
 	   | _ -> raise (Expect l))
 
 
   let data_transition q v =
     let _,result = data_expectation q in
       result v
-
-
-(*
-  let data_transition q v = match q,v with
-    | No_sig_dec , EOI ->
-	No_sig_dec
-    | No_sig_dec , Sig_kwd ->
-	Sig No_sig_dec_id
-    | No_sig_dec , _ -> 
-	raise (Expect [Sig_kwd])
-
-    | Sig No_sig_dec_id , Id ->
-	Sig (Sig_dec_id No_sig_dec_equal)
-    | Sig No_sig_dec_id , _ ->
-	raise (Expect [Id])
-
-    | Sig (Sig_dec_id No_sig_dec_equal) , Equal ->
-	Sig (Sig_dec_id (Sig_dec_equal (No_entry)))
-    | Sig (Sig_dec_id No_sig_dec_equal) , _ ->
-	raise (Expect [Equal])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (No_entry))) , Id ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list)))
-    | Sig (Sig_dec_id (Sig_dec_equal (No_entry))) , Prefix_kwd ->
-	Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix No_symbol)))
-    | Sig (Sig_dec_id (Sig_dec_equal (No_entry))) , Infix_kwd ->
-	Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix No_symbol)))
-    | Sig (Sig_dec_id (Sig_dec_equal (No_entry))) , Binder_kwd -> 
-	Sig (Sig_dec_id (Sig_dec_equal (Binder No_binder_id)))
-    | Sig (Sig_dec_id (Sig_dec_equal (No_entry))) , End_kwd ->
-	No_sig_dec
-    | Sig (Sig_dec_id (Sig_dec_equal (No_entry))) , _ -> 
-	raise (Expect [Id;Prefix_kwd;Infix_kwd;Binder_kwd;End_kwd])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list))), Comma->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id Comma_in_id_list)))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list))), Colon ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list))), Equal  ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list))), _ ->
-	raise (Expect [Comma;Colon])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id Comma_in_id_list))) , Id ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list)))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id Comma_in_id_list))) ,  _-> 
-	raise (Expect [Id])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term)))) , Type_kwd ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term)))) , Type_or_term ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term))))
-(*	raise (Expect [Type_kwd]) *)
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term)))) , Id ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term))))
-(*	raise (Expect [Type_kwd]) *)
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term)))) , Sym ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term)))) , _ ->
-	raise (Expect [Type_kwd])
-	  
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def)))) , Type_or_term ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def)))) , Id ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def)))) , Sym ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def)))) , _ ->
-	raise (Expect [Type_or_term])
-
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def)))) , Colon ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def)))) , Type_or_term ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def)))) , Id ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def)))) , Sym ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def Type_or_term_in_def)))) , _ ->
-	raise (Expect [Colon])
-	  
-
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix No_symbol))), Sym -> 
-	Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix Symbol)))
-    | Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix No_symbol))), _ ->
-	raise (Expect [Sym])
-
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix Symbol))) , Colon ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix Symbol))) , Equal ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix Symbol))) , _ ->
-	raise (Expect [Colon;Equal])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Binder No_binder_id))) , Id ->
-	Sig (Sig_dec_id (Sig_dec_equal (Binder Binder_id)))
-    | Sig (Sig_dec_id (Sig_dec_equal (Binder No_binder_id))) , _ -> 
-	raise (Expect [Id])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Binder Binder_id))) , Equal ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def No_type_or_term_in_def))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Binder Binder_id))) , Colon ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment No_type_kwd_or_type_or_term))))
-    | Sig (Sig_dec_id (Sig_dec_equal (Binder Binder_id))) , _ ->
-	raise (Expect [Colon;Equal])
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term)))), End_kwd ->
-	No_sig_dec
-
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term)))), Semi_colon ->
-	Sig (Sig_dec_id (Sig_dec_equal No_entry))
-
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term)))), (Type_or_term|Id|Sym) ->
-	Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term))))
-
-    | Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment Type_kwd_or_type_or_term)))), _ ->
-	raise (Expect [End_kwd;Semi_colon])
-
-*)
 
 
 end

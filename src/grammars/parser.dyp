@@ -8,12 +8,7 @@
 
   exception No_sig
 
-(*  let () = dypgen_verbose :=2 *)
-
-
   let local_data = None
-
-(*  let pr s = Printf.fprintf stderr "%s\n%!" s *)
 
   let abs x l t = function
     | Abstract_sig.Linear -> Abstract_sig.LAbs (x,t,l)
@@ -51,56 +46,6 @@
     let s = Entry.valuation_to_string v in
       raise (Error.Error (Error.Lexer_error ((Error.Expect (s,p1,p2)))))
 
-(*
-  let add_prefix_rule sym =
-    Dyp_symbols.atomic_term,
-     [Ter Dyp_symbols.t_SYMBOL;
-      Non_ter (Dyp_symbols.term,No_priority)],
-    Dyp_priority_data.atom
-
-  let add_prefix_action symbol =
-    (fun dyp params ->
-       let sg = get_value dyp.last_local_data in
-       let sym,t = match params with
-	 | [Obj_SYMBOL ((id,_) as s);Obj_term t] when id = symbol-> s, t
-	 | [Obj_SYMBOL _; Obj_term _] -> raise Dyp.Giveup
-	 | _ -> failwith "Could not add prefix action" in
-       let id,((pos1,pos2) as l) = sym in
-	 match Abstract_sig.is_constant id sg with
-	   | true,Some (Abstract_sig.Prefix) -> 
-	       (Obj_atomic_term
-		  (fun env ws ->
-		     let u2,ws2 = t env ws in
-		       (Abstract_sig.App(Abstract_sig.Const(id,l),u2,Abstract_sig.new_loc l (Abstract_sig.get_term_location u2))),ws2),[])
-	   | true,_ -> raise Dyp.Giveup
-	   | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2))))
-      
-      
-  let add_infix_rule sym =
-    Dyp_symbols.term,
-    [Non_ter (Dyp_symbols.term,Eq_priority Dyp_priority_data.atom);
-     Ter Dyp_symbols.t_SYMBOL;
-     Non_ter (Dyp_symbols.term,Eq_priority Dyp_priority_data.app)],
-    Dyp_priority_data.app
-      
-  let add_infix_action symbol =
-    (fun dyp params ->
-       let sg = get_value dyp.last_local_data in
-       let t1,sym,t2 = match params with
-	 | [Obj_term t_1;Obj_SYMBOL ((id,_) as s);Obj_term t_2] when id = symbol-> t_1,s, t_2
-	 | [Obj_term _;Obj_SYMBOL _; Obj_term _] -> raise Dyp.Giveup
-	 | _ -> failwith "Could not add prefix action" in
-       let id,((pos1,pos2) as l) = sym in
-	 match Abstract_sig.is_constant id sg with
-	   | true,Some (Abstract_sig.Infix) -> 
-	       (Obj_term
-		  (fun env ws->
-		     let u1,ws1 = t1 env ws in
-		     let u2,ws2 = t2 env ws1 in
-		       (Abstract_sig.App (Abstract_sig.App(Abstract_sig.Const(id,l),u1,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) l),u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))),ws2),[])
-	   | true,_ -> raise Dyp.Giveup
-	   | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2))))
-*)
 }
 
 
@@ -187,11 +132,20 @@
 						   let pos1,pos2= snd $1 in
 						     raise (Error.emit_parse_error (Error.Duplicated_type (fst $1,pos1,pos2))) in 
 					     new_sig,[Local_data (Some new_sig)]}
-/*| IDENT EQUAL type_expression COLON type_expression {let s = get_value dyp.last_local_data in
-						       raise_expect Entry.Type_kwd (snd ($5 s))}
+| IDENT EQUAL type_expression COLON type_expression {let s = get_value dyp.last_local_data in
+						       try
+							 let _ = $3 s in
+							   raise_expect Entry.Type_kwd (snd ($5 s))
+						       with
+							 | Error.Error (Error.Parse_error (Error.Unknown_type _)) -> raise Dyp.Giveup}
 | IDENT EQUAL type_expression COLON term {let s = get_value dyp.last_local_data in
-						       raise_expect Entry.Type_kwd (snd ($5 bEnv.empty []))}
-*/
+					    try
+					      let _ = $3 s in
+					      let l = Abstract_sig.get_term_location (fst ($5 Env.empty [])) in
+						raise_expect Entry.Type_kwd l
+					    with
+					      | Error.Error (Error.Parse_error (Error.Unknown_type (_,p1,p2))) -> raise Dyp.Giveup
+					      | Error.Error (Error.Parse_error (Error.Unknown_constant (_,p1,p2))) -> raise_expect Entry.Type_kwd (p1,p2)}
 	  
 	  type_expression :
 | atomic_type {$1} atom_type
