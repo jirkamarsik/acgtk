@@ -7,7 +7,7 @@ signature toto =
 	binder All = t : a -> a -> b;  
 	prefix - : (a -> a) -> a ;
 	infix + : (a -> a) -> (a -> a) -> a -> a; 
-	c = lambda a b c x1.t (lambda uu v t. toto (All x y z z .(- - t aa bb cc) (z + v + t x)) v) x1 : a -> a ; 
+	c = lambda a b c x1.t (lambda uu v t. toto (All x y z z .(- - t aa bb - cc) (z + v + t x)) v) x1 : a -> a ; 
 	string = a->a : type ;
 end
 

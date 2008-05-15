@@ -7,22 +7,28 @@ signature essai =
 	a,b: type ;
 	c: a ;
 
-(* message incompréhensible : manque ":type" *)
-	string = a -> a : type;
-	concat = c : b ;
-
-
 (* message incompréhensible : dire que + est infix, idem prefix *)
 	infix + : a -> a -> a;
-(*	c = lambda x . x + : a  *)
-	c = lambda x.  + x : a 
+(* OK	c = lambda x . x + : a   *)
+(*	d = lambda x . x x + x :a; *)
+(*	e = lambda x.  + x : a *)
+
+	f = b :c;
+
+
+
+(**************OK********************)
+(* messages incompréhensibles *)
+(*	infix - : a -> ; *)
+(*	infix - : -> a ; *)
+
+
+
+(****************OK*******************)
 
 (* dire binder expected, pas reconnu *)
-(*	c = labda x.x : a->a ;  *)
+(*	c = labda x.x : a->a ;   *)
 
-(* messages incompréhensibles *)
-	infix - : a -> ; 
-(*	infix - : -> a ; *)
 
 
 end
