@@ -59,7 +59,7 @@ struct
   type kind = K of type_def list
 
   (** The type of the signature as abstract object *)
-  type t = Signature of string * sig_content (** The first string is the name of the signature *)
+  type t = Signature of (string * location) * sig_content (** The first string is the name of the signature *)
   and sig_content = {entries:sig_entry list;
 		     type_definitions: type_of_definition StringMap.t;
 		     term_definitions: (type_of_definition*term_kind) StringMap.t;
@@ -255,7 +255,7 @@ struct
 	    | Type_Abs ((s,_,t),_) -> unfold_type_abs (s::acc) t
 	    | t -> acc,t *)
 	
-  let empty s = Signature (s,{entries=[];type_definitions=StringMap.empty;term_definitions=StringMap.empty;warnings=[]})
+  let empty (s,l) = Signature ((s,l),{entries=[];type_definitions=StringMap.empty;term_definitions=StringMap.empty;warnings=[]})
     
   let add_type_decl id types loc (Signature (name,content)) =
     try
@@ -306,7 +306,7 @@ struct
 
   let get_warnings (Signature (_,{warnings=ws})) = ws
       
-  let to_string ((Signature (name,dec)) as sg) =
+  let to_string ((Signature ((name,_),dec)) as sg) =
     sprintf
       "signature %s = \n%s\nend"
       name
@@ -397,6 +397,49 @@ end
 
 module Environment =
 struct
+
+  exception Signature_not_found of string
+    
   module Env = Map.Make(String)
-  type content = Abstract_sig.t Env.t
+  type content = 
+    | Signature of Abstract_sig.t
+
+  type t = {map:content Env.t;sig_number:int;lex_number:int}
+
+  let empty = {map=Env.empty;sig_number=0;lex_number=0}
+
+  let insert d e = match d with
+    | Signature s -> let name,(p1,p2) = Abstract_sig.name s in
+	if not (Env.mem name e.map)
+	then
+	  {e with map=Env.add name d e.map ;sig_number=e.sig_number+1}
+	else
+	  raise (Error.Error (Error.Env_error (Error.Duplicated_signature (name,p1,p2))))
+
+  let iter f {map=e} =  Env.iter (fun _ d -> f d) e
+
+  let sig_number {sig_number=n} = n
+
+  let get_signature s {map=e} =
+    try
+      match Env.find s e with
+	| Signature sg -> sg
+    with
+      | Not_found -> raise (Signature_not_found s)
+
+
+  exception Sig of Abstract_sig.t    
+
+  let choose_signature {map=e} =
+    try
+      let () = Env.fold
+	(fun _ c _ -> 
+	   match c with
+	     | Signature s -> raise (Sig s))
+	e
+	() in
+	None
+    with
+      | Sig s -> Some s
+    
 end

@@ -22,10 +22,14 @@ type type_error =
   | Not_well_kinded_type of (string * Lexing.position * Lexing.position)
   | Other of (Lexing.position * Lexing.position)
 
+type env_error =
+  | Duplicated_signature of (string * Lexing.position * Lexing.position)
+
 type error = 
   | Parse_error of parse_error
   | Lexer_error of lex_error
   | Type_error of type_error
+  | Env_error of env_error
 
 type warning =
   | Variable_or_constant of (string * Lexing.position * Lexing.position)

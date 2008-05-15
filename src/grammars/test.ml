@@ -11,24 +11,46 @@ let options =
 let usg_msg = "./test [options] file"
   
   
+let parse_term sg =
+  let rec parse_rec = function
+    | true ->
+	let () = Printf.printf "Enter a term: " in
+	let term_string = read_line () in
+	  (match Data_parsing.term term_string sg with
+	    | None -> parse_rec true
+	    | Some _ -> false )
+    | false -> false in
+    while (parse_rec true) do
+      ()
+    done
+	    
+
 let parse i filename =
   let env = Data_parsing.signature filename in
-    if Environment.Env.is_empty env || (not !i)
+  let n = Environment.sig_number env in
+  let chosen_sig=Environment.choose_signature env in
+  let chosen_sig_name_loaded =
+    match chosen_sig with
+      | None -> ""
+      | Some s -> Printf.sprintf "Signature \"%s\" loaded." (fst (Abstract_sig.name s))  in
+    if (n=0) || (not !i)
     then
       exit 0
     else
       try
+	let () = if n=1 then Printf.printf "%s\n" chosen_sig_name_loaded else () in
 	while true do
 	  try
-	    let () = Printf.printf "Enter a signature: " in
-	    let sig_string = read_line () in
-	    let sg =  Environment.Env.find sig_string env in
-	    let () = Printf.printf "Enter a term: " in
-	    let term_string = read_line () in
-	    let _ = Data_parsing.term term_string sg in
-	      ()
+	    let sg =
+	      match n,chosen_sig with
+		| 1, Some s -> s
+		| _,_ -> 
+		    let () = Printf.printf "Enter a signature: " in
+		    let sig_string = read_line () in 
+		      Environment.get_signature sig_string env in
+	      parse_term sg
 	  with
-	    | Not_found -> Printf.printf "No such signature in %s\n" filename
+	    | Environment.Signature_not_found sig_name -> Printf.printf "No such signature in %s\n" sig_name
 	done
       with
 	| End_of_file -> let () = print_newline () in exit 0

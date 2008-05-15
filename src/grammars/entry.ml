@@ -92,14 +92,11 @@ struct
 
 
   let term_expectation = function
-    | No_type_or_term_in_def -> let l = [Id;Type_or_term LPAR;Sym] in
+    | No_type_or_term_in_def -> let l = [Id;Type_or_term LAMBDA;Sym] in
 	l,(function
-	     | (Id|Type_or_term (LPAR|RPAR)) as a -> Type_or_term_in_def (Unset,a)
-	     | Type_or_term (DOT|LAMBDA) as a -> Type_or_term_in_def (Term,a)
-	     | Type_or_term ARROW as a -> Type_or_term_in_def (Type,a)
-	     | Sym as a -> Type_or_term_in_def (Term,a)
+	     | (Id|Sym|Type_or_term (LPAR|LAMBDA)) as a -> Type_or_term_in_def (Term,a)
 	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Unset,(Id|Type_or_term(LPAR|RPAR))) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
+(*    | Type_or_term_in_def (Unset,(Id|Type_or_term(LPAR|RPAR))) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
 	l,(function
 	     | Id as a -> Type_or_term_in_def (Unset,a)
 	     | Type_or_term (LPAR|RPAR) as a  -> Type_or_term_in_def (Unset,a)
@@ -108,9 +105,9 @@ struct
 	     | Type_or_term ARROW as a  -> Type_or_term_in_def (Type,a)
 	     | Sym as a  -> Type_or_term_in_def (Term,a)
 	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Unset,_) -> failwith "Bug: should not occur"
-    | Type_or_term_in_def (Type,Id) -> let l = [Type_or_term ARROW;EOI] in
+	     | _ -> raise (Expect l)) *)
+    | Type_or_term_in_def ((Unset|Type),_) -> failwith "Bug: should not occur"
+(*    | Type_or_term_in_def (Type,Id) -> let l = [Type_or_term ARROW;EOI] in
 	l,(function
 	     | Id -> raise (Expect [Type_or_term ARROW])
 	     | Type_or_term (LPAR|RPAR) -> raise (Expect [Type_or_term ARROW])
@@ -138,36 +135,33 @@ struct
 	     | Type_or_term LPAR as a -> Type_or_term_in_def (Type,a)
 	     | EOI -> No_type_or_term_in_def
 	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Type,_) -> failwith "Bug: should not occur"
-    | Type_or_term_in_def (Term,Id) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
+    | Type_or_term_in_def (Type,_) -> failwith "Bug: should not occur" *)
+    | Type_or_term_in_def (Term,Id) -> let l = [Id;Type_or_term LAMBDA;Sym;EOI] in
 	l,(function
 	     | Type_or_term ARROW -> raise (Expect [Type_or_term DOT])
 	     | (Id|Type_or_term _| Sym) as a -> Type_or_term_in_def (Term,a)
 	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Term,Sym) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
+	     | _ -> raise (Expect l)) 
+    | Type_or_term_in_def (Term,Sym) -> let l = [Id;Type_or_term LAMBDA;Sym;EOI] in
 	l,(function
-	     | Type_or_term RPAR -> raise (Expect l)
-	     | Type_or_term ARROW -> raise (Expect [Type_or_term DOT])
-	     | (Id|Type_or_term _|Sym) as a -> Type_or_term_in_def (Term,a)
+	     | (Id|Type_or_term (LPAR|LAMBDA)|Sym) as a -> Type_or_term_in_def (Term,a)
+	     | Type_or_term (RPAR|DOT|ARROW) -> raise (Expect l)
 	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Term,Type_or_term DOT) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
+	     | _ -> raise (Expect l)) 
+    | Type_or_term_in_def (Term,Type_or_term DOT) -> let l = [Id;Type_or_term LAMBDA;Sym;EOI] in
 	l,(function
-	     | Type_or_term ARROW -> raise (Expect [Type_or_term DOT])
-	     | Type_or_term (RPAR|DOT) -> raise (Expect l)
-	     | (Id|Type_or_term _|Sym) as a-> Type_or_term_in_def (Term,a)
+	     | (Id|Type_or_term (LPAR|LAMBDA)|Sym) as a-> Type_or_term_in_def (Term,a)
 	     | EOI -> No_type_or_term_in_def
 	     | _ -> raise (Expect l))
     | Type_or_term_in_def (Term,Type_or_term LAMBDA) -> let l = [Id] in
 	l,(function
 	     | Id as a -> Type_or_term_in_def (Term,a)
 	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Term,Type_or_term LPAR) -> let l = [Id;Type_or_term LPAR;Sym] in
+    | Type_or_term_in_def (Term,Type_or_term LPAR) -> let l = [Id;Type_or_term ARROW;Sym] in
 	l,(function
 	     | (Id|Sym| Type_or_term (LPAR|LAMBDA)) as a -> Type_or_term_in_def (Term,a)
 	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Term,Type_or_term RPAR) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
+    | Type_or_term_in_def (Term,Type_or_term RPAR) -> let l = [Id;Type_or_term ARROW;Sym;EOI] in
 	l,(function
 	     | (Id|Sym|Type_or_term (LPAR|RPAR|LAMBDA)) as a -> Type_or_term_in_def (Term,a)
 	     | EOI -> No_type_or_term_in_def

@@ -71,6 +71,8 @@ sig
   type kind = K of type_def list
     
   (** The type of the signature as abstract object *)
+  type t
+(*
   type t  = Signature of string * sig_content  (** The first string is the name of the signature *)
   and sig_content = {entries:sig_entry list;
     (** the list of entries comes in the reverse order of declaration *)		     		     type_definitions: type_of_definition StringMap.t;
@@ -82,7 +84,8 @@ sig
     (** the list of warnings emitted during parsing *)}
 	 
     
-and sig_entry = 
+and *)
+type sig_entry = 
     | Type_decl of (string * location * kind)
 	(** The first parameter ([string]) is the name of the type,
 	    the second parameter is the place in the file where it was
@@ -102,28 +105,8 @@ and sig_entry =
 	
 	
   (** [empty name] returns the empty signature of name [name] *)
-  val empty : string -> t
+  val empty : string * location -> t
     
-  (** [add_type_decl id types loc sig] returns a signature where
-      the type [id] has been added as type depending of [types] to the
-      signature [sig] *)
-(*  val add_type_decl : string -> type_def list -> location -> t -> t *)
-
-  (** [add_type_def def sig] returns a signature where the type
-      definition [def] with value [type_def] has been added to the
-      signature [sig] *)
-(*  val add_type_def : string -> type_def -> location -> t -> t *)
-
-  (** [add_term_decl id type loc sig] returns a signature where the
-      constant [id] of type [type] has been added to the signature [sig]
-  *)
-(*  val add_term_decl : string ->  term_kind -> type_def -> location -> t -> t *)
-
-  (** [add_term_def def term sig] returns a signature where the
-      term definition [def] of value [term] has been added to the
-      signature [sig] *)
-(*  val add_term_def : string -> term_kind -> (term*type_def) -> location -> t -> t *)
-
   (** [add_entry e s] returns a signature where the entry [e] has been
       added *)
   val add_entry : sig_entry -> t -> t
@@ -165,8 +148,8 @@ and sig_entry =
   (** [display sg] prints the signature [sg] on stdout. *)
   val display : t -> unit
     
-  (** [name s] returns the name of the signature [s] *)
-  val name : t -> string
+  (** [name s] returns the name of the signature [s] and the location of its definition *)
+  val name : t -> (string * location)
 
   (** [get_warnings sg] returns the warnigs emitted while parsing [sg]. *)
   val get_warnings : t -> Error.warning list
@@ -176,6 +159,17 @@ end
 
 module Environment :
 sig
-  module Env : Map.S with type key = String.t
-  type content = Abstract_sig.t Env.t
+  type t
+  type content = 
+    | Signature of Abstract_sig.t
+
+  exception Signature_not_found of string
+
+  val empty : t
+  val insert : content -> t -> t
+  val iter : (content -> unit) -> t -> unit
+  val sig_number : t -> int
+  val get_signature : string -> t -> Abstract_sig.t
+  val choose_signature : t -> Abstract_sig.t option
+
 end

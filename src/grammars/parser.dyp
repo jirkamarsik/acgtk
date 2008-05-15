@@ -36,7 +36,7 @@
 	  let new_env = Env.add a e in
 	    multiple_bind new_env ws binder l_b tl t (fun r -> k (bind binder a l (fst r),(snd r)))
 
-  let empty_sig = Abstract_sig.empty ""
+(*  let empty_sig = Abstract_sig.empty ""*)
 
   let get_value = function
     | None -> raise No_sig
@@ -71,7 +71,7 @@
 <(string*Abstract_sig.location)> IDENT
 <(string*Abstract_sig.location)> SYMBOL
   
-%start <(Environment.content -> Environment.content)> signatures
+%start <(Environment.t -> Environment.t)> signatures
 %start <(Env.t -> Error.warning list -> (Abstract_sig.term * Error.warning list))> term
 %start <Abstract_sig.term> term_alone
   
@@ -83,14 +83,14 @@
   
   signatures :
 | EOI {fun env -> env}
-| signature[s] signatures[e] {fun env -> e (Environment.Env.add (Abstract_sig.name s) s env)}
+| signature[s] signatures[e] {fun env -> e (Environment.insert (Environment.Signature s) env)}
 
       signature : 
 | SIG_OPEN ident EQUAL sig_entries END_OF_DEC {$4}
 | SIG_OPEN ident EQUAL sig_entries SEMICOLON END_OF_DEC {$4}
       
       ident :
-| IDENT @{$1,[Local_data (Some (Abstract_sig.empty (fst $1)))]}
+| IDENT @{$1,[Local_data (Some (Abstract_sig.empty $1))]}
 
 	  sig_entries :
 | sig_entry @{$1,[Local_data (Some $1)]}

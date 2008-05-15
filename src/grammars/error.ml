@@ -37,10 +37,15 @@ type type_error =
   | Not_well_kinded_type of (string * Lexing.position * Lexing.position)
   | Other of (Lexing.position * Lexing.position)
 
+
+type env_error =
+  | Duplicated_signature of (string * Lexing.position * Lexing.position)
+
 type error = 
   | Parse_error of parse_error
   | Lexer_error of lex_error
   | Type_error of type_error
+  | Env_error of env_error
 
 type warning =
   | Variable_or_constant of (string * Lexing.position * Lexing.position)
@@ -75,10 +80,14 @@ let type_error_to_string = function
       Printf.sprintf "Type \"%s\" not well kinded" s
   | Other(_,_) -> "Not yet implemented"
 
+let env_error_to_string = function
+  | Duplicated_signature (s,_,_) -> Printf.sprintf "Signature id \"%s\" is used twice" s
+
 let error_to_string = function
   | Parse_error e -> parse_error_to_string e
   | Lexer_error e -> lex_error_to_string e
   | Type_error e -> type_error_to_string e
+  | Env_error e -> env_error_to_string e
 
 let warning_to_string w = 
   match w with
@@ -103,7 +112,8 @@ let error_msg e (*lexbuf*) input_file =
   | Lexer_error (Mismatch_parentheses (s,e)) -> s,e
   | Lexer_error (Expect (_,s,e)) -> s,e
   | Lexer_error (Unstarted_bracket (s,e)) -> s,e
-  | Lexer_error (Unstarted_comment (s,e)) -> s,e in
+  | Lexer_error (Unstarted_comment (s,e)) -> s,e
+  | Env_error (Duplicated_signature (_,s,e)) -> s,e in
   let line2 = pos2.Lexing.pos_lnum in
   let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
   let pos1 = pos1 in
