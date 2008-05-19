@@ -2,13 +2,13 @@ open Abstract_syntax
 
 module Data_parsing =
 struct
-  let signature filename =
+  let data filename env =
     let in_ch = open_in filename in
     let lexbuf = Lexing.from_channel in_ch in
       try
 	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
 	let () = Lexer.set_to_data () in
-	let sgs = (fst (List.hd (Parser.signatures Lexer.lexer lexbuf))) (Environment.empty) in
+	let sgs = (fst (List.hd (Parser.signatures Lexer.lexer lexbuf))) env in
 	let () = Printf.printf "Done.\n" in
 	let () =
 	  Environment.iter 

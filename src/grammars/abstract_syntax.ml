@@ -418,6 +418,8 @@ struct
 
   let iter f {map=e} =  Env.iter (fun _ d -> f d) e
 
+  let fold f a {map=e} = Env.fold (fun _ d acc -> f d acc) e a
+
   let sig_number {sig_number=n} = n
 
   let get_signature s {map=e} =

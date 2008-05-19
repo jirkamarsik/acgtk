@@ -168,6 +168,7 @@ sig
   val empty : t
   val insert : content -> t -> t
   val iter : (content -> unit) -> t -> unit
+  val fold : (content -> 'a -> 'a) -> 'a -> t -> 'a
   val sig_number : t -> int
   val get_signature : string -> t -> Abstract_sig.t
   val choose_signature : t -> Abstract_sig.t option
