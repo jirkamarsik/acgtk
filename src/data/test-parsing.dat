@@ -13,7 +13,7 @@ signature essai =
 (*	d = lambda x . x x + x :a; *)
 (*	e = lambda x.  + x : a *)
 
-	f = b :c;
+	f = c :a;
 
 
 

@@ -1,6 +1,6 @@
 type position = Lexing.position
     
-let update_loc lexbuf file line absolute chars =
+let update_loc lexbuf file =
   let pos = lexbuf.Lexing.lex_curr_p in
   let new_file = match file with
     | None -> pos.Lexing.pos_fname
@@ -8,8 +8,8 @@ let update_loc lexbuf file line absolute chars =
   in
     lexbuf.Lexing.lex_curr_p <- { pos with
 			     Lexing.pos_fname = new_file;
-			     Lexing.pos_lnum = if absolute then line else pos.Lexing.pos_lnum + line;
-			     Lexing.pos_bol = pos.Lexing.pos_cnum - chars;
+			     Lexing.pos_lnum = pos.Lexing.pos_lnum + 1;
+			     Lexing.pos_bol = pos.Lexing.pos_cnum;
 			 }
 
 type lex_error =
@@ -93,7 +93,7 @@ let warning_to_string w =
   match w with
     | Variable_or_constant (s,pos1,pos2) -> Printf.sprintf "\"%s\" is a variable here, but is also declared as constant in the signature" s
 	      
-let error_msg e (*lexbuf*) input_file =
+let error_msg e input_file =
   let msg = error_to_string e in
   let pos1,pos2 = match e with
   | Type_error (Already_defined_var(_,s,e)) -> s,e
@@ -134,14 +134,14 @@ let error lexbuf input_file =
   let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
     if line1=line2 then
       Printf.sprintf "File \"%s\", line %d, characters %d-%d\nSyntax error"
-        input_file line2 col1 col2
+        input_file line2 col1 col2 
     else
       Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nSyntax error"
         input_file line1 col1 line2 col2
 
 
 
-  let emit_parse_error e = Error (Parse_error e)
+(*  let emit_parse_error e = Error (Parse_error e) *)
 
   let emit_warning w input_file = 
     match w with

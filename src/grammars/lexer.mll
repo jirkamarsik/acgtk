@@ -59,7 +59,7 @@ let string = (letter|digit|'_')*
     rule lexer =
     parse
       | [' ' '\t'] {lexer lexbuf}
-      | newline {let () = Error.update_loc lexbuf None 1 false 0 in lexer lexbuf}
+      | newline {let () = Error.update_loc lexbuf None in lexer lexbuf}
       | "(*" {comment [loc lexbuf] lexbuf}
       | "*)" {raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
       | eof {let () = update_data Entry.EOI (loc lexbuf) in
@@ -121,6 +121,6 @@ let string = (letter|digit|'_')*
 		| [] -> raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
       | "(*" {comment ((loc lexbuf)::depth) lexbuf}
       | eof {raise (Error (Lexer_error (Unclosed_comment (List.hd depth))))}
-      | newline {let () = Error.update_loc lexbuf None 1 false 0 in comment depth lexbuf}
+      | newline {let () = Error.update_loc lexbuf None in comment depth lexbuf}
       | _ {comment depth lexbuf}
 

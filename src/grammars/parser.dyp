@@ -8,7 +8,12 @@
 
   exception No_sig
 
+  let emit_parse_error e = raise (Error.Error (Error.Parse_error e))
+
   let local_data = None
+
+
+
 
   let abs x l t = function
     | Abstract_sig.Linear -> Abstract_sig.LAbs (x,t,l)
@@ -113,7 +118,7 @@
 			       with
 				 | Abstract_sig.Duplicate_type_definition -> 
 				     let pos1,pos2= snd id in
-				       raise (Error.emit_parse_error (Error.Duplicated_type (fst id,pos1,pos2))))
+				       emit_parse_error (Error.Duplicated_type (fst id,pos1,pos2)))
 			    s
 			    $1 in
 			  new_sig,[Local_data (Some new_sig)]}
@@ -130,7 +135,7 @@
 					     with
 					       | Abstract_sig.Duplicate_type_definition -> 
 						   let pos1,pos2= snd $1 in
-						     raise (Error.emit_parse_error (Error.Duplicated_type (fst $1,pos1,pos2))) in 
+						     emit_parse_error (Error.Duplicated_type (fst $1,pos1,pos2)) in 
 					     new_sig,[Local_data (Some new_sig)]}
 | IDENT EQUAL type_expression COLON type_expression {let s = get_value dyp.last_local_data in
 						       try
@@ -159,7 +164,7 @@
 	   let id,((pos1,pos2) as l) = $1 in
 	     match Abstract_sig.is_type id sg with
 	       | true -> Abstract_sig.Type_atom (id,l,[]),l
-	       | false -> raise (Error.emit_parse_error (Error.Unknown_type (id,pos1,pos2)))} atom_type
+	       | false -> emit_parse_error (Error.Unknown_type (id,pos1,pos2))} atom_type
 | LPAREN type_expression RPAREN {fun sg -> fst ($2 sg),Abstract_sig.new_loc $1 $3} atom_type
       
       term_declaration :
@@ -172,7 +177,7 @@
 						 with
 						   | Abstract_sig.Duplicate_term_definition -> 
 						       let pos1,pos2= loc in
-							 raise (Error.emit_parse_error (Error.Duplicated_term (id,pos1,pos2))))
+							 emit_parse_error (Error.Duplicated_term (id,pos1,pos2)))
 					      s
 					      $1 in new_sig,[Local_data (Some new_sig);Keep_grammar true]}
 
@@ -204,7 +209,8 @@
 							    | [] -> new_sig2
 							    | lst -> Abstract_sig.add_warnings ws new_sig2) with
 							    | Abstract_sig.Duplicate_term_definition ->
-								raise (Error.emit_parse_error (Error.Duplicated_term (id,fst l,snd l))) in new_sig,[Local_data (Some new_sig);Keep_grammar true]}
+								emit_parse_error (Error.Duplicated_term (id,fst l,snd l)) in
+						      new_sig,[Local_data (Some new_sig);Keep_grammar true]}
 	  
 	  term_alone :
 | term EOI {fst ($1 Env.empty [])}	  
@@ -220,7 +226,7 @@
       fun env ws -> 
 	match Abstract_sig.is_constant binder sg with
 	  | true,Some Abstract_sig.Binder -> multiple_bind env ws (Abstract_sig.Const(binder,l)) (snd $1) $2 $4 (fun x -> x)
-	  | _ -> raise (Error.emit_parse_error (Error.Binder_expected (binder,p1,p2)))
+	  | _ -> emit_parse_error (Error.Binder_expected (binder,p1,p2))
 	  (*| _ -> raise Dyp.Giveup*) } binder 
 | application(<=app) {$1} app 
 | atomic_term (<=atom) SYMBOL term (<=app) {let sg = get_value dyp.last_local_data in
@@ -232,7 +238,7 @@
 							let u2,ws2 = $3 env ws1 in
 							  (Abstract_sig.App (Abstract_sig.App(Abstract_sig.Const(id,l),u1,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) l),u2,Abstract_sig.new_loc (Abstract_sig.get_term_location u1) (Abstract_sig.get_term_location u2))),ws2)
 						 | true,_ -> raise Dyp.Giveup
-						 | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2)))}  app 
+						 | _ -> emit_parse_error (Error.Unknown_constant (id,pos1,pos2))}  app 
       
       atomic_term :
 | IDENT {let id,l=$1 in
@@ -243,7 +249,7 @@
 	       | true,false -> Abstract_sig.Var (id,l),ws
 	       | true,true -> Abstract_sig.Var (id,l),(Error.Variable_or_constant (id,fst l,snd l))::ws
 	       | false,true -> Abstract_sig.Const (id,l),ws
-	       | false,false ->raise (Error.emit_parse_error (Error.Unknown_constant (id,fst l,snd l)))} atom
+	       | false,false ->emit_parse_error (Error.Unknown_constant (id,fst l,snd l))} atom
 | LPAREN term RPAREN {$2} atom
 | SYMBOL term {let sg = get_value dyp.last_local_data in
 	       let id,((pos1,pos2) as l) = $1 in
@@ -253,7 +259,7 @@
 			  let u2,ws2 = $2 env ws in
 			    (Abstract_sig.App(Abstract_sig.Const(id,l),u2,Abstract_sig.new_loc l (Abstract_sig.get_term_location u2))),ws2)
 		   | true,_ -> raise Dyp.Giveup
-		   | _ -> raise (Error.emit_parse_error (Error.Unknown_constant (id,pos1,pos2)))} atom 
+		   | _ -> emit_parse_error (Error.Unknown_constant (id,pos1,pos2))} atom 
       
       application :
 | atomic_term(<=atom) {$1} app

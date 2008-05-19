@@ -1,4 +1,4 @@
-signature toto =
+signature tutu =
 	a:type;
 	t1,t2: a-> a;
 	b,c:type ; 

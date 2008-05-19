@@ -18,21 +18,6 @@ val string_of_list : string -> ('a -> string) -> ('a list) -> string
     (if the list is of length greater than 2) *)
 val string_of_list_rev : string -> ('a -> string) -> ('a list) -> string
 
-(** [error_msg loc file msg] returns a string describing a error
-    message [msg] with the location informations extracted from [loc] and
-    [file] *)
-val error_msg : Token.flocation -> string -> string -> string
-
-
-(** [parse_file entry file exn] parses the file [file] as an entry
-    [entry] of type ['a Grammar.Entry.e]. Whenever an error occurs, it
-    returns the exception encapsulated in [exn]. *)
-val parse_file : 'a Grammar.Entry.e -> string -> (string -> exn) -> 'a
-
-val new_parse_file : string -> (char Stream.t -> 'a)  -> (string -> exn) -> 'a
-
-val get_parse_errors : string -> ('a -> 'b) -> 'a   -> (string -> exn) -> 'b
-
 (** [No_file (file_name,msg)] is raised when the file [file_name] is
     not found in any of the directories given to the {!Utils.find_file}
     function with the message [msg] *)

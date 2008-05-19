@@ -68,7 +68,7 @@ sig
 	
 	
   (** The type of kinds as found in the signature files *)
-  type kind = K of type_def list
+  type kind = K of type_def list 
     
   (** The type of the signature as abstract object *)
   type t
@@ -144,7 +144,7 @@ type sig_entry =
       syntactic behaviour [b] if [id] is the name of a constant in [s]
       and [false,None] oterwise *)
   val is_constant : string -> t -> bool * term_kind option
-
+    
   (** [display sg] prints the signature [sg] on stdout. *)
   val display : t -> unit
     
@@ -156,21 +156,50 @@ type sig_entry =
     
 end
 
-
+  
+(** This modules implements a temporary environment where parsed
+    signatures and lexicon are stored *)
 module Environment :
 sig
+  (** The type of the environmnet *)
   type t
+    
+  (** The type of what an environmnent can contain *)
   type content = 
     | Signature of Abstract_sig.t
-
+	
+  (** This exception can be raised when a signature is not found in the
+      environmnent *)
   exception Signature_not_found of string
-
+    
+  (** [empty] is the empty environmnent *)
   val empty : t
+
+  (** [insert c e] adds the content [c] into the environment [e] and
+      returns the resulting environmnent *)
   val insert : content -> t -> t
+
+  (** [iter f e] applies f to every data contain in the environment
+  *)
   val iter : (content -> unit) -> t -> unit
+
+  (** [fold f a e] returns [f a_n (f a_n-1 (... (f a1 (f a0 a))
+  ... ))] where the [a_0 ... a_n] are the [n+1] elements of the
+  environmnent *)
   val fold : (content -> 'a -> 'a) -> 'a -> t -> 'a
+
+  (** [sig_number e] returns the number of signature an environment
+  contains *)
   val sig_number : t -> int
+
+  (** [get_signature name e] returns the signature of name [name] in
+      the environment [e]. Raise
+      {!Abstract_syntax.Environment.Signature_not_found} if such a
+      signature does not exist *)
   val get_signature : string -> t -> Abstract_sig.t
+
+  (** [choose_signature e] returns a randomly chosen signature in the
+      environment [e] *)
   val choose_signature : t -> Abstract_sig.t option
 
 end
