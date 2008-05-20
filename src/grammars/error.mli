@@ -28,7 +28,7 @@ type type_error =
   | Already_defined_var of string
   | Not_defined_var of string
   | Not_defined_const of string
-  | Not_well_typed_term of string
+  | Not_well_typed_term of string * string
   | Not_well_kinded_type of string
   | Other
 
