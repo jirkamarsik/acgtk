@@ -30,28 +30,28 @@ module Sign =
        term_definitions: (Abstract_sig.type_of_definition*Abstract_sig.term_kind) Utils.StringMap.t}
 	 
     type t = Signature of string * int * sig_entry Table.t * sig_entry
-	Tries.t * sig_content (** The first string is the name of the
+	Tries.t * int list (** The first string is the name of the
 				  signature and the int is its size *)
  
-    let content2content (content : Abstract_sig.sig_content) =
-      {type_definitions = content.Abstract_sig.type_definitions;
-       term_definitions = content.Abstract_sig.term_definitions}
+ (*    let content2content (content : Abstract_sig.sig_content) = *)
+(*       {type_definitions = content.Abstract_sig.type_definitions; *)
+(*        term_definitions = content.Abstract_sig.term_definitions} *)
 	
-  let is_infix id (Signature (_, _, _, _, {type_definitions=_;term_definitions=defs})) =
-    try
-      let _,t = Utils.StringMap.find id defs in
-      (t=Abstract_sig.Infix)
-    with
-    | Not_found -> false
+  let is_infix id (Signature (_, _, _, _, _(* {type_definitions=_;term_definitions=defs} *))) =
+(*     try *)
+(*       let _,t = Utils.StringMap.find id defs in *)
+(*       (t=Abstract_sig.Infix) *)
+(*     with *)
+(*     | Not_found ->  *)false
 	  
-    let is_binder id (Signature (_, _, _, _, {type_definitions=_;term_definitions=defs})) =
-      try
-	let _,t = Utils.StringMap.find id defs in
-	t = Abstract_sig.Binder
-      with
-      | Not_found -> false
+    let is_binder id (Signature (_, _, _, _, _(* {type_definitions=_;term_definitions=defs} *))) =
+(*       try *)
+(* 	let _,t = Utils.StringMap.find id defs in *)
+(* 	t = Abstract_sig.Binder *)
+(*       with *)
+(*       | Not_found -> *) false
 	    
-    let create(name, content) = Signature (name,0, Table.create(), Tries.empty,content)
+    let create(name) = Signature (name,0, Table.create(), Tries.empty,[])
 	
     let get_ind ind_assoc s =
       List.assoc s ind_assoc
@@ -408,18 +408,18 @@ module Sign =
                    | _  -> Printf.sprintf "\t%s: (%s)type;" id (Utils.string_of_list "," (fun s -> type_def_to_string ind_assoc s sg) types))
 	    | Type_def (id,_,value) -> Printf.sprintf "\t%s = %s: type;" id (type_def_to_string ind_assoc value sg)
 	    | Term_decl (id,_,_,ty) -> 
-		let t = match snd (Utils.StringMap.find id content.term_definitions) with
-		  | Abstract_sig.Default -> ""
-		  | Abstract_sig.Infix -> "infix "
-		  | Abstract_sig.Prefix -> "prefix "
-		  | Abstract_sig.Binder -> "binder " in
+		let t = ""(* match snd (Utils.StringMap.find id content.term_definitions) with *)
+(* 		  | Abstract_sig.Default -> "" *)
+(* 		  | Abstract_sig.Infix -> "infix " *)
+(* 		  | Abstract_sig.Prefix -> "prefix " *)
+(* 		  | Abstract_sig.Binder -> "binder "  *)in
 		  Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string ind_assoc ty sg)
 	    | Term_def (id,_,_,value,type_of) -> 
-		let t = match snd (Utils.StringMap.find id content.term_definitions) with
-		  | Abstract_sig.Default -> ""
-		  | Abstract_sig.Infix -> "infix "
-		  | Abstract_sig.Prefix -> "prefix "
-		  | Abstract_sig.Binder -> "binder " in
+		let t = ""(* match snd (Utils.StringMap.find id content.term_definitions) with *)
+(* 		  | Abstract_sig.Default -> "" *)
+(* 		  | Abstract_sig.Infix -> "infix " *)
+(* 		  | Abstract_sig.Prefix -> "prefix " *)
+(* 		  | Abstract_sig.Binder -> "binder " *) in
 		  Printf.sprintf "\t%s%s = %s: %s;" t id (term_to_string value ind_assoc sg) (type_def_to_string ind_assoc type_of sg))
 	 (Tries.content trie))
 
