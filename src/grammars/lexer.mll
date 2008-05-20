@@ -17,13 +17,13 @@
   let add_bracket loc = brackets:=loc::!brackets
 
   let remove_bracket l = match !brackets with
-    | [] -> raise (Error (Lexer_error (Unstarted_bracket l)))
+    | [] -> raise (Error (Lexer_error (Unstarted_bracket, l)))
     | _::tl -> brackets := tl
 
   let check_brackets () =
     match !brackets with
       | [] -> ()
-      | (p1,p2)::__ -> raise (Error (Lexer_error (Mismatch_parentheses (p1,p2))))
+      | (p1,p2)::__ -> raise (Error (Lexer_error (Mismatch_parentheses,(p1,p2))))
 	
 	  
   let data = ref (Data (Entry.start_data ()))
@@ -43,7 +43,7 @@
     with
       | Entry.Expect l -> 
 	  let s = Utils.string_of_list " or " Entry.valuation_to_string l in
-	    raise (Error (Lexer_error (Expect (s,p1,p2))))
+	    raise (Error (Lexer_error (Expect s,(p1,p2))))
 	  
 
 }
@@ -61,7 +61,7 @@ let string = (letter|digit|'_')*
       | [' ' '\t'] {lexer lexbuf}
       | newline {let () = Error.update_loc lexbuf None in lexer lexbuf}
       | "(*" {comment [loc lexbuf] lexbuf}
-      | "*)" {raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
+      | "*)" {raise (Error (Lexer_error (Unstarted_comment,loc lexbuf)))}
       | eof {let () = update_data Entry.EOI (loc lexbuf) in
 	       EOI}
       | ['='] {let () = update_data Entry.Equal (loc lexbuf) in
@@ -118,9 +118,9 @@ let string = (letter|digit|'_')*
       | "*)" {match depth with
 		| [a] -> lexer lexbuf
 		| a::tl -> comment tl lexbuf
-		| [] -> raise (Error (Lexer_error (Unstarted_comment (loc lexbuf))))}
+		| [] -> raise (Error (Lexer_error (Unstarted_comment,loc lexbuf)))}
       | "(*" {comment ((loc lexbuf)::depth) lexbuf}
-      | eof {raise (Error (Lexer_error (Unclosed_comment (List.hd depth))))}
+      | eof {raise (Error (Lexer_error (Unclosed_comment, List.hd depth)))}
       | newline {let () = Error.update_loc lexbuf None in comment depth lexbuf}
       | _ {comment depth lexbuf}
 

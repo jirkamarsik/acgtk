@@ -68,13 +68,13 @@ struct
 
   let valuation_to_string = function
     | EOI -> "End of input"
-    | Sig_kwd -> "\"signature\""
+    | Sig_kwd -> "\"signature\" kwd"
     | Id -> "Identifier"
     | Equal -> "\"=\""
     | Comma -> "\",\""
     | Colon -> "\":\""
-    | Type_kwd -> "\"type\""
-    | End_kwd -> "\"end\""
+    | Type_kwd -> "\"type\" kwd"
+    | End_kwd -> "\"end\" kwd"
     | Semi_colon -> "\";\""
     | Type_or_term (LPAR|RPAR) -> "type or term"
     | Type_or_term (DOT|LAMBDA) -> "term"
@@ -96,46 +96,7 @@ struct
 	l,(function
 	     | (Id|Sym|Type_or_term (LPAR|LAMBDA)) as a -> Type_or_term_in_def (Term,a)
 	     | _ -> raise (Expect l))
-(*    | Type_or_term_in_def (Unset,(Id|Type_or_term(LPAR|RPAR))) -> let l = [Id;Type_or_term LPAR;Sym;EOI] in
-	l,(function
-	     | Id as a -> Type_or_term_in_def (Unset,a)
-	     | Type_or_term (LPAR|RPAR) as a  -> Type_or_term_in_def (Unset,a)
-	     | Type_or_term DOT as a  -> Type_or_term_in_def (Term,a)
-	     | Type_or_term LAMBDA as a  -> Type_or_term_in_def (Term,a)
-	     | Type_or_term ARROW as a  -> Type_or_term_in_def (Type,a)
-	     | Sym as a  -> Type_or_term_in_def (Term,a)
-	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l)) *)
     | Type_or_term_in_def ((Unset|Type),_) -> failwith "Bug: should not occur"
-(*    | Type_or_term_in_def (Type,Id) -> let l = [Type_or_term ARROW;EOI] in
-	l,(function
-	     | Id -> raise (Expect [Type_or_term ARROW])
-	     | Type_or_term (LPAR|RPAR) -> raise (Expect [Type_or_term ARROW])
-	     | Type_or_term DOT -> raise (Expect [Type_or_term ARROW])
-	     | Type_or_term LAMBDA -> raise (Expect [Type_or_term ARROW])
-	     | Type_or_term ARROW -> Type_or_term_in_def (Type,Type_or_term ARROW)
-	     | Sym -> raise (Expect [Type_or_term DOT])
-	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Type,Type_or_term LPAR) -> let l = [Id;Type_or_term LPAR;EOI] in
-	l,(function
-	     | Id as a -> Type_or_term_in_def (Type,a)
-	     | Type_or_term LPAR as a -> Type_or_term_in_def (Type,a)
-	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Type,Type_or_term RPAR) -> let l = [Type_or_term ARROW;EOI] in
-	l,(function
-	     | Type_or_term RPAR as a -> Type_or_term_in_def (Type,a)
-	     | Type_or_term ARROW as a -> Type_or_term_in_def (Type,a)
-	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Type,Type_or_term ARROW) -> let l = [Id;Type_or_term LPAR] in
-	l,(function
-	     | Id as a -> Type_or_term_in_def (Type,a)
-	     | Type_or_term LPAR as a -> Type_or_term_in_def (Type,a)
-	     | EOI -> No_type_or_term_in_def
-	     | _ -> raise (Expect l))
-    | Type_or_term_in_def (Type,_) -> failwith "Bug: should not occur" *)
     | Type_or_term_in_def (Term,Id) -> let l = [Id;Type_or_term LAMBDA;Sym;EOI] in
 	l,(function
 	     | Type_or_term ARROW -> raise (Expect [Type_or_term DOT])
@@ -249,18 +210,18 @@ struct
 		      | (Unset|Term) as k,(Type_or_term RPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (k,a))))))
 		      | (Unset|Type),(Type_or_term ARROW) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
 		      | Unset, _ -> raise (Expect [Id;Sym;Type_or_term LPAR])
-		      | Type, _ -> raise (Expect [Type_or_term ARROW])
+		      | Type, _ -> raise (Expect [Type_or_term ARROW;Semi_colon])
 		      | Term, _ -> raise (Expect [Id;Sym;Type_or_term DOT])
 		      | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))		   
 	       | Type_or_term DOT as a ->
 		   (match k_o_t with
-		      | Type,_ -> raise (Expect [Type_or_term ARROW])
+		      | Type,_ -> raise (Expect [Type_or_term ARROW;Semi_colon])
 		      | (Unset|Term),Id -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
 		      | (Unset|Term),_ -> raise (Expect [Id])
 		      | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
 	       | Type_or_term LAMBDA as a-> 
 		   (match k_o_t with
-		      | Type,_ -> raise (Expect [Type_or_term ARROW])
+		      | Type,_ -> raise (Expect [Type_or_term ARROW;Semi_colon])
 		      | (Unset|Term),(Id|Sym|Type_or_term (LPAR|RPAR)) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
 		      | (Unset|Term),_ -> raise (Expect [Id;Sym;Type_or_term LAMBDA])
 		      | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
@@ -273,7 +234,7 @@ struct
 | Id as a -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (fst k_o_t,a))))))
 | Sym as a -> 
     (match k_o_t with
-       | Type,_ -> raise (Expect [Type_or_term ARROW])
+       | Type,_ -> raise (Expect [Type_or_term ARROW;Semi_colon])
        | (Unset|Term),(Id|Sym|Type_or_term (LPAR|RPAR|DOT)) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
        | (Unset|Term),_ -> raise (Expect [Id])
        | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
@@ -322,24 +283,24 @@ struct
 	   | Id as a ->
 	       (match k_o_t with
 		  | (Unset|Type),Type_or_term (LPAR|ARROW) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term (fst k_o_t,a))))))
-		  | _ -> raise (Expect [Type_or_term ARROW]))
+		  | _ -> raise (Expect [Type_or_term ARROW;Semi_colon]))
 	   | Type_or_term LPAR as a ->
 	       (match k_o_t with
 		  | (Unset|Type),Type_or_term (LPAR|ARROW) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term (fst k_o_t,a))))))
-		  | _ -> raise (Expect [Type_or_term ARROW]))
+		  | _ -> raise (Expect [Type_or_term ARROW;Semi_colon]))
 	   | Type_or_term RPAR -> 
 	       (match k_o_t with
 		  | (Unset|Type),(Id|Type_or_term LPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term k_o_t)))))
-		  | _ -> raise (Expect [Type_or_term ARROW]))
-	   | Type_or_term DOT -> raise (Expect [Type_or_term ARROW])
-	   | Type_or_term LAMBDA -> raise (Expect [Type_or_term ARROW])
+		  | _ -> raise (Expect [Type_or_term ARROW;Semi_colon]))
+	   | Type_or_term DOT -> raise (Expect [Type_or_term ARROW;Semi_colon])
+	   | Type_or_term LAMBDA -> raise (Expect [Type_or_term ARROW;Semi_colon])
 	   | Type_or_term ARROW as a-> 
 	       (match k_o_t with
 		  | Term,_ -> raise (Expect [Type_or_term DOT])
 		  | (Unset|Type),(Id|Type_or_term RPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Colon_assignment (Type_kwd_or_type_or_term (Type,a))))))
 		  | (Unset|Type),_ -> raise (Expect [Id;Type_or_term ARROW])
 		  | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
-	   | Sym -> raise (Expect [Type_or_term ARROW])
+	   | Sym -> raise (Expect [Type_or_term ARROW;Semi_colon])
 	   | _ -> raise (Expect l))
 
 

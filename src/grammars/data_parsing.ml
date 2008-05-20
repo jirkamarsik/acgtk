@@ -8,7 +8,9 @@ struct
       try
 	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
 	let () = Lexer.set_to_data () in
-	let sgs = (fst (List.hd (Parser.signatures Lexer.lexer lexbuf))) env in
+	let sgs = 
+	  try (fst (List.hd (Parser.signatures Lexer.lexer lexbuf))) env with
+	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
 	let () = Printf.printf "Done.\n" in
 	let () =
 	  Environment.iter 
@@ -20,24 +22,20 @@ struct
       with
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename) in
-	      Environment.empty
-	| Dyp.Syntax_error -> 
-	    let () = Printf.fprintf stderr "Dyp: %s\n" (Error.error lexbuf filename) in
-	      Environment.empty
+	      env
 	    
   let term t sg = 
     let lexbuf = Lexing.from_string t in
       try 
 	let () = Lexer.set_to_term () in
-	let abs_term = fst (List.hd(Parser.term_alone ~local_data:(Some sg) Lexer.lexer lexbuf)) in
+	let abs_term = 
+	  try fst (List.hd(Parser.term_alone ~local_data:(Some sg) Lexer.lexer lexbuf)) with
+	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
 	let () = Printf.printf "I read: %s\n" (Abstract_sig.term_to_string abs_term sg) in
 	  Some abs_term
       with
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
-	      None
-	| Dyp.Syntax_error -> 
-	    let () = Printf.fprintf stderr "Dyp: %s\n%!" (Error.error lexbuf "stdin") in 
 	      None
 	| End_of_file -> None
     

@@ -414,7 +414,7 @@ struct
 	then
 	  {e with map=Env.add name d e.map ;sig_number=e.sig_number+1}
 	else
-	  raise (Error.Error (Error.Env_error (Error.Duplicated_signature (name,p1,p2))))
+	  raise (Error.Error (Error.Env_error (Error.Duplicated_signature name,(p1,p2))))
 
   let iter f {map=e} =  Env.iter (fun _ d -> f d) e
 
