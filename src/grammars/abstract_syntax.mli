@@ -72,19 +72,6 @@ sig
     
   (** The type of the signature as abstract object *)
   type t
-(*
-  type t  = Signature of string * sig_content  (** The first string is the name of the signature *)
-  and sig_content = {entries:sig_entry list;
-    (** the list of entries comes in the reverse order of declaration *)		     		     type_definitions: type_of_definition StringMap.t;
-    (** the map from type definitions to their value *)
-	    term_definitions: (type_of_definition*term_kind) StringMap.t;
-    (** the map from term definitions to their value and their
-	    syntactic behaviour *)
-	    warnings: Error.warning list
-    (** the list of warnings emitted during parsing *)}
-	 
-    
-and *)
 type sig_entry = 
     | Type_decl of (string * location * kind)
 	(** The first parameter ([string]) is the name of the type,
@@ -103,6 +90,19 @@ type sig_entry =
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its value *)
 	
+(*
+  type t  = Signature of string * sig_content  (** The first string is the name of the signature *)*)
+  and sig_content = {entries:sig_entry list;
+    (** the list of entries comes in the reverse order of declaration *)		     		     type_definitions: type_of_definition StringMap.t;
+    (** the map from type definitions to their value *)
+	    term_definitions: (type_of_definition*term_kind) StringMap.t;
+    (** the map from term definitions to their value and their
+	    syntactic behaviour *)
+	    warnings: Error.warning list
+    (** the list of warnings emitted during parsing *)}
+	 
+    
+
 	
   (** [empty name] returns the empty signature of name [name] *)
   val empty : string * location -> t
