@@ -9,11 +9,12 @@ signature essai =
 
 (* message incompréhensible : dire que + est infix, idem prefix *)
 	infix + : a -> a -> a;
+	prefix - : a -> a -> a;
 (* OK	c = lambda x . x + : a   *)
-(*	d = lambda x . x x + x :a; *)
-(*	e = lambda x.  + x : a *)
+(* OK	d = lambda x . x x + x :a;  *)
+(* OK	e = lambda x.  x ( + - x) : a ;*)
 
-	f = c :a;
+
 
 
 
