@@ -24,7 +24,7 @@ LIBDIR = -I +dypgen -I +camlp4
 PREVIOUS_DIRS = ../utils ../grammars
 
 # Source files in the right order of dependance
-ML = signature.ml typechecker.ml
+ML = lambda.ml sign.ml typechecker.ml
 EXE_SOURCES = test.ml
 
 ####################################
@@ -39,5 +39,5 @@ parser.ml : parser.dyp
 	dypgen.opt $<
 
 lexer.ml : lexer.mll
-	ocamllex.opt $<
+	ocamllex $<
 
