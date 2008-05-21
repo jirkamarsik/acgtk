@@ -63,6 +63,11 @@ module Sign =
       in
       Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr, content)
 
+    let insert_type_def id ty (Signature (name,size, tb, tr,content)) =
+      let e = Type_def (id, size , ty)
+      in
+      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr, content)
+
     let insert_term_dcl id tk ty (Signature (name,size, tb, tr,content)) =
       let e = Term_decl (id, size, tk, ty)
       in 
@@ -255,21 +260,32 @@ module Sign =
 (*       in  *)
 (*       pprint 0 [] entry *)
 
-    let rec pretty_print tm =  
+    let rec pretty_print l_const tm =  
       let rec pprint level ind_list tm =
         match tm with
-          Lambda.Var i        ->  (find i ind_list)
-        | Lambda.Const i      ->  (find i ind_list)
+          Lambda.Var i        -> 
+(* 	    print_string "Var : ";  *)
+	    (find i ind_list)
+        | Lambda.Const i      ->  
+(* 	    print_string ("Const : "^(string_of_int i)^" [");  *)
+(* 	    print_list ind_list; *)
+	    (find i ind_list)
         | Lambda.LAbs (x, t)  -> 
+(* 	    print_string "LAbs : ";  *)
 	    Printf.sprintf
 	      "(lambda %s.%s)" x (pprint (level + 1) (x::ind_list) t)
         | Lambda.App (t1, t2) -> 
+(* 	    print_string "App : ";  *)
 	    Printf.sprintf
 	      "(%s %s)" 
 	      (pprint level ind_list t1)
               (pprint level ind_list t2)
+      and print_list ind_list =
+	match ind_list with
+	  [] -> print_string "]\n"
+	| x::l -> print_string (x^";"); print_list l
       in 
-      pprint 0 [] tm
+      pprint 0 l_const tm
 
  
 
