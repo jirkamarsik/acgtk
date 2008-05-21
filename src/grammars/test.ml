@@ -1,47 +1,77 @@
-let options = []
+open Abstract_syntax
+open Data_parsing
 
-let usg_msg = ""
+let interactive = ref false
 
+let env = ref Environment.empty
+
+let options =
+  [
+  ("-i", Arg.Set interactive , "Enter the interaction loop to parse terms according to signatures")
+  ]
+  
+let usg_msg = "./test [options] file"
+  
+  
+let parse_term sg =
+  let rec parse_rec = function
+    | true ->
+	let () = Printf.printf "Enter a term: " in
+	let term_string = read_line () in
+	  (match Data_parsing.term term_string sg with
+	    | None -> parse_rec true
+	    | Some _ -> false )
+    | false -> false in
+    while (parse_rec true) do
+      ()
+    done
+	    
 
 let parse filename =
-  let sgs = Data_parsing.Data_parsing.signature filename in
-    Abstract_syntax.Environment.Env.iter 
-      (fun _ sg ->
-	 try
-	   let () = Printf.printf "\n\nResultat typecheck : \n" in
-	   let Abstract_syntax.Abstract_sig.Signature(name,y) = sg in
-	   let (t,l) = (Typechecker.typecheck (name,y)) in
-	   let Sign.Sign.Signature (name,size,_,trie,content) = t in
-	   let list_decl = Tries.Tries.content trie in
-	     Printf.printf "Sign \"%s\": [\n" name;
-	     List.iter
-	       (fun x -> (match x with
-			      Sign.Sign.Term_def(s,i,kd,wf,typ) -> 
-				print_string (s^" =PP ");
-				print_string (Sign.Sign.pretty_print wf);
-				print_string " : ";
-				Typechecker.display_typ_tdef t typ;
-				print_string " ;\n ";
-			    | Sign.Sign.Term_decl(s,i,kd,typ) -> 
-				print_string (s^" : ");
-				Typechecker.display_typ_tdef t typ;
-				print_string " ;\n ";
-			    | Sign.Sign.Type_def(s,i,typ) -> 
-				print_string (s^" : ");
-				Typechecker.display_typ_tdef t typ;
-				print_string " ;\n ";
-			    | Sign.Sign.Type_decl
-				(s,i,Lambda.Lambda.K tdl) -> 
-				print_string (s^" : K[");
-				  List.iter (Typechecker.display_typ_tdef t) tdl;
-				  print_string "] ;\n ";))
-	       list_decl;
-	     print_string"]\n"
-	 with
-	   | Error.Error e -> 
-	       let () = Printf.fprintf stderr "Error: in signature\"%s\"\n" (Error.error_msg e (Abstract_syntax.Abstract_sig.name sg)) in
-		 ())
-      sgs
-	  
-	  
-let () = Arg.parse options parse usg_msg
+  env := Data_parsing.data filename !env
+    
+    
+let term_parsing i env =
+  let n = Environment.sig_number env in
+  let available_sig =
+    Utils.string_of_list
+      "\n"
+      (fun x -> x)
+      (Environment.fold
+	 (fun d a -> 
+	    match d with
+	      | Environment.Signature sg -> (fst (Abstract_sig.name sg))::a)
+	 []
+	 env) in
+  let chosen_sig=Environment.choose_signature env in
+  let chosen_sig_name_loaded =
+    match chosen_sig with
+      | None -> ""
+      | Some s -> Printf.sprintf "Signature \"%s\" loaded." (fst (Abstract_sig.name s))  in
+    if (n=0) || (not !i)
+    then
+      ()
+    else
+      try
+	let () = if n=1 then Printf.printf "%s\n" chosen_sig_name_loaded else () in
+	  while true do
+	    try
+	      let () = Printf.printf "Availale signatures:\n%s\n" available_sig in
+	      let sg =
+		match n,chosen_sig with
+		  | 1, Some s -> s
+		  | _,_ -> 
+		      let () = Printf.printf "Enter a signature: " in
+		      let sig_string = read_line () in 
+			Environment.get_signature sig_string env in
+		parse_term sg
+	    with
+	      | Environment.Signature_not_found sig_name -> Printf.printf "No such signature in %s\n" sig_name
+	  done
+      with
+	| End_of_file -> let () = print_newline () in ()
+	
+	
+let () =
+  let () = Arg.parse options parse usg_msg in
+    term_parsing interactive !env
