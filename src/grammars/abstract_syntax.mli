@@ -151,6 +151,9 @@ type sig_entry =
   (** [name s] returns the name of the signature [s] and the location of its definition *)
   val name : t -> (string * location)
 
+  (** [name s] returns the content of the signature [s] *)
+  val get_content : t -> sig_content
+
   (** [get_warnings sg] returns the warnigs emitted while parsing [sg]. *)
   val get_warnings : t -> Error.warning list
     

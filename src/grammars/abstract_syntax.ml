@@ -85,6 +85,7 @@ struct
 
   let name (Signature(n,_)) = n
     
+  let get_content (Signature(_,c)) = c
     
   let is_atomic_term = function
     | Var _ -> true
