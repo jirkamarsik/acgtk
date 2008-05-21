@@ -17,7 +17,9 @@ let term_parsing env =
 	   let Abstract_syntax.Environment.Signature(sg) = 
 	     content in
 	 try
-	   let Abstract_syntax.Abstract_sig.Signature((name,_),y) = sg in
+	   let y = Abstract_syntax.Abstract_sig.get_content sg in
+	   let (name,_) = Abstract_syntax.Abstract_sig.name sg in
+(* 	   let Abstract_syntax.Abstract_sig.Signature((name,_),y) = sg in *)
 	   let (t,l) = (Typechecker.typecheck (name,y)) in
 	   let Sign.Sign.Signature (name,size,_,trie,content) = t in
 	   let list_decl = Tries.Tries.content trie in
