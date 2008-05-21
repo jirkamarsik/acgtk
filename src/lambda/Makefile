@@ -39,5 +39,5 @@ parser.ml : parser.dyp
 	dypgen.opt $<
 
 lexer.ml : lexer.mll
-	ocamllex $<
+	ocamllex.opt $<
 

@@ -23,7 +23,7 @@ type parse_error =
   | No_such_signature of string
   | Dyp_error
 
-(** The types for errors raised by the typechecker. Names hould be
+(** The types for errors raised by the typechecker. Names should be
     explicit *)
 type type_error =
   | Already_defined_var of string
@@ -34,7 +34,7 @@ type type_error =
   | Other
 
 
-(** The types for errors raised by the environment. Names hould be
+(** The types for errors raised by the environment. Names should be
     explicit *)
 type env_error =
   | Duplicated_signature of string

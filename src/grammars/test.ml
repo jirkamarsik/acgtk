@@ -57,7 +57,7 @@ let term_parsing i env =
 	let () = if n=1 then Printf.printf "%s\n" chosen_sig_name_loaded else () in
 	  while true do
 	    try
-	      let () = Printf.printf "Availale signatures:\n%s\n" available_sig in
+	      let () = Printf.printf "Available signatures:\n%s\n" available_sig in
 	      let sg =
 		match n,chosen_sig with
 		  | 1, Some s -> s

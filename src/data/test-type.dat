@@ -1,18 +1,18 @@
 signature essai =
 	a:type;
-(* premier type d'erreur : un lambda sans type fleche *)
-(*	c = lambda x.x : a ; *)
+(* À améliorer :  le message d'erreur *)
+(*	c = lambda x.x : a ;   *)
 
 (* deuxième type d'erreur : definition de type pas implémentée *)
-(*	string = a -> a:type ; *)
+(* OK	string = a -> a:type ;  *)
 
 (* amélioration : dire le type déclaré/attendu pour la constante et dire le type calculé dans le term (ici : "+" not well typed) *)
-(* Remarque : à améliorer pour le parsing aussi, cf si + déclaré infix *)
-(*	t:a -> a;
+(*	t:a ;
 	prefix + = lambda x .t x : a -> a;
 	c = + t : a ; *)
 
 (* Il arrive à typer c alors que ça devrait être linéaire *)
+(* il transforme t en a dans c*)
 	t : a -> a   -> a; 
-	c = lambda x. t x x : a -> a;
+	c = lambda x. t x x : a -> a; 
 end
