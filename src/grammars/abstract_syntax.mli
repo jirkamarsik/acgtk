@@ -159,7 +159,19 @@ type sig_entry =
     
 end
 
-  
+module Abstract_lex :
+sig
+  type t
+  type interpretation =
+    | Type of Abstract_sig.location * Abstract_sig.type_def
+    | Constant of Abstract_sig.location * Abstract_sig.term
+
+  val empty : string*Abstract_sig.location -> abs:Abstract_sig.t -> obj:Abstract_sig.t -> t
+  val insert : string -> interpretation -> t -> t
+  val to_string : t -> string
+end
+
+
 (** This modules implements a temporary environment where parsed
     signatures and lexicon are stored *)
 module Environment :
@@ -170,6 +182,7 @@ sig
   (** The type of what an environmnent can contain *)
   type content = 
     | Signature of Abstract_sig.t
+    | Lexicon of Abstract_lex.t
 	
   (** This exception can be raised when a signature is not found in the
       environmnent *)

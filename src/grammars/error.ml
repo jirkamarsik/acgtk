@@ -37,6 +37,7 @@ type parse_error =
   | Unknown_constant of string
   | Unknown_type of string
   | Missing_arg_of_Infix of string
+  | No_such_signature of string
   | Dyp_error
 
 type type_error =
@@ -50,6 +51,7 @@ type type_error =
 
 type env_error =
   | Duplicated_signature of string
+  | Duplicated_lexicon of string
 
 type error = 
   | Parse_error of parse_error * (Lexing.position * Lexing.position)
@@ -76,6 +78,7 @@ let parse_error_to_string = function
   | Unknown_constant id -> Printf.sprintf "Syntax error: Unknown constant \"%s\"" id
   | Unknown_type id -> Printf.sprintf "Syntax error: Unknown atomic type \"%s\"" id
   | Missing_arg_of_Infix  id -> Printf.sprintf "Syntax error: \"%s\" is defined as infix but used here with less than two arguments" id
+  | No_such_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" not in the current< environment" s
   | Dyp_error -> "Dyp: Syntax error"
 
 let type_error_to_string = function
@@ -92,7 +95,8 @@ let type_error_to_string = function
   | Other -> "Not yet implemented"
 
 let env_error_to_string = function
-  | Duplicated_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" is used twice" s
+  | Duplicated_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" is used twice in this environment" s
+  | Duplicated_lexicon s -> Printf.sprintf "Syntax error: Lexion id \"%s\" is used twice in this environment" s
 
 let compute_comment_for_position pos1 pos2 =
   let line2 = pos2.Lexing.pos_lnum in

@@ -40,7 +40,8 @@ let term_parsing i env =
       (Environment.fold
 	 (fun d a -> 
 	    match d with
-	      | Environment.Signature sg -> (fst (Abstract_sig.name sg))::a)
+	      | Environment.Signature sg -> (fst (Abstract_sig.name sg))::a
+	      | _ -> a)
 	 []
 	 env) in
   let chosen_sig=Environment.choose_signature env in

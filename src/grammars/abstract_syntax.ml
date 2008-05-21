@@ -395,6 +395,49 @@ struct
 	  
 end
   
+module Abstract_lex =
+struct
+
+  module Dico = Map.Make(String)
+
+  type interpretation = 
+    | Type of Abstract_sig.location * Abstract_sig.type_def
+    | Constant of Abstract_sig.location * Abstract_sig.term
+
+  let interpretation_to_string i sg = match i with
+    | Type (_,t) -> Printf.sprintf "(* type *)\t%s" (Abstract_sig.type_def_to_string t sg)
+    | Constant (_,c) -> Printf.sprintf "(* cst *)\t%s" (Abstract_sig.term_to_string c sg)
+
+  type t = {name:string*Abstract_sig.location;
+	    dico:interpretation Dico.t;
+	    abstract_sig:Abstract_sig.t;
+	    object_sig:Abstract_sig.t;}
+
+
+  let name {name=n}=n
+
+  let empty name ~abs ~obj = {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj}
+
+  let insert s i ({dico=d} as lex) = {lex with dico=Dico.add s i d}
+
+  let to_string {name=n,_;dico=d;abstract_sig=abs_sg;object_sig=obj_sg} =
+    Printf.sprintf
+      "lexicon %s(%s): %s =\n%send"
+      n
+      (fst (Abstract_sig.name abs_sg))
+      (fst (Abstract_sig.name obj_sg))
+      (match 
+	 Dico.fold
+	   (fun k i -> function
+	      | None -> Some (Printf.sprintf "\t%s := %s;" k (interpretation_to_string i obj_sg))
+	      | Some a -> Some (Printf.sprintf "%s\n\t%s := %s;" a k (interpretation_to_string i obj_sg)))
+	   d
+	   None with
+	     | None -> ""
+	     | Some s -> Printf.sprintf "%s\n" s)
+end
+
+
 
 module Environment =
 struct
@@ -404,6 +447,7 @@ struct
   module Env = Map.Make(String)
   type content = 
     | Signature of Abstract_sig.t
+    | Lexicon of Abstract_lex.t
 
   type t = {map:content Env.t;sig_number:int;lex_number:int}
 
@@ -416,6 +460,12 @@ struct
 	  {e with map=Env.add name d e.map ;sig_number=e.sig_number+1}
 	else
 	  raise (Error.Error (Error.Env_error (Error.Duplicated_signature name,(p1,p2))))
+    | Lexicon l -> let name,(p1,p2) = Abstract_lex.name l in
+	if not (Env.mem name e.map)
+	then
+	  {e with map=Env.add name d e.map ;lex_number=e.lex_number+1}
+	else
+	  raise (Error.Error (Error.Env_error (Error.Duplicated_lexicon name,(p1,p2))))
 
   let iter f {map=e} =  Env.iter (fun _ d -> f d) e
 
@@ -427,6 +477,7 @@ struct
     try
       match Env.find s e with
 	| Signature sg -> sg
+	| Lexicon _ -> raise (Signature_not_found s)
     with
       | Not_found -> raise (Signature_not_found s)
 
@@ -436,9 +487,10 @@ struct
   let choose_signature {map=e} =
     try
       let () = Env.fold
-	(fun _ c _ -> 
+	(fun _ c a -> 
 	   match c with
-	     | Signature s -> raise (Sig s))
+	     | Signature s -> raise (Sig s)
+	     | Lexicon _ -> a )
 	e
 	() in
 	None

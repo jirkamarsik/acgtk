@@ -20,6 +20,7 @@ type parse_error =
   | Unknown_constant of string
   | Unknown_type of string
   | Missing_arg_of_Infix of string
+  | No_such_signature of string
   | Dyp_error
 
 (** The types for errors raised by the typechecker. Names hould be
@@ -37,6 +38,8 @@ type type_error =
     explicit *)
 type env_error =
   | Duplicated_signature of string
+  | Duplicated_lexicon of string
+
 
 (** The type for errors *)
 type error = 

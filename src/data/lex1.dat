@@ -1,0 +1,22 @@
+signature abs =
+	a,b,c:type;
+	t,u,v:a;
+end
+
+
+signature obj =
+	s:type;
+	tt,uu,vv:s;
+	infix + : s -> s -> s;
+	prefix - : s -> s;
+	w=lambda x. tt+x:s;
+	binder ALL = w:s;
+(*	z = ALL tt.tt+tt:s *)
+end
+
+lexicon absobj ( abs ) : obj =
+	a,b,c:=s;
+	t:=tt;
+	u:= ALL y.y+y ;
+	v:=w;
+end

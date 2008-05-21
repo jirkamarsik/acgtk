@@ -1,6 +1,11 @@
 %mltop {
   open Abstract_syntax
   module Env = Set.Make(String)
+
+  type local_data =
+    | Signature of Abstract_sig.t
+    | Abs_and_obj of Abstract_sig.t * Abstract_sig.t
+    | Env of Environment.t
 }
 {
   open Dyp
@@ -8,10 +13,16 @@
 
   exception No_sig
 
+  type type_or_cst =
+    | Type
+    | Cst
+
+  exception Is_type
+  exception Is_cst
+
   let emit_parse_error e loc = raise (Error.Error (Error.Parse_error (e,loc)))
 
   let local_data = None
-
 
 
 
@@ -43,9 +54,25 @@
 
 (*  let empty_sig = Abstract_sig.empty ""*)
 
-  let get_value = function
+  let get_sig_value = function
     | None -> raise No_sig
-    | Some s -> s
+    | Some (Signature s) -> s
+    | Some (Abs_and_obj (_,o)) -> o
+    | Some (Env _) -> failwith "Bug: looking for a signature while env is the current local data"
+
+  let get_abs_and_obj_sig_value = function
+    | None -> raise No_sig
+    | Some (Signature _) -> failwith "Bug: looking for an abs_obj while signature is the current local data"
+    | Some (Abs_and_obj (a,o)) -> a,o
+    | Some (Env _) -> failwith "Bug: looking for an abs_obj while env is the current local data"
+
+
+  let get_env_value = function
+    | None -> Environment.empty
+    | Some (Env e) -> e
+    | Some (Abs_and_obj _) -> failwith "Bug: looking for an env while abs_obj is the current local data"
+    | Some (Signature _) -> failwith "Bug: looking for an env while signature is the current local data"
+
 
   let raise_expect v (p1,p2) =
     let s = Entry.valuation_to_string v in
@@ -64,6 +91,7 @@
 <Abstract_sig.location> RPAREN
 <Abstract_sig.location> DOT
 <Abstract_sig.location> SIG_OPEN
+<Abstract_sig.location> LEX_OPEN
 <Abstract_sig.location> END_OF_DEC
 <Abstract_sig.location> TYPE
 <Abstract_sig.location> PREFIX
@@ -72,34 +100,61 @@
 <Abstract_sig.location> LAMBDA
 <Abstract_sig.location> LAMBDA0
 <Abstract_sig.location> ARROW
+<Abstract_sig.location> COLON_EQUAL
 <Abstract_sig.location> LIN_ARROW
 <(string*Abstract_sig.location)> IDENT
 <(string*Abstract_sig.location)> SYMBOL
   
-%start <(Environment.t -> Environment.t)> signatures
+%start <Environment.t> data
 %start <(Env.t -> Error.warning list -> (Abstract_sig.term * Error.warning list))> term
 %start <Abstract_sig.term> term_alone
   
 %relation atom<app<sym_app<binder atom_type<arrow_type
 
-%local_data_type <(Abstract_sig.t option)>
+%local_data_type <(local_data option)>
   
 %%
+
+  data:
+| EOI {get_env_value dyp.last_local_data}
+| signature[s] @{s,[Local_data (Some (Env (Environment.insert (Environment.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| lexicon[l] @{l,[Local_data (Some (Env (Environment.insert (Environment.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
   
-  signatures :
+/*  signatures :
 | EOI {fun env -> env}
 | signature[s] signatures[e] {fun env -> e (Environment.insert (Environment.Signature s) env)}
-
+*/
       signature : 
-| SIG_OPEN ident EQUAL sig_entries END_OF_DEC {$4}
-| SIG_OPEN ident EQUAL sig_entries SEMICOLON END_OF_DEC {$4}
+| SIG_OPEN sig_ident EQUAL sig_entries END_OF_DEC {$4}
+| SIG_OPEN sig_ident EQUAL sig_entries SEMICOLON END_OF_DEC {$4}
       
-      ident :
-| IDENT @{$1,[Local_data (Some (Abstract_sig.empty $1))]}
+      sig_ident :
+| IDENT @{$1,[Local_data (Some (Signature (Abstract_sig.empty $1)))]}
+	  
+	  lexicon : 
+| LEX_OPEN lex_opening[l] EQUAL lex_entries[e] END_OF_DEC {e l}
+| LEX_OPEN lex_opening[l] EQUAL lex_entries[e] SEMICOLON END_OF_DEC {e l}
+
+
+      lex_opening :
+| IDENT[name] LPAREN IDENT[abs_name,abs_loc] RPAREN COLON IDENT[obj_name,obj_loc] @{
+    let env = get_env_value dyp.last_local_data in
+    let abs = 
+      try
+	Environment.get_signature abs_name env
+      with
+	| Environment.Signature_not_found _ -> emit_parse_error (Error.No_such_signature abs_name) abs_loc in
+    let obj = 
+      try
+	Environment.get_signature obj_name env
+      with
+	| Environment.Signature_not_found _ -> emit_parse_error (Error.No_such_signature obj_name) obj_loc in
+    let lex = Abstract_lex.empty name ~abs:abs ~obj:obj in
+      lex,[Local_data (Some (Abs_and_obj (abs,obj)))]}
 
 	  sig_entries :
-| sig_entry @{$1,[Local_data (Some $1)]}
-| sig_entry SEMICOLON sig_entries @{$3,[Local_data (Some $3)]}
+| sig_entry @{$1,[Local_data (Some (Signature $1))]}
+| sig_entry SEMICOLON sig_entries @{$3,[Local_data (Some (Signature $3))]}
 
       sig_entry :
 | type_declaration @{$1,[Local_data dyp.last_local_data]}
@@ -109,7 +164,7 @@
 
       
       type_declaration :
-| comma_ids COLON TYPE @{let s = get_value dyp.last_local_data in
+| comma_ids COLON TYPE @{let s = get_sig_value dyp.last_local_data in
 			let new_sig =
 			  List.fold_left
 			    (fun acc id ->
@@ -121,14 +176,14 @@
 				       emit_parse_error (Error.Duplicated_type (fst id)) (pos1,pos2))
 			    s
 			    $1 in
-			  new_sig,[Local_data (Some new_sig)]}
+			  new_sig,[Local_data (Some (Signature new_sig))]}
 
 	  comma_ids :
 | IDENT[id] {[id]}
 | IDENT[id] COMMA comma_ids[id_list] {id::id_list}
 
       type_definition :
-| IDENT EQUAL type_expression COLON TYPE @{let s = get_value dyp.last_local_data in
+| IDENT EQUAL type_expression COLON TYPE @{let s = get_sig_value dyp.last_local_data in
 					   let new_sig =
 					     try
 					       Abstract_sig.add_entry (Abstract_sig.Type_def (fst $1,snd $1,fst ($3 s))) s
@@ -136,14 +191,14 @@
 					       | Abstract_sig.Duplicate_type_definition -> 
 						   let pos1,pos2= snd $1 in
 						     emit_parse_error (Error.Duplicated_type (fst $1)) (pos1,pos2) in 
-					     new_sig,[Local_data (Some new_sig)]}
-| IDENT EQUAL type_expression COLON type_expression {let s = get_value dyp.last_local_data in
+					     new_sig,[Local_data (Some (Signature new_sig))]}
+| IDENT EQUAL type_expression COLON type_expression {let s = get_sig_value dyp.last_local_data in
 						       try
 							 let _ = $3 s in
 							   raise_expect Entry.Type_kwd (snd ($5 s))
 						       with
 							 | Error.Error (Error.Parse_error ((Error.Unknown_type _),_)) -> raise Dyp.Giveup}
-| IDENT EQUAL type_expression COLON term {let s = get_value dyp.last_local_data in
+| IDENT EQUAL type_expression COLON term {let s = get_sig_value dyp.last_local_data in
 					    try
 					      let _ = $3 s in
 					      let l = Abstract_sig.get_term_location (fst ($5 Env.empty [])) in
@@ -168,7 +223,7 @@
 | LPAREN type_expression RPAREN {fun sg -> fst ($2 sg),Abstract_sig.new_loc $1 $3} atom_type
       
       term_declaration :
-| term_dec_start COLON type_expression  @{let s = get_value dyp.last_local_data in
+| term_dec_start COLON type_expression  @{let s = get_sig_value dyp.last_local_data in
 					  let new_sig =
 					    List.fold_left
 					      (fun acc (id,kind,loc) -> 
@@ -179,7 +234,7 @@
 						       let pos1,pos2= loc in
 							 emit_parse_error (Error.Duplicated_term id) (pos1,pos2))
 					      s
-					      $1 in new_sig,[Local_data (Some new_sig);Keep_grammar true]}
+					      $1 in new_sig,[Local_data (Some (Signature new_sig));Keep_grammar true]}
 
 	  term_dec_start : 
 | comma_ids {List.map (fun (id,loc) -> (id,Abstract_sig.Default,loc)) $1}
@@ -196,7 +251,7 @@
 
       term_definition :
 | term_def_start EQUAL term COLON type_expression @{let id,k,l = $1 in
-						    let s = get_value dyp.last_local_data in
+						    let s = get_sig_value dyp.last_local_data in
 						    let new_sig =
 						      try
 							let term_value,ws = $3 Env.empty [] in
@@ -206,24 +261,25 @@
 							    | lst -> Abstract_sig.add_warnings ws new_sig2) with
 							    | Abstract_sig.Duplicate_term_definition ->
 								emit_parse_error (Error.Duplicated_term id) (fst l,snd l) in
-						      new_sig,[Local_data (Some new_sig);Keep_grammar true]}
+						      new_sig,[Local_data (Some (Signature new_sig));Keep_grammar true]}
 	  
 	  term_alone :
 | term EOI {fst ($1 Env.empty [])}	  
 
 	  term :
 | LAMBDA0  idents DOT term {
-    let sg = get_value dyp.last_local_data in
+    let sg = get_sig_value dyp.last_local_data in
       fun env ws -> multiple_abs env ws Abstract_sig.Linear $1 $2 $4 (fun x -> x)} binder
 | IDENT  idents DOT term {
-    let sg = get_value dyp.last_local_data in
+    let sg = get_sig_value dyp.last_local_data in
+    let () = Printf.printf "To parse a term, the current sig is: %s\n%!" (fst (Abstract_sig.name sg)) in
     let binder,((p1,p2) as l) = $1 in
       fun env ws -> 
 	match Abstract_sig.is_constant binder sg with
 	  | true,Some Abstract_sig.Binder -> multiple_bind env ws (Abstract_sig.Const(binder,l)) (snd $1) $2 $4 (fun x -> x)
 	  | _ -> emit_parse_error (Error.Binder_expected binder) (p1,p2) } binder 
 | application(<=app) {$1} app 
-| atomic_term (<=atom) SYMBOL term (<=app) {let sg = get_value dyp.last_local_data in
+| atomic_term (<=atom) SYMBOL term (<=app) {let sg = get_sig_value dyp.last_local_data in
 					     let id,((pos1,pos2) as l) = $2 in
 					       match Abstract_sig.is_constant id sg with
 						 | true,Some (Abstract_sig.Infix) -> 
@@ -237,7 +293,7 @@
       
       atomic_term :
 | IDENT {let id,l=$1 in
-	 let s = get_value dyp.last_local_data in 
+	 let s = get_sig_value dyp.last_local_data in 
 	 let is_constant,_ = Abstract_sig.is_constant id s in
 	   fun env ws -> 
 	     match Env.mem id env,is_constant with
@@ -246,7 +302,7 @@
 	       | false,true -> Abstract_sig.Const (id,l),ws
 	       | false,false ->emit_parse_error (Error.Unknown_constant id) (fst l,snd l)} atom
 | LPAREN term RPAREN {$2} atom
-| SYMBOL term {let sg = get_value dyp.last_local_data in
+| SYMBOL term {let sg = get_sig_value dyp.last_local_data in
 	       let id,((pos1,pos2) as l) = $1 in
 		 match Abstract_sig.is_constant id sg with
 		   | true,Some (Abstract_sig.Prefix) -> 
@@ -268,16 +324,69 @@
       idents :
 | {[]}
 | IDENT idents {$1::$2}
-
-      binder :
-| LAMBDA0 {let sg = get_value dyp.last_local_data in fun ids t env ws -> (multiple_abs env ws Abstract_sig.Linear $1 ids t (fun x -> x))} binder
-| IDENT {let sg = get_value dyp.last_local_data in let binder,((p1,p2) as l) = $1 in
-	   match Abstract_sig.is_constant binder sg with
-	     | true,Some Abstract_sig.Binder -> (fun ids t env ws-> (multiple_bind env ws (Abstract_sig.Const(binder,l)) (snd $1) ids t (fun x -> x)))
-	     | _ -> raise Dyp.Giveup } binder
+      
+      lex_entries :
+/*| lex_entry[e] {fun lex -> e lex}*/
+| {fun lex -> lex}
+| lex_entry[e] lex_entries[es] {fun lex -> es (e lex)}
+      
+      lex_entry :
+| comma_ids[ids] COLON_EQUAL term[t] SEMICOLON {
+    let () = Printf.printf "Hop with %s!\n%!" (Utils.string_of_list " " fst ids) in
+    let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
+    let kind =
+      List.fold_left
+	(fun k (id,loc) ->
+	   match k,fst (Abstract_sig.is_constant id abs) with
+	     | (None|Some Cst),true -> Some Cst
+	     | None,false ->
+		 if (Abstract_sig.is_type id abs)
+		 then
+		   raise Dyp.Giveup 
+		 else
+		   emit_parse_error (Error.Unknown_constant id) loc
+	     | Some Cst,false -> emit_parse_error (Error.Unknown_constant id) loc
+	     | Some Type,_ -> failwith "Bug: should not occur")
+	None
+	ids in
+    let () = Printf.printf "Going to compute the term\n%!" in
+    let term = fst (t Env.empty []) in
+    let () = Printf.printf "Succeeded!(%s)\n%!" (Abstract_sig.term_to_string term obj) in
+      fun lex ->
+	List.fold_left
+	  (fun acc (id,loc) -> Abstract_lex.insert id (Abstract_lex.Constant (loc,term)) acc)
+	  lex
+	  ids}
+| comma_ids[ids] COLON_EQUAL type_expression[ty] SEMICOLON {
+    let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
+    let kind =
+      List.fold_left
+	(fun k (id,loc) ->
+	   match k,Abstract_sig.is_type id abs with
+	     | (None|Some Type),true -> Some Type
+	     | None,false ->
+		 if fst (Abstract_sig.is_constant id abs)
+		 then
+		   raise Dyp.Giveup 
+		 else
+		   emit_parse_error (Error.Unknown_type id) loc
+	     | Some Type,false -> emit_parse_error (Error.Unknown_type id) loc
+	     | Some Cst,_ -> failwith "Bug: should not occur")
+	None
+	ids in
+    let actual_type = fst (ty obj) in
+      fun lex ->
+	List.fold_left
+	  (fun acc (id,loc) -> Abstract_lex.insert id (Abstract_lex.Type (loc,actual_type)) acc)
+	  lex
+	  ids}
 
 
 %mlitop {
   open Abstract_syntax
   module Env : Set. S with type elt = String.t
+  type local_data =
+    | Signature of Abstract_sig.t
+    | Abs_and_obj of Abstract_sig.t * Abstract_sig.t
+    | Env of Environment.t
 }

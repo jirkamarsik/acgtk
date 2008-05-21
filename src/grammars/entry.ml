@@ -1,9 +1,10 @@
 module Entry =
 struct
-  type data = sig_dec
-  and sig_dec = 
-    | No_sig_dec
+  type data = dec
+  and dec = 
+    | No_dec
     | Sig of sig_dec_id
+    | Lex of lex_id
   and sig_dec_id =
     | No_sig_dec_id
     | Sig_dec_id of sig_dec_equal
@@ -44,10 +45,12 @@ struct
   and valuation =
     | EOI
     | Sig_kwd
+    | Lex_kwd
     | Id
     | Equal
     | Comma
     | Colon
+    | Colon_equal
     | Type_kwd
     | End_kwd
     | Semi_colon
@@ -62,6 +65,21 @@ struct
     | DOT
     | LAMBDA
     | ARROW
+  and lex_id =
+    | No_lex_dec
+    | Lex_id
+    | Abstract_sig_opening
+    | Abstract_sig_name
+    | Abstract_sig_closing
+    | Object_sig_opening
+    | Object_sig_name
+    | Lex_def of lex_entry
+  and lex_entry =
+    | No_lex_entry
+    | Lex_entry_id of interpretation
+  and interpretation =
+    | No_interpretation
+    | Interpretation of type_or_term_in_def
 
   type term = type_or_term_in_def
 
@@ -69,10 +87,12 @@ struct
   let valuation_to_string = function
     | EOI -> "End of input"
     | Sig_kwd -> "\"signature\" kwd"
+    | Lex_kwd -> "\"lexicon\" kwd"
     | Id -> "Identifier"
     | Equal -> "\"=\""
     | Comma -> "\",\""
     | Colon -> "\":\""
+    | Colon_equal -> "\":=\""
     | Type_kwd -> "\"type\" kwd"
     | End_kwd -> "\"end\" kwd"
     | Semi_colon -> "\";\""
@@ -86,10 +106,29 @@ struct
 
   exception Expect of valuation list
 
-  let start_data () = No_sig_dec
+  let start_data () = No_dec
 
   let start_term () = No_type_or_term_in_def
 
+let build_expectation lst =
+    let rec build_expectation_rec lst k =
+      match lst with
+	| [] -> k []
+	| (tok,res)::tl -> 
+	    build_expectation_rec
+	      tl
+	      (fun acc ->
+		 let a,f= k acc in
+		 let expectation = tok::a in
+		   expectation,
+		 (fun x -> if x=tok then 
+		    res
+		  else
+		    try
+		      f x
+		    with
+		      | Expect e -> raise (Expect (tok::e)))) in
+      build_expectation_rec lst (fun l -> (l,(fun x -> raise (Expect l))))
 
   let term_expectation = function
     | No_type_or_term_in_def -> let l = [Id;Type_or_term LAMBDA;Sym] in
@@ -135,11 +174,12 @@ struct
       result v
 
   let data_expectation = function
-    | No_sig_dec ->
-	let l = [EOI;Sig_kwd] in
+    | No_dec ->
+	let l = [EOI;Sig_kwd;Lex_kwd] in
 	  l , (function
-		 | EOI -> No_sig_dec
+		 | EOI -> No_dec
 		 | Sig_kwd -> Sig No_sig_dec_id
+		 | Lex_kwd -> Lex No_lex_dec
 		 | _ -> raise (Expect l))
 	    
     | Sig No_sig_dec_id -> let l = [Id] in
@@ -158,7 +198,7 @@ struct
 	     | Prefix_kwd -> Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix No_symbol)))
 	     | Infix_kwd -> Sig (Sig_dec_id (Sig_dec_equal (Prefix_infix No_symbol)))
 	     | Binder_kwd -> Sig (Sig_dec_id (Sig_dec_equal (Binder No_binder_id)))
-	     | End_kwd -> No_sig_dec
+	     | End_kwd -> No_dec
 	     | _ -> raise (Expect l))
 
     | Sig (Sig_dec_id (Sig_dec_equal (Entry_id No_entry_id_list))) -> let l = [Comma;Colon;Equal] in
@@ -272,8 +312,8 @@ struct
       l,(function
 	   | End_kwd -> 
 	       (match k_o_t with
-		  | Nothing,_ -> No_sig_dec
-		  | (Unset|Type),(Id|Type_or_term RPAR) -> No_sig_dec
+		  | Nothing,_ -> No_dec
+		  | (Unset|Type),(Id|Type_or_term RPAR) -> No_dec
 		  | _ -> raise (Expect [Id;Type_or_term ARROW]))
 	   | Semi_colon -> 
 	       (match k_o_t with
@@ -302,11 +342,119 @@ struct
 		  | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
 	   | Sym -> raise (Expect [Type_or_term ARROW;Semi_colon])
 	   | _ -> raise (Expect l))
+    | Lex No_lex_dec -> build_expectation [Id,Lex Lex_id]
+    | Lex Lex_id -> build_expectation [Type_or_term LPAR,Lex Abstract_sig_opening]
+    | Lex Abstract_sig_opening -> build_expectation [Id,Lex Abstract_sig_name]
+    | Lex Abstract_sig_name -> build_expectation [(Type_or_term RPAR),Lex Abstract_sig_closing]
+    | Lex Abstract_sig_closing -> build_expectation [Colon,Lex Object_sig_opening]
+    | Lex Object_sig_opening -> build_expectation [Id,Lex Object_sig_name]
+    | Lex Object_sig_name -> build_expectation [Equal,Lex (Lex_def No_lex_entry)]
+    | Lex (Lex_def No_lex_entry) -> build_expectation [Id,Lex (Lex_def (Lex_entry_id No_interpretation));End_kwd,No_dec]
+    | Lex (Lex_def (Lex_entry_id No_interpretation)) -> 
+	build_expectation [Comma,Lex (Lex_def No_lex_entry);
+			   Colon_equal,Lex (Lex_def (Lex_entry_id (Interpretation No_type_or_term_in_def)))]
+    | Lex (Lex_def (Lex_entry_id (Interpretation ty_o_te))) ->
+	match ty_o_te with
+	  | No_type_or_term_in_def ->
+	      let l = [Id;Sym;Type_or_term LPAR;Type_or_term LAMBDA] in
+		l,(function
+		     | (Id|Type_or_term LPAR) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Unset,a)))))
+		     | (Sym|Type_or_term LAMBDA) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | _ -> raise (Expect [Type_or_term LPAR]))
+	  | Type_or_term_in_def (Unset,Id) ->
+	      let l = [Type_or_term LPAR;Semi_colon;End_kwd] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|DOT|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | Type_or_term RPAR as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Unset,a)))))
+		     | Type_or_term ARROW as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
+		     | Semi_colon -> Lex (Lex_def No_lex_entry)
+		     | End_kwd -> No_dec
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Unset,Type_or_term LPAR) ->
+	      let l = [Type_or_term LPAR] in
+		l,(function
+		     | (Sym|Type_or_term LAMBDA) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | (Id|Type_or_term LPAR) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Unset,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Unset,Type_or_term RPAR) ->
+	      let l = [Type_or_term LPAR;Semi_colon;End_kwd] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | (Type_or_term RPAR) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Unset,a)))))
+		     | (Type_or_term ARROW) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
+		     | Semi_colon -> Lex (Lex_def No_lex_entry)
+		     | End_kwd -> No_dec
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Unset,_) -> failwith "Bug: should not occur"
+	  | Type_or_term_in_def (Term,Id) -> 
+	      let l = [Semi_colon;End_kwd;Type_or_term ARROW] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|RPAR|DOT|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | Semi_colon -> Lex (Lex_def No_lex_entry)
+		     | End_kwd -> No_dec
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Term,Sym) -> 
+	      let l = [Type_or_term ARROW] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Term,Type_or_term LPAR) -> 
+	      let l = [Type_or_term ARROW] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Term,Type_or_term RPAR) -> 
+	      let l = [Semi_colon;End_kwd;Type_or_term ARROW] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|RPAR|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | Semi_colon -> Lex (Lex_def No_lex_entry)
+		     | End_kwd -> No_dec
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Term,Type_or_term DOT) -> 
+	      let l = [Type_or_term ARROW] in
+		l,(function
+		     | (Id|Sym|Type_or_term (LPAR|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Term,Type_or_term LAMBDA) -> 
+	      let l = [Id] in
+		l,(function
+		     | Id as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Term,_) -> failwith "Bug: Should not occur"
+	  | Type_or_term_in_def (Type,Id) ->
+	      let l = [End_kwd;Semi_colon;Type_or_term RPAR;Type_or_term ARROW] in
+		l,(function
+		     | End_kwd -> No_dec
+		     | Semi_colon -> Lex (Lex_def No_lex_entry)
+		     | Type_or_term (RPAR|ARROW) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Type,Type_or_term LPAR) ->
+	      let l = [Id;Type_or_term LPAR] in
+		l,(function
+		     | (Id|Type_or_term LPAR) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Type,Type_or_term RPAR) ->
+	      let l = [End_kwd;Semi_colon;Type_or_term RPAR;Type_or_term ARROW] in
+		l,(function
+		     | End_kwd -> No_dec
+		     | Semi_colon -> Lex (Lex_def No_lex_entry)
+		     | Type_or_term (RPAR|ARROW) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Type,Type_or_term ARROW) ->
+	      let l = [Id;Type_or_term LPAR] in
+		l,(function
+		     | (Id|Type_or_term LPAR) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
+		     | _ -> raise (Expect l))
+	  | Type_or_term_in_def (Type,_) -> failwith "Bug:should not occur"
+	  | Type_or_term_in_def (Nothing,_) -> failwith "Bug:should not occur"
+			 
+	  
+	      
 
 
   let data_transition q v =
     let _,result = data_expectation q in
-      result v
+      result v 
 
 
 end

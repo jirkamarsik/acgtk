@@ -19,10 +19,12 @@ sig
   type valuation =
     | EOI
     | Sig_kwd
+    | Lex_kwd
     | Id
     | Equal
     | Comma
     | Colon
+    | Colon_equal
     | Type_kwd
     | End_kwd
     | Semi_colon

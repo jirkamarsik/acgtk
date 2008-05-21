@@ -89,6 +89,9 @@ let string = (letter|digit|'_')*
       | "signature" {let () = update_data Entry.Sig_kwd (loc lexbuf) in
 		     let () = check_brackets () in
 		       SIG_OPEN(loc lexbuf)}
+      | "lexicon" {let () = update_data Entry.Lex_kwd (loc lexbuf) in
+		     let () = check_brackets () in
+		       LEX_OPEN(loc lexbuf)}
       | "end" {let () = update_data Entry.End_kwd (loc lexbuf) in
 	       let () = check_brackets () in
 		 END_OF_DEC(loc lexbuf)}
@@ -110,6 +113,8 @@ let string = (letter|digit|'_')*
 		    LAMBDA(loc lexbuf)}
       | "->" {let () = update_data (Entry.Type_or_term Entry.ARROW) (loc lexbuf) in
 		LIN_ARROW(loc lexbuf)}
+      | ":=" {let () = update_data Entry.Colon_equal (loc lexbuf) in
+		COLON_EQUAL(loc lexbuf)}
       | letter string {let () = update_data Entry.Id (loc lexbuf) in
 			 IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
       | symbol {let () = update_data Entry.Sym (loc lexbuf) in
