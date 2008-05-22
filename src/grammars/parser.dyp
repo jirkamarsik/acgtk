@@ -272,7 +272,7 @@
       fun env ws -> multiple_abs env ws Abstract_sig.Linear $1 $2 $4 (fun x -> x)} binder
 | IDENT  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
-    let () = Printf.printf "To parse a term, the current sig is: %s\n%!" (fst (Abstract_sig.name sg)) in
+(*    let () = Printf.printf "To parse a term, the current sig is: %s\n%!" (fst (Abstract_sig.name sg)) in *)
     let binder,((p1,p2) as l) = $1 in
       fun env ws -> 
 	match Abstract_sig.is_constant binder sg with
@@ -332,7 +332,7 @@
       
       lex_entry :
 | comma_ids[ids] COLON_EQUAL term[t] SEMICOLON {
-    let () = Printf.printf "Hop with %s!\n%!" (Utils.string_of_list " " fst ids) in
+(*    let () = Printf.printf "Hop with %s!\n%!" (Utils.string_of_list " " fst ids) in*)
     let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
     let kind =
       List.fold_left
@@ -349,9 +349,9 @@
 	     | Some Type,_ -> failwith "Bug: should not occur")
 	None
 	ids in
-    let () = Printf.printf "Going to compute the term\n%!" in
+(*    let () = Printf.printf "Going to compute the term\n%!" in*)
     let term = fst (t Env.empty []) in
-    let () = Printf.printf "Succeeded!(%s)\n%!" (Abstract_sig.term_to_string term obj) in
+(*    let () = Printf.printf "Succeeded!(%s)\n%!" (Abstract_sig.term_to_string term obj) in *)
       fun lex ->
 	List.fold_left
 	  (fun acc (id,loc) -> Abstract_lex.insert id (Abstract_lex.Constant (loc,term)) acc)

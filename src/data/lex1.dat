@@ -16,7 +16,7 @@ end
 
 lexicon absobj ( abs ) : obj =
 	a,b,c:=s;
-	t:=tt;
+	t:=tt uu;
 	u:= ALL y.y+y ;
 	v:=w;
 end
