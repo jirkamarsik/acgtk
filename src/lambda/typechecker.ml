@@ -12,7 +12,7 @@ exception Not_yet_implemented of string
       
 (* module Table = Make_table (struct let b = 10 end) *)
 
-let verbose = true
+let verbose = false
  
 type symbol = string 
       
@@ -146,7 +146,9 @@ and typecheck_entry sg = function
 (*      print_string (Abstract_typ.to_string sg);*)
       let new_td = 
 	typecheck_type sg typ in
-      display_typ_tdef sg new_td;
+      if verbose
+      then
+	display_typ_tdef sg new_td;
       let new_sg = Sign.insert_term_dcl s tk new_td sg in
       new_sg
 
@@ -199,7 +201,6 @@ and typecheck_type sg = function
 	let (i,type_s) = Sign.get_atom sg s
 (*List.assoc s type_env*) 
 	in 
-	print_string ("check type : "^(string_of_int i)^"\n");
 	if type_s = Lambda.K []
 	then 
 	  Lambda.Type_atom((*Sign.get_ind ind_assoc s*)i,[])
@@ -417,28 +418,17 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
       match rec_term.Sign.typeofterm with 
 	None -> type_error Other loc
       | Some type_app -> 
-	  print_string "appel typecheck_term 3\n"; 
+	  if verbose 
+	  then 	  print_string "appel typecheck_term 3\n"; 
 	  let new_type = (Lambda.Linear_arrow(type_t2,type_app)) in
-	  display_typ_tdef sg type_t2;
-	  display_typ_tdef sg type_app;
-	  display_rec_term sg new_rec_term;
-(* 	  let new_type_t2 =  *)
-(* 	  let i1 =  *)
-(* 	    (match (new_rec_term.Sign.wfterm) with *)
-(* 	      None -> raise Not_found *)
-(* 	    | Some t -> (Sign.give_level t); *)
-(* 	    ); *)
-(* 	  and i2,tl = *)
-(* 	    (match (type_t2) with *)
-(* 	      Lambda.Type_atom(i,tl) -> i,tl; *)
-(* 	    | _ -> raise Not_found *)
-(* 	    ); *)
-(* 	  in *)
-(* 	  let i = Sign.get_atom_ind *)
-(* 	  let new_type = (Lambda.Linear_arrow(Lambda.Type_atom(i1-1+i2,tl),type_app)) in *)
-	  display_typ_tdef sg new_type;
+	  if verbose
+	  then (
+	    display_typ_tdef sg type_t2;
+	    display_typ_tdef sg type_app;
+	    display_rec_term sg new_rec_term;
+	    display_typ_tdef sg new_type;);
 	  
-          let (res,new_sg) = 
+	  let (res,new_sg) = 
 	    typecheck_term 
 	      rec_term.Sign.ind_assoc 
 	      (Sign.update_rec_term t1 None (Some new_type) rec_term.Sign.ind_assoc)
@@ -465,8 +455,6 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
 and typeinf_term ind_assoc rec_term typelabs sg lvar_list =
   match rec_term.Sign.term with
   | Abstract_sig.Var(s,loc) -> 
-      if (verbose)
-      then(print_string "in Var\n";);
       if (verbose)
       then(
 	print_string ("Var : "^s^"\n");
@@ -510,21 +498,19 @@ and typeinf_term ind_assoc rec_term typelabs sg lvar_list =
 
   | Abstract_sig.Const(s,loc) ->
       if (verbose)
-      then(print_string "inf Const\n";);
-      if (verbose)
       then(
       print_string ("Const : "^s^" "););
       (try 
 	let (i,_,type_s) = Sign.get_const sg s in
-	print_int i;
-	print_newline();
-	print_string (Sign.string_of_atom 0 sg);
-	print_newline();
-	display_typ_tdef sg type_s;
-	print_newline();
 	if (verbose)
 	then(
-	display_typ_tdef sg type_s;);
+	  print_int i;
+	  print_newline();
+	  print_string (Sign.string_of_atom 0 sg);
+	  print_newline();
+	  display_typ_tdef sg type_s;
+	  print_newline();
+	  display_typ_tdef sg type_s;);
 (* 	let new_sg =  *)
 (* 	  Sign.insert_term_dcl s Abstract_syntax.Abstract_sig.Default type_s sg in *)
 	rec_term.Sign.wfterm <-
