@@ -1,9 +1,0 @@
-module type Signature_sig =
-sig
-  exception Duplicate_type_definition
-  exception Duplicate_term_definition
-
-  type t
-  empty : t
-  add_entry : entry -> t -> t
-  is_type : string -> t -> bool
