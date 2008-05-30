@@ -31,12 +31,12 @@ let type_error e loc = raise (Error (Type_error (e,loc)))
 let type_nb = ref 100
 let new_type_list : new_type_list = ref []
      
-let rec old_term_to_string sg = function
+let rec abstr_synt_term_to_string sg = function
   | Abstract_sig.Var(s,_) -> s
   | Abstract_sig.Const(s,_) -> s
   | Abstract_sig.LAbs(s,t,_) ->
-      "(lambda "^s^". "^( old_term_to_string sg t)^")"
-  | Abstract_sig.App(t1,t2,_) -> (old_term_to_string sg t1)^" "^(old_term_to_string sg t2)
+      "(lambda "^s^". "^( abstr_synt_term_to_string sg t)^")"
+  | Abstract_sig.App(t1,t2,_) -> (abstr_synt_term_to_string sg t1)^" "^(abstr_synt_term_to_string sg t2)
 	    
 
 let rec typecheck_sig sig_new = function
@@ -162,7 +162,7 @@ and typecheck_type sg = function
 	in 
 	if type_s = Lambda.K []
 	then 
-	  Lambda.Type_atom((*Sign.get_ind ind_assoc s*)i,[])
+	  Lambda.Type_atom(i,[])
 	else  type_error (Not_well_kinded_type s) loc
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
@@ -180,9 +180,9 @@ and typecheck_type sg = function
 (* typecheck a term *)
 and typecheck_term ind_assoc rec_term sg lvar_list = 
   match rec_term.Sign.term with
-  | Abstract_sig.Var(s,loc) ->       
+  | Abstract_sig.Var(s,loc) ->
       if (verbose)
-      then(print_string "\n\n\tcheck Var\n";);
+      then(print_string ("\n\n\tcheck Var "^s^"\n"););
       (** WT terms : variable *)
       (try 
 	let (_,_,type_s) = Sign.get_const sg s
@@ -190,7 +190,7 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
 	display_typ_tdef sg type_s;
 	match rec_term.Sign.typeofterm with 
 	  None -> type_error Other loc
-	| Some ty -> 
+	| Some ty -> 	display_typ_tdef sg ty;
 	    if eq_typ type_s ty sg
 	    then 
 	      (if List.mem s lvar_list
@@ -198,7 +198,7 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
 		try
 		  let s_index = Sign.get_ind rec_term.Sign.ind_assoc s
 		  in
-		  rec_term.Sign.wfterm <- Some (Lambda.Var s_index);
+		  rec_term.Sign.wfterm <- Some (Lambda.LVar s_index);
 (* enlever x de ind_assoc car ne peut etre utilise qu une fois*)
 		  if verbose
 		  then print_string "remove 1\n";
@@ -212,7 +212,7 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
 		try
 		  let s_index = Sign.get_ind rec_term.Sign.ind_assoc s
 		  in
-		  rec_term.Sign.wfterm <- Some (Lambda.Var s_index);
+		  rec_term.Sign.wfterm <- Some (Lambda.LVar s_index);
 		  (rec_term,sg)
 		with Not_found -> 
 		  type_error (Not_defined_var s) loc
@@ -241,8 +241,6 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
 	      print_string "AVANT eq_typ : ";
 	      display_typ_tdef sg type_s;
 	      print_string s;
-	      Sign.display_assoc ind_assoc;
-	      print_newline();
 	      display_typ_tdef sg ty;
 	      Sign.display_assoc rec_term.Sign.ind_assoc;
 	      print_newline();
@@ -284,7 +282,7 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
  	  print_string "erreur 3"; 
 	  type_error (
 	  Not_well_typed_term(
-	  (old_term_to_string sg rec_term.Sign.term),
+	  (abstr_synt_term_to_string sg rec_term.Sign.term),
 	  ("a' -> b'"))) loc
       | Some (Lambda.Linear_arrow(tdef1,tdef2)) -> 
 	  let new_rec = 

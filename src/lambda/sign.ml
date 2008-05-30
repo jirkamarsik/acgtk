@@ -25,12 +25,8 @@ module Sign =
 		constant, the second parameter is its index and the last
 		parameter is its value *)
 	    	
-    type sig_content = 
-      {type_definitions: Abstract_sig.type_of_definition Utils.StringMap.t;
-       term_definitions: (Abstract_sig.type_of_definition*Abstract_sig.term_kind) Utils.StringMap.t}
-	 
     type t = Signature of string * int * sig_entry Table.t * sig_entry
-	Tries.t * sig_entry list (** The first string is the name of the
+	Tries.t (** The first string is the name of the
 				  signature and the int is its size *)
 	
     type rec_term = 
@@ -49,55 +45,39 @@ module Sign =
 	
 	
 	
-    let is_infix id (Signature (_, _, _, _, _(* {type_definitions=_;term_definitions=defs} *))) =
-(*     try *)
-(*       let _,t = Utils.StringMap.find id defs in *)
-(*       (t=Abstract_sig.Infix) *)
-(*     with *)
-(*     | Not_found ->  *)false
-	
-    let is_binder id (Signature (_, _, _, _, _(* {type_definitions=_;term_definitions=defs} *))) =
-(*       try *)
-(* 	let _,t = Utils.StringMap.find id defs in *)
-(* 	t = Abstract_sig.Binder *)
-(*       with *)
-(*       | Not_found -> *) false
-	
-    let create(name) = Signature (name,0, Table.create(), Tries.empty,[])
+  let create(name) = Signature (name,0, Table.create(), Tries.empty)
 	
     let get_ind ind_assoc s =
       List.assoc s ind_assoc
 
-    let size (Signature (_, n, _, _, _)) = n
+    let size (Signature (_, n, _, _)) = n
 	
-    let insert_type_dcl id ki (Signature (name,size, tb, tr,content)) =
+    let insert_type_dcl id ki (Signature (name,size, tb, tr)) =
       let e = Type_decl (id, size , ki)
       in
-      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr, e::content)
+      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr)
 
-    let insert_type_def id ty (Signature (name,size, tb, tr,content)) =
+    let insert_type_def id ty (Signature (name,size, tb, tr)) =
       let e = Type_def (id, size , ty)
       in
-      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr, e::content)
+      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr)
 
-    let insert_term_dcl id tk ty (Signature (name,size, tb, tr,content)) =
+    let insert_term_dcl id tk ty (Signature (name,size, tb, tr)) =
       let e = Term_decl (id, size, tk, ty)
       in 
-      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr, e::content)
+      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr)
 	
-    let insert_term_def id tk te ty 
-	(Signature (name,size, tb, tr,content)) =
+    let insert_term_def id tk te ty (Signature (name,size, tb, tr)) =
       let e = Term_def (id, size, tk, te, ty)
       in 
-      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr, e::content)
+      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr)
 	
-    let insert_var id tk ty 
-	(Signature (name,size, tb, tr,content)) =
+    let insert_var id tk ty (Signature (name,size, tb, tr)) =
       let e = Term_def (id, size, tk, Lambda.Var(size), ty)
       in 
-      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr, content)
+      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr)
 	
-    let lookup i (Signature (_, _, tb, _, _)) = Table.lookup i tb
+    let lookup i (Signature (_, _, tb, _)) = Table.lookup i tb
 
     let rec inc_index = function
 	[] -> []
@@ -136,7 +116,7 @@ module Sign =
 	    display l
       in display ind_assoc
 	
-    let get_const (Signature (_, _, _, tr, _)) id =
+    let get_const (Signature (_, _, _, tr)) id =
       try
 	(match (Tries.lookup id tr) with
           Term_decl (_, i, tk, ty) -> (i, tk, ty)
@@ -144,7 +124,7 @@ module Sign =
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 
-    let get_const_ind (Signature (_, _, _, tr, _)) id =
+    let get_const_ind (Signature (_, _, _, tr)) id =
       try
 	(match (Tries.lookup id tr) with
           Term_decl (_, i, _, _) -> i
@@ -152,35 +132,60 @@ module Sign =
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 
-    let get_atom (Signature (_, _ , _, tr,_)) id =
+    let get_atom (Signature (_, _ , _, tr)) id =
       try
 	(match (Tries.lookup id tr) with
           Type_decl (_, i, ki) -> (i, ki)
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 	  
-    let get_atom_ind (Signature (_, _ , _, tr,_)) id =
+    let get_atom_ind (Signature (_, _ , _, tr)) id =
       try
 	(match (Tries.lookup id tr) with
           Type_decl (_, i, _) -> i
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 	  
-    let string_of_const i (Signature (_, _, tb, _, _)) =
+    let string_of_const i (Signature (_, _, tb, _)) =
       match Table.lookup i tb with
         Type_decl _ -> raise (Failure "Sign.string_of_const")
       | Term_decl (x, _, _, _) -> x
       | Term_def (x, _, _, _, _) -> x
       | _ -> raise (Failure "string_of_const Not yet implemented")
 
-    let string_of_atom i (Signature (_, _, tb, _, _)) =
+    let string_of_atom i (Signature (_, _, tb, _)) =
       match Table.lookup i tb with
         Type_decl (x, _, _) -> x 
       | Term_decl (x,_,_,_) -> print_int i;print_string x;raise (Failure "Sign.string_of_atom 1")
       | Term_def _ -> raise (Failure "Sign.string_of_atom 2")
       | _ -> raise (Failure "string_of_atom Not yet implemented")
 
-(*
+    let is_infix (id,_) (Signature (_, _, _, _(* {type_definitions=_;term_definitions=defs} *)) as sg) =
+      try 
+	let (_,tk,_) = get_const sg id in
+	(tk=Abstract_sig.Infix)
+      with 
+	Not_found -> false
+(*     try *)
+(*       let _,t = Utils.StringMap.find id defs in *)
+(*       (t=Abstract_sig.Infix) *)
+(*     with *)
+(*     | Not_found ->  false*)
+	
+    let is_binder (id,_) (Signature (_, _, _, _(* {type_definitions=_;term_definitions=defs} *)) as sg) =
+      try 
+	let (_,tk,_) = get_const sg id in
+	(tk=Abstract_sig.Binder)
+      with 
+	Not_found -> false
+      
+(*       try *)
+(* 	let _,t = Utils.StringMap.find id defs in *)
+(* 	t = Abstract_sig.Binder *)
+(*       with *)
+(*       | Not_found -> false *)
+	
+  (*
   let kind_of_atom i (Signature (_, tb)) =
   match Table.lookup i tb with
   Type_declaration (_, ki) -> ki
@@ -188,7 +193,7 @@ module Sign =
   
  *)  
 
-    let is_a_cst id (Signature (_, _, _, tr, _)) =
+    let is_a_cst id (Signature (_, _, _, tr)) =
       try
 	match (Tries.lookup id tr) with
 	| Term_decl _ -> true
@@ -198,7 +203,7 @@ module Sign =
       | Tries.Not_found -> false
 
 
-    let is_a_type id (Signature (_, _, _, tr, _)) =
+    let is_a_type id (Signature (_, _, _, tr)) =
       try
 	match (Tries.lookup id tr) with
         | Type_decl _ -> true
@@ -243,12 +248,26 @@ struct
 	then
 	  print_string ("Var"^x);
 	x
+    | Lambda.LVar(i) -> 
+	if verbose
+	then
+	  print_string "LVar ";
+	let (x,_) = Sign.find i ind_assoc in
+	if verbose
+	then
+	  print_string ("LVar"^x);
+	x
     | Lambda.Const (i) ->
 	if verbose
 	then
 	  print_string "Const \n";
 (* 	let (x,_) = find i ind_assoc in *)
 (* 	x *)
+	Sign.string_of_const i sg;
+    | Lambda.DConst (i) ->
+	if verbose
+	then
+	  print_string "DConst \n";
 	Sign.string_of_const i sg;
     | Lambda.LAbs (s,t) ->
 	if verbose
@@ -300,7 +319,7 @@ struct
     | t -> acc,t
   and unfold_binder binder sg ind_assoc acc = function
     | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) 
-      when let (s,_) = (Sign.find i ind_assoc) in (Sign.is_binder s sg)&&(s=binder) -> 
+      when let (s,n) = (Sign.find i ind_assoc) in (Sign.is_binder (s,n) sg)&&(s=binder) -> 
 	unfold_binder binder sg ind_assoc (x::acc) u
     | t -> acc,t
 	
@@ -313,8 +332,6 @@ struct
 (*    | Arrow _ -> true *)
     | Lambda.Linear_arrow _ -> true
     | _ -> false
-
-
 
 
   let rec type_def_to_string ind_assoc def sg = 
@@ -356,12 +373,7 @@ struct
 	    | t -> acc,t *)
 	
 
-  let to_string ind_assoc ((Sign.Signature (name,_,_,trie,content)) as sg) =
-    if verbose
-    then
-      List.iter
-	(fun (x,n) -> print_string ("("^x^", "^(string_of_int n)^") "))
-	ind_assoc;
+  let to_string ((Sign.Signature (name,_,_,trie)) as sg) =
     Printf.sprintf
       "signature %s = \n%s\nend"
       name
@@ -369,10 +381,6 @@ struct
 	 "\n"
 	 (function
 	   | Sign.Type_decl (id,_,Lambda.K types) ->     
-(* 	       List.iter *)
-(* 		 (fun (x,n) -> print_string ("("^x^", "^(string_of_int n)^") ")) *)
-(* 		 (cut_assoc ind_assoc id); *)
-
 	       if verbose
 	       then
 		 print_string ("Type_decl "^id^"\n");
@@ -380,46 +388,39 @@ struct
                with [] -> Printf.sprintf "\t%s: type;" id
                | _  -> Printf.sprintf "\t%s: (%s)type;" id (Utils.string_of_list "," (fun s -> type_def_to_string [] s sg) types))
 	   | Sign.Type_def (id,_,value) ->  
-(* 	       List.iter *)
-(* 		 (fun (x,n) -> print_string ("("^x^", "^(string_of_int n)^") ")) *)
-(* 		 (cut_assoc ind_assoc id); *)
 	       if verbose
 	       then
 		 print_string "Type_def\n";
 	       Printf.sprintf "\t%s = %s: type;" id (type_def_to_string [] value sg)
-	   | Sign.Term_decl (id,_,_,ty) ->
+	   | Sign.Term_decl (id,_,tk,ty) ->
 	       if verbose
 	       then
 		 print_string ("Term_decl "^id^"\n");
-(* 	       List.iter *)
-(* 		 (fun (x,n) -> print_string ("("^x^", "^(string_of_int n)^") ")) *)
-(* 		 (cut_assoc ind_assoc id); *)
-(* 		print_newline(); *)
-	       let t = ""(* match snd (Utils.StringMap.find id content.term_definitions) with *)
-(* 		  | Abstract_sig.Default -> "" *)
-(* 		  | Abstract_sig.Infix -> "infix " *)
-(* 		  | Abstract_sig.Prefix -> "prefix " *)
-(* 		  | Abstract_sig.Binder -> "binder "  *)in
+	       let t = 
+(* match snd (Utils.StringMap.find id content.term_definitions) with *)
+		 match tk with
+		  | Abstract_sig.Default -> ""
+		  | Abstract_sig.Infix -> "infix "
+		  | Abstract_sig.Prefix -> "prefix "
+		  | Abstract_sig.Binder -> "binder "in
 	       Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string [] ty sg)
-	   | Sign.Term_def (id,_,_,value,type_of) -> 
-(* 	       List.iter *)
-(* 		 (fun (x,n) -> print_string ("("^x^", "^(string_of_int n)^") ")) *)
-(* 		 (cut_assoc ind_assoc id); *)
+	   | Sign.Term_def (id,_,tk,value,type_of) -> 
 	       if verbose
 	       then
 		 print_string ("Term_def "^id^"\n");
-	       let t = ""(* match snd (Utils.StringMap.find id content.term_definitions) with *)
-(* 		  | Abstract_sig.Default -> "" *)
-(* 		  | Abstract_sig.Infix -> "infix " *)
-(* 		  | Abstract_sig.Prefix -> "prefix " *)
-(* 		  | Abstract_sig.Binder -> "binder " *) 
+	       let t = 
+(* match snd (Utils.StringMap.find id content.term_definitions) with *)
+		 match tk with
+		  | Abstract_sig.Default -> ""
+		  | Abstract_sig.Infix -> "infix "
+		  | Abstract_sig.Prefix -> "prefix "
+		  | Abstract_sig.Binder -> "binder " 
 	       in
 	       let te = 
 		 (term_to_string value [] sg) in
 	       let ty = (type_def_to_string [] type_of sg) in
 	       Printf.sprintf "\t%s%s = %s: %s;" t id te ty)
 	 (Tries.content trie)
-(* 	 content *)
       )
 
 
@@ -466,7 +467,9 @@ and display_wfterm sg = function
 (*       (try *)
 (* 	print_string (Sign.string_of_const i sg) *)
 (*       with _ -> raise (Typing_error(string_of_int i))) *)
+  | Lambda.LVar(i) -> print_string ("("^(string_of_int i)^")");
   | Lambda.Const(i) -> print_string ("("^(string_of_int i)^")");
+  | Lambda.DConst(i) -> print_string ("("^(string_of_int i)^")");
 (*       print_string (Sign.string_of_const i sg) *)
   | Lambda.LAbs(s,t) -> 
       print_string "(lambda ";print_string s;print_string ". "; display_wfterm sg t;
@@ -545,47 +548,5 @@ and display_signature sg =
   in
   display_one (size-1)
 
-  let pretty_print sg entries =
-    print_string (to_string [] sg);
-(*     let var_l = *)
-(*       List.fold_left  *)
-
-(*     List.iter *)
-(* 	(fun (\* var_l *\) x -> ( *)
-(* 	  match x with *)
-(* 	  | Sign.Term_def(s,i,kd,wf,typ) ->  *)
-(* 	      print_string (s^" = "); *)
-(* 	      print_string (term_to_string wf [] sg); *)
-(* 	      print_string " : "; *)
-(* 	      print_string (type_def_to_string [] typ sg); *)
-(* (\*	    display_typ_tdef sg typ;*\) *)
-(* 	    print_string " ;\n "; *)
-(* 	  | Sign.Term_decl(s,i,kd,typ) ->  *)
-(* 	      print_string (s^" : "); *)
-(* 	      print_string (type_def_to_string [] typ sg); *)
-(* (\* 	    display_typ_tdef sg typ; *\) *)
-(* 	    print_string " ;\n "; *)
-(* 	  | Sign.Type_def(s,i,typ) ->  *)
-(* 	      print_string (s^" : "); *)
-(* 	      print_string (type_def_to_string [] typ sg); *)
-(* (\* 	      display_typ_tdef sg typ; *\) *)
-(* 	      print_string " ;\n "; *)
-(* 	  | Sign.Type_decl(s,i,Lambda.K types) ->  *)
-(* 	      (match types with *)
-(* 		[] -> print_string (s^" : type;\n "); *)
-(* 	      | _ -> print_string (s^" : "^(Utils.string_of_list "," (fun s -> type_def_to_string [] s sg) types)^";\n ");); *)
-(* (\* 	    print_string (s^" : K["); *\) *)
-(* (\* 	    List.iter (display_typ_tdef sg) tdl; *\) *)
-(* (\* 	    print_string "] ;\n "; *\) *)
-(* 	     )) *)
-(* 	(\*[]*\) *)
-(*       (List.rev entries); *)
-(* (\*     in *\) *)
-(* (\*        List.iter *\) *)
-(* (\* 	 (fun (x,n) -> print_string ("("^x^", "^(string_of_int n)^") ")) *\) *)
-(* (\* 	 var_l; *\) *)
-(* (\*    Sign.to_string var_l sg*\) *)
-(*     () *)
-      	
 
 end
