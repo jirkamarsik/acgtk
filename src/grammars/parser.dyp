@@ -7,6 +7,7 @@
     | Abs_and_obj of Abstract_sig.t * Abstract_sig.t
     | Env of Environment.t
 }
+
 {
   open Dyp
   open Entry
@@ -78,6 +79,8 @@
     let s = Entry.valuation_to_string v in
       raise (Error.Error (Error.Lexer_error (Error.Expect s,(p1,p2))))
 
+(*end*)
+
 }
 
 
@@ -117,8 +120,8 @@
 
   data:
 | EOI {get_env_value dyp.last_local_data}
-| signature[s] @{s,[Local_data (Some (Env (Environment.insert (Environment.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
-| lexicon[l] @{l,[Local_data (Some (Env (Environment.insert (Environment.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| signature[s] ...@{s,[Local_data (Some (Env (Environment.insert (Environment.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| lexicon[l] ...@{l,[Local_data (Some (Env (Environment.insert (Environment.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
   
 /*  signatures :
 | EOI {fun env -> env}
@@ -159,8 +162,8 @@
       sig_entry :
 | type_declaration @{$1,[Local_data dyp.last_local_data]}
 | type_definition @{$1,[Local_data dyp.last_local_data]}
-| term_declaration @{$1,[Local_data dyp.last_local_data;Keep_grammar true]}
-| term_definition @{$1,[Local_data dyp.last_local_data;Keep_grammar true]}
+| term_declaration @{$1,[Local_data dyp.last_local_data]}
+| term_definition @{$1,[Local_data dyp.last_local_data]}
 
       
       type_declaration :
@@ -234,7 +237,7 @@
 						       let pos1,pos2= loc in
 							 emit_parse_error (Error.Duplicated_term id) (pos1,pos2))
 					      s
-					      $1 in new_sig,[Local_data (Some (Signature new_sig));Keep_grammar true]}
+					      $1 in new_sig,[Local_data (Some (Signature new_sig))]}
 
 	  term_dec_start : 
 | comma_ids {List.map (fun (id,loc) -> (id,Abstract_sig.Default,loc)) $1}
@@ -261,7 +264,7 @@
 							    | lst -> Abstract_sig.add_warnings ws new_sig2) with
 							    | Abstract_sig.Duplicate_term_definition ->
 								emit_parse_error (Error.Duplicated_term id) (fst l,snd l) in
-						      new_sig,[Local_data (Some (Signature new_sig));Keep_grammar true]}
+						      new_sig,[Local_data (Some (Signature new_sig))]}
 	  
 	  term_alone :
 | term EOI {fst ($1 Env.empty [])}	  
@@ -380,7 +383,6 @@
 	  (fun acc (id,loc) -> Abstract_lex.insert id (Abstract_lex.Type (loc,actual_type)) acc)
 	  lex
 	  ids}
-
 
 %mlitop {
   open Abstract_syntax

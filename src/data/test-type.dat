@@ -1,10 +1,13 @@
 signature essai =
 	a:type;
 
-(* Il n'arrive pas à typer v : message d'erreur sur le type de u *)
-	t: a;
+(* au print de la signature, t est donné de type t *)
+	t: a -> a;
+	v: a -> a ;
 	u : a -> a ;
-	v = u t : a; 
+(* si on rajoute la ligne suivante, il n'arrive pas
+ à typer v : message d'erreur sur le type de u *)
+(*	v = u t : a; *)
 
 
 (* Il arrive à typer c alors que ça devrait être linéaire *)

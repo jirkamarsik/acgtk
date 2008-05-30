@@ -1,5 +1,11 @@
 open Abstract_syntax
 
+module Toto_imp =
+  struct
+    type t = int
+    let toto =0
+  end
+
 module Data_parsing =
 struct
   let data filename env =

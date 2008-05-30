@@ -44,8 +44,6 @@
       | Entry.Expect l -> 
 	  let s = Utils.string_of_list " or " Entry.valuation_to_string l in
 	    raise (Error (Lexer_error (Expect s,(p1,p2))))
-	  
-
 }
 
 let newline = ('\010' | '\013' | "\013\010")
@@ -128,4 +126,5 @@ let string = (letter|digit|'_')*
       | eof {raise (Error (Lexer_error (Unclosed_comment, List.hd depth)))}
       | newline {let () = Error.update_loc lexbuf None in comment depth lexbuf}
       | _ {comment depth lexbuf}
+
 
