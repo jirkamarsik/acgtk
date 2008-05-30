@@ -365,7 +365,7 @@ struct
     Printf.sprintf
       "signature %s = \n%s\nend"
       name
-      (Utils.string_of_list_rev
+      (Utils.string_of_list
 	 "\n"
 	 (function
 	   | Sign.Type_decl (id,_,Lambda.K types) ->     
