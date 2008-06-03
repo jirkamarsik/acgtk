@@ -12,17 +12,10 @@ exception Not_yet_implemented of string
       
 (* module Table = Make_table (struct let b = 10 end) *)
 
-let verbose = false
+let verbose = true
  
 type symbol = string 
       
-type rec_term = Sign.rec_term
-(*     {term: Abstract_sig.term; *)
-(*      mutable wfterm: Lambda.term option; *)
-(*      mutable typeofterm: Lambda.type_def option; *)
-(*      mutable ind_assoc: (string * int) list; *)
-(*    } *)
-
 type new_type_list = (int * Lambda.type_def option) list ref
 
 let type_error e loc = raise (Error (Type_error (e,loc)))
@@ -73,26 +66,23 @@ and equiv tdef trepl =
 and eq_typ t1 t2 sg = 
   if (verbose)
   then (
-    print_string "EQ_TYP\n";
+(*     print_string "EQ_TYP\n"; *)
    );
   match (equiv t1 t2, equiv t2 t1) with
     (Lambda.Type_atom(s,tl),Lambda.Type_atom(sbis,tlbis)) -> 
       if (verbose)
-      then (
+      then (display_typ_tdef sg t1;print_newline();display_typ_tdef sg t2
        );
       (s = sbis) && (tl = tlbis)
-  | (Lambda.Linear_arrow(td1,td2),Lambda.Linear_arrow(td1bis,td2bis)) ->
+  | (Lambda.Linear_arrow(td1,td2),Lambda.Linear_arrow(td1bis,td2bis)) -> 
       (eq_typ td1 td1bis sg) && (eq_typ td2 td2bis sg)
-  | _ -> false
+  | _ -> display_typ_tdef sg t1;print_newline();display_typ_tdef sg t2;
+       print_string "false ";false
 
 
 (* typecheck a definition or a declaration of a type or a term *)
 and typecheck_entry sg = function 
   | Abstract_sig.Type_decl(s,loc,((Abstract_sig.K tdefs) as k)) -> 
-      if (verbose)
-      then(
-	print_string ("suiv "^s^"\n");
-       );
       let new_kd = 
 	typecheck_kind sg tdefs in
       let new_sg = Sign.insert_type_dcl s (Lambda.K new_kd) sg in
@@ -111,35 +101,19 @@ and typecheck_entry sg = function
       new_sg
 
   | Abstract_sig.Term_decl(s,tk,loc,typ) -> 
-      if (verbose)
-      then(
-	print_string ("suiv Tdecl "^s^"\n");
-       );
       let new_td = 
 	typecheck_type sg typ in
-      if verbose
-      then
-	display_typ_tdef sg new_td;
       let new_sg = Sign.insert_term_dcl s tk new_td sg in
       new_sg
 
   | Abstract_sig.Term_def(s,tk,loc,t,typ) -> 
-      if (verbose)
-      then(
-	print_string ("suiv "^s^"\n");
-       );
       let new_td = 
 	typecheck_type sg typ 
 	  in 
-      let rec_term = Sign.update_rec_term t None (Some new_td) []
-      in
-      let (new_rec,new_sg) = typecheck_term [] rec_term sg [] in
-      (match new_rec.Sign.wfterm with
-	None -> type_error Other loc
-      | Some wf -> 
-	  let new2_sg = 
-	    Sign.insert_term_def s tk wf new_td new_sg in
-	  new2_sg)	
+      let (wfterm,_,new_sg) = typecheck_term t new_td [] sg [] in
+      let new2_sg = 
+	Sign.insert_term_def s tk wfterm new_td new_sg in
+      new2_sg
 	    
 (* typecheck a kind *)
 and typecheck_kind sg = function
@@ -178,8 +152,8 @@ and typecheck_type sg = function
 
 
 (* typecheck a term *)
-and typecheck_term ind_assoc rec_term sg lvar_list = 
-  match rec_term.Sign.term with
+and typecheck_term term wftype ind_assoc sg lvar_list = 
+  match term with
   | Abstract_sig.Var(s,loc) ->
       if (verbose)
       then(print_string ("\n\n\tcheck Var "^s^"\n"););
@@ -187,81 +161,90 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
       (try 
 	let (_,_,type_s) = Sign.get_const sg s
 	in 
-	display_typ_tdef sg type_s;
-	match rec_term.Sign.typeofterm with 
-	  None -> type_error Other loc
-	| Some ty -> 	display_typ_tdef sg ty;
-	    if eq_typ type_s ty sg
-	    then 
-	      (if List.mem s lvar_list
-	      then
-		try
-		  let s_index = Sign.get_ind rec_term.Sign.ind_assoc s
-		  in
-		  rec_term.Sign.wfterm <- Some (Lambda.LVar s_index);
-(* enlever x de ind_assoc car ne peut etre utilise qu une fois*)
-		  if verbose
-		  then print_string "remove 1\n";
-		  rec_term.Sign.ind_assoc <- 
-		    List.remove_assoc s rec_term.Sign.ind_assoc;
-		  (rec_term,sg)
-		with Not_found -> 
-		  print_string "premier\n";
-		  type_error (Not_linear_LAbs s) loc
-	      else 
-		try
-		  let s_index = Sign.get_ind rec_term.Sign.ind_assoc s
-		  in
-		  rec_term.Sign.wfterm <- Some (Lambda.LVar s_index);
-		  (rec_term,sg)
-		with Not_found -> 
-		  type_error (Not_defined_var s) loc
-	      )
+	if eq_typ type_s wftype sg
+	then 
+	  (	
+	    if List.mem s lvar_list
+	    then
+	      (* x is linear *)
+	      try
+		let s_index = Sign.get_ind ind_assoc s
+		in
+		let wfterm = Lambda.LVar s_index in
+		if verbose
+		then print_string "remove 1\n";
+                (* x is linear and used once *)
+		let new_ind_assoc =
+		  List.remove_assoc s ind_assoc in
+		(wfterm,new_ind_assoc,sg)
+	      with Not_found -> 
+		print_string "premier\n";
+		type_error (Not_linear_LAbs s) loc
 	    else 
-	      (if (verbose)
-	      then (print_string "erreur 1"; );
-	       rec_term.Sign.ind_assoc <-
-		 Sign.cut_assoc rec_term.Sign.ind_assoc s ;
-	       type_error (Not_well_typed_term(s, type_def_to_string rec_term.Sign.ind_assoc type_s sg)) loc)
+	      (* x is non linear *)
+	      try
+		let s_index = Sign.get_ind ind_assoc s
+		in
+		let wfterm = Lambda.Var s_index in
+		(wfterm,ind_assoc,sg)
+	      with Not_found -> 
+		type_error (Not_defined_var s) loc
+	   )
+	else 
+	  (if (verbose)
+	  then (print_string "erreur 1"; );
+	   let new_ind_assoc =
+	     Sign.cut_assoc ind_assoc s in
+	   type_error
+	     (Not_well_typed_term_plus(s, 
+				       type_def_to_string new_ind_assoc type_s sg,
+				       type_def_to_string new_ind_assoc wftype sg)) 
+	     loc)
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
 	
   | Abstract_sig.Const(s,loc) ->
       if (verbose)
       then(print_string ("\n\n\tcheck Const "^s^"\n");
-	  display_rec_term sg rec_term);
+	 );
       (** WT terms : constant *)
       (try 
-	let (_,_,type_s) = Sign.get_const sg s in
-	match rec_term.Sign.typeofterm with 
-	  None -> type_error Other loc
-	| Some ty -> 
-	    if (verbose)
-	    then(
-	      print_string "AVANT eq_typ : ";
-	      display_typ_tdef sg type_s;
-	      print_string s;
-	      display_typ_tdef sg ty;
-	      Sign.display_assoc rec_term.Sign.ind_assoc;
-	      print_newline();
-	      print_string "debut\n";
-	     );
-	    if eq_typ type_s ty sg
-	    then 
-	      (
-	       rec_term.Sign.wfterm <-
-		 Some (Lambda.Const(Sign.get_const_ind sg s));
-	       (rec_term,sg))
-	    else 
-	      (if (verbose)
-	      then(
-		print_string ("erreur 2 : "^s^" : "); 
-		display_typ_tdef sg type_s;
-		print_newline();
-		display_typ_tdef sg ty;
-		print_newline();
-	       );
-	       type_error (Not_well_typed_term(s,type_def_to_string rec_term.Sign.ind_assoc type_s sg)) loc)
+	let (s_index,_,type_s) = Sign.get_const sg s in
+	if (verbose)
+	then(
+(* 	      print_string "AVANT eq_typ : "; *)
+(* 	      display_typ_tdef sg type_s; *)
+(* 	      print_string s; *)
+(* 	      display_typ_tdef sg ty; *)
+(* 	      Sign.display_assoc ind_assoc; *)
+(* 	      print_newline(); *)
+(* 	      print_string "debut\n"; *)
+	 );
+	if eq_typ type_s wftype sg
+	then 
+	  (
+	   let wfterm = 
+	     if Sign.is_decl sg s
+	     then
+	       Lambda.Const(s_index)
+	     else
+	       Lambda.DConst(s_index)
+	   in
+	   (wfterm,ind_assoc,sg))
+	else 
+	  (if (verbose)
+	  then(
+	    print_string ("erreur 2 : "^s^" : "); 
+	    display_typ_tdef sg type_s;
+	    print_newline();
+	    display_typ_tdef sg wftype;
+	    print_newline();
+	   );
+	   type_error
+	     (Not_well_typed_term_plus(s,
+				       type_def_to_string ind_assoc type_s sg,
+				       type_def_to_string ind_assoc wftype sg)) 
+	     loc)
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
 
@@ -270,167 +253,164 @@ and typecheck_term ind_assoc rec_term sg lvar_list =
       then(print_string "check LAbs\n";);
       if (verbose)
       then(
-	print_string "LABS : lambda ";
-	print_string s;
-	print_string ". ";
-	display_term sg t;
-	print_newline(););
-      (** WT terms linear abstraction *)
-      (match rec_term.Sign.typeofterm with
-	None -> type_error Other loc
-      | Some (Lambda.Type_atom(styp,terml)) -> 
+(* 	print_string "LABS : lambda "; *)
+(* 	print_string s; *)
+(* 	print_string ". "; *)
+(* 	display_term sg t; *)
+(* 	print_newline(); *));
+      (match wftype with
+      | Lambda.Type_atom(styp,terml) -> 
  	  print_string "erreur 3"; 
-	  type_error (
-	  Not_well_typed_term(
-	  (abstr_synt_term_to_string sg rec_term.Sign.term),
-	  ("a' -> b'"))) loc
-      | Some (Lambda.Linear_arrow(tdef1,tdef2)) -> 
-	  let new_rec = 
-	    Sign.update_rec_term t None (Some tdef2) rec_term.Sign.ind_assoc
-	  in
+	  type_error(Not_well_typed_term(
+		     (abstr_synt_term_to_string sg term),
+		     ("a' -> b'"))) loc
+      | Lambda.Linear_arrow(tdef1,tdef2) -> 
 	  if (verbose)
 	  then(
-	    print_string "\t\tAFFICHE tdef1 LABS\n";
-	    display_typ_tdef sg tdef1;
+(* 	    print_string "\t\tAFFICHE tdef1 LABS\n"; *)
+(* 	    display_typ_tdef sg tdef1; *)
 	   );
-	  new_rec.Sign.ind_assoc <- Sign.add_assoc rec_term.Sign.ind_assoc s ;
+	  let new_ind_assoc = Sign.add_assoc ind_assoc s in
 
 	  let new_sg = 
 	    Sign.insert_var s Abstract_sig.Default tdef1 sg 
 	  in
 	  if (verbose)
 	  then(
-	    print_string "\t\tAFFICHE NEW_SG\n";
-	    Sign.display_assoc rec_term.Sign.ind_assoc;
- 	    print_string "appel typecheck_term 2\n"; 
-	    display_rec_term new_sg new_rec;
-	    let (_,_,type_s2) = Sign.get_const new_sg s in
-	    print_string (s^" index : ");
-	    print_string " : ";
-	    display_typ_tdef new_sg type_s2;
-	    print_newline();
+(* 	    print_string "\t\tAFFICHE NEW_SG\n"; *)
+(* 	    Sign.display_assoc ind_assoc; *)
+(*  	    print_string "appel typecheck_term 2\n";  *)
+(* 	    let (_,_,type_s2) = Sign.get_const new_sg s in *)
+(* 	    print_string (s^" index : "); *)
+(* 	    print_string " : "; *)
+(* 	    display_typ_tdef new_sg type_s2; *)
+(* 	    print_newline(); *)
 	   );
-	  let (res,new2_sg) = 
-	    typecheck_term rec_term.Sign.ind_assoc new_rec new_sg (s::lvar_list)
+	  let (wfterm2,_,new_sg2) = 
+	    typecheck_term t tdef2 new_ind_assoc new_sg (s::lvar_list)
 	  in      
-	  (match res.Sign.wfterm with
-	    None -> type_error Other loc
-	  | Some wfterm -> 
-	      res.Sign.wfterm <- Some (Lambda.LAbs(s,wfterm))
-	  );
-	  (res,sg)
+	  (Lambda.LAbs(s,wfterm2),ind_assoc,sg)
       )
 
   | Abstract_sig.App(t1,t2,loc) ->
       if (verbose)
-      then(print_string "check App\n";);
-      let (type_t2, new_rec_term) = 
-	typeinf_term rec_term.Sign.ind_assoc (Sign.update_rec_term t2 None None rec_term.Sign.ind_assoc)
-	  None sg lvar_list
+      then(print_string "check App\n";
+	display_term sg t1;
+	print_newline();
+	display_term sg t2;
+	print_newline(););
+      let (type_t2,wfterm2,ind_assoc2) = 
+	typeinf_term t2 None ind_assoc sg lvar_list
       in 
+      if verbose 
+      then 	   print_string "\nappel typecheck_term 3\n";  
+      let new_type = (Lambda.Linear_arrow(type_t2,wftype)) in
+      if verbose
+      then (
+	display_typ_tdef sg new_type;);
+      
+      let (wfterm1,_,new_sg) = 
+	typecheck_term t1 new_type ind_assoc
+	  sg lvar_list
+      in
+      print_string "\nResultat app1 : ";
+      print_string (term_to_string (Lambda.App(wfterm1,wfterm2)) ind_assoc sg);
+      let wfterm_app =
+	Lambda.App(wfterm1,wfterm2)
+      in
       if (verbose)
       then(
-	print_string "new_rec_term2 : ";
-	display_rec_term sg new_rec_term;
-	display_rec_term sg rec_term;);
-      
-      new_rec_term.Sign.typeofterm <- Some (type_t2); (* new_rec a mettre dans le nouveau record? *)
-      new_rec_term.Sign.ind_assoc <- rec_term.Sign.ind_assoc;
-      match rec_term.Sign.typeofterm with 
-	None -> type_error Other loc
-      | Some type_app -> 
-	  if verbose 
-	  then 	  print_string "appel typecheck_term 3\n"; 
-	  let new_type = (Lambda.Linear_arrow(type_t2,type_app)) in
-	  if verbose
-	  then (
-	    display_typ_tdef sg type_t2;
-	    display_typ_tdef sg type_app;
-	    display_rec_term sg new_rec_term;
-	    display_typ_tdef sg new_type;);
-	  
-	  let (res,new_sg) = 
-	    typecheck_term 
-	      rec_term.Sign.ind_assoc 
-	      (Sign.update_rec_term t1 None (Some new_type) rec_term.Sign.ind_assoc)
-	      sg lvar_list
-	  in
-	  (match (res.Sign.wfterm,new_rec_term.Sign.wfterm) with
-	    (None,_) -> type_error Other loc
-	  | (_,None) -> type_error Other loc
-	  | (Some r1,Some r2) ->
-	      res.Sign.wfterm <- Some (Lambda.App(r1,r2)));
-	  if (verbose)
-	  then(
-	    print_string "\n RES = ";
-	    display_rec_term new_sg res;);
-	  (res,new_sg)
-	    
-and typeinf_term ind_assoc rec_term typelabs sg lvar_list =
-  match rec_term.Sign.term with
+(* 	    print_string "\n RES = "; *)
+       );
+      (wfterm_app,ind_assoc,(*new_*)sg)
+	
+and typeinf_term term typelabs ind_assoc sg lvar_list =
+  match term with
   | Abstract_sig.Var(s,loc) -> 
       if (verbose)
       then(
-	print_string ("Var : "^s^"\n");
-	print_string "Affichage ind_assoc\n";
-	List.iter (fun (x,_) -> print_string (x^", ")) rec_term.Sign.ind_assoc;
-	print_newline();
+(* 	print_string ("Var : "^s^"\n"); *)
+(* 	print_string "Affichage ind_assoc\n"; *)
+(* 	List.iter (fun (x,_) -> print_string (x^", ")) ind_assoc; *)
+(* 	print_newline(); *)
        );
-	(if List.mem s lvar_list
+      (try 
+	let (_,_,type_s) = Sign.get_const sg s in
+	(match typelabs,type_s with
+	  None,_ -> ()
+	| Some type_arg,Lambda.Linear_arrow(type_s1,_) -> 
+	    print_string "\n\n\n\t\t\tA verifier (Var)\n\n\n";
+	    if not (eq_typ type_s1 type_arg sg)
+	    then 
+	      let new_ind_assoc =
+		Sign.cut_assoc ind_assoc s in
+	      type_error
+		(Not_well_typed_term(s, 
+				     type_def_to_string new_ind_assoc type_s sg)) 
+		loc
+	| _ -> type_error Other loc);
+	
+	if List.mem s lvar_list
 	then
-	  (try 
-	    let (_,_,type_s) = Sign.get_const sg s in
-	    try
-	      display_typ_tdef sg type_s;
-	      let s_index = Sign.get_ind rec_term.Sign.ind_assoc s
-	      in
-	      rec_term.Sign.wfterm <- Some (Lambda.Var s_index);
-	      if verbose
-	      then print_string "remove 2\n";
-	      rec_term.Sign.ind_assoc <- 
-		List.remove_assoc s rec_term.Sign.ind_assoc;
-	      (type_s,rec_term)
-	    with Not_found ->
-	      print_string "deuxieme\n";
-	      type_error (Not_linear_LAbs s) loc
-	  with Not_found -> 
-	    print_string "troisieme\n";
-	    type_error (Not_linear_LAbs s) loc)
+	  (* x is linear *)
+	  try
+	    let s_index = Sign.get_ind ind_assoc s
+	    in
+	    let wfterm = Lambda.LVar s_index in
+	    if verbose
+	    then print_string "remove 2\n";
+	    let new_ind_assoc =
+	      List.remove_assoc s ind_assoc in
+	    (type_s,wfterm,new_ind_assoc)
+	  with Not_found ->
+	    print_string "deuxieme\n";
+	    type_error (Not_linear_LAbs s) loc
 	else
-	  (try 
-	    let (_,_,type_s) = Sign.get_const sg s in
-	    try
-	      let s_index = Sign.get_ind rec_term.Sign.ind_assoc s
-	      in
-	      rec_term.Sign.wfterm <- Some (Lambda.Var s_index);
-	      (type_s,rec_term)
-	    with Not_found ->
-	      type_error (Not_defined_var s) loc
-	  with Not_found -> 
-	    type_error (Not_defined_var s) loc)
-	)
+	  (* x is non linear *)
+	  try
+	    let s_index = Sign.get_ind ind_assoc s
+	    in
+	    let wfterm = Lambda.Var s_index in
+	    (type_s,wfterm,ind_assoc)
+	  with Not_found ->
+	    type_error (Not_defined_var s) loc
+      with Not_found -> 
+	type_error (Not_defined_var s) loc)
 
-  | Abstract_sig.Const(s,loc) ->
+
+      | Abstract_sig.Const(s,loc) ->
       if (verbose)
       then(
       print_string ("Const : "^s^" "););
       (try 
 	let (i,_,type_s) = Sign.get_const sg s in
+	(match typelabs,type_s with
+	  None,_ -> ()
+	| Some type_arg,Lambda.Linear_arrow(type_s1,_) ->
+	    print_string "\n\n\n\t\t\tA verifier (Const) \n\n\n";
+	    if not (eq_typ type_s1 type_arg sg)
+	    then 
+	      type_error
+		(Not_well_typed_term(s, type_def_to_string ind_assoc type_s sg)) 
+		loc
+	| _ -> type_error Other loc);
 	if (verbose)
 	then(
-	  print_int i;
-	  print_newline();
-	  print_string (Sign.string_of_atom 0 sg);
-	  print_newline();
-	  display_typ_tdef sg type_s;
-	  print_newline();
-	  display_typ_tdef sg type_s;);
-	rec_term.Sign.wfterm <-
-	  Some (Lambda.Const(Sign.get_const_ind sg s));
+(* 	  print_int i; *)
+(* 	  print_newline(); *)
+(* 	  display_typ_tdef sg type_s; *)
+	 );
+	let wfterm =
+	  if Sign.is_decl sg s
+	  then
+	    Lambda.Const(i)
+	  else
+	    Lambda.DConst(i)
+	in
 	if (verbose)
 	then (
-	display_rec_term sg rec_term;);
-	(type_s,rec_term)
+	);
+	(type_s,wfterm,ind_assoc)
       with Not_found ->
 	type_error (Not_defined_const s) loc)
 
@@ -439,41 +419,35 @@ and typeinf_term ind_assoc rec_term typelabs sg lvar_list =
       then(print_string "inf LAbs\n";);
       (match typelabs with
 	None -> 
-	  let new_rec = 
-	    Sign.update_rec_term t None None rec_term.Sign.ind_assoc
-	  in
 	  let new_sg = 
 	    try 	    
 	      Sign.insert_var s Abstract_sig.Default (new_type loc) sg 
 	    with _ -> raise (Typing_error "errr")
 	  in
-	  rec_term.Sign.ind_assoc <- Sign.add_assoc rec_term.Sign.ind_assoc s ;
-	  let (td,res) = typeinf_term rec_term.Sign.ind_assoc new_rec None (* ? *) new_sg (s::lvar_list)
+	  let new_ind_assoc = Sign.add_assoc ind_assoc s in 
+	  let (type2,wfterm2,ind_assoc2) = 
+	    typeinf_term t None new_ind_assoc new_sg (s::lvar_list)
 	  in
-	  (match res.Sign.wfterm with 
-	    None -> type_error Other loc
-	  | Some wfterm -> 
-	      rec_term.Sign.wfterm <- Some (Lambda.LAbs(s,wfterm))
-	  );
+	  let wfterm_labs = 
+	    Lambda.LAbs(s,wfterm2)
+	  in
 	  let s_type =
 	    (try  let (_,_,tdef)= Sign.get_const new_sg s  in tdef
 	    with Not_found -> new_type loc)
 	  in
-	  (Lambda.Linear_arrow(s_type,td),rec_term)
+	  (Lambda.Linear_arrow(s_type,type2),wfterm_labs,ind_assoc)
       | Some s_type -> 
-	  let new_rec = Sign.update_rec_term t None None rec_term.Sign.ind_assoc in
 	  let new_sg = 
 	    try Sign.insert_var s Abstract_sig.Default s_type sg 
 	    with _ -> raise (Typing_error "errr")
 	  in
-	  rec_term.Sign.ind_assoc <- Sign.add_assoc rec_term.Sign.ind_assoc s ;
-	  let (td,res) = typeinf_term rec_term.Sign.ind_assoc new_rec None (* ? *) new_sg (s::lvar_list) in
-	  (match res.Sign.wfterm with
-	    None -> type_error Other loc
-	  | Some wfterm -> 
-	      rec_term.Sign.wfterm <- Some (Lambda.LAbs(s,wfterm))
-	  );
-	  (Lambda.Linear_arrow(s_type,td),rec_term)
+	  let new_ind_assoc = Sign.add_assoc ind_assoc s in
+	  let (type2,wfterm2,ind_assoc2) = 
+	    typeinf_term t None new_ind_assoc new_sg (s::lvar_list) in
+	  let wfterm_labs =
+	    Lambda.LAbs(s,wfterm2)
+	  in
+	  (Lambda.Linear_arrow(s_type,type2),wfterm_labs,ind_assoc)
       )    
   | Abstract_sig.App(t1,t2,loc) -> 
       if (verbose)
@@ -482,70 +456,64 @@ and typeinf_term ind_assoc rec_term typelabs sg lvar_list =
       then (
 	print_string "APP : \n";
 	display_term sg t1;
+	print_newline();
 	display_term sg t2;
 	print_newline(););
-      let (t2_type, new_rec_t2) = 
-	typeinf_term rec_term.Sign.ind_assoc (Sign.update_rec_term t2 None None rec_term.Sign.ind_assoc)
-	  None (* ? *) sg lvar_list
+      let (t2_type,wfterm2,ind_assoc2) = 
+	typeinf_term t2 None ind_assoc sg lvar_list
       in 
-      new_rec_t2.Sign.typeofterm <- Some(t2_type);
-      new_rec_t2.Sign.ind_assoc <- rec_term.Sign.ind_assoc;
-      let (t1_type,new_rec_t1) =
-	typeinf_term rec_term.Sign.ind_assoc (Sign.update_rec_term t1 None None rec_term.Sign.ind_assoc)
-	  (Some t2_type) sg lvar_list in
-      (match (new_rec_t2.Sign.wfterm,new_rec_t1.Sign.wfterm) with
-	(None,_) -> type_error Other loc
-      | (_,None) -> type_error Other loc
-      | (Some r1,Some r2) ->
+      print_string "\n\twfterm2 = ";
+      print_string (term_to_string wfterm2 ind_assoc2 sg);
+      print_newline();
+      let (t1_type,wfterm1,ind_assoc1) =
+	typeinf_term t1 (Some t2_type) ind_assoc  sg lvar_list in
+      print_string "\n\twfterm1 = ";
+      print_string (term_to_string wfterm1 ind_assoc1 sg);
+      print_newline();
+      if (verbose)
+      then (
+       );
+      let wfterm_app = Lambda.App(wfterm1,wfterm2) in
+      print_string "\nResultat app 2 : ";
+      print_string (term_to_string (Lambda.App(wfterm1,wfterm2)) ind_assoc sg);
+      
+      match t1_type with
+      | Lambda.Type_atom(_,_) -> type_error Other loc
+      | Lambda.Linear_arrow(td1,td2) ->
+	  let r2_assoc = 
+	    try (Sign.cut ind_assoc wfterm2) 
+	    with _ -> ind_assoc in
+	  let r1_assoc = 
+	    try (Sign.cut ind_assoc wfterm1)
+	    with _ -> ind_assoc in
 	  if (verbose)
+	  then(
+(* 		print_string "AVANT eq_typ 2 : "; *)
+(* 		display_typ_tdef sg td1; *)
+(* 		print_int (Sign.give_level r2); *)
+(* 		Sign.display_assoc r2_assoc; *)
+(* 		display_typ_tdef sg t2_type;	       *)
+(* 		Sign.display_assoc ind_assoc; *)
+(* 		display_wfterm sg r2; *)
+(* 		display_wfterm sg r1; *)
+(* 		Sign.display_assoc r1_assoc; *)
+(* 		print_newline(); *)
+	   );
+	  if eq_typ td1 t2_type sg
 	  then (
-	    print_string "APP SUITE : \n";
-	    display_wfterm sg r1;
-	    print_string " ; ";
-	    display_term sg new_rec_t2.Sign.term;
-	    print_string " ; ";
-	    display_wfterm sg r2;
-	    print_string " ; ";
-	    display_term sg new_rec_t1.Sign.term;
-	    print_newline(););
-	  new_rec_t1.Sign.wfterm <- Some (Lambda.App(r2,r1));
-	      
-	  match t1_type with
-	  | Lambda.Type_atom(_,_) -> type_error Other loc
-	  | Lambda.Linear_arrow(td1,td2) ->
-	      let r2_assoc = 
-		try (Sign.cut rec_term.Sign.ind_assoc r2) 
-		with _ -> rec_term.Sign.ind_assoc in
-	      let r1_assoc = 
-		try (Sign.cut rec_term.Sign.ind_assoc r1)
-		with _ -> rec_term.Sign.ind_assoc in
-	      if (verbose)
-	      then(
-		print_string "AVANT eq_typ 2 : ";
-		display_typ_tdef sg td1;
-		print_int (Sign.give_level r2);
-		Sign.display_assoc r2_assoc;
-		display_typ_tdef sg t2_type;	      
-		Sign.display_assoc rec_term.Sign.ind_assoc;
-		display_wfterm sg r2;
-		display_wfterm sg r1;
-		Sign.display_assoc r1_assoc;
-		print_newline(););
-	      if eq_typ td1 t2_type sg
-	      then (
-		if (verbose)
-		then (
-		  print_string "JUSTE AVANT\n";
-		  display_typ_tdef sg td2;
-		  display_rec_term sg new_rec_t1;);
-		(t2_type,new_rec_t1))
-	      else 
-		(print_string "\nerreur 4\n"; 
-		 type_error (Not_well_typed_term(
-			     (term_to_string r2 rec_term.Sign.ind_assoc sg),
-			     type_def_to_string (Sign.cut rec_term.Sign.ind_assoc r1) 
-			       t2_type sg))
-			       loc))
+	    if (verbose)
+	    then (
+(* 		  print_string "JUSTE AVANT\n"; *)
+(* 		  display_typ_tdef sg td2; *)
+	      );
+	    (td2,wfterm_app,ind_assoc))
+	  else 
+	    (print_string "\nerreur 4\n"; 
+	     type_error (Not_well_typed_term(
+			 (term_to_string wfterm2 ind_assoc sg),
+			 type_def_to_string (Sign.cut ind_assoc wfterm1) 
+			   t2_type sg))
+	       loc)
 	
 
 (* create a fresh type at the location loc *)

@@ -29,27 +29,14 @@ module Sign =
 	Tries.t (** The first string is the name of the
 				  signature and the int is its size *)
 	
-    type rec_term = 
-	{term: Abstract_sig.term;
-	 mutable wfterm: Lambda.term option;
-	 mutable typeofterm: Lambda.type_def option;
-	 mutable ind_assoc: (string * int) list;
-       }
-	  
-	  
-    let update_rec_term t wft typ ind_assoc =
-      {term = t;
-       wfterm = wft;
-       typeofterm = typ;
-       ind_assoc = ind_assoc;}
+    let verbose = false
 	
 	
-	
-  let create(name) = Signature (name,0, Table.create(), Tries.empty)
+    let create(name) = Signature (name,0, Table.create(), Tries.empty)
 	
     let get_ind ind_assoc s =
       List.assoc s ind_assoc
-
+	
     let size (Signature (_, n, _, _)) = n
 	
     let insert_type_dcl id ki (Signature (name,size, tb, tr)) =
@@ -108,19 +95,19 @@ module Sign =
     let cut ind_assoc typ =
       cut_assoc_ind ind_assoc (give_level typ)
 
-    let display_assoc ind_assoc =
-      print_string "\n[";
-      let rec display = function 
-	  [] -> print_string "]\n";
-	| (v,c)::l -> print_string ("("^v^","^(string_of_int c)^")");
-	    display l
-      in display ind_assoc
-	
     let get_const (Signature (_, _, _, tr)) id =
       try
 	(match (Tries.lookup id tr) with
           Term_decl (_, i, tk, ty) -> (i, tk, ty)
 	| Term_def (_, i, tk, _, ty) -> (i, tk, ty)
+	| _                          -> raise Not_found)
+      with Tries.Not_found -> raise Not_found
+
+    let is_decl (Signature (_, _, _, tr)) id =
+      try
+	(match (Tries.lookup id tr) with
+          Term_decl (_, _, _, _) -> true
+	| Term_def (_, _, _, _, _) -> false
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 
@@ -160,38 +147,25 @@ module Sign =
       | Term_def _ -> raise (Failure "Sign.string_of_atom 2")
       | _ -> raise (Failure "string_of_atom Not yet implemented")
 
-    let is_infix (id,_) (Signature (_, _, _, _(* {type_definitions=_;term_definitions=defs} *)) as sg) =
+    let is_infix id (Signature (_, _, _, _) as sg) =
+      if verbose
+      then 
+	print_string "is_infix\n";
       try 
 	let (_,tk,_) = get_const sg id in
 	(tk=Abstract_sig.Infix)
       with 
 	Not_found -> false
-(*     try *)
-(*       let _,t = Utils.StringMap.find id defs in *)
-(*       (t=Abstract_sig.Infix) *)
-(*     with *)
-(*     | Not_found ->  false*)
 	
-    let is_binder (id,_) (Signature (_, _, _, _(* {type_definitions=_;term_definitions=defs} *)) as sg) =
+    let is_binder id (Signature (_, _, _, _) as sg) =
+      if verbose
+      then 
+	print_string "is_binder\n";
       try 
 	let (_,tk,_) = get_const sg id in
 	(tk=Abstract_sig.Binder)
       with 
 	Not_found -> false
-      
-(*       try *)
-(* 	let _,t = Utils.StringMap.find id defs in *)
-(* 	t = Abstract_sig.Binder *)
-(*       with *)
-(*       | Not_found -> false *)
-	
-  (*
-  let kind_of_atom i (Signature (_, tb)) =
-  match Table.lookup i tb with
-  Type_declaration (_, ki) -> ki
-  | Term_declaration _       -> raise (Failure "Sign.kind_of_atom")
-  
- *)  
 
     let is_a_cst id (Signature (_, _, _, tr)) =
       try
@@ -212,8 +186,11 @@ module Sign =
       | Tries.Not_found -> false
 
     let rec find level = function
-	[] -> raise Not_found
+	[] -> raise (Failure "Sign.find : Not_found")
       | v::l -> 
+	  if verbose
+	  then
+	    print_string "find\n";
 	  if level = 1
 	  then v
 	  else find (level - 1) l
@@ -239,10 +216,10 @@ struct
        List.iter (fun (x,i) -> print_string (x^", "^(string_of_int i)^" ; ")) ind_assoc;
       );
     match t with
-    | Lambda.Var(i) -> 
+    | Lambda.Var(i) -> print_int i;
 	if verbose
 	then
-	  print_string "Var ";
+	  print_string ("Var "^(string_of_int i));
 	let (x,_) = Sign.find i ind_assoc in
 	if verbose
 	then
@@ -251,7 +228,7 @@ struct
     | Lambda.LVar(i) -> 
 	if verbose
 	then
-	  print_string "LVar ";
+	  print_string ("LVar "^(string_of_int i)^"\n");
 	let (x,_) = Sign.find i ind_assoc in
 	if verbose
 	then
@@ -260,7 +237,7 @@ struct
     | Lambda.Const (i) ->
 	if verbose
 	then
-	  print_string "Const \n";
+	  print_string ("Const "^(Sign.string_of_const i sg)^"\n");
 (* 	let (x,_) = find i ind_assoc in *)
 (* 	x *)
 	Sign.string_of_const i sg;
@@ -272,33 +249,60 @@ struct
     | Lambda.LAbs (s,t) ->
 	if verbose
 	then
-	  print_string "LAbs ";
-	let vars,u=unfold_labs [s] t in
+	  print_string ("LAbs "^s^"\n");
+	let vars,new_ind_assoc,u =
+	  unfold_labs [s] (Sign.add_assoc ind_assoc s) t in
 	Printf.sprintf
 	  "(lambda %s. %s)"
 	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
-	  (term_to_string u (Sign.add_assoc ind_assoc s) sg)
+	  (term_to_string u new_ind_assoc sg)
 (*     | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) when is_binder (string_of_const i sg) sg -> print_string "App1 "; *)
-    | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) when Sign.is_binder (Sign.find i ind_assoc) sg ->
+    | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) when Sign.is_binder (Sign.string_of_const i sg) sg ->
 	if verbose
 	then
 	  print_string "App1 ";
-	let s = string_of_int i in
+	let s = (Sign.string_of_const i sg) in
 	let vars,u= unfold_binder s sg ind_assoc [x] u in
 	Printf.sprintf
 	  "(%s %s. %s)"
 	  s
 	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
-	  (term_to_string u ind_assoc sg)
-(*     | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when is_infix (string_of_const i sg) sg -> print_string "App2 "; *)
-    | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when Sign.is_infix (Sign.find i ind_assoc) sg -> 
+	  (term_to_string u (Sign.add_assoc ind_assoc x) sg)
+    | Lambda.App (Lambda.DConst (i),(Lambda.LAbs(x,u) as t)) when Sign.is_binder (Sign.string_of_const i sg) sg ->
 	if verbose
 	then
-	  print_string "App2 ";
+	  print_string "App1bis ";
+	let s = (Sign.string_of_const i sg) in
+	let vars,u= unfold_binder s sg ind_assoc [x] u in
+	Printf.sprintf
+	  "(%s %s. %s)"
+	  s
+	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
+	  (term_to_string u (Sign.add_assoc ind_assoc x) sg)
+(*     | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when is_infix (string_of_const i sg) sg -> print_string "App2 "; *)
+    | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when Sign.is_infix (Sign.string_of_const i sg) sg -> 
+	if verbose
+	then
+	  (print_string "App2 : ";
+	   print_string (term_to_string t1 ind_assoc sg);
+	   print_string "\n string_of_const : ";
+	   print_string (Sign.string_of_const i sg);
+	   print_string "\nt2 : ";
+	   print_string (term_to_string t2 ind_assoc sg);
+	  );
 	Printf.sprintf
 	  "(%s %s %s)"
 	  (term_to_string t1 ind_assoc sg)
-	  (string_of_int i)
+	  (Sign.string_of_const i sg)
+	  (term_to_string t2 ind_assoc sg)
+    | Lambda.App ((Lambda.App (Lambda.DConst (i),t1)),t2) when Sign.is_infix (Sign.string_of_const i sg) sg -> 
+	if verbose
+	then
+	  print_string "App2bis ";
+	Printf.sprintf
+	  "(%s %s %s)"
+	  (term_to_string t1 ind_assoc sg)
+	  (Sign.string_of_const i sg)
 	  (term_to_string t2 ind_assoc sg)
     | Lambda.App (t1,t2) -> 
 	if verbose
@@ -311,16 +315,16 @@ struct
 	  (*  and unfold_abs acc = function
 	      | Abs (s,t,_) -> unfold_abs (s::acc) t
 	      | t -> acc,t *)
-  and unfold_labs acc = function
-    | Lambda.LAbs (s,t) -> unfold_labs (s::acc) t
-    | t -> acc,t
+  and unfold_labs acc ind_assoc = function
+    | Lambda.LAbs (s,t) -> unfold_labs (s::acc) (Sign.add_assoc ind_assoc s) t
+    | t -> acc,ind_assoc,t
   and unfold_app acc = function
     | Lambda.App (t1,t2) -> unfold_app (t2::acc) t1
     | t -> acc,t
   and unfold_binder binder sg ind_assoc acc = function
     | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) 
-      when let (s,n) = (Sign.find i ind_assoc) in (Sign.is_binder (s,n) sg)&&(s=binder) -> 
-	unfold_binder binder sg ind_assoc (x::acc) u
+      when let (s,_) = (Sign.find i ind_assoc) in (Sign.is_binder s sg)&&(s=binder) -> 
+	unfold_binder binder sg (Sign.add_assoc ind_assoc x) (x::acc) u
     | t -> acc,t
 	
   let rec is_atomic_type = function
@@ -348,7 +352,10 @@ struct
 	       let v = Sign.string_of_atom i sg in
 	       v
            | _  -> Printf.sprintf "%i %s" i (Utils.string_of_list " " (fun x -> Printf.sprintf "(%s)" (term_to_string x ind_assoc sg )) terms))
-    | Lambda.Linear_arrow (t1,t2) ->
+    | Lambda.Linear_arrow (t1,t2) -> 
+	if verbose
+	then
+	  print_string "Linear\n";
 	let arrows,u = unfold_linear_arrow [t1] t2 in
 	let u_string = if (is_atomic_type u)||(is_arrow u) then type_def_to_string ind_assoc u sg  else Printf.sprintf "(%s)" (type_def_to_string ind_assoc u sg ) in
 	Printf.sprintf
@@ -404,7 +411,7 @@ struct
 		  | Abstract_sig.Prefix -> "prefix "
 		  | Abstract_sig.Binder -> "binder "in
 	       Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string [] ty sg)
-	   | Sign.Term_def (id,_,tk,value,type_of) -> 
+	   | Sign.Term_def (id,_,tk,value,type_def) -> 
 	       if verbose
 	       then
 		 print_string ("Term_def "^id^"\n");
@@ -418,135 +425,118 @@ struct
 	       in
 	       let te = 
 		 (term_to_string value [] sg) in
-	       let ty = (type_def_to_string [] type_of sg) in
+	       if verbose
+	       then
+		 print_string ("\nTerm = "^te^"\n");
+	       let ty = (type_def_to_string [] type_def sg) in
 	       Printf.sprintf "\t%s%s = %s: %s;" t id te ty)
 	 (Tries.content trie)
       )
 
 
-    let display_assoc ind_assoc =
-      print_string "\n[";
-      let rec display = function 
-	  [] -> print_string "]\n";
-	| (v,c)::l -> print_string ("("^v^","^(string_of_int c)^")");
-	    display l
-      in display ind_assoc
-
+  let display_assoc ind_assoc =
+    print_string "\n[";
+    let rec display = function 
+	[] -> print_string "]\n";
+      | (v,c)::l -> print_string ("("^v^","^(string_of_int c)^")");
+	  display l
+    in display ind_assoc
+      
 (* display a list of types *)
   let rec display_type_env sg = function
-  | [] -> print_string "[]\n";
-  | [(x,_)] -> print_string "(";
-      print_string x; print_string ",";
-      print_string ")]";
-  | (x,_)::l -> print_string "(";
-      print_string x; print_string ",";
-      print_string ");"; display_type_env sg l
-
+    | [] -> print_string "[]\n";
+    | [(x,_)] -> print_string "(";
+	print_string x; print_string ",";
+	print_string ")]";
+    | (x,_)::l -> print_string "(";
+	print_string x; print_string ",";
+	print_string ");"; display_type_env sg l
+	  
 (* display a list of variables with there types *)
-and display_var_env sg = function
-  | [] -> print_string "\n";
-  | [(x,y)] -> print_string "(";
-      print_string x; print_string ","; display_tdef sg y;
-      print_string ")]";
-  | (x,y)::l -> print_string "(";
-      print_string x; print_string ","; display_tdef sg y;
-      print_string ");"; display_var_env sg l
+  and display_var_env sg = function
+    | [] -> print_string "\n";
+    | [(x,y)] -> print_string "(";
+	print_string x; print_string ","; display_tdef sg y;
+	print_string ")]";
+    | (x,y)::l -> print_string "(";
+	print_string x; print_string ","; display_tdef sg y;
+	print_string ");"; display_var_env sg l
 
 (* display a term before typechecking *)
-and display_term sg = function
-  | Abstract_sig.Var(s,_) -> print_string s
-  | Abstract_sig.Const(s,_) -> print_string s
-  | Abstract_sig.LAbs(s,t,_) -> 
-      print_string "(lambda ";print_string s;print_string ". "; display_term sg t;
-      print_string ")"
-  | Abstract_sig.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
-
+  and display_term sg = function
+    | Abstract_sig.Var(s,_) -> print_string s
+    | Abstract_sig.Const(s,_) -> print_string s
+    | Abstract_sig.LAbs(s,t,_) -> 
+	print_string "(lambda ";print_string s;print_string ". "; display_term sg t;
+	print_string ")"
+    | Abstract_sig.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
+	  
 (* display a term well typed *)
-and display_wfterm sg = function
-  | Lambda.Var(i) -> print_string ("("^(string_of_int i)^")");
-(*       (try *)
-(* 	print_string (Sign.string_of_const i sg) *)
-(*       with _ -> raise (Typing_error(string_of_int i))) *)
-  | Lambda.LVar(i) -> print_string ("("^(string_of_int i)^")");
-  | Lambda.Const(i) -> print_string ("("^(string_of_int i)^")");
-  | Lambda.DConst(i) -> print_string ("("^(string_of_int i)^")");
+  and display_wfterm sg = function
+    | Lambda.Var(i) -> print_string ("("^(string_of_int i)^")");
+    | Lambda.LVar(i) -> print_string ("("^(string_of_int i)^")");
+    | Lambda.Const(i) -> print_string ("("^(string_of_int i)^")");
+    | Lambda.DConst(i) -> print_string ("("^(string_of_int i)^")");
 (*       print_string (Sign.string_of_const i sg) *)
-  | Lambda.LAbs(s,t) -> 
-      print_string "(lambda ";print_string s;print_string ". "; display_wfterm sg t;
-      print_string ")"
-  | Lambda.App(t1,t2) -> display_wfterm sg t1;print_string " ";display_wfterm sg t2
-
+    | Lambda.LAbs(s,t) -> 
+	print_string "(lambda ";print_string s;print_string ". "; display_wfterm sg t;
+	print_string ")"
+    | Lambda.App(t1,t2) -> display_wfterm sg t1;print_string " ";display_wfterm sg t2
+	  
 (* display a type before typechecking *)
-and display_tdef sg = function
-  | Abstract_sig.Type_atom(s,_,tl) -> print_string s
-  | Abstract_sig.Linear_arrow(td1,td2,_) ->
-      print_string "(";display_tdef sg td1;
-      print_string " -> ";display_tdef sg td2;print_string ")";
-
-and display_typ_tdef sg = function
-  | Lambda.Type_atom(i,tl) -> 
-      (try print_string ("Type_atom("^(Sign.string_of_atom i sg)^") ");
+  and display_tdef sg = function
+    | Abstract_sig.Type_atom(s,_,tl) -> print_string s
+    | Abstract_sig.Linear_arrow(td1,td2,_) ->
+	print_string "(";display_tdef sg td1;
+	print_string " -> ";display_tdef sg td2;print_string ")";
+	
+  and display_typ_tdef sg = function
+    | Lambda.Type_atom(i,tl) -> 
+	(try print_string ("Type_atom("^(Sign.string_of_atom i sg)^") ");
 (* 	print_string (Sign.string_of_atom i sg) *)
-      with _ -> print_int i)
-  | Lambda.Linear_arrow(td1,td2) ->
-      print_string "(";display_typ_tdef sg td1;
-      print_string " -> ";display_typ_tdef sg td2;print_string ")";
-
+	with _ -> print_int i)
+    | Lambda.Linear_arrow(td1,td2) ->
+	print_string "(";display_typ_tdef sg td1;
+	print_string " -> ";display_typ_tdef sg td2;print_string ")";
+	
 (* display a list of variables associated with there de Bruijn index *)
-and display_index_assoc = function
-  | [] -> print_string "]"
-  | [(s,i)] -> print_string "(";print_string s; print_string ",";
-      print_int i;print_string ")]"
-  | (s,i)::ls -> print_string "(";print_string s; print_string ",";
-      print_int i;print_string ");";display_index_assoc ls;
-
-(* display a record characteristic of a term *)
-and display_rec_term sg rec_term =
-    print_string "\n{term = ";
-    display_term sg rec_term.Sign.term;
-    print_string "\nwfterm = ";
-    (match rec_term.Sign.wfterm with
-      None -> print_string "None"
-    | Some t -> print_string "Some ";
-	display_wfterm sg t);
-    print_string ";\n typeofterm = ";
-    (match rec_term.Sign.typeofterm with
-      None -> print_string "None"
-    | Some t -> print_string "Some ";
-	display_typ_tdef sg t);
-    print_string ";\nind_assoc = ";
-    display_index_assoc rec_term.Sign.ind_assoc;
-    print_string "}\n";
+  and display_index_assoc = function
+    | [] -> print_string "]"
+    | [(s,i)] -> print_string "(";print_string s; print_string ",";
+	print_int i;print_string ")]"
+    | (s,i)::ls -> print_string "(";print_string s; print_string ",";
+	print_int i;print_string ");";display_index_assoc ls;
+	
 
 (* display a signature *)
-and display_signature sg =
-  let size = Sign.size sg in
-  let rec display_one i =
-    match i with
-      0 -> print_newline()
-    | _ ->  
-	try
-	  let entry = Sign.lookup i sg in
-	  display_entry entry;
-	  print_newline();
-	  display_one (i-1)
-	with Not_found -> raise (Failure "lookup Not_found")
-  and display_entry = function 
-    | Sign.Type_decl(s, i, k) ->
-	print_string ("Type_decl("^s^(string_of_int i))
-    | Sign.Type_def(s, i, tdef) ->
-	print_string ("Type_def("^s^(string_of_int i)^" : ");
-	display_typ_tdef sg tdef
-    | Sign.Term_decl(s, i, tk, tdef) ->
-	print_string ("Term_decl("^s^(string_of_int i)^" : ");
-	display_typ_tdef sg tdef
-    | Sign.Term_def(s, i, tk, t, tdef) ->
-	print_string ("Term_def("^s^(string_of_int i)^" = ");
-	display_wfterm sg t;
-	print_string " : ";
-	display_typ_tdef sg tdef
-  in
-  display_one (size-1)
+  and display_signature sg =
+    let size = Sign.size sg in
+    let rec display_one i =
+      match i with
+	0 -> print_newline()
+      | _ ->  
+	  try
+	    let entry = Sign.lookup i sg in
+	    display_entry entry;
+	    print_newline();
+	    display_one (i-1)
+	  with Not_found -> raise (Failure "lookup Not_found")
+    and display_entry = function 
+      | Sign.Type_decl(s, i, k) ->
+	  print_string ("Type_decl("^s^(string_of_int i))
+      | Sign.Type_def(s, i, tdef) ->
+	  print_string ("Type_def("^s^(string_of_int i)^" : ");
+	  display_typ_tdef sg tdef
+      | Sign.Term_decl(s, i, tk, tdef) ->
+	  print_string ("Term_decl("^s^(string_of_int i)^" : ");
+	  display_typ_tdef sg tdef
+      | Sign.Term_def(s, i, tk, t, tdef) ->
+	  print_string ("Term_def("^s^(string_of_int i)^" = ");
+	  display_wfterm sg t;
+	  print_string " : ";
+	  display_typ_tdef sg tdef
+    in
+    display_one (size-1)
 
 
 end
