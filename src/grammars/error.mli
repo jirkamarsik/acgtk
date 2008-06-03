@@ -30,6 +30,7 @@ type type_error =
   | Not_defined_var of string
   | Not_defined_const of string
   | Not_well_typed_term of string * string
+  | Not_well_typed_term_plus of string * string * string
   | Not_well_kinded_type of string
   | Not_linear_LAbs of string
   | Other

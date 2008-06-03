@@ -45,6 +45,7 @@ type type_error =
   | Not_defined_var of string
   | Not_defined_const of string
   | Not_well_typed_term of string * string
+  | Not_well_typed_term_plus of string * string * string
   | Not_well_kinded_type of string
   | Not_linear_LAbs of string
   | Other
@@ -91,6 +92,8 @@ let type_error_to_string = function
       Printf.sprintf "Const \"%s\" is not defined" s
   | Not_well_typed_term (s,typ) ->
       Printf.sprintf "Term \"%s\" not well typed.\nType expected : %s\n" s typ
+  | Not_well_typed_term_plus (s,typ,wrong_typ) ->
+      Printf.sprintf "Term \"%s\" not well typed.\n \"%s\" is of type %s but is here used with type  %s\n" s s typ wrong_typ
   | Not_well_kinded_type s ->
       Printf.sprintf "Type \"%s\" not well kinded" s
   | Not_linear_LAbs s ->
