@@ -1926,7 +1926,7 @@ echo "$as_me: error: Cannot find ocamldep." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-# Look for camllex and camlyacc
+# Look for camllex
 for ac_prog in ocamllex.opt ocamllex
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -1976,11 +1976,8 @@ echo "$as_me: error: Cannot find ocamllex" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-#AC_CHECK_PROG(OCAMLYACC,ocamlyacc,ocamlyacc,no)
-#if test "$OCAMLYACC" = no ; then
-#	AC_MSG_ERROR(Cannot find ocamlyacc)
-#fi
-
+#Look for dypgen
+DYPGEN_NEEDED=20080204
 for ac_prog in dypgen.opt dypgen
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -2028,7 +2025,21 @@ if test "$DYPGEN" = no ; then
 	{ { echo "$as_me:$LINENO: error: Cannot find dypgen" >&5
 echo "$as_me: error: Cannot find dypgen" >&2;}
    { (exit 1); exit 1; }; }
+else
+	DYPGEN_VERSION=`$DYPGEN --version | grep version | sed 's/^.* \(.*\)$/\1/'`
+	{ echo "$as_me:$LINENO: checking for $DYPGEN version" >&5
+echo $ECHO_N "checking for $DYPGEN version... $ECHO_C" >&6; }
+	if test $DYPGEN_VERSION -ge $DYPGEN_NEEDED ; then
+	   { echo "$as_me:$LINENO: result: $DYPGEN ($DYPGEN_VERSION) is ok" >&5
+echo "${ECHO_T}$DYPGEN ($DYPGEN_VERSION) is ok" >&6; }
+	else
+	   { { echo "$as_me:$LINENO: error: $DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed" >&5
+echo "$as_me: error: $DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed" >&2;}
+   { (exit 1); exit 1; }; }
+	fi
 fi
+
+
 
 # What is the OCAML version  ?
 # we extract Ocaml version number

@@ -43,21 +43,28 @@ if test "$OCAMLDEP" = no ; then
         AC_MSG_ERROR(Cannot find ocamldep.)
 fi
 
-# Look for camllex and camlyacc
+# Look for camllex
 AC_CHECK_PROGS(OCAMLLEX,ocamllex.opt ocamllex,no)
 if test "$OCAMLLEX" = no ; then
 	AC_MSG_ERROR(Cannot find ocamllex)
 fi
 
-#AC_CHECK_PROG(OCAMLYACC,ocamlyacc,ocamlyacc,no)
-#if test "$OCAMLYACC" = no ; then
-#	AC_MSG_ERROR(Cannot find ocamlyacc)
-#fi
-
+#Look for dypgen
+DYPGEN_NEEDED=20080204
 AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
 if test "$DYPGEN" = no ; then
 	AC_MSG_ERROR(Cannot find dypgen)
+else
+	DYPGEN_VERSION=`$DYPGEN --version | grep version | sed 's/^.* \(.*\)$/\1/'`
+	AC_MSG_CHECKING([for $DYPGEN version])
+	if test $DYPGEN_VERSION -ge $DYPGEN_NEEDED ; then
+	   AC_MSG_RESULT($DYPGEN ($DYPGEN_VERSION) is ok)
+	else
+	   AC_MSG_ERROR($DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed)
+	fi
 fi
+
+
 
 # What is the OCAML version  ?
 # we extract Ocaml version number
