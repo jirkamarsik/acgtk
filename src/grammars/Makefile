@@ -24,7 +24,9 @@ LIBDIR = -I +dypgen -I +camlp4
 PREVIOUS_DIRS = ../utils
 
 # Source files in the right order of dependance
-ML = error.ml abstract_syntax.ml interface.ml entry.ml parser.ml lexer.ml data_parsing.ml
+#ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
+ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml lexer.ml parser.ml syntactic_data_structures.ml interactive.ml
+
 EXE_SOURCES = test.ml
 
 ####################################
@@ -36,7 +38,7 @@ EXE_SOURCES = test.ml
 include ../Makefile.common
 
 parser.ml : parser.dyp
-	dypgen.opt $<
+	dypgen.opt --noemit-token-type $<
 
 lexer.ml : lexer.mll
 	ocamllex.opt $<

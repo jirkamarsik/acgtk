@@ -1,38 +1,18 @@
-open Utils
-open Tries
-open Table
-
 (** This modules implements the abstract syntax and the build function for the signatures *)
 
-module Abstract_sig : 
+module Abstract_syntax :
 sig
   
   (** The type of location in the signature files *)
   type location = Lexing.position*Lexing.position
-      
-  (** Exceptions raised when definitions of types or constants are
-      duplicated *)
-  exception Duplicate_type_definition
-  exception Duplicate_term_definition
-    
+
   (** The type of the syntactic behaviour of constants defined in
       the signature *)    
-  type term_kind =
+  type syntactic_behavior =
     | Default 
     | Prefix 
     | Infix 
     | Binder
-	
-  (** The type corresponding to the fact that a type (resp. a
-      term) comes from a declaration or a definition *)
-  type type_of_definition =
-    | Declared
-    | Defined
-	
-  (** The type of the different possible abstractions *)
-  type abs =
-    | Linear
-	(*    | Non_linear *)
 	
   (** The type of terms provided by the parser. *)
   type term =
@@ -65,14 +45,7 @@ sig
 	      | Type_Abs of (string * location * type_def)  * location
 	(** If the type is a dependent type build with an abstraction *) *)
 	
-	
-	
-  (** The type of kinds as found in the signature files *)
-  type kind = K of type_def list 
-    
-  (** The type of the signature as abstract object *)
-  type t
-type sig_entry = 
+  type sig_entry = 
     | Type_decl of (string * location * kind)
 	(** The first parameter ([string]) is the name of the type,
 	    the second parameter is the place in the file where it was
@@ -81,141 +54,52 @@ type sig_entry =
 	(** Tthe first parameter ([string]) is the name of the defined type,
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its value *)
-    | Term_decl of (string * term_kind * location * type_def)
+    | Term_decl of (string * syntactic_behavior * location * type_def)
 	(** The first parameter ([string]) is the name of the constant,
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its type *)
-    | Term_def of (string * term_kind * location * term * type_def)
+    | Term_def of (string * syntactic_behavior * location * term * type_def)
 	(** The first parameter ([string]) is the name of the constant,
 	    the second parameter is the place in the file where it was
 	    defined and the last parameter is its value *)
-	
-(*
-  type t  = Signature of string * sig_content  (** The first string is the name of the signature *)*)
-  and sig_content = {entries:sig_entry list;
-    (** the list of entries comes in the reverse order of declaration *)		     		     type_definitions: type_of_definition StringMap.t;
-    (** the map from type definitions to their value *)
-	    term_definitions: (type_of_definition*term_kind) StringMap.t;
-    (** the map from term definitions to their value and their
-	    syntactic behaviour *)
-	    warnings: Error.warning list
-    (** the list of warnings emitted during parsing *)}
-	 
-    
+  and kind = K of type_def list
 
-	
-  (** [empty name] returns the empty signature of name [name] *)
-  val empty : string * location -> t
-    
-  (** [add_entry e s] returns a signature where the entry [e] has been
-      added *)
-  val add_entry : sig_entry -> t -> t
 
-  (** [add_warnings w s ] resturns a signature where the warning [w] have been added *)
-  val add_warnings : Error.warning list -> t -> t
-    
-  (** [to_string sg] returns a string describing the signature
-      [sg]. Should be parsable *)
-  val to_string : t -> string
-    
-  (** [term_to_string t sg] returns a string describing the term [t]
-      wrt the signature [sg]. *)
-  val term_to_string : term -> t -> string
-    
-  (** [type_def_to_string t sg ] returns a string describing the type definition [t]
-      wrt the signature [sg]. *)
-  val type_def_to_string : type_def -> t -> string
-
-  (** [get_term_location t] returns the location of the term [t]. *)
-  val get_term_location : term -> Token.flocation
-    
-  (** [get_type_location t] returns the location of the type definiton [t]. *)
-  val get_type_location : type_def -> Token.flocation
-    
-  (** [new_loc start end] returns a new location from the beginning of
-      [start] to the end of [end]*)
-  val new_loc : location -> location -> location
-    
-  (** [is_atomic_ype id s ] returns [true] if [id] is the name of an
-      atomic type in [s] and [false] oterwise *)
-  val is_type : string -> t -> bool
-    
-  (** [is_constant id s ] returns [(true,Some b)] together with its
-      syntactic behaviour [b] if [id] is the name of a constant in [s]
-      and [false,None] oterwise *)
-  val is_constant : string -> t -> bool * term_kind option
-    
-  (** [display sg] prints the signature [sg] on stdout. *)
-  val display : t -> unit
-    
-  (** [name s] returns the name of the signature [s] and the location of its definition *)
-  val name : t -> (string * location)
-
-  (** [name s] returns the content of the signature [s] *)
-  val get_content : t -> sig_content
-
-  (** [get_warnings sg] returns the warnigs emitted while parsing [sg]. *)
-  val get_warnings : t -> Error.warning list
-    
+  type lex_entry =
+    | Type of (string * location * type_def )
+    | Constant of (string * location * term )
 end
-
-module Abstract_lex :
+  
+(** This modules implements the types for the tokens that are useful
+    to the parsers and the lexers *)
+module Token :
 sig
-  type t
-  type interpretation =
-    | Type of Abstract_sig.location * Abstract_sig.type_def
-    | Constant of Abstract_sig.location * Abstract_sig.term
 
-  val empty : string*Abstract_sig.location -> abs:Abstract_sig.t -> obj:Abstract_sig.t -> t
-  val insert : string -> interpretation -> t -> t
-  val to_string : t -> string
-end
+  (** The type of available tokens for parsers and lexers *)
+  type t =    
+    | SYMBOL of (string*Abstract_syntax.location)
+    | IDENT of (string*Abstract_syntax.location)
+    | LIN_ARROW of (Abstract_syntax.location)
+    | COLON_EQUAL of (Abstract_syntax.location)
+    | ARROW of (Abstract_syntax.location)
+    | LAMBDA0 of (Abstract_syntax.location)
+    | LAMBDA of (Abstract_syntax.location)
+    | BINDER of (Abstract_syntax.location)
+    | INFIX of (Abstract_syntax.location)
+    | PREFIX of (Abstract_syntax.location)
+    | TYPE of (Abstract_syntax.location)
+    | END_OF_DEC of (Abstract_syntax.location)
+    | LEX_OPEN of (Abstract_syntax.location)
+    | SIG_OPEN of (Abstract_syntax.location)
+    | DOT of (Abstract_syntax.location)
+    | RPAREN of (Abstract_syntax.location)
+    | LPAREN of (Abstract_syntax.location)
+    | COMMA of (Abstract_syntax.location)
+    | COLON of (Abstract_syntax.location)
+    | SEMICOLON of (Abstract_syntax.location)
+    | EQUAL of (Abstract_syntax.location)
+    | EOI
+end	
 
 
-(** This modules implements a temporary environment where parsed
-    signatures and lexicon are stored *)
-module Environment :
-sig
-  (** The type of the environmnet *)
-  type t
-    
-  (** The type of what an environmnent can contain *)
-  type content = 
-    | Signature of Abstract_sig.t
-    | Lexicon of Abstract_lex.t
-	
-  (** This exception can be raised when a signature is not found in the
-      environmnent *)
-  exception Signature_not_found of string
-    
-  (** [empty] is the empty environmnent *)
-  val empty : t
 
-  (** [insert c e] adds the content [c] into the environment [e] and
-      returns the resulting environmnent *)
-  val insert : content -> t -> t
-
-  (** [iter f e] applies f to every data contain in the environment
-  *)
-  val iter : (content -> unit) -> t -> unit
-
-  (** [fold f a e] returns [f a_n (f a_n-1 (... (f a1 (f a0 a))
-  ... ))] where the [a_0 ... a_n] are the [n+1] elements of the
-  environmnent *)
-  val fold : (content -> 'a -> 'a) -> 'a -> t -> 'a
-
-  (** [sig_number e] returns the number of signature an environment
-  contains *)
-  val sig_number : t -> int
-
-  (** [get_signature name e] returns the signature of name [name] in
-      the environment [e]. Raise
-      {!Abstract_syntax.Environment.Signature_not_found} if such a
-      signature does not exist *)
-  val get_signature : string -> t -> Abstract_sig.t
-
-  (** [choose_signature e] returns a randomly chosen signature in the
-      environment [e] *)
-  val choose_signature : t -> Abstract_sig.t option
-
-end
