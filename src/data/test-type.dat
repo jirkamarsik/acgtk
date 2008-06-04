@@ -1,24 +1,19 @@
 signature essai =
 	a:type;
+	string = a -> a : type;
 
 (* Il arrive à typer c alors que ça devrait être linéaire *)
-(* il transforme t en a dans c*)
-(*	t : a -> a   -> a; 
-	c = lambda x. t x x : a -> a;  *)
+	t : a -> a   -> a; 
+	c = lambda x. t x x  : a -> a;  
+
+(* Problème avec les types définis. c devrait être typabe *)
+(*	c = lambda x.x : string; *)
 
 
-(* À améliorer :  le message d'erreur *)
-	c = lambda x.x : a ;    
+(* À améliorer :  le message d'erreur : 
+	qqch du genre "lambda x.x" has
+	type a but is here used with type a -> a *)
+(*	c = lambda x.x : a ;     *)
 
-(* deuxième type d'erreur : definition de type pas implémentée *)
-(* OK corrigé *)
-(* OK	string = a -> a:type ;  *)
 
-(* amélioration : dire le type déclaré/attendu pour la constante et
-dire le type calculé dans le term (ici : "+" not well typed) *)
-(* Sans doute idem premier problème *)
-	t:a ;
-(*	prefix + : a->a;*)
-	prefix + = lambda x .t x : a -> a; 
-(*	c = + t : a ;  *)
 end
