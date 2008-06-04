@@ -25,14 +25,17 @@ let type_nb = ref 100
 let new_type_list : new_type_list = ref []
      
 let rec abstr_synt_term_to_string sg = function
-  | Abstract_sig.Var(s,_) -> s
-  | Abstract_sig.Const(s,_) -> s
-  | Abstract_sig.LAbs(s,t,_) ->
+  | Abstract_syntax.Var(s,_) -> s
+  | Abstract_syntax.Const(s,_) -> s
+  | Abstract_syntax.LAbs(s,t,_) ->
       "(lambda "^s^". "^( abstr_synt_term_to_string sg t)^")"
-  | Abstract_sig.App(t1,t2,_) -> (abstr_synt_term_to_string sg t1)^" "^(abstr_synt_term_to_string sg t2)
+  | Abstract_syntax.App(t1,t2,_) -> (abstr_synt_term_to_string sg t1)^" "^(abstr_synt_term_to_string sg t2)
 	    
 
-let rec typecheck_sig sig_new = function
+let rec typecheck_sig sig_new sg =
+  Syntactic_data_structures.Abstract_sig.fold (fun e a_sg -> typecheck_entry a_sg e) sig_new sg
+
+(* function
   | [] -> sig_new
   | last_entry::entries -> 
       let sig_new2 = 
@@ -42,7 +45,7 @@ let rec typecheck_sig sig_new = function
 	typecheck_entry sig_new2 last_entry
       in
       sig_new3
-     
+*)   
 
 	
 (* equiv tdef trepl returns a type_def*)
@@ -82,13 +85,13 @@ and eq_typ t1 t2 sg =
 
 (* typecheck a definition or a declaration of a type or a term *)
 and typecheck_entry sg = function 
-  | Abstract_sig.Type_decl(s,loc,((Abstract_sig.K tdefs) as k)) -> 
+  | Abstract_syntax.Type_decl(s,loc,((Abstract_syntax.K tdefs) as k)) -> 
       let new_kd = 
 	typecheck_kind sg tdefs in
       let new_sg = Sign.insert_type_dcl s (Lambda.K new_kd) sg in
       new_sg
 
-  | Abstract_sig.Type_def(s,loc,tdef) -> 
+  | Abstract_syntax.Type_def(s,loc,tdef) -> 
       if (verbose)
       then(
 	print_string ("Type_def("^s^" : ");
@@ -100,13 +103,13 @@ and typecheck_entry sg = function
 	  new_tdef sg in
       new_sg
 
-  | Abstract_sig.Term_decl(s,tk,loc,typ) -> 
+  | Abstract_syntax.Term_decl(s,tk,loc,typ) -> 
       let new_td = 
 	typecheck_type sg typ in
       let new_sg = Sign.insert_term_dcl s tk new_td sg in
       new_sg
 
-  | Abstract_sig.Term_def(s,tk,loc,t,typ) -> 
+  | Abstract_syntax.Term_def(s,tk,loc,t,typ) -> 
       let new_td = 
 	typecheck_type sg typ 
 	  in 
@@ -129,7 +132,7 @@ and typecheck_kind sg = function
 
 (* typecheck a type *)      	
 and typecheck_type sg = function
-  | Abstract_sig.Type_atom (s,loc,[]) -> 
+  | Abstract_syntax.Type_atom (s,loc,[]) -> 
       (** WF types : type constant *)
       (try 
 	let (i,type_s) = Sign.get_atom sg s
@@ -140,7 +143,7 @@ and typecheck_type sg = function
 	else  type_error (Not_well_kinded_type s) loc
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
-  | Abstract_sig.Linear_arrow(tdef1,tdef2,_) -> 
+  | Abstract_syntax.Linear_arrow(tdef1,tdef2,_) -> 
       (** WF types : linear function *)
             let new_td1 = 
 	      typecheck_type sg tdef1 in
@@ -154,7 +157,7 @@ and typecheck_type sg = function
 (* typecheck a term *)
 and typecheck_term term wftype ind_assoc sg lvar_list = 
   match term with
-  | Abstract_sig.Var(s,loc) ->
+  | Abstract_syntax.Var(s,loc) ->
       if (verbose)
       then(print_string ("\n\n\tcheck Var "^s^"\n"););
       (** WT terms : variable *)
@@ -203,7 +206,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
 	
-  | Abstract_sig.Const(s,loc) ->
+  | Abstract_syntax.Const(s,loc) ->
       if (verbose)
       then(print_string ("\n\n\tcheck Const "^s^"\n");
 	 );
@@ -248,7 +251,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
 
-  | Abstract_sig.LAbs(s,t,loc) -> 
+  | Abstract_syntax.LAbs(s,t,loc) -> 
       if (verbose)
       then(print_string "check LAbs\n";);
       if (verbose)
@@ -273,7 +276,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	  let new_ind_assoc = Sign.add_assoc ind_assoc s in
 
 	  let new_sg = 
-	    Sign.insert_var s Abstract_sig.Default tdef1 sg 
+	    Sign.insert_var s Abstract_syntax.Default tdef1 sg 
 	  in
 	  if (verbose)
 	  then(
@@ -292,7 +295,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	  (Lambda.LAbs(s,wfterm2),ind_assoc,sg)
       )
 
-  | Abstract_sig.App(t1,t2,loc) ->
+  | Abstract_syntax.App(t1,t2,loc) ->
       if (verbose)
       then(print_string "check App\n";
 	display_term sg t1;
@@ -326,7 +329,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	
 and typeinf_term term typelabs ind_assoc sg lvar_list =
   match term with
-  | Abstract_sig.Var(s,loc) -> 
+  | Abstract_syntax.Var(s,loc) -> 
       if (verbose)
       then(
 (* 	print_string ("Var : "^s^"\n"); *)
@@ -376,9 +379,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	    type_error (Not_defined_var s) loc
       with Not_found -> 
 	type_error (Not_defined_var s) loc)
-
-
-      | Abstract_sig.Const(s,loc) ->
+  | Abstract_syntax.Const(s,loc) ->
       if (verbose)
       then(
       print_string ("Const : "^s^" "););
@@ -414,14 +415,14 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
       with Not_found ->
 	type_error (Not_defined_const s) loc)
 
-  | Abstract_sig.LAbs(s,t,loc) ->  
+  | Abstract_syntax.LAbs(s,t,loc) ->  
       if (verbose)
       then(print_string "inf LAbs\n";);
       (match typelabs with
 	None -> 
 	  let new_sg = 
 	    try 	    
-	      Sign.insert_var s Abstract_sig.Default (new_type loc) sg 
+	      Sign.insert_var s Abstract_syntax.Default (new_type loc) sg 
 	    with _ -> raise (Typing_error "errr")
 	  in
 	  let new_ind_assoc = Sign.add_assoc ind_assoc s in 
@@ -438,7 +439,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	  (Lambda.Linear_arrow(s_type,type2),wfterm_labs,ind_assoc)
       | Some s_type -> 
 	  let new_sg = 
-	    try Sign.insert_var s Abstract_sig.Default s_type sg 
+	    try Sign.insert_var s Abstract_syntax.Default s_type sg 
 	    with _ -> raise (Typing_error "errr")
 	  in
 	  let new_ind_assoc = Sign.add_assoc ind_assoc s in
@@ -449,7 +450,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	  in
 	  (Lambda.Linear_arrow(s_type,type2),wfterm_labs,ind_assoc)
       )    
-  | Abstract_sig.App(t1,t2,loc) -> 
+  | Abstract_syntax.App(t1,t2,loc) -> 
       if (verbose)
       then(print_string "inf App\n";);
       if (verbose)
@@ -523,7 +524,7 @@ and new_type loc =
   new_type_list := (s,None) :: !new_type_list; 
   Lambda.Type_atom(s,[]) 
 
-      
+(*      
 let typecheck (sig_name,content :string * Abstract_sig.sig_content) = 
   let res = typecheck_sig 
       (Sign.create(sig_name))
@@ -531,5 +532,15 @@ let typecheck (sig_name,content :string * Abstract_sig.sig_content) =
   in
   print_string "\nTyping done.\n";
   res
+
+*)
+let typecheck (sig_name,sg) =
+  let res = typecheck_sig 
+    (Sign.create(sig_name))
+    sg
+  in
+    print_string "\nTyping done.\n";
+    res
+  
 
 ;;

@@ -2,6 +2,7 @@ open Table
 open Tries
 open Lambda
 open Abstract_syntax
+open Syntactic_data_structures
 
 module Sign =
   struct
@@ -16,11 +17,11 @@ module Sign =
 	    (** The first parameter ([string]) is the name of the defined
 		type, the second parameter its index and the last
 		parameter is its value *)
-      | Term_decl of (string * int * Abstract_sig.term_kind * Lambda.type_def)
+      | Term_decl of (string * int * Abstract_syntax.syntactic_behavior * Lambda.type_def)
 	    (** The first parameter ([string]) is the name of the
 		constant, the second parameter is its index and the last
 		parameter is its type *)
-      | Term_def of (string * int * Abstract_sig.term_kind * Lambda.term * Lambda.type_def)
+      | Term_def of (string * int * Abstract_syntax.syntactic_behavior * Lambda.term * Lambda.type_def)
 	    (** The first parameter ([string]) is the name of the
 		constant, the second parameter is its index and the last
 		parameter is its value *)
@@ -29,8 +30,9 @@ module Sign =
 	Tries.t (** The first string is the name of the
 				  signature and the int is its size *)
 	
+
     let verbose = false
-	
+		
 	
     let create(name) = Signature (name,0, Table.create(), Tries.empty)
 	
@@ -153,7 +155,7 @@ module Sign =
 	print_string "is_infix\n";
       try 
 	let (_,tk,_) = get_const sg id in
-	(tk=Abstract_sig.Infix)
+	(tk=Abstract_syntax.Infix)
       with 
 	Not_found -> false
 	
@@ -163,7 +165,7 @@ module Sign =
 	print_string "is_binder\n";
       try 
 	let (_,tk,_) = get_const sg id in
-	(tk=Abstract_sig.Binder)
+	(tk=Abstract_syntax.Binder)
       with 
 	Not_found -> false
 
@@ -404,24 +406,24 @@ struct
 	       then
 		 print_string ("Term_decl "^id^"\n");
 	       let t = 
-(* match snd (Utils.StringMap.find id content.term_definitions) with *)
+		 (* match snd (Utils.StringMap.find id content.term_definitions) with *)
 		 match tk with
-		  | Abstract_sig.Default -> ""
-		  | Abstract_sig.Infix -> "infix "
-		  | Abstract_sig.Prefix -> "prefix "
-		  | Abstract_sig.Binder -> "binder "in
+		  | Abstract_syntax.Default -> ""
+		  | Abstract_syntax.Infix -> "infix "
+		  | Abstract_syntax.Prefix -> "prefix "
+		  | Abstract_syntax.Binder -> "binder "in
 	       Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string [] ty sg)
 	   | Sign.Term_def (id,_,tk,value,type_def) -> 
 	       if verbose
 	       then
 		 print_string ("Term_def "^id^"\n");
 	       let t = 
-(* match snd (Utils.StringMap.find id content.term_definitions) with *)
+		 (* match snd (Utils.StringMap.find id content.term_definitions) with *)
 		 match tk with
-		  | Abstract_sig.Default -> ""
-		  | Abstract_sig.Infix -> "infix "
-		  | Abstract_sig.Prefix -> "prefix "
-		  | Abstract_sig.Binder -> "binder " 
+		  | Abstract_syntax.Default -> ""
+		  | Abstract_syntax.Infix -> "infix "
+		  | Abstract_syntax.Prefix -> "prefix "
+		  | Abstract_syntax.Binder -> "binder " 
 	       in
 	       let te = 
 		 (term_to_string value [] sg) in
@@ -463,14 +465,13 @@ struct
 	print_string ");"; display_var_env sg l
 
 (* display a term before typechecking *)
-  and display_term sg = function
-    | Abstract_sig.Var(s,_) -> print_string s
-    | Abstract_sig.Const(s,_) -> print_string s
-    | Abstract_sig.LAbs(s,t,_) -> 
-	print_string "(lambda ";print_string s;print_string ". "; display_term sg t;
-	print_string ")"
-    | Abstract_sig.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
-	  
+and display_term sg = function
+  | Abstract_syntax.Var(s,_) -> print_string s
+  | Abstract_syntax.Const(s,_) -> print_string s
+  | Abstract_syntax.LAbs(s,t,_) -> 
+      print_string "(lambda ";print_string s;print_string ". "; display_term sg t;
+      print_string ")"
+  | Abstract_syntax.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
 (* display a term well typed *)
   and display_wfterm sg = function
     | Lambda.Var(i) -> print_string ("("^(string_of_int i)^")");
@@ -484,15 +485,15 @@ struct
     | Lambda.App(t1,t2) -> display_wfterm sg t1;print_string " ";display_wfterm sg t2
 	  
 (* display a type before typechecking *)
-  and display_tdef sg = function
-    | Abstract_sig.Type_atom(s,_,tl) -> print_string s
-    | Abstract_sig.Linear_arrow(td1,td2,_) ->
-	print_string "(";display_tdef sg td1;
-	print_string " -> ";display_tdef sg td2;print_string ")";
-	
-  and display_typ_tdef sg = function
-    | Lambda.Type_atom(i,tl) -> 
-	(try print_string ("Type_atom("^(Sign.string_of_atom i sg)^") ");
+and display_tdef sg = function
+  | Abstract_syntax.Type_atom(s,_,tl) -> print_string s
+  | Abstract_syntax.Linear_arrow(td1,td2,_) ->
+      print_string "(";display_tdef sg td1;
+      print_string " -> ";display_tdef sg td2;print_string ")";
+
+and display_typ_tdef sg = function
+  | Lambda.Type_atom(i,tl) -> 
+      (try print_string ("Type_atom("^(Sign.string_of_atom i sg)^") ");
 (* 	print_string (Sign.string_of_atom i sg) *)
 	with _ -> print_int i)
     | Lambda.Linear_arrow(td1,td2) ->

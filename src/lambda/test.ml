@@ -1,30 +1,33 @@
 let options = []
 
-let env = ref Abstract_syntax.Environment.empty
+
+module Sg = Syntactic_data_structures.Abstract_sig
+module Lex = Syntactic_data_structures.Abstract_lex
+
+module Actual_env = Environment.Make(Sg)(Lex)
+
+let env = ref Actual_env.empty
+
+module Actual_parser = Parser.Make(Actual_env)
+
+
+
+let env = ref Actual_env.empty
 
 let usg_msg = ""
 
-
-let print_sign t =
-  let Sign.Sign.Signature (name,size,_,trie) = t in
-  print_string (Sign.Display.to_string t);
-  print_newline()
-
-	
 let parse filename =
-  let () = env := Data_parsing.Data_parsing.data filename !env in
-  Abstract_syntax.Environment.iter 
+  let () = env := Actual_parser.parse_data filename !env in
+  Actual_env.iter 
     (fun content ->
        match content with
-	 | Abstract_syntax.Environment.Lexicon _ -> ()
-	 | Abstract_syntax.Environment.Signature sg ->
+	 | Actual_env.Lexicon _ -> ()
+	 | Actual_env.Signature sg ->
 	     let () = Printf.printf "\n\nResultat typecheck : \n" in
-	     let y = Abstract_syntax.Abstract_sig.get_content sg in
-	     let (name,_) = Abstract_syntax.Abstract_sig.name sg in
-(* 	     print_string (Abstract_syntax.Abstract_sig.to_string sg); *)
+	     let (name,_) = Sg.name sg in
 	       try
-		 let t = (Typechecker.typecheck (name,y)) in
-		   print_sign t
+		 let t = (Typechecker.typecheck (name,sg)) in
+		   Printf.printf "%s\n"  (Sign.Display.to_string t)
 	       with
 		 | Error.Error e -> Printf.fprintf stderr "Error: in signature\"%s\"\n%s\n" name (Error.error_msg e name))
     !env

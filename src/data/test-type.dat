@@ -1,23 +1,14 @@
 signature essai =
 	a:type;
 
-(* au print de la signature, t est donné de type t *)
-	t: a -> a;
-	v: a -> a ;
-	u : a -> a ;
-(* si on rajoute la ligne suivante, il n'arrive pas
- à typer v : message d'erreur sur le type de u *)
-(*	v = u t : a; *)
-
-
 (* Il arrive à typer c alors que ça devrait être linéaire *)
 (* il transforme t en a dans c*)
 (*	t : a -> a   -> a; 
-	c = lambda x. t x x : a -> a; *)
+	c = lambda x. t x x : a -> a;  *)
 
 
 (* À améliorer :  le message d'erreur *)
-(*	c = lambda x.x : a ;   *)
+	c = lambda x.x : a ;    
 
 (* deuxième type d'erreur : definition de type pas implémentée *)
 (* OK corrigé *)
@@ -26,8 +17,8 @@ signature essai =
 (* amélioration : dire le type déclaré/attendu pour la constante et
 dire le type calculé dans le term (ici : "+" not well typed) *)
 (* Sans doute idem premier problème *)
-(*	t:a ;
-	prefix + : a->a;
-(*	prefix + = lambda x .t x : a -> a; *)
-	c = + t : a ; *)
+	t:a ;
+(*	prefix + : a->a;*)
+	prefix + = lambda x .t x : a -> a; 
+(*	c = + t : a ;  *)
 end
