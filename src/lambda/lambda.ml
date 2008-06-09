@@ -1,5 +1,14 @@
-module Lambda =
+open Table
+open Tries
+open Syntactic_data_structures
+open Interface
+open Abstract_syntax
+open Error
+
+module Lambda (*: Signature_sig*) =
   struct
+    module Table : TABLE = Make_table (struct let b = 10 end)
+
     type term =
       | Var of int
 	    (** If the term is variable (bound by a binder)*)
@@ -24,6 +33,47 @@ module Lambda =
 
 	    
     type kind = K of type_def list
-	
+
+    let rec find level = function
+	[] -> raise (Failure "Sign.find : Not_found")
+      | v::l -> 
+	  if level = 1
+	  then v
+	  else find (level - 1) l
+
+    let rec inc_index = function
+	[] -> []
+      | (s,i)::ls -> (s,i+1)::(inc_index ls)
+				
+    let add_assoc ind_assoc s =
+      (s,1)::(inc_index ind_assoc)
+
+
+    let to_string t f sg =
+      let rec rec_to_string t lin_ind_list ind_list =
+	match t with
+	| Var i -> let (s,_) = find i ind_list in s
+	| LVar i -> let (s,_) = find i lin_ind_list in s
+	| Const i -> f i sg
+	| DConst i -> f i sg
+	| LAbs (s,t) -> 
+	    let t' = rec_to_string t (add_assoc lin_ind_list s) ind_list in
+	    let vars,new_ind_assoc,u =
+	      unfold_labs [s] (add_assoc lin_ind_list s) t in
+	    Printf.sprintf
+	      "(lambda %s. %s)"
+	      (Utils.string_of_list " " (fun x -> x) (List.rev vars))
+	      (rec_to_string u lin_ind_list ind_list)
+	| App (t1,t2) ->
+	    Printf.sprintf
+	      "(%s %s)"
+	      (rec_to_string t1 lin_ind_list ind_list)
+	      (rec_to_string t2 lin_ind_list ind_list)
+      and unfold_labs acc ind_assoc = function
+	| LAbs (s,t) -> 
+	    unfold_labs (s::acc) (add_assoc ind_assoc s) t
+	| t -> acc,ind_assoc,t
+      in
+      rec_to_string t [] []
 	    
   end

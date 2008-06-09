@@ -24,10 +24,10 @@ let parse filename =
 	 | Actual_env.Lexicon _ -> ()
 	 | Actual_env.Signature sg ->
 	     let () = Printf.printf "\n\nResultat typecheck : \n" in
-	     let (name,_) = Sg.name sg in
+	     let (name,loc) = Sg.name sg in
 	       try
-		 let t = (Typechecker.typecheck (name,sg)) in
-		   Printf.printf "%s\n"  (Sign.Display.to_string t)
+		 let t = (Typechecker.typecheck (name,loc,sg)) in
+		   Printf.printf "%s\n"  (Display.Display.to_string t)
 	       with
 		 | Error.Error e -> Printf.fprintf stderr "Error: in signature\"%s\"\n%s\n" name (Error.error_msg e name))
     !env

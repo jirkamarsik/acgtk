@@ -6,13 +6,13 @@ open Abstract_syntax
 open Error
 open Lambda
 open Sign
-open Display
+open Display.Display
 exception Typing_error of string
 exception Not_yet_implemented of string
       
 (* module Table = Make_table (struct let b = 10 end) *)
 
-let verbose = true
+let verbose = false
  
 type symbol = string 
       
@@ -79,7 +79,7 @@ and eq_typ t1 t2 sg =
       (s = sbis) && (tl = tlbis)
   | (Lambda.Linear_arrow(td1,td2),Lambda.Linear_arrow(td1bis,td2bis)) -> 
       (eq_typ td1 td1bis sg) && (eq_typ td2 td2bis sg)
-  | _ -> display_typ_tdef sg t1;print_newline();display_typ_tdef sg t2;
+  | _ -> (* display_typ_tdef sg t1;print_newline();display_typ_tdef sg t2; *)
        print_string "false ";false
 
 
@@ -88,7 +88,7 @@ and typecheck_entry sg = function
   | Abstract_syntax.Type_decl(s,loc,((Abstract_syntax.K tdefs) as k)) -> 
       let new_kd = 
 	typecheck_kind sg tdefs in
-      let new_sg = Sign.insert_type_dcl s (Lambda.K new_kd) sg in
+      let new_sg = Sign.insert_type_decl s (Lambda.K new_kd) sg in
       new_sg
 
   | Abstract_syntax.Type_def(s,loc,tdef) -> 
@@ -99,23 +99,22 @@ and typecheck_entry sg = function
 	print_string ")\n");
       let new_tdef = 
 	typecheck_type sg tdef in
-      let new_sg = Sign.insert_type_def s 
-	  new_tdef sg in
+      let new_sg = Sign.insert_type_def s new_tdef sg in
       new_sg
 
   | Abstract_syntax.Term_decl(s,tk,loc,typ) -> 
       let new_td = 
 	typecheck_type sg typ in
-      let new_sg = Sign.insert_term_dcl s tk new_td sg in
+      let new_sg = Sign.insert_term_decl s tk new_td sg in
       new_sg
 
   | Abstract_syntax.Term_def(s,tk,loc,t,typ) -> 
       let new_td = 
 	typecheck_type sg typ 
 	  in 
-      let (wfterm,_,new_sg) = typecheck_term t new_td [] sg [] in
+      let (wfterm,_,_(*new_sg*)) = typecheck_term t new_td [] sg [] in
       let new2_sg = 
-	Sign.insert_term_def s tk wfterm new_td new_sg in
+	Sign.insert_term_def s tk wfterm new_td (*new_*)sg in
       new2_sg
 	    
 (* typecheck a kind *)
@@ -162,7 +161,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
       then(print_string ("\n\n\tcheck Var "^s^"\n"););
       (** WT terms : variable *)
       (try 
-	let (_,_,type_s) = Sign.get_const sg s
+	let (_,_,type_s,_) = Sign.get_const sg s
 	in 
 	if eq_typ type_s wftype sg
 	then 
@@ -212,22 +211,15 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	 );
       (** WT terms : constant *)
       (try 
-	let (s_index,_,type_s) = Sign.get_const sg s in
+	let (s_index,_,type_s,is_decl) = Sign.get_const sg s in
 	if (verbose)
 	then(
-(* 	      print_string "AVANT eq_typ : "; *)
-(* 	      display_typ_tdef sg type_s; *)
-(* 	      print_string s; *)
-(* 	      display_typ_tdef sg ty; *)
-(* 	      Sign.display_assoc ind_assoc; *)
-(* 	      print_newline(); *)
-(* 	      print_string "debut\n"; *)
 	 );
 	if eq_typ type_s wftype sg
 	then 
 	  (
 	   let wfterm = 
-	     if Sign.is_decl sg s
+	     if is_decl
 	     then
 	       Lambda.Const(s_index)
 	     else
@@ -266,7 +258,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
  	  print_string "erreur 3"; 
 	  type_error(Not_well_typed_term(
 		     (abstr_synt_term_to_string sg term),
-		     ("a' -> b'"))) loc
+		     ("'a -> 'b"))) loc
       | Lambda.Linear_arrow(tdef1,tdef2) -> 
 	  if (verbose)
 	  then(
@@ -316,8 +308,6 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	typecheck_term t1 new_type ind_assoc
 	  sg lvar_list
       in
-      print_string "\nResultat app1 : ";
-      print_string (term_to_string (Lambda.App(wfterm1,wfterm2)) ind_assoc sg);
       let wfterm_app =
 	Lambda.App(wfterm1,wfterm2)
       in
@@ -338,18 +328,18 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 (* 	print_newline(); *)
        );
       (try 
-	let (_,_,type_s) = Sign.get_const sg s in
+	let (_,_,type_s,_) = Sign.get_const sg s in
 	(match typelabs,type_s with
 	  None,_ -> ()
-	| Some type_arg,Lambda.Linear_arrow(type_s1,_) -> 
-	    print_string "\n\n\n\t\t\tA verifier (Var)\n\n\n";
+	| Some type_arg,Lambda.Linear_arrow(type_s1,type_s2) -> 
 	    if not (eq_typ type_s1 type_arg sg)
 	    then 
 	      let new_ind_assoc =
 		Sign.cut_assoc ind_assoc s in
 	      type_error
-		(Not_well_typed_term(s, 
-				     type_def_to_string new_ind_assoc type_s sg)) 
+		(Not_well_typed_term_plus(s, 
+					  type_def_to_string new_ind_assoc type_s sg,
+					  type_def_to_string new_ind_assoc (Lambda.Linear_arrow(type_arg,type_s2)) sg)) 
 		loc
 	| _ -> type_error Other loc);
 	
@@ -384,15 +374,16 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
       then(
       print_string ("Const : "^s^" "););
       (try 
-	let (i,_,type_s) = Sign.get_const sg s in
+	let (i,_,type_s,is_decl) = Sign.get_const sg s in
 	(match typelabs,type_s with
 	  None,_ -> ()
-	| Some type_arg,Lambda.Linear_arrow(type_s1,_) ->
-	    print_string "\n\n\n\t\t\tA verifier (Const) \n\n\n";
+	| Some type_arg,Lambda.Linear_arrow(type_s1,type_s2) ->
 	    if not (eq_typ type_s1 type_arg sg)
 	    then 
 	      type_error
-		(Not_well_typed_term(s, type_def_to_string ind_assoc type_s sg)) 
+		(Not_well_typed_term_plus(s, 
+					  type_def_to_string ind_assoc type_s sg,
+					  type_def_to_string ind_assoc (Lambda.Linear_arrow(type_arg,type_s2)) sg)) 
 		loc
 	| _ -> type_error Other loc);
 	if (verbose)
@@ -402,7 +393,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 (* 	  display_typ_tdef sg type_s; *)
 	 );
 	let wfterm =
-	  if Sign.is_decl sg s
+	  if is_decl
 	  then
 	    Lambda.Const(i)
 	  else
@@ -433,7 +424,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	    Lambda.LAbs(s,wfterm2)
 	  in
 	  let s_type =
-	    (try  let (_,_,tdef)= Sign.get_const new_sg s  in tdef
+	    (try  let (_,_,tdef,_)= Sign.get_const new_sg s  in tdef
 	    with Not_found -> new_type loc)
 	  in
 	  (Lambda.Linear_arrow(s_type,type2),wfterm_labs,ind_assoc)
@@ -463,21 +454,18 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
       let (t2_type,wfterm2,ind_assoc2) = 
 	typeinf_term t2 None ind_assoc sg lvar_list
       in 
-      print_string "\n\twfterm2 = ";
-      print_string (term_to_string wfterm2 ind_assoc2 sg);
-      print_newline();
+(*       print_string "\n\twfterm2 = "; *)
+(*       print_string (term_to_string wfterm2 ind_assoc2 sg); *)
+(*       print_newline(); *)
       let (t1_type,wfterm1,ind_assoc1) =
 	typeinf_term t1 (Some t2_type) ind_assoc  sg lvar_list in
-      print_string "\n\twfterm1 = ";
-      print_string (term_to_string wfterm1 ind_assoc1 sg);
-      print_newline();
+(*       print_string "\n\twfterm1 = "; *)
+(*       print_string (term_to_string wfterm1 ind_assoc1 sg); *)
+(*       print_newline(); *)
       if (verbose)
       then (
        );
       let wfterm_app = Lambda.App(wfterm1,wfterm2) in
-      print_string "\nResultat app 2 : ";
-      print_string (term_to_string (Lambda.App(wfterm1,wfterm2)) ind_assoc sg);
-      
       match t1_type with
       | Lambda.Type_atom(_,_) -> type_error Other loc
       | Lambda.Linear_arrow(td1,td2) ->
@@ -525,18 +513,18 @@ and new_type loc =
   Lambda.Type_atom(s,[]) 
 
 (*      
-let typecheck (sig_name,content :string * Abstract_sig.sig_content) = 
+let typecheck (sig_name,sig_loc,content :string * Abstract_sig.sig_content) = 
   let res = typecheck_sig 
-      (Sign.create(sig_name))
+      (Sign.empty(sig_name,sig_loc))
       content.Abstract_sig.entries
   in
   print_string "\nTyping done.\n";
   res
 
 *)
-let typecheck (sig_name,sg) =
+let typecheck (sig_name,sig_loc,sg) =
   let res = typecheck_sig 
-    (Sign.create(sig_name))
+    (Sign.empty(sig_name,sig_loc))
     sg
   in
     print_string "\nTyping done.\n";
