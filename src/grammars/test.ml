@@ -9,7 +9,7 @@ module Actual_lex = Syntactic_data_structures.Abstract_lex
   
   
 (* Build accordingly a Test module *)
-module Test=Interactive.Make(Actual_sig)(Actual_lex)
+module Test=Interactive.Make(Actual_lex)
   
 (* And run it *)
 let () = Test.main()

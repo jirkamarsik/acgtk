@@ -21,10 +21,10 @@ LIBS += dyp.cma
 LIBDIR = -I +dypgen -I +camlp4
 
 # Directories to which the current source files depend on
-PREVIOUS_DIRS = ../utils ../grammars
+PREVIOUS_DIRS = ../utils ../logic ../grammars
 
 # Source files in the right order of dependance
-ML = lambda.ml sign.ml display.ml typechecker.ml
+ML =  sign.ml display.ml typechecker.ml
 EXE_SOURCES = test.ml
 
 ####################################
@@ -39,5 +39,5 @@ parser.ml : parser.dyp
 	dypgen.opt $<
 
 lexer.ml : lexer.mll
-	ocamllex $<
+	ocamllex.opt $<
 

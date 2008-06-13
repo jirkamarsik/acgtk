@@ -71,15 +71,15 @@ sig
 	  (** The first parameter ([string]) is the name of the type,
 	      the second parameter its indexd and the last parameter is
 	      its kind *)
-    | Type_def of (string * int * Lambda.type_def)
+    | Type_def of (string * int * Lambda.stype)
 	  (** The first parameter ([string]) is the name of the defined
 	      type, the second parameter its index and the last
 	      parameter is its value *)
-    | Term_decl of (string * int * Abstract_syntax.syntactic_behavior * Lambda.type_def)
+    | Term_decl of (string * int * Abstract_syntax.syntactic_behavior * Lambda.stype)
 	  (** The first parameter ([string]) is the name of the
 		constant, the second parameter is its index and the last
 	      parameter is its type *)
-    | Term_def of (string * int * Abstract_syntax.syntactic_behavior * Lambda.term * Lambda.type_def)
+    | Term_def of (string * int * Abstract_syntax.syntactic_behavior * Lambda.term * Lambda.stype)
 	  (** The first parameter ([string]) is the name of the
 	      constant, the second parameter is its index and the last
 	      parameter is its value *)
@@ -92,21 +92,21 @@ sig
 
   val insert_type_decl : string -> Lambda.kind -> t -> t
 
-  val insert_type_def : string -> Lambda.type_def -> t -> t
+  val insert_type_def : string -> Lambda.stype -> t -> t
 
   val insert_term_decl : 
-      string -> Abstract_syntax.syntactic_behavior -> Lambda.type_def -> t -> t
+      string -> Abstract_syntax.syntactic_behavior -> Lambda.stype -> t -> t
 	
   val insert_term_def : 
-      string -> Abstract_syntax.syntactic_behavior -> Lambda.term -> Lambda.type_def -> t -> t
+      string -> Abstract_syntax.syntactic_behavior -> Lambda.term -> Lambda.stype -> t -> t
 	
   val insert_var : 
-      string -> Abstract_syntax.syntactic_behavior -> Lambda.type_def -> t -> t
+      string -> Abstract_syntax.syntactic_behavior -> Lambda.stype -> t -> t
 
   val get_atom : t -> string -> int * Lambda.kind
 
   val get_const : 
-      t -> string -> int * Abstract_syntax.syntactic_behavior * Lambda.type_def * bool
+      t -> string -> int * Abstract_syntax.syntactic_behavior * Lambda.stype * bool
 
   val get_ind : ('a * 'b) list -> 'a -> 'b
 

@@ -34,6 +34,8 @@ type type_error =
   | Not_well_kinded_type of string
   | Not_linear_LAbs of string
   | Other
+  | Is_Used of string * string
+  | Two_occurrences_of_linear_variable of (Lexing.position * Lexing.position)
 
 
 (** The types for errors raised by the environment. Names should be

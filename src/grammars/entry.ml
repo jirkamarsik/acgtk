@@ -169,9 +169,9 @@ let build_expectation lst =
     | Type_or_term_in_def (Term,_) -> failwith "Bug: should not occur"
     | Type_or_term_in_def (Nothing,_) -> failwith "Bug: Mothing should not appear in term"
 
-  let term_transition q v =
-    let _,result = term_expectation q in
-      result v
+  let term_transition q v = q
+(*    let _,result = term_expectation q in
+      result v *)
 
   let data_expectation = function
     | No_dec ->
@@ -368,7 +368,7 @@ let build_expectation lst =
 		     | Type_or_term RPAR as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Unset,a)))))
 		     | Type_or_term ARROW as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
 		     | Semi_colon -> Lex (Lex_def No_lex_entry)
-(*		     | End_kwd -> No_dec *)
+		     | End_kwd -> No_dec 
 		     | _ -> raise (Expect l))
 	  | Type_or_term_in_def (Unset,Type_or_term LPAR) ->
 	      let l = [Type_or_term LPAR] in
@@ -383,7 +383,7 @@ let build_expectation lst =
 		     | (Type_or_term RPAR) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Unset,a)))))
 		     | (Type_or_term ARROW) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
 		     | Semi_colon -> Lex (Lex_def No_lex_entry)
-(*		     | End_kwd -> No_dec*)
+		     | End_kwd -> No_dec
 		     | _ -> raise (Expect l))
 	  | Type_or_term_in_def (Unset,_) -> failwith "Bug: should not occur"
 	  | Type_or_term_in_def (Term,Id) -> 
@@ -391,7 +391,7 @@ let build_expectation lst =
 		l,(function
 		     | (Id|Sym|Type_or_term (LPAR|RPAR|DOT|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
 		     | Semi_colon -> Lex (Lex_def No_lex_entry)
-(*		     | End_kwd -> No_dec*)
+		     | End_kwd -> No_dec
 		     | _ -> raise (Expect l))
 	  | Type_or_term_in_def (Term,Sym) -> 
 	      let l = [Type_or_term ARROW] in
@@ -408,7 +408,7 @@ let build_expectation lst =
 		l,(function
 		     | (Id|Sym|Type_or_term (LPAR|RPAR|LAMBDA)) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Term,a)))))
 		     | Semi_colon -> Lex (Lex_def No_lex_entry)
-(*		     | End_kwd -> No_dec*)
+		     | End_kwd -> No_dec
 		     | _ -> raise (Expect l))
 	  | Type_or_term_in_def (Term,Type_or_term DOT) -> 
 	      let l = [Type_or_term ARROW] in
@@ -424,7 +424,7 @@ let build_expectation lst =
 	  | Type_or_term_in_def (Type,Id) ->
 	      let l = [Semi_colon;Type_or_term RPAR;Type_or_term ARROW] in
 		l,(function
-(*		     | End_kwd -> No_dec*)
+		     | End_kwd -> No_dec
 		     | Semi_colon -> Lex (Lex_def No_lex_entry)
 		     | Type_or_term (RPAR|ARROW) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
 		     | _ -> raise (Expect l))
@@ -436,7 +436,7 @@ let build_expectation lst =
 	  | Type_or_term_in_def (Type,Type_or_term RPAR) ->
 	      let l = [Semi_colon;Type_or_term RPAR;Type_or_term ARROW] in
 		l,(function
-(*		     | End_kwd -> No_dec*)
+		     | End_kwd -> No_dec
 		     | Semi_colon -> Lex (Lex_def No_lex_entry)
 		     | Type_or_term (RPAR|ARROW) as a -> Lex (Lex_def (Lex_entry_id (Interpretation (Type_or_term_in_def (Type,a)))))
 		     | _ -> raise (Expect l))

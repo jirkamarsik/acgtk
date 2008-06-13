@@ -16,15 +16,15 @@ module Sign =
 	    (** The first parameter ([string]) is the name of the type,
 		the second parameter its indexd and the last parameter is
 		its kind *)
-      | Type_def of (string * int * Lambda.type_def)
+      | Type_def of (string * int * Lambda.stype)
 	    (** The first parameter ([string]) is the name of the defined
 		type, the second parameter its index and the last
 		parameter is its value *)
-      | Term_decl of (string * int * Abstract_syntax.syntactic_behavior * Lambda.type_def)
+      | Term_decl of (string * int * Abstract_syntax.syntactic_behavior * Lambda.stype)
 	    (** The first parameter ([string]) is the name of the
 		constant, the second parameter is its index and the last
 		parameter is its type *)
-      | Term_def of (string * int * Abstract_syntax.syntactic_behavior * Lambda.term * Lambda.type_def)
+      | Term_def of (string * int * Abstract_syntax.syntactic_behavior * Lambda.term * Lambda.stype)
 	    (** The first parameter ([string]) is the name of the
 		constant, the second parameter is its index and the last
 		parameter is its value *)
@@ -33,7 +33,7 @@ module Sign =
 	Tries.t (** The first string is the name of the
 				  signature and the int is its size *)
 
-    let empty (name,loc) = Signature ((name,loc),0, Table.create(), Tries.empty)
+    let empty (name,loc) = Signature ((name,loc),0, Table.empty, Tries.empty)
     let type_error e loc = raise (Error (Type_error (e,loc)))
 	
     let name (Signature ((n,loc), _, _, _)) = n,loc
@@ -42,7 +42,7 @@ module Sign =
 	
     let is_type id (Signature (_, _, _, tr)) =
       try
-	match (Tries.lookup id tr) with
+	match (Tries.find id tr) with
         | Type_decl _ -> true
         | Type_def _ -> true
 	| _ -> false
@@ -51,7 +51,7 @@ module Sign =
 
     let is_constant id (Signature (_, _, _, tr)) =
       try
-	match (Tries.lookup id tr) with
+	match (Tries.find id tr) with
 	| Term_decl (_,_,sb,_) -> true,Some sb
 	| Term_def (_,_,sb,_,_) -> true,Some sb
 	| _ -> false,None
@@ -73,7 +73,7 @@ module Sign =
 
     let get_const (Signature (_, _, _, tr)) id =
       try
-	(match (Tries.lookup id tr) with
+	(match (Tries.find id tr) with
           Term_decl (_, i, tk, ty) -> (i, tk, ty,true)
 	| Term_def (_, i, tk, _, ty) -> (i, tk, ty,false)
 	| _                          -> raise Not_found)
@@ -82,7 +82,7 @@ module Sign =
 
     let get_const_ind (Signature (_, _, _, tr)) id =
       try
-	(match (Tries.lookup id tr) with
+	(match (Tries.find id tr) with
           Term_decl (_, i, _, _) -> i
 	| Term_def (_, i, _, _, _) -> i
 	| _                          -> raise Not_found)
@@ -114,6 +114,7 @@ module Sign =
 	| Abstract_syntax.LAbs(s,t,loc) ->
 	    let t' = rec_convert t (add_assoc lin_ind_list s) ind_list in
 	    Lambda.LAbs(s,t')
+	| Abstract_syntax.Abs (s,t,loc) -> failwith "Not yet implemented"
 	| Abstract_syntax.App(t1,t2,loc) ->
 	    let t1' = rec_convert t1 lin_ind_list ind_list
 	    and t2' = rec_convert t2 lin_ind_list ind_list
@@ -132,27 +133,27 @@ module Sign =
     let insert_type_decl id ki (Signature (name,size, tb, tr)) =
       let e = Type_decl (id, size , ki)
       in
-      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr)
+      Signature (name,size+1, Table.add size e tb, Tries.add id e tr)
 
     let insert_type_def id ty (Signature (name,size, tb, tr)) =
       let e = Type_def (id, size , ty)
       in
-      Signature (name,size+1, Table.insert size e tb, Tries.insert id e tr)
+      Signature (name,size+1, Table.add size e tb, Tries.add id e tr)
 
     let insert_term_decl id tk ty (Signature (name,size, tb, tr)) =
       let e = Term_decl (id, size, tk, ty)
       in 
-      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr)
+      Signature (name, size+1, Table.add size e tb, Tries.add id e tr)
 	
     let insert_term_def id tk te ty (Signature (name,size, tb, tr)) =
       let e = Term_def (id, size, tk, te, ty)
       in 
-      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr)
+      Signature (name, size+1, Table.add size e tb, Tries.add id e tr)
 	
     let insert_var id tk ty (Signature (name,size, tb, tr)) =
       let e = Term_def (id, size, tk, Lambda.Var(size), ty)
       in 
-      Signature (name, size+1, Table.insert size e tb, Tries.insert id e tr)
+      Signature (name, size+1, Table.add size e tb, Tries.add id e tr)
 	
 (*** impossible kind et type_of doivent etre transfomes...*)
 (*     let add_entry e (Signature (name,size, tb, tr) as sg) = *)
@@ -164,7 +165,7 @@ module Sign =
 (*       | Abstract_syntax.Term_def (id,k,l,t,type_of) ->  *)
 (* 	  insert_term_def id k t type_of sg *)
 
-    let lookup i (Signature (_, _, tb, _)) = Table.lookup i tb
+    let lookup i (Signature (_, _, tb, _)) = Table.find i tb
 
 
     let rec cut_assoc ind_assoc s =
@@ -191,27 +192,27 @@ module Sign =
 
     let get_atom (Signature (_, _ , _, tr)) id =
       try
-	(match (Tries.lookup id tr) with
+	(match (Tries.find id tr) with
           Type_decl (_, i, ki) -> (i, ki)
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 	  
     let get_atom_ind (Signature (_, _ , _, tr)) id =
       try
-	(match (Tries.lookup id tr) with
+	(match (Tries.find id tr) with
           Type_decl (_, i, _) -> i
 	| _                          -> raise Not_found)
       with Tries.Not_found -> raise Not_found
 	  
     let string_of_const i (Signature (_, _, tb, _)) =
-      match Table.lookup i tb with
+      match Table.find i tb with
         Type_decl _ -> raise (Failure "Sign.string_of_const")
       | Term_decl (x, _, _, _) -> x
       | Term_def (x, _, _, _, _) -> x
       | _ -> raise (Failure "string_of_const Not yet implemented")
 
     let string_of_atom i (Signature (_, _, tb, _)) =
-      match Table.lookup i tb with
+      match Table.find i tb with
         Type_decl (x, _, _) -> x 
       | Term_decl (x,_,_,_) -> print_int i;print_string x;raise (Failure "Sign.string_of_atom 1")
       | Term_def _ -> raise (Failure "Sign.string_of_atom 2")
@@ -246,7 +247,6 @@ module Sign =
 	  if level = 1
 	  then v
 	  else find (level - 1) l
-
 
 
   end

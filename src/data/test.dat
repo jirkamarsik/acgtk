@@ -1,19 +1,26 @@
 signature toto =
 	a:type ;
 	t1,t2: a-> a;
+	d,e:a;
+(*	a: a -> a; *)
 	b,c:type ; 
+	prefix * : b -> a;
 	t,toto,aa,bb,cc :a -> a -> b ;
 	string = a -> a : type;
 	u : (b ->c) -> a;
-	binder All = t : a -> a -> b;  
+	binder All  : (a -> a) -> a;  
 	prefix - : a -> a; 
-	infix + : a -> a; 
-	v1 = t : a -> a;     
-	vv = lambda x . t1 (t2 x) : a -> a ; 
-	v = t1 - t2 : a  ;
-	vvv =  t1 + t2 : a  ;   
-	vv1 = t bb : a -> a -> a -> a; 
-	v2 = t + aa + bb + cc : a -> a; 
-	c = lambda a b c x.t (lambda uu v t. toto (All x y z .(- - t aa bb cc) (z + v + t)) v) x : a -> a ;
+	infix + : a -> a -> a; 
+	v1 = t : a -> a -> b;     
+(*	vv = lambda x . t1 (t2 x) : string ; *)
+	v = lambda x y  . t  (- (t2 x)) y: a -> a -> b  ;
+	vvv =  lambda x y . (t1 x) + (t2 y) : a -> a -> a  ;   
+	vv1 = t  * (bb d d) : (a -> b);
+	v2 = lambda x . d + (t1 x) + d + e : a -> a; 
+(*	z =  lambda z.All x y . z+ x + y : a -> a ;
+	nonlinear = a => a : type;
+	truc = Lambda x. x: a => a;
+	binder Ex : (a => a) -> a;
+	bidule = Ex x y . - (x +x) : a; *)
 end
 

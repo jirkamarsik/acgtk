@@ -1,6 +1,6 @@
 signature essai =
 	a:type;
-	string = a -> a : type;
+(*	string = a -> a : type; *)
 
 (* Il arrive à typer c alors que ça devrait être linéaire *)
 	t : a -> a   -> a; 

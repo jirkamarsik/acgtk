@@ -21,13 +21,13 @@ LIBS += dyp.cma
 LIBDIR = -I +dypgen -I +camlp4
 
 # Directories to which the current source files depend on
-PREVIOUS_DIRS = ../utils ../logic
+PREVIOUS_DIRS = ../utils
 
 # Source files in the right order of dependance
 #ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
-ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml lexer.ml parser.ml  interactive.ml
+ML = abstract_syntax.ml lambda.ml
 
-EXE_SOURCES = test.ml
+EXE_SOURCES = 
 
 ####################################
 #                                  #
@@ -36,10 +36,3 @@ EXE_SOURCES = test.ml
 ####################################
 
 include ../Makefile.common
-
-parser.ml : parser.dyp
-	dypgen.opt --noemit-token-type $<
-
-lexer.ml : lexer.mll
-	ocamllex.opt $<
-

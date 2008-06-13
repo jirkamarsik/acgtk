@@ -118,6 +118,7 @@ struct
 	  (*  and unfold_abs acc = function
 	      | Abs (s,t,_) -> unfold_abs (s::acc) t
 	      | t -> acc,t *)
+    | _ -> failwith "Not yet implemented"
   and unfold_labs acc ind_assoc = function
     | Lambda.LAbs (s,t) -> unfold_labs (s::acc) (Sign.add_assoc ind_assoc s) t
     | t -> acc,ind_assoc,t
@@ -131,13 +132,13 @@ struct
     | t -> acc,t
 	
   let rec is_atomic_type = function
-    | Lambda.Type_atom _ -> true
+    | Lambda.Atom _ -> true
 (*    | Dep (_,t,_) -> is_atomic_type t  *)
     | _ -> false
       
   let is_arrow = function
 (*    | Arrow _ -> true *)
-    | Lambda.Linear_arrow _ -> true
+    | Lambda.LFun _ -> true
     | _ -> false
 
 
@@ -146,16 +147,18 @@ struct
     then
       print_string "type_to_string\n";
     match def with
-    | Lambda.Type_atom (i,terms) ->
+    | Lambda.Atom i ->
 	if verbose
 	then
-	  print_string ("Type_atom "^(string_of_int i)^"\n");
-	(match terms with
+	  print_string ("Atom "^(string_of_int i)^"\n");
+	Sign.string_of_atom i sg
+(* Added by Sylvain : terms parameter are no more in the atomic type type *)
+(*	(match terms with
              [] -> 
 	       let v = Sign.string_of_atom i sg in
 	       v
-           | _  -> Printf.sprintf "%i %s" i (Utils.string_of_list " " (fun x -> Printf.sprintf "(%s)" (term_to_string x ind_assoc sg )) terms))
-    | Lambda.Linear_arrow (t1,t2) -> 
+           | _  -> Printf.sprintf "%i %s" i (Utils.string_of_list " " (fun x -> Printf.sprintf "(%s)" (term_to_string x ind_assoc sg )) terms)) *)
+    | Lambda.LFun (t1,t2) -> 
 	if verbose
 	then
 	  print_string "Linear\n";
@@ -168,9 +171,10 @@ struct
 	     (fun x -> if is_atomic_type x then type_def_to_string ind_assoc x sg  else Printf.sprintf "(%s)" (type_def_to_string ind_assoc x sg ))
 	     (List.rev arrows))
 	  u_string
+    | _ -> failwith "Not yet implemented"
 
   and unfold_linear_arrow acc = function
-    | Lambda.Linear_arrow (t1,t2) -> unfold_linear_arrow (t1::acc) t2
+    | Lambda.LFun (t1,t2) -> unfold_linear_arrow (t1::acc) t2
     | t -> acc,t
 	(*  and unfold_arrow acc = function
 	    | Arrow (t1,t2,_) -> unfold_arrow (t1::acc) t2
@@ -182,59 +186,72 @@ struct
 	    | Type_Abs ((s,_,t),_) -> unfold_type_abs (s::acc) t
 	    | t -> acc,t *)
 	
+  let entry_to_string sg = function
+    | Sign.Type_decl (id,_,k) ->     
+	if verbose
+	then
+	  print_string ("Type_decl "^id^"\n");
+	let rec get_types = function
+	  | Lambda.Type -> []
+	  | Lambda.Depend (ty,k') -> ty::(get_types k') in
+	let types = get_types k in
+	  (match types 
+	   with [] -> Printf.sprintf "\t%s: type;" id
+	     | _  -> Printf.sprintf "\t%s: (%s)type;" id (Utils.string_of_list "," (fun s -> type_def_to_string [] s sg) types))
+    | Sign.Type_def (id,_,value) ->  
+	if verbose
+	then
+	  print_string "Type_def\n";
+	Printf.sprintf "\t%s = %s: type;" id (type_def_to_string [] value sg)
+    | Sign.Term_decl (id,_,tk,ty) ->
+	if verbose
+	then
+	  print_string ("Term_decl "^id^"\n");
+	let t = 
+	  match tk with
+	    | Abstract_syntax.Default -> ""
+	    | Abstract_syntax.Infix -> "infix "
+	    | Abstract_syntax.Prefix -> "prefix "
+	    | Abstract_syntax.Binder -> "binder "in
+	  Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string [] ty sg)
+    | Sign.Term_def (id,_,tk,value,type_def) -> 
+	if verbose
+	then
+	  print_string ("Term_def "^id^"\n");
+	let t = 
+	  match tk with
+	    | Abstract_syntax.Default -> ""
+	    | Abstract_syntax.Infix -> "infix "
+	    | Abstract_syntax.Prefix -> "prefix "
+	    | Abstract_syntax.Binder -> "binder " 
+	in
+	let te = 
+	  (term_to_string value [] sg) in
+	  if verbose
+	  then
+	    print_string ("\nTerm = "^te^"\n");
+	  let ty = (type_def_to_string [] type_def sg) in
+	    Printf.sprintf "\t%s%s = %s: %s;" t id te ty
+	      
+  let tries_to_string sg t =
+    let buff = Buffer.create 16 in
+    let () =
+      Tries.fold
+	(fun _ e _ -> 
+	   let () = Buffer.add_string buff (entry_to_string sg e) in
+	     Buffer.add_char buff '\n')
+	()
+	t in
+      Buffer.contents buff
+
 
   let to_string sg =
     let trie = Sign.get_trie sg 
     and (name,_) = Sign.name sg in
-    Printf.sprintf
-      "signature %s = \n%s\nend"
-      name
-      (Utils.string_of_list
-	 "\n"
-	 (function
-	   | Sign.Type_decl (id,_,Lambda.K types) ->     
-	       if verbose
-	       then
-		 print_string ("Type_decl "^id^"\n");
-               (match types 
-               with [] -> Printf.sprintf "\t%s: type;" id
-               | _  -> Printf.sprintf "\t%s: (%s)type;" id (Utils.string_of_list "," (fun s -> type_def_to_string [] s sg) types))
-	   | Sign.Type_def (id,_,value) ->  
-	       if verbose
-	       then
-		 print_string "Type_def\n";
-	       Printf.sprintf "\t%s = %s: type;" id (type_def_to_string [] value sg)
-	   | Sign.Term_decl (id,_,tk,ty) ->
-	       if verbose
-	       then
-		 print_string ("Term_decl "^id^"\n");
-	       let t = 
-		 match tk with
-		  | Abstract_syntax.Default -> ""
-		  | Abstract_syntax.Infix -> "infix "
-		  | Abstract_syntax.Prefix -> "prefix "
-		  | Abstract_syntax.Binder -> "binder "in
-	       Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string [] ty sg)
-	   | Sign.Term_def (id,_,tk,value,type_def) -> 
-	       if verbose
-	       then
-		 print_string ("Term_def "^id^"\n");
-	       let t = 
-		 match tk with
-		  | Abstract_syntax.Default -> ""
-		  | Abstract_syntax.Infix -> "infix "
-		  | Abstract_syntax.Prefix -> "prefix "
-		  | Abstract_syntax.Binder -> "binder " 
-	       in
-	       let te = 
-		 (term_to_string value [] sg) in
-	       if verbose
-	       then
-		 print_string ("\nTerm = "^te^"\n");
-	       let ty = (type_def_to_string [] type_def sg) in
-	       Printf.sprintf "\t%s%s = %s: %s;" t id te ty)
-	 (Tries.content trie)
-      )
+      Printf.sprintf
+	"signature %s = \n%s\nend"
+	name
+	(tries_to_string sg trie)
 
 
   let display_assoc ind_assoc =
@@ -273,6 +290,7 @@ and display_term sg = function
       print_string "(lambda ";print_string s;print_string ". "; display_term sg t;
       print_string ")"
   | Abstract_syntax.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
+  | Abstract_syntax.Abs _ -> failwith "Not yet implemented"
 (* display a term well typed *)
   and display_wfterm sg = function
     | Lambda.Var(i) -> print_string ("("^(string_of_int i)^")");
@@ -284,6 +302,7 @@ and display_term sg = function
 	print_string "(lambda ";print_string s;print_string ". "; display_wfterm sg t;
 	print_string ")"
     | Lambda.App(t1,t2) -> display_wfterm sg t1;print_string " ";display_wfterm sg t2
+    | _ -> failwith "Not yet implemented"
 	  
 (* display a type before typechecking *)
 and display_tdef sg = function
@@ -291,15 +310,17 @@ and display_tdef sg = function
   | Abstract_syntax.Linear_arrow(td1,td2,_) ->
       print_string "(";display_tdef sg td1;
       print_string " -> ";display_tdef sg td2;print_string ")";
+  | _ -> failwith "Not yet implemented"
 
 and display_typ_tdef sg = function
-  | Lambda.Type_atom(i,tl) -> 
-      (try print_string ("Type_atom("^(Sign.string_of_atom i sg)^") ");
+  | Lambda.Atom i -> 
+      (try print_string ("Atom("^(Sign.string_of_atom i sg)^") ");
 (* 	print_string (Sign.string_of_atom i sg) *)
-	with _ -> print_int i)
-    | Lambda.Linear_arrow(td1,td2) ->
-	print_string "(";display_typ_tdef sg td1;
-	print_string " -> ";display_typ_tdef sg td2;print_string ")";
+       with _ -> print_int i)
+  | Lambda.LFun(td1,td2) ->
+      print_string "(";display_typ_tdef sg td1;
+      print_string " -> ";display_typ_tdef sg td2;print_string ")"
+  | _ -> failwith "Not yet implemented"
 	
 (* display a list of variables associated with there de Bruijn index *)
   and display_index_assoc = function

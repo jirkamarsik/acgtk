@@ -2,9 +2,10 @@ module Tries =
 
   struct
 
-    type 'a option = None | Some of 'a
+(*    type 'a option = None | Some of 'a *)
 
     type 'a t = ST of 'a option * (char * 'a t) list
+    type key=string
 
     exception Not_found
 
@@ -19,7 +20,7 @@ module Tries =
       in
       explode_aux (String.length str - 1) []
 
-    let insert id attr smtb =
+    let add id attr smtb =
       let rec insert1 lts (ST (a, s)) =
         match lts with
           []    -> (match a with
@@ -37,7 +38,7 @@ module Tries =
       in 
       insert1 (explode id) smtb
 
-    let lookup w smtb =
+    let find w smtb =
       let rec lookup1 lts (ST (a, s)) = 
         match lts with
           []    -> (match a with 
@@ -68,4 +69,20 @@ module Tries =
           | (_, t)::rm ->  trls_to_list rm (tr_to_list t ls)
       in
       List.rev (tr_to_list tr [])
+
+
+      let implode lst =
+	let buff = Buffer.create (List.length lst) in
+	let() = List.fold_right (fun c _ -> Buffer.add_char buff c) lst () in
+	  Buffer.contents buff
+
+      let fold f acc tr =
+	let rec fold_aux key acc = function
+	  | ST (None,trs) -> List.fold_left (fun acc (c,t) -> fold_aux (c::key) acc t) acc trs
+	  | ST (Some v,trs) -> 
+	      let new_acc = f (implode key) v acc in
+		(List.fold_left (fun acc (c,t) -> fold_aux (c::key) acc t) new_acc trs) in
+	  fold_aux [] acc tr
+	
+
   end

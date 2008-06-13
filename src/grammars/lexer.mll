@@ -113,6 +113,8 @@ let string = (letter|digit|'_')*
 		    LAMBDA(loc lexbuf)}
       | "->" {let () = update_data (Entry.Type_or_term Entry.ARROW) (loc lexbuf) in
 		LIN_ARROW(loc lexbuf)}
+      | "=>" {let () = update_data (Entry.Type_or_term Entry.ARROW) (loc lexbuf) in
+		ARROW(loc lexbuf)}
       | ":=" {let () = update_data Entry.Colon_equal (loc lexbuf) in
 		COLON_EQUAL(loc lexbuf)}
       | letter string {let () = update_data Entry.Id (loc lexbuf) in

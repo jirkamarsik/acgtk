@@ -49,6 +49,8 @@ type type_error =
   | Not_well_kinded_type of string
   | Not_linear_LAbs of string
   | Other
+  | Is_Used of string * string
+  | Two_occurrences_of_linear_variable of (Lexing.position * Lexing.position)
 
 
 type env_error =
@@ -65,6 +67,19 @@ type warning =
   | Variable_or_constant of (string * Lexing.position * Lexing.position)
 
 exception Error of error
+
+
+let compute_comment_for_position pos1 pos2 =
+  let line2 = pos2.Lexing.pos_lnum in
+  let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
+  let pos1 = pos1 in
+  let line1 = pos1.Lexing.pos_lnum in
+  let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
+    if line1=line2 then
+      Printf.sprintf "line %d, characters %d-%d" line2 col1 col2
+    else
+      Printf.sprintf "from l:%d, c:%d to l:%d,c:%d" line1 col1 line2 col2
+
 
 let lex_error_to_string = function
   | Unstarted_comment -> "Syntax error: No comment opened before this closing of comment"
@@ -99,21 +114,12 @@ let type_error_to_string = function
   | Not_linear_LAbs s ->
       Printf.sprintf "Var \"%s\" is supposed to be linear" s
   | Other -> "Not yet implemented"
+  | Is_Used (s1,s2) -> Printf.sprintf "The type of this expression is \"%s\" but is used with type \"%s\"" s1 s2
+  | Two_occurrences_of_linear_variable (s,e) -> Printf.sprintf "This linear variable was already used: %s" (compute_comment_for_position s e)
 
 let env_error_to_string = function
   | Duplicated_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" is used twice in this environment" s
   | Duplicated_lexicon s -> Printf.sprintf "Syntax error: Lexion id \"%s\" is used twice in this environment" s
-
-let compute_comment_for_position pos1 pos2 =
-  let line2 = pos2.Lexing.pos_lnum in
-  let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
-  let pos1 = pos1 in
-  let line1 = pos1.Lexing.pos_lnum in
-  let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
-    if line1=line2 then
-      Printf.sprintf "line %d, characters %d-%d" line2 col1 col2
-    else
-      Printf.sprintf "from l:%d, c:%d to l:%d,c:%d" line1 col1 line2 col2
 
 let warning_to_string w = 
   match w with

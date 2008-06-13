@@ -1,4 +1,74 @@
-open Interface
+(*open Interface*)
+open Abstract_syntax
+
+module type Signature_sig =
+sig
+  (** Exceptions raised when definitions of types or constants are
+      duplicated *)
+  
+  exception Duplicate_type_definition
+  exception Duplicate_term_definition
+
+  (** The type of the signature as abstract object *)
+  type t
+
+  (** The (ocaml) type for the terms of the signature *)
+  type term
+
+  (** The (ocaml) type for the types of the signature *)
+  type stype
+
+    
+  (** [empty name] returns the empty signature of name [name] *)
+  val empty : (string*Abstract_syntax.location) -> t
+    
+  (** [name s] returns the name of the signature [s] and the location of its definition *)
+  val name : t -> (string*Abstract_syntax.location)
+    
+  (** [add_entry e s] returns a signature where the entry [e] has been
+      added *)
+  val add_entry : Abstract_syntax.sig_entry -> t -> t
+    
+  (** [is_atomic_ype id s ] returns [true] if [id] is the name of an
+      atomic type in [s] and [false] oterwise *)
+  val is_type : string -> t -> bool
+    
+  (** [is_constant id s ] returns [(true,Some b)] together with its
+      syntactic behaviour [b] if [id] is the name of a constant in [s]
+      and [false,None] oterwise *)
+  val is_constant : string -> t -> bool * Abstract_syntax.syntactic_behavior option
+
+  (** [add_warnings w s ] resturns a signature where the warning [w] have been added *)
+  val add_warnings : Error.warning list -> t -> t
+
+  (** [get_warnings sg] returns the warnigs emitted while parsing [sg]. *)
+  val get_warnings : t -> Error.warning list
+
+  (** [to_string sg] returns a string describing the signature
+      [sg]. Should be parsable *)
+  val to_string : t -> string
+
+  (** [term_to_string t sg] returns a string describing the term [t]
+      wrt the signature [sg]. *)
+  val term_to_string : term -> t -> string
+
+  (** [type_to_string t sg] returns a string describing the term [t]
+      wrt the signature [sg]. *)
+  val type_to_string : stype -> t -> string
+    
+  (** [convert_term t ty sg] returns a the term corresponding to the
+      parsed term [t] with parsed type [ty] wrt to the signature [sg]
+  *)
+  val convert_term : Abstract_syntax.term -> Abstract_syntax.type_def -> t -> term * stype
+
+  (** [convert_type ty sg] returns a type to the parsed type [ty] wrt
+      to the signature [sg] *)
+  val convert_type : Abstract_syntax.type_def -> t -> stype
+  val get_binder_argument_functional_type : string -> t -> Abstract_syntax.abstraction option
+
+
+end
+
 
 
 module type Environment_sig =
@@ -6,27 +76,32 @@ sig
   exception Signature_not_found of string
 
 
-  module Signature:Signature_sig
-  module Lexicon:Lexicon_sig with type signature=Signature.t
+  module Signature1:Signature_sig
+  module Lexicon:Interface.Lexicon_sig with type Signature.t=Signature1.t and type Signature.term=Signature1.term and type Signature.stype=Signature1.stype
+
 
   type t
   type entry = 
-    | Signature of Signature.t
+    | Signature of Signature1.t
     | Lexicon of Lexicon.t
   val empty : t
   val insert : entry -> t -> t
-  val get_signature : string -> t -> Signature.t
+  val get_signature : string -> t -> Signature1.t
+  val get : string -> t -> entry
   val iter : (entry -> unit) -> t -> unit
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
   val sig_number : t -> int
-  val choose_signature : t -> Signature.t option 
+  val lex_number : t -> int
+  val choose_signature : t -> Signature1.t option 
 end
 
   
-module Make (Sg:Signature_sig)(Lex:Lexicon_sig with type signature = Sg.t) =
+module Make (Lex:Interface.Lexicon_sig) =
 struct
-  module Signature=Sg
+(*  module Signature=Sg*)
   module Lexicon=Lex
+  module Sg=Lex.Signature
+  module Signature1=Sg
 
   exception Signature_not_found of string
     
@@ -59,6 +134,7 @@ struct
   let fold f a {map=e} = Env.fold (fun _ d acc -> f d acc) e a
 
   let sig_number {sig_number=n} = n
+  let lex_number {lex_number=n} = n
 
   let get_signature s {map=e} =
     try
@@ -67,6 +143,13 @@ struct
 	| Lexicon _ -> raise (Signature_not_found s)
     with
       | Not_found -> raise (Signature_not_found s)
+
+  let get s {map=e} =
+    try
+      Env.find s e 
+    with
+      | Not_found -> raise (Signature_not_found s)
+
 
 
   exception Sig of Sg.t    

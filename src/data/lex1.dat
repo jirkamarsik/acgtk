@@ -1,6 +1,6 @@
 signature abs =
 	a,b,c:type;
-	t,u,v:a;
+	t,u,v:(a -> a);
 end
 
 
@@ -9,14 +9,14 @@ signature obj =
 	tt,uu,vv:s;
 	infix + : s -> s -> s;
 	prefix - : s -> s;
-	w=lambda x. tt+x:s;
-	binder ALL = w:s;
-(*	z = ALL tt.tt+tt:s *)
+	w=lambda x. tt+x:s->s;
+	binder ALL = lambda P . P (w tt):(s -> s) -> s;
+	z = ALL t.t+tt: s 
 end
 
 lexicon absobj ( abs ) : obj =
 	a,b,c:=s;
-	t:=tt uu;
-	u:= ALL y.y+y ;
-	v:=w;
+	t:= lambda x.-x;
+	u:= lambda x.ALL y.x+y ;
+	v:=w
 end

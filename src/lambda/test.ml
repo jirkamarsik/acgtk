@@ -1,10 +1,12 @@
 let options = []
 
 
+
 module Sg = Syntactic_data_structures.Abstract_sig
+(*module Sg= Sign.Sign*)
 module Lex = Syntactic_data_structures.Abstract_lex
 
-module Actual_env = Environment.Make(Sg)(Lex)
+module Actual_env = Environment.Make(Lex)
 
 let env = ref Actual_env.empty
 
@@ -24,7 +26,7 @@ let parse filename =
 	 | Actual_env.Lexicon _ -> ()
 	 | Actual_env.Signature sg ->
 	     let () = Printf.printf "\n\nResultat typecheck : \n" in
-	     let (name,loc) = Sg.name sg in
+	     let (name,loc) = Actual_env.Signature1.name sg in
 	       try
 		 let t = (Typechecker.typecheck (name,loc,sg)) in
 		   Printf.printf "%s\n"  (Display.Display.to_string t)
