@@ -124,8 +124,6 @@ module Sign =
     let verbose = false
 		
 	
-(*     let create(name) = Signature (name,0, Table.create(), empty) *)
-	
     let get_ind ind_assoc s =
       List.assoc s ind_assoc
 	
@@ -191,14 +189,6 @@ module Sign =
     let cut ind_assoc typ =
       cut_assoc_ind ind_assoc (give_level typ)
 
-(*     let is_decl (Signature (_, _, _, tr)) id = *)
-(*       try *)
-(* 	(match (Tries.lookup id tr) with *)
-(*           Term_decl (_, _, _, _) -> true *)
-(* 	| Term_def (_, _, _, _, _) -> false *)
-(* 	| _                          -> raise Not_found) *)
-(*       with Tries.Not_found -> raise Not_found *)
-
     let get_atom (Signature (_, _ , _, tr)) id =
       try
 	(match (Tries.lookup id tr) with
@@ -247,24 +237,6 @@ module Sign =
       with 
 	Not_found -> false
 
-    let is_a_cst id (Signature (_, _, _, tr)) =
-      try
-	match (Tries.lookup id tr) with
-	| Term_decl _ -> true
-	| Term_def _ -> true
-	| _ -> false
-      with
-      | Tries.Not_found -> false
-
-
-    let is_a_type id (Signature (_, _, _, tr)) =
-      try
-	match (Tries.lookup id tr) with
-        | Type_decl _ -> true
-	| _ -> false
-      with
-      | Tries.Not_found -> false
-
     let rec find level = function
 	[] -> raise (Failure "Sign.find : Not_found")
       | v::l -> 
@@ -275,11 +247,6 @@ module Sign =
 	  then v
 	  else find (level - 1) l
 
-    let rec inc_type = function
-	Lambda.Type_atom (i,l) -> Lambda.Type_atom (i+1,l)
-      | Lambda.Linear_arrow(ty1,ty2) -> Lambda.Linear_arrow(inc_type ty1,inc_type ty2)
-
-	    
 
 
   end
