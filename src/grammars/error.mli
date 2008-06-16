@@ -36,6 +36,9 @@ type type_error =
   | Other
   | Is_Used of string * string
   | Two_occurrences_of_linear_variable of (Lexing.position * Lexing.position)
+  | Non_empty_context of (string*(Lexing.position * Lexing.position))
+  | Not_normal
+  | Vacuous_abstraction of (string * (Lexing.position * Lexing.position))
 
 
 (** The types for errors raised by the environment. Names should be

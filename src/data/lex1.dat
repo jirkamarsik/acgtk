@@ -1,6 +1,9 @@
 signature abs =
 	a,b,c:type;
+	d:type;
 	t,u,v:(a -> a);
+	w: a -> d;
+	cst : a;
 end
 
 
@@ -16,7 +19,11 @@ end
 
 lexicon absobj ( abs ) : obj =
 	a,b,c:=s;
+	d:=s=>s;
 	t:= lambda x.-x;
 	u:= lambda x.ALL y.x+y ;
-	v:=w
+	v:=w;
+	cst := tt;
+	w := lambda x.Lambda y. y + ( tt +x)
+
 end
