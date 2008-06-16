@@ -133,27 +133,27 @@ module Sign =
     let insert_type_decl id ki (Signature (name,size, tb, tr)) =
       let e = Type_decl (id, size , ki)
       in
-      Signature (name,size+1, Table.add size e tb, Tries.add id e tr)
+      Signature (name,size+1, Table.add ~override:true size e tb, Tries.add ~override:true id e tr)
 
     let insert_type_def id ty (Signature (name,size, tb, tr)) =
       let e = Type_def (id, size , ty)
       in
-      Signature (name,size+1, Table.add size e tb, Tries.add id e tr)
+      Signature (name,size+1, Table.add ~override:true size e tb, Tries.add ~override:true id e tr)
 
     let insert_term_decl id tk ty (Signature (name,size, tb, tr)) =
       let e = Term_decl (id, size, tk, ty)
       in 
-      Signature (name, size+1, Table.add size e tb, Tries.add id e tr)
+      Signature (name, size+1, Table.add ~override:true size e tb, Tries.add ~override:true id e tr)
 	
     let insert_term_def id tk te ty (Signature (name,size, tb, tr)) =
       let e = Term_def (id, size, tk, te, ty)
       in 
-      Signature (name, size+1, Table.add size e tb, Tries.add id e tr)
+      Signature (name, size+1, Table.add ~override:true size e tb, Tries.add ~override:true id e tr)
 	
     let insert_var id tk ty (Signature (name,size, tb, tr)) =
       let e = Term_def (id, size, tk, Lambda.Var(size), ty)
       in 
-      Signature (name, size+1, Table.add size e tb, Tries.add id e tr)
+      Signature (name, size+1, Table.add ~override:true size e tb, Tries.add ~override:true id e tr)
 	
 (*** impossible kind et type_of doivent etre transfomes...*)
 (*     let add_entry e (Signature (name,size, tb, tr) as sg) = *)

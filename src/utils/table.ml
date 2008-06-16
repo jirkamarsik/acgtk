@@ -14,7 +14,7 @@ module type TABLE =
     val insert : int -> 'a -> 'a t -> 'a t
     val lookup : int -> 'a t -> 'a *)
     val empty : 'a t
-    val add : key -> 'a -> 'a t -> 'a t
+    val add : ?override:bool -> key -> 'a -> 'a t -> 'a t
     val find : key -> 'a t -> 'a
     val fold : (key -> 'a -> 'b -> 'b) -> 'b -> 'a t -> 'b
   end
@@ -37,7 +37,7 @@ module Make_table (Base : BASE)=
 
     let empty =  Nil
 
-    let add n attr table = 
+    let add ?(override=false) n attr table = 
       let rec insert1 n table =
         match table with
           Nil  -> insert1 n (create ())
@@ -46,9 +46,10 @@ module Make_table (Base : BASE)=
                   in 
                   if r = 0
                   then 
-		    match a with
-		      | None -> ar.(i) <- (Some attr, tb); T ar
-		      | Some _ -> raise Conflict
+		    match a,override with
+		      | None,_ -> ar.(i) <- (Some attr, tb); T ar
+		      | Some _,false -> raise Conflict
+		      | Some _ ,true -> ar.(i) <- (Some attr, tb); T ar
                   else (ar.(i) <- (a, insert1 r tb);T ar)
       in
       insert1 n table

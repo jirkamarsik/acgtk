@@ -285,7 +285,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	   );
 	  let new_ind_assoc = Sign.add_assoc ind_assoc s in
 
-	  let new_sg = 
+	  let new_sg =
 	    Sign.insert_var s Abstract_syntax.Default tdef1 sg 
 	  in
 	  if (verbose)

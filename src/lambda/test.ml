@@ -31,7 +31,8 @@ let parse filename =
 		 let t = (Typechecker.typecheck (name,loc,sg)) in
 		   Printf.printf "%s\n"  (Display.Display.to_string t)
 	       with
-		 | Error.Error e -> Printf.fprintf stderr "Error: in signature\"%s\"\n%s\n" name (Error.error_msg e name))
+		 | Error.Error e -> Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename))
+(*Printf.fprintf stderr "Error: in signature\"%s\"\n%s\n" name (Error.error_msg e name))*)
     !env
     
 	

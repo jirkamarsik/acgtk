@@ -20,23 +20,24 @@ module Tries =
       in
       explode_aux (String.length str - 1) []
 
-    let add id attr smtb =
+    let add ?(override=false) id attr smtb =
       let rec insert1 lts (ST (a, s)) =
         match lts with
-          []    -> (match a with
-                      None   -> ST (Some attr, s)
-                    | Some b -> raise Conflict)
-        | l::rm -> ST (a, insert2 l rm s)
+            []    -> (match a,override with
+			  None,_   -> ST (Some attr, s)
+			| Some b,true -> ST (Some attr, s)
+			| Some b,false -> raise Conflict)
+          | l::rm -> ST (a, insert2 l rm s)
       and     insert2 lt lts stls =
         match stls with
-          []        -> [lt, insert1 lts empty]  
-        | (l,i)::rm -> if lt = l 
-                       then (lt, insert1 lts i)::rm
-                       else if lt <= l
-                            then (lt, insert1 lts empty)::stls
-                            else (l,i)::(insert2 lt lts rm)
+            []        -> [lt, insert1 lts empty]  
+          | (l,i)::rm -> if lt = l 
+            then (lt, insert1 lts i)::rm
+            else if lt <= l
+            then (lt, insert1 lts empty)::stls
+            else (l,i)::(insert2 lt lts rm)
       in 
-      insert1 (explode id) smtb
+	insert1 (explode id) smtb
 
     let find w smtb =
       let rec lookup1 lts (ST (a, s)) = 
