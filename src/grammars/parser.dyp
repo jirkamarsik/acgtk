@@ -428,40 +428,44 @@ sig_entries :
     
 %%
 {
-  let parse_data filename env =
+  let parse_data ?(output=false) filename env =
     let in_ch = open_in filename in
     let lexbuf = Lexing.from_channel in_ch in
     let actual_env = if env=E.empty then None else Some (Env env) in
       try
 	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
 	let () = Lexer.set_to_data () in
-	let sgs = 
+	let e = 
 	  try (fst (List.hd (data ~local_data:actual_env Lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
 	let () = Printf.printf "Done.\n" in
-	let () =
-	  E.iter 
-	    (function 
-	       | E.Signature sg -> 
-		   let () = Printf.printf "%s\n" (E.Signature1.to_string sg) in
-		     Printf.printf "%s\n" (Error.warnings_to_string filename (E.Signature1.get_warnings sg))
-	       | E.Lexicon lex ->
-		   Printf.printf "%s\n" (E.Lexicon.to_string lex))
-	    sgs in
-	  sgs
+	let () = match output with
+	  | false -> ()
+	  | true ->
+	      E.iter 
+		(function 
+		   | E.Signature sg -> 
+		       let () = Printf.printf "%s\n" (E.Signature1.to_string sg) in
+			 Printf.printf "%s\n" (Error.warnings_to_string filename (E.Signature1.get_warnings sg))
+		   | E.Lexicon lex ->
+		       Printf.printf "%s\n" (E.Lexicon.to_string lex))
+		e in
+	  e
       with
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename) in
 	      env
 	    
-  let parse_term t sg = 
+  let parse_term ?(output=false) t sg = 
     let lexbuf = Lexing.from_string t in
       try 
 	let () = Lexer.set_to_term () in
 	let abs_term,abs_type = 
 	  try fst (List.hd(term_alone ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf)) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
-	let () = Printf.printf "I read: %s : %s \n" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) in
+	let () = match output with
+	  | true -> Printf.printf "I read: %s : %s \n" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
+	  | false -> () in
 	  Some (abs_term,abs_type)
       with
 	| Error.Error e -> 
@@ -490,12 +494,12 @@ end}
     (** [parse_data filename e] adds the data (signatures or lexicons)
 	parsed from file [filename] to [e] and returns the resulting
 	environment *)
-    val parse_data : string -> E.t  -> E.t
+    val parse_data : ?output:bool -> string -> E.t  -> E.t
       
     (** [term s sg] returns [Some t] with [t] being an
 	{!Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
 	and [None] otherwise *)
-    val parse_term : string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
+    val parse_term : ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
       
       
     type local_data =

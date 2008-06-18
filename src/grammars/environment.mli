@@ -83,9 +83,10 @@ end
 module type Environment_sig =
 sig
 
-  (** This exception can be raised when a signature is not found in
-      the environmnent *)
+  (** This exception can be raised when a signature or an entry is not
+      found in the environmnent *)
   exception Signature_not_found of string
+  exception Entry_not_found of string
 
   (** The modules implementing the signatures and the lexicons managed
       by the environment *)
@@ -135,6 +136,12 @@ sig
   (** [choose_signature e] returns a randomly chosen signature in the
       environment [e] *)
   val choose_signature : t -> Signature1.t option
+
+  val select : string -> t -> t
+
+  val unselect : t -> t
+
+  val focus : t -> entry
 end
 
 

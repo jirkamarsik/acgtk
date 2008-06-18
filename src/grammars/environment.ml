@@ -74,6 +74,7 @@ end
 module type Environment_sig =
 sig
   exception Signature_not_found of string
+  exception Entry_not_found of string
 
 
   module Signature1:Signature_sig
@@ -93,6 +94,12 @@ sig
   val sig_number : t -> int
   val lex_number : t -> int
   val choose_signature : t -> Signature1.t option 
+
+  val select : string -> t -> t
+
+  val unselect : t -> t
+
+  val focus : t -> entry
 end
 
   
@@ -104,16 +111,16 @@ struct
   module Signature1=Sg
 
   exception Signature_not_found of string
-    
+  exception Entry_not_found of string
   module Env = Utils.StringMap
 
   type entry = 
     | Signature of Sg.t
     | Lexicon of Lex.t
 
-  type t = {map:entry Env.t;sig_number:int;lex_number:int}
+  type t = {map:entry Env.t;sig_number:int;lex_number:int;focus:entry option}
 
-  let empty = {map=Env.empty;sig_number=0;lex_number=0}
+  let empty = {map=Env.empty;sig_number=0;lex_number=0;focus=None}
 
   let insert d e = match d with
     | Signature s -> let name,(p1,p2) = Sg.name s in
@@ -148,7 +155,17 @@ struct
     try
       Env.find s e 
     with
-      | Not_found -> raise (Signature_not_found s)
+      | Not_found -> raise (Entry_not_found s)
+
+  let select name e =
+    {e with focus=Some (get name e)}
+
+  let unselect e = {e with focus=None}
+
+  let focus {focus=f} =
+    match f with
+      | None -> raise (Entry_not_found "focused entry")
+      | Some e -> e
 
 
 
