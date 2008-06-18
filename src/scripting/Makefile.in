@@ -1,0 +1,45 @@
+###############################################
+#                                             #
+# Makefile for directories with no executable #
+#                                             #
+###############################################
+
+include ../Makefile.master
+
+###############################
+#                             #
+# Set the following variables #
+#                             #
+###############################
+
+# Used libraries
+LIBS += dyp.cma
+
+# The corresponding directories
+# (if not in the main ocaml lib directory,
+# ex. -I  +campl4
+LIBDIR = -I +dypgen -I +camlp4
+
+# Directories to which the current source files depend on
+PREVIOUS_DIRS = ../utils ../logic ../grammars ../lambda.sylvain
+
+# Source files in the right order of dependance
+
+ML = functions.ml script_parser.ml
+
+EXE_SOURCES = test.ml
+
+####################################
+#                                  #
+# End of the configuration section #
+#                                  #
+####################################
+
+include ../Makefile.common
+
+script_parser.ml : script_parser.dyp
+	@DYPGEN@ --noemit-token-type $<
+
+script_lexer.ml : script_lexer.mll
+	@OCAMLLEX@ $<
+

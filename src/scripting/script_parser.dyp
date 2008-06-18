@@ -1,0 +1,93 @@
+%mltop{
+  open Abstract_syntax
+
+    type token =
+      | EOI
+      | LOAD_DATA of Abstract_syntax.location
+      | LOAD_SCRIPT of Abstract_syntax.location
+      | LIST of Abstract_syntax.location
+      | SELECT of Abstract_syntax.location
+      | UNSELECT of Abstract_syntax.location
+      | TRACE of Abstract_syntax.location
+      | PRINT of Abstract_syntax.location
+      | ANALYSE of Abstract_syntax.location
+      | COMPOSE of Abstract_syntax.location
+      | SEMICOLON of Abstract_syntax.location
+      | AS of Abstract_syntax.location
+      | IDENT of (string*Abstract_syntax.location)
+      | STRING of (string*Abstract_syntax.location)
+
+  module Make (E:Environment.Environment_sig) =
+  struct  
+
+    module F = Functions.Make(E)
+  }
+
+{
+  open Dyp
+}
+
+
+%token
+EOI
+<Abstract_syntax.location>LOAD_DATA
+<Abstract_syntax.location>LOAD_SCRIPT
+<Abstract_syntax.location>LIST
+<Abstract_syntax.location>SELECT
+<Abstract_syntax.location>UNSELECT
+<Abstract_syntax.location>TRACE
+<Abstract_syntax.location>PRINT
+<Abstract_syntax.location>ANALYSE
+<Abstract_syntax.location>COMPOSE
+<Abstract_syntax.location>SEMICOLON
+<Abstract_syntax.location>AS
+<(string*Abstract_syntax.location)>IDENT
+<(string*Abstract_syntax.location)>STRING
+
+
+%start <(E.t -> E.t)> command
+
+
+%%
+
+  command:
+| LOAD_DATA STRING SEMICOLON {}
+| LOAD_SCRIPT STRING SEMICOLON {}
+| LIST SEMICOLON {}
+| SELECT IDENT  SEMICOLON {}
+| UNSELECT SEMICOLON {}
+| TRACE SEMICOLON {}
+| optional_ident PRINT {}
+| optional_ident ANALYSE STRING {}
+| COMPOSE IDENT IDENT AS IDENT {}
+
+
+%%
+
+{end}
+
+%mlitop{
+  open Abstract_syntax
+
+    type token =
+      | EOI
+      | LOAD_DATA of Abstract_syntax.location
+      | LOAD_SCRIPT of Abstract_syntax.location
+      | LIST of Abstract_syntax.location
+      | SELECT of Abstract_syntax.location
+      | UNSELECT of Abstract_syntax.location
+      | TRACE of Abstract_syntax.location
+      | PRINT of Abstract_syntax.location
+      | ANALYSE of Abstract_syntax.location
+      | COMPOSE of Abstract_syntax.location
+      | SEMICOLON of Abstract_syntax.location
+      | AS of Abstract_syntax.location
+      | IDENT of (string*Abstract_syntax.location)
+      | STRING of (string*Abstract_syntax.location)
+
+  module Make(E:Environment.Environment_sig) : 
+  sig
+
+  }
+
+%mli{end}
