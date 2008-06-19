@@ -55,15 +55,15 @@ struct
 	| Some n -> E.get n e
     in
       match entry with
-	| E.Signature sg -> ignore (Term_parser.parse_term data sg)
+	| E.Signature sg -> ignore (Term_parser.parse_term ~output:true data sg)
 	| E.Lexicon lex -> 
 	    let abs,obj=E.Lexicon.get_sig lex in
-	      match Term_parser.parse_term data abs with
+	      match Term_parser.parse_term ~output:true data abs with
 		| None -> ()
 		| Some (t,ty) -> 
 		    let t',ty' = E.Lexicon.interpret t ty lex in
 		      Printf.printf
-			"Interpreted as:\n%s : %s\n"
+			"Interpreted as:\n\t%s : %s\n%!"
 			(E.Signature1.term_to_string t' obj)
 			(E.Signature1.type_to_string ty' obj)
 			

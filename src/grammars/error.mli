@@ -41,6 +41,10 @@ type type_error =
   | Vacuous_abstraction of (string * (Lexing.position * Lexing.position))
 
 
+(** The types for errors raised by lexicons *)
+type lexicon_error =
+  | Missing_interpretations of (string * string * (string list))
+
 (** The types for errors raised by the environment. Names should be
     explicit *)
 type env_error =
@@ -54,6 +58,7 @@ type error =
   | Lexer_error of lex_error * (Lexing.position * Lexing.position)
   | Type_error of type_error * (Lexing.position * Lexing.position)
   | Env_error of env_error * (Lexing.position * Lexing.position)
+  | Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
 
 (** The type for warnings *)
 type warning =

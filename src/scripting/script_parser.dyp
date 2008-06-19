@@ -1,93 +1,140 @@
 %mltop{
   open Abstract_syntax
+    open Script_lexer
+    
+(*  type token = Script_lexer.token *)
+      
+  let id = fun x -> x
 
-    type token =
-      | EOI
-      | LOAD_DATA of Abstract_syntax.location
-      | LOAD_SCRIPT of Abstract_syntax.location
-      | LIST of Abstract_syntax.location
-      | SELECT of Abstract_syntax.location
-      | UNSELECT of Abstract_syntax.location
-      | TRACE of Abstract_syntax.location
-      | PRINT of Abstract_syntax.location
-      | ANALYSE of Abstract_syntax.location
-      | COMPOSE of Abstract_syntax.location
-      | SEMICOLON of Abstract_syntax.location
-      | AS of Abstract_syntax.location
-      | IDENT of (string*Abstract_syntax.location)
-      | STRING of (string*Abstract_syntax.location)
-
+  let pr s = Printf.printf "%s\n%!" s
+    
   module Make (E:Environment.Environment_sig) =
   struct  
-
+    
+    (*    module Data_parser = Parser.Make(E)*)
     module F = Functions.Make(E)
+
   }
+  
+  {
+    open Dyp
+    let local_data = E.empty
+
+  }
+  
+  
+%token
+EOII
+<(string*Abstract_syntax.location)>LOAD_DATA
+<(string*Abstract_syntax.location)>LOAD_SCRIPT
+LIST
+SELECT
+UNSELECT
+TRACE
+PRINT
+<(string*Abstract_syntax.location)>ANALYSE
+COMPOSE
+SEMICOLONN
+AS
+<(string*Abstract_syntax.location)>IDENTT
+/*<(string*Abstract_syntax.location)>STRING*/
+
+
+%start <(E.t)> zzcommands
+
+%local_data_type <(E.t)>
+
+%%
+
+  zzcommands :
+| EOII {dyp.last_local_data}
+| command[c] ...@{let e' = c (dyp.last_local_data) in
+		    e',[Local_data e']}
+      zzcommands {dyp.last_local_data}
+
+
+      command:
+| LOAD_DATA[(s,loc)]  {fun e ->  F.load F.Data  s e}
+| LOAD_SCRIPT[(s,loc)]  {fun e -> F.load F.Script  s e}
+| LIST SEMICOLONN {fun e -> let () = F.list e in e}
+| SELECT IDENTT[(name,_)]  SEMICOLONN {fun e -> F.select name e}
+| UNSELECT SEMICOLONN {F.unselect}
+| TRACE SEMICOLONN {fun e -> let () = F.trace () in e}
+| optional_ident[name] PRINT SEMICOLONN {fun e -> match name with
+					  | None -> let () = F.print e in e
+					  | Some (n,_) -> let () = F.print ~name:n e in e}
+| optional_ident[name] ANALYSE[(t,l)]   {fun e -> match name with
+					   | None -> let () = F.analyse e t in e
+					   | Some (n,_) -> let () = F.analyse ~name:n e t in e}
+| COMPOSE IDENTT[(n1,_)] IDENTT [(n2,_)] AS IDENTT[(n3,_)] SEMICOLONN {fun e -> F.compose n1 n2 n3 e}
+
+      optional_ident :
+| {None}
+| IDENTT[id] {Some id}
+
+%%
 
 {
-  open Dyp
-}
+  let parse_file filename env =
+    let in_ch = open_in filename in
+    let lexbuf = Lexing.from_channel in_ch in
+    let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
+      try
+	let new_env=
+	  try (fst (List.hd (zzcommands ~local_data:env  Script_lexer.lexer lexbuf))) with
+	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
+	  new_env
+      with
+	| Error.Error e -> 
+	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename) in
+	      env
 
 
-%token
-EOI
-<Abstract_syntax.location>LOAD_DATA
-<Abstract_syntax.location>LOAD_SCRIPT
-<Abstract_syntax.location>LIST
-<Abstract_syntax.location>SELECT
-<Abstract_syntax.location>UNSELECT
-<Abstract_syntax.location>TRACE
-<Abstract_syntax.location>PRINT
-<Abstract_syntax.location>ANALYSE
-<Abstract_syntax.location>COMPOSE
-<Abstract_syntax.location>SEMICOLON
-<Abstract_syntax.location>AS
-<(string*Abstract_syntax.location)>IDENT
-<(string*Abstract_syntax.location)>STRING
+  let bufferize () =
+    let buf = Buffer.create 16 in
+    let no_semi_colon=ref true in
+    let () =
+      while !no_semi_colon do
+	let input = read_line () in
+	  try
+	    let semi_colon_index=String.index input ';' in
+	    let () = Buffer.add_string buf (String.sub input 0 (semi_colon_index+1)) in
+	      no_semi_colon:=false
+	  with
+	    | Not_found -> Buffer.add_string buf input ;Buffer.add_char buf '\n'
+      done in
+      Buffer.contents buf
+	
+	
+  let parse_entry env =
+    let in_str = bufferize () in
+(*    let () = Printf.printf "\texecute \"%s\"\n%!" in_str in*)
+    let lexbuf = Lexing.from_string in_str in
+      try
+	let new_env=
+	  try (fst (List.hd (zzcommands ~local_data:env  Script_lexer.lexer lexbuf))) with
+	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
+	  new_env
+      with
+	| Error.Error e -> 
+	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e "stdin") in
+	      env
 
 
-%start <(E.t -> E.t)> command
-
-
-%%
-
-  command:
-| LOAD_DATA STRING SEMICOLON {}
-| LOAD_SCRIPT STRING SEMICOLON {}
-| LIST SEMICOLON {}
-| SELECT IDENT  SEMICOLON {}
-| UNSELECT SEMICOLON {}
-| TRACE SEMICOLON {}
-| optional_ident PRINT {}
-| optional_ident ANALYSE STRING {}
-| COMPOSE IDENT IDENT AS IDENT {}
-
-
-%%
-
-{end}
+end}
 
 %mlitop{
   open Abstract_syntax
-
-    type token =
-      | EOI
-      | LOAD_DATA of Abstract_syntax.location
-      | LOAD_SCRIPT of Abstract_syntax.location
-      | LIST of Abstract_syntax.location
-      | SELECT of Abstract_syntax.location
-      | UNSELECT of Abstract_syntax.location
-      | TRACE of Abstract_syntax.location
-      | PRINT of Abstract_syntax.location
-      | ANALYSE of Abstract_syntax.location
-      | COMPOSE of Abstract_syntax.location
-      | SEMICOLON of Abstract_syntax.location
-      | AS of Abstract_syntax.location
-      | IDENT of (string*Abstract_syntax.location)
-      | STRING of (string*Abstract_syntax.location)
+  open Script_lexer
 
   module Make(E:Environment.Environment_sig) : 
   sig
 
+(*    type token = Script_lexer.token*)
+
+    val parse_file : string -> E.t -> E.t
+
+    val parse_entry : E.t -> E.t
   }
 
 %mli{end}

@@ -108,6 +108,11 @@ sig
       {!Abstract_syntax.Abstract_syntax.Non_linear} otherwise *)
   val get_binder_argument_functional_type : string -> t -> Abstract_syntax.abstraction option
 
+  (** [is_declared e sg] returns [Some s] if the entry [e] is a
+      declaration of the string [s] (and not a definiton) in [sg] and
+      [None] otherwise *)
+  val is_declared : entry -> t -> string option
+
 end
 
 (** This module signature describes the interface for modules implementing lexicons *)
@@ -127,4 +132,5 @@ sig
   val to_string : t -> string
   val interpret : Signature.term -> Signature.stype -> t -> (Signature.term*Signature.stype)
   val get_sig : t -> (signature*signature)
+  val check : t -> unit
 end

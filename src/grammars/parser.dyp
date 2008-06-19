@@ -138,7 +138,7 @@
   data:
 | EOI {get_env_value dyp.last_local_data}
 | signature[s] ...@{s,[Local_data (Some (Env (E.insert (E.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
-| lexicon[l] ...@{l,[Local_data (Some (Env (E.insert (E.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| lexicon[l] ...@{let () = E.Lexicon.check l in l,[Local_data (Some (Env (E.insert (E.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
   
       signature : 
 | SIG_OPEN sig_ident EQUAL sig_entries {$4}
@@ -438,22 +438,22 @@ sig_entries :
 	let e = 
 	  try (fst (List.hd (data ~local_data:actual_env Lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
-	let () = Printf.printf "Done.\n" in
+	let () = Printf.printf "Done.\n%!" in
 	let () = match output with
 	  | false -> ()
 	  | true ->
 	      E.iter 
 		(function 
 		   | E.Signature sg -> 
-		       let () = Printf.printf "%s\n" (E.Signature1.to_string sg) in
-			 Printf.printf "%s\n" (Error.warnings_to_string filename (E.Signature1.get_warnings sg))
+		       let () = Printf.printf "%s\n%!" (E.Signature1.to_string sg) in
+			 Printf.printf "%s\n%!" (Error.warnings_to_string filename (E.Signature1.get_warnings sg))
 		   | E.Lexicon lex ->
-		       Printf.printf "%s\n" (E.Lexicon.to_string lex))
+		       Printf.printf "%s\n%!" (E.Lexicon.to_string lex))
 		e in
 	  e
       with
 	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename) in
+	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
 	      env
 	    
   let parse_term ?(output=false) t sg = 
@@ -464,7 +464,7 @@ sig_entries :
 	  try fst (List.hd(term_alone ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf)) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
 	let () = match output with
-	  | true -> Printf.printf "I read: %s : %s \n" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
+	  | true -> Printf.printf "\t %s : %s \n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
 	  | false -> () in
 	  Some (abs_term,abs_type)
       with

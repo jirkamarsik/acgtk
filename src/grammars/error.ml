@@ -60,11 +60,19 @@ type env_error =
   | Duplicated_signature of string
   | Duplicated_lexicon of string
 
+
+type lexicon_error =
+  | Missing_interpretations of (string * string * (string list))
+
+
 type error = 
   | Parse_error of parse_error * (Lexing.position * Lexing.position)
   | Lexer_error of lex_error * (Lexing.position * Lexing.position)
   | Type_error of type_error * (Lexing.position * Lexing.position)
   | Env_error of env_error * (Lexing.position * Lexing.position)
+  | Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
+
+
 
 type warning =
   | Variable_or_constant of (string * Lexing.position * Lexing.position)
@@ -125,7 +133,11 @@ let type_error_to_string = function
 
 let env_error_to_string = function
   | Duplicated_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" is used twice in this environment" s
-  | Duplicated_lexicon s -> Printf.sprintf "Syntax error: Lexion id \"%s\" is used twice in this environment" s
+  | Duplicated_lexicon s -> Printf.sprintf "Syntax error: Lexicon id \"%s\" is used twice in this environment" s
+
+let lexicon_error_to_string = function
+  | Missing_interpretations (lex_name,abs_name,missing_inters) ->
+      Printf.sprintf "Lexicon definition error: Lexicon \"%s\" is missing the interpretations of the following terms of the abstract signature \"%s\":\n%s" lex_name abs_name (Utils.string_of_list "\n" (fun x -> Printf.sprintf"\t%s" x) missing_inters)
 
 let warning_to_string w = 
   match w with
@@ -137,7 +149,8 @@ let error_msg e input_file =
       | Parse_error (er,(s,e)) -> parse_error_to_string er,compute_comment_for_position s e
       | Lexer_error (er,(s,e))  -> lex_error_to_string er,compute_comment_for_position s e
       | Type_error (er,(s,e)) -> type_error_to_string er,compute_comment_for_position s e
-      | Env_error (er,(s,e)) -> env_error_to_string er,compute_comment_for_position s e in
+      | Env_error (er,(s,e)) -> env_error_to_string er,compute_comment_for_position s e 
+      | Lexicon_error (er,(s,e)) -> lexicon_error_to_string er,compute_comment_for_position s e  in
     Printf.sprintf "File \"%s\", %s\n%s" input_file location_msg msg
 
 let dyp_error lexbuf input_file =

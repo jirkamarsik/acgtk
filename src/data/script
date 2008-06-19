@@ -1,0 +1,9 @@
+load d ../data/lex1.dat;
+list;
+abs print;
+obj print;
+absobj print;
+select absobj;
+analyse lambda x.t (u (v x)):a ->a;
+
+

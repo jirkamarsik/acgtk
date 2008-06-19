@@ -1,7 +1,7 @@
-(*open Interface*)
+open Interface
 open Abstract_syntax
 
-module type Signature_sig =
+(*module type Signature_sig =
 sig
   (** Exceptions raised when definitions of types or constants are
       duplicated *)
@@ -68,7 +68,7 @@ sig
 
 
 end
-
+  *)
 
 
 module type Environment_sig =

@@ -29,6 +29,7 @@ sig
   val typecheck : Abstract_syntax.term -> stype -> t -> term
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
   val get_binder_argument_functional_type : string -> t -> Abstract_syntax.abstraction option
+  val is_declared : entry -> t -> string option
 end
 
 module type Lexicon_sig =
@@ -45,4 +46,5 @@ sig
   val to_string : t -> string
   val interpret : Signature.term -> Signature.stype -> t -> (Signature.term*Signature.stype)
   val get_sig : t -> (signature*signature)
+  val check : t -> unit
 end

@@ -274,6 +274,8 @@ struct
     let typecheck t _ _ = t
 
     let get_binder_argument_functional_type _ _ = Some Abstract_syntax.Linear
+
+    let is_declared _ _ = None
 end
   
 module Abstract_lex =
@@ -327,6 +329,8 @@ struct
 	   None with
 	     | None -> ""
 	     | Some s -> Printf.sprintf "%s\n" s)
+
+  let check _ = Printf.printf "No checking of interpretations\n%!" 
 end
 
 
