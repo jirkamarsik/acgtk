@@ -1,0 +1,37 @@
+signature abstract =
+	np,s,n:type;	
+	J,M,he,her,it:np;
+	man,woman,farmer,donkey:n;
+	loves,beats,owns : np -> np -> s;
+	
+end
+
+
+signature object =
+	g,e,t:type;
+	inter = g ->t : type;
+	o = g => inter => t:type;
+	sel : g -> e;
+	infix + : e -> g -> g;
+	john,mary : e;
+	man,woman,farmer,donkey:e->t;
+	infix & : t -> t -> t;
+	love,beat,own : ((e -> o) -> o) -> ((e -> o) -> o) -> o
+end
+
+
+lexicon montague (abstract) : object =
+	s := o;
+	np := (e -> o) -> o;
+	n := e -> o;
+	J := lambda P.P john;
+	M := lambda P.P mary;
+	farmer := lambda x.Lambda e phi.(farmer x) & (phi e);
+	donkey := lambda x.Lambda e phi.(donkey x) & (phi e);
+	man := lambda x.Lambda e phi.(man x) & (phi e);
+	woman := lambda x.Lambda e phi.(woman x) & (phi e);
+	loves := lambda S O. Lambda e phi.S(lambda x.O(lambda y.(love x y) & (phi e))) ;
+	beats := lambda S O.S(lambda x.O(lambda y.(beat x y) & (phi e))) ;
+	owns := lambda S O.S(lambda x.O(lambda y.(own x y) & (phi e))) ;
+	he,her,it := lambda P.Lambda e phi. P (sel e) e phi;
+end

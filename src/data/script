@@ -4,6 +4,6 @@ abs print;
 obj print;
 absobj print;
 select absobj;
-analyse lambda x.t (u (v x)):a ->a;
+analyse lambda x.t (u (v x)):a =>a;
 
 
