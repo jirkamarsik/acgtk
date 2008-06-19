@@ -468,8 +468,16 @@ sig_entries :
 	  | false -> () in
 	  Some (abs_term,abs_type)
       with
-	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
+	| Error.Error er -> 
+	    let s,e = Error.get_loc_error er in
+	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
+	    let () = Printf.fprintf 
+	      stderr
+	      "%s\n%s%s\nError: %s\n%!"
+	      t
+	      (String.make s' ' ') 
+	      (String.make (e'-s') '^')
+	      (Error.error_msg er "stdin") in
 	      None
 	| End_of_file -> None
     

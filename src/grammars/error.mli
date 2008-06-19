@@ -91,3 +91,7 @@ val dyp_error : Lexing.lexbuf -> string -> exn
 (** [warnings_to_string filname ws] returns a string describing the
     warnings anf their location for the file [filename] *)
 val warnings_to_string : string -> warning list -> string
+
+(** [get_loc_error e] returns the starting and ending position of an
+error *)
+val get_loc_error : error -> (Lexing.position * Lexing.position)

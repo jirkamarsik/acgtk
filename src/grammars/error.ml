@@ -163,22 +163,27 @@ let dyp_error lexbuf input_file =
       | Some (sym,(s,e)) -> Error (Parse_error (Missing_arg_of_Infix sym,(s,e)))
 
 
-  let emit_warning w input_file = 
-    match w with
-      | Variable_or_constant (s,pos1,pos2) -> 
-	  let msg = warning_to_string w in
-	  let line2 = pos2.Lexing.pos_lnum in
-	  let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
-	  let pos1 = pos1 in
-	  let line1 = pos1.Lexing.pos_lnum in
-	  let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
-	    if line1=line2 then
-	      Printf.sprintf "File \"%s\", line %d, characters %d-%d\nWarning: %s"
-		input_file line2 col1 col2 msg
-	    else
-	      Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nWarning: %s"
-		input_file line1 col1 line2 col2 msg
-
-  let warnings_to_string input_file ws = Utils.string_of_list "\n" (fun w -> emit_warning w input_file) ws
-
-    
+let emit_warning w input_file = 
+  match w with
+    | Variable_or_constant (s,pos1,pos2) -> 
+	let msg = warning_to_string w in
+	let line2 = pos2.Lexing.pos_lnum in
+	let col2 = pos2.Lexing.pos_cnum - pos2.Lexing.pos_bol in
+	let pos1 = pos1 in
+	let line1 = pos1.Lexing.pos_lnum in
+	let col1 = pos1.Lexing.pos_cnum - pos1.Lexing.pos_bol in
+	  if line1=line2 then
+	    Printf.sprintf "File \"%s\", line %d, characters %d-%d\nWarning: %s"
+	      input_file line2 col1 col2 msg
+	  else
+	    Printf.sprintf "File \"%s\", from l:%d, c:%d to l:%d,c:%d\nWarning: %s"
+	      input_file line1 col1 line2 col2 msg
+	      
+let warnings_to_string input_file ws = Utils.string_of_list "\n" (fun w -> emit_warning w input_file) ws
+  
+let get_loc_error = function
+  | Parse_error (_,(s,e))
+  | Lexer_error (_,(s,e))
+  | Type_error (_,(s,e))
+  | Env_error (_,(s,e))
+  | Lexicon_error (_,(s,e)) -> (s,e)
