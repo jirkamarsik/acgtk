@@ -248,7 +248,7 @@ let build_expectation lst =
 		   (match k_o_t with
 		      | (Unset|Term),(Id|Sym|Type_or_term (LPAR|DOT)) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
 		      | (Unset|Term) as k,(Type_or_term RPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (k,a))))))
-		      | (Unset|Type),(Type_or_term ARROW) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
+		      | (Unset|Type),(Type_or_term ARROW) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Type,a))))))
 		      | Unset, _ -> raise (Expect [Id;Sym;Type_or_term LPAR])
 		      | Type, _ -> raise (Expect [Type_or_term ARROW;Semi_colon])
 		      | Term, _ -> raise (Expect [Id;Sym;Type_or_term DOT])
@@ -262,16 +262,16 @@ let build_expectation lst =
 	       | Type_or_term LAMBDA as a-> 
 		   (match k_o_t with
 		      | Type,_ -> raise (Expect [Type_or_term ARROW;Semi_colon])
-		      | (Unset|Term),(Id|Sym|Type_or_term (LPAR|RPAR)) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
+		      | (Unset|Term),(Id|Sym|Type_or_term (LPAR|RPAR|DOT)) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
 		      | (Unset|Term),_ -> raise (Expect [Id;Sym;Type_or_term LAMBDA])
 		      | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
 	       | Type_or_term ARROW as a -> 
 		   (match k_o_t with
-		      | Term,_ -> raise (Expect [Type_or_term DOT])
+		      | Term,_ -> let () = Printf.printf "I know it is a term\n%!" in raise (Expect [Type_or_term DOT])
 		      | (Unset|Type),(Id|Type_or_term RPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Type,a))))))
 		      | (Unset|Type),_ -> raise (Expect [Id;Type_or_term ARROW])
 		      | Nothing,_ -> raise (Expect [End_kwd;Semi_colon]))
-| Id as a -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (fst k_o_t,a))))))
+	       | Id as a -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (fst k_o_t,a))))))
 | Sym as a -> 
     (match k_o_t with
        | Type,_ -> raise (Expect [Type_or_term ARROW;Semi_colon])

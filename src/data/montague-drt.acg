@@ -2,36 +2,51 @@ signature abstract =
 	np,s,n:type;	
 	J,M,he,her,it:np;
 	man,woman,farmer,donkey:n;
-	loves,beats,owns : np -> np -> s;
+	loves,beats,owns : np => np => s;
+	a,every:n=>np; 
+	who: (np => s) => n => n;
 	
 end
 
 
 signature object =
 	g,e,t:type;
-	inter = g ->t : type;
-	o = g => inter => t:type;
-	sel : g -> e;
-	infix + : e -> g -> g;
+	o = g => (g => t) => t:type;
+	sel : g => e;
+	infix + : e => g => g;
+	Top,Bot:t;
 	john,mary : e;
-	man,woman,farmer,donkey:e->t;
-	infix & : t -> t -> t;
-	love,beat,own : ((e -> o) -> o) -> ((e -> o) -> o) -> o
+	man,woman,farmer,donkey:e=>t;
+	infix & : t => t => t;
+	love,beat,own : e => e => t;
+	vt = Lambda v O S.S(Lambda x.O(Lambda y.Lambda e phi.(v x y) & (phi e))) : (e => e => t) => ((e =>o ) => o)  => ((e =>o ) => o) => o ;
+	n = Lambda n .Lambda x.Lambda e phi.(n x) & (phi e) : (e => t) => e => o;
+	binder Ex : (e => t) => t ;
+	binder All : (e => t) => t ;
+	prefix - : t => t ;
+	binder Ex_dyn = Lambda P . Lambda e phi.Ex x. P x (x+e) phi : (e => o) => o ;
+	prefix ~ = Lambda A . Lambda e phi. (-(A e (Lambda e.Top)))&(phi e) : o => o;
+	infix @ = Lambda A B.Lambda e phi.A e (Lambda e.B e phi) : o => o => o;
+	binder All_dyn = Lambda P.~(Ex_dyn x. ~(P x)) : (e =>o) => o; 
+	infix > = Lambda A B . ~(A @ ~B) : o => o => o;
 end
 
 
 lexicon montague (abstract) : object =
 	s := o;
-	np := (e -> o) -> o;
-	n := e -> o;
-	J := lambda P.P john;
-	M := lambda P.P mary;
-	farmer := lambda x.Lambda e phi.(farmer x) & (phi e);
-	donkey := lambda x.Lambda e phi.(donkey x) & (phi e);
-	man := lambda x.Lambda e phi.(man x) & (phi e);
-	woman := lambda x.Lambda e phi.(woman x) & (phi e);
-	loves := lambda S O. Lambda e phi.S(lambda x.O(lambda y.(love x y) & (phi e))) ;
-	beats := lambda S O.S(lambda x.O(lambda y.(beat x y) & (phi e))) ;
-	owns := lambda S O.S(lambda x.O(lambda y.(own x y) & (phi e))) ;
-	he,her,it := lambda P.Lambda e phi. P (sel e) e phi;
+	np := (e => o) => o;
+	n := e => o;
+	J := Lambda P.P john;
+	M := Lambda P.P mary;
+	farmer := n farmer;
+	woman := n woman ;
+	man := n man ;
+	donkey := n donkey ;
+	loves := vt love ;
+	beats := vt beat ;
+	owns := vt own ;
+	he,her,it := Lambda P.Lambda e phi. P (sel e) e phi;
+	a := Lambda P Q . Ex_dyn x. (P x) @ (Q x);
+	every := Lambda P Q . All_dyn x. (P x) > (Q x);
+	who := Lambda R Q x. (Q x) @ (R (Lambda P.P x));
 end

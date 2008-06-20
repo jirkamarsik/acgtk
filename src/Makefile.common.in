@@ -41,7 +41,7 @@ endif
 
 ifdef EXE_SOURCES
 $(EXEOPT) : $(CMX)
-#	@OCAMLCOPT@ -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
+	@OCAMLCOPT@ -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
 endif
 
 

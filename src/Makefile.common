@@ -41,7 +41,7 @@ endif
 
 ifdef EXE_SOURCES
 $(EXEOPT) : $(CMX)
-#	ocamlopt.opt -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
+	ocamlopt.opt -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
 endif
 
 

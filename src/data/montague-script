@@ -1,0 +1,10 @@
+load d ../data/montague-drt.acg;
+list ;
+abstract print;
+abstract analyse beats (every farmer) a donkey) : s;
+abstract analyse beats (every farmer) (a J) : s;
+abstract analyse beats (every farmer) (a donkey) : s;
+select object;
+print;
+abstract analyse beats it (every (who (owns (a donkey)) farmer)) : s;
+montague analyse beats it (every (who (owns (a donkey)) farmer)) : s;
