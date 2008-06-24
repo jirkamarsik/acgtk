@@ -39,11 +39,22 @@
     | Linear
     | Non_linear  *)
 
-  let abs x l t = function
-    | Abstract_syntax.Linear -> Abstract_syntax.LAbs (x,t,l)
-    | Abstract_syntax.Non_linear -> Abstract_syntax.Abs (x,t,l)
+      
+  let new_loc (s,_) (_,e) = (s,e)
 
-  let rec multiple_abs e ws k_a l ids t k =
+  let get_term_location = function
+    | Abstract_syntax.Var (_,l) -> l
+    | Abstract_syntax.Const (_,l) -> l
+    | Abstract_syntax.Abs (_,_,_,l) -> l
+    | Abstract_syntax.LAbs (_,_,_,l) -> l
+    | Abstract_syntax.App (_,_,l) -> l
+
+
+  let abs x l1 t = function
+    | Abstract_syntax.Linear -> Abstract_syntax.LAbs (x,l1,t,new_loc l1 (get_term_location t))
+    | Abstract_syntax.Non_linear -> Abstract_syntax.Abs (x,l1,t,new_loc l1 (get_term_location t))
+
+  let rec multiple_abs e ws k_a ids t k =
     match ids with
       | [] -> k (t e ws)
       | [a,l_a] ->
@@ -51,11 +62,16 @@
 	    k (abs a l_a new_t k_a,new_ws)
       | (a,l_a)::((_,l_b)::_ as tl) -> 
 	  let new_env = Env.add a e in
-	    multiple_abs new_env ws k_a l_b tl t (fun r -> k (abs a l (fst r) k_a,(snd r)))
+	    multiple_abs new_env ws k_a tl t (fun r -> k (abs a l_a (fst r) k_a,(snd r)))
 
-  let bind c x l t lin = Abstract_syntax.App (c,abs x l t lin,l)
+  let reset_location l = function
+    | Abstract_syntax.LAbs(x,l1,t,l2),ws -> Abstract_syntax.LAbs(x,l1,t,new_loc l l2),ws
+    | Abstract_syntax.Abs(x,l1,t,l2),ws -> Abstract_syntax.Abs(x,l1,t,new_loc l l2),ws
+    | _ -> failwith "Bug"
 
-  let rec multiple_bind e ws binder lin l ids t k =
+  let bind c x l t lin = Abstract_syntax.App (c,abs x l t lin,new_loc l (get_term_location t))
+
+  let rec multiple_bind e ws binder lin ids t k =
     match ids with
       | [] -> k (t e ws)
       | [a,l_a] ->
@@ -63,7 +79,12 @@
 	    k (bind binder a l_a new_t lin,new_ws)
       | (a,l_a)::((_,l_b)::_ as tl) ->
 	  let new_env = Env.add a e in
-	    multiple_bind new_env ws binder lin l_b tl t (fun r -> k (bind binder a l (fst r) lin,(snd r)))
+	    multiple_bind new_env ws binder lin tl t (fun r -> k (bind binder a l_a (fst r) lin,(snd r)))
+
+  let reset_binder_location l1 = function
+    | Abstract_syntax.App(u,v,l2),ws -> Abstract_syntax.App(u,v,new_loc l1 l2),ws
+    | _ -> failwith "Bug"
+
 
   let get_sig_value = function
     | None -> raise No_sig
@@ -90,15 +111,6 @@
       raise (Error.Error (Error.Lexer_error (Error.Expect s,(p1,p2))))
 
       
-  let new_loc (s,_) (_,e) = (s,e)
-
-  let get_term_location = function
-    | Abstract_syntax.Var (_,l) -> l
-    | Abstract_syntax.Const (_,l) -> l
-    | Abstract_syntax.Abs (_,_,l) -> l
-    | Abstract_syntax.LAbs (_,_,l) -> l
-    | Abstract_syntax.App (_,_,l) -> l
-
 }
 
 
@@ -302,10 +314,10 @@ sig_entries :
 	  term :
 | LAMBDA0  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
-      fun env ws -> multiple_abs env ws Abstract_syntax.Linear $1 $2 $4 (fun x -> x)} binder
+      fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Linear $2 $4 (fun x -> x))} binder
 | LAMBDA  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
-      fun env ws -> multiple_abs env ws Abstract_syntax.Non_linear $1 $2 $4 (fun x -> x)} binder
+      fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Non_linear $2 $4 (fun x -> x))} binder
 | IDENT[b]  idents[ids] DOT ...{let sg = get_sig_value dyp.last_local_data in
 				let binder,((p1,p2) as l) = b in
 				  match E.Signature1.is_constant binder sg with
@@ -316,7 +328,7 @@ sig_entries :
 				    | _ -> emit_parse_error (Error.Binder_expected binder) (p1,p2) }[lin]
       term[t] {
 	let binder,((p1,p2) as l) = b in
-	  fun env ws -> multiple_bind env ws (Abstract_syntax.Const(binder,l)) lin l ids t (fun x -> x)} binder 
+	  fun env ws -> reset_binder_location l (multiple_bind env ws (Abstract_syntax.Const(binder,l)) lin ids t (fun x -> x))} binder 
 | application(<=app) {$1} app 
 | atomic_term(<=atom)[arg1] SYMBOL[sym] ...{let id,((pos1,pos2) as l) = sym in
 					    let sg = get_sig_value dyp.last_local_data in

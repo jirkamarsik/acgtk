@@ -131,6 +131,7 @@ module Sign =
       let (new_term,_,_) = Typechecker.typecheck_term t wftype [] sg [] in
       new_term
 
+
     let fold f a sg =
       let tb = Utilitaires.get_table sg in
       Utilitaires.Table.fold (fun _ -> f) a tb

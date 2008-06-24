@@ -25,9 +25,13 @@ sig
 	(** If the term is variable (bound by a binder)*)
     | Const of string * location
 	(** If the term is a constant (not bound by a binder) *)
-    | Abs of string * term * location
-	(** If the term is a intuitionistic abstraction *) 
-    | LAbs of string * term * location
+    | Abs of string * location * term * location
+	(** If the term is a intuitionistic abstraction. The first
+	    location is the one of the variable, and the second one is
+	    the one of the whole term. The latter take into account
+	    the binder if the string is the first variable bound, and
+	    starts with the string otherwise *)
+    | LAbs of string * location * term * location
 	(** If the term is a linear abstraction *)
     | App of term * term * location
 	(** If the term is an application *)	

@@ -132,7 +132,7 @@ let type_error_to_string = function
   | Two_occurrences_of_linear_variable (s,e) -> Printf.sprintf "This linear variable was already used: %s" (compute_comment_for_position s e)
   | Non_empty_context (x,(s,e)) -> Printf.sprintf "This term has a non empty linear context (variable \"%s\" at %s)" x (compute_comment_for_position s e)
   | Not_normal -> "This term is not in normal form"
-  | Vacuous_abstraction (x,(s,e)) -> Printf.sprintf "The linear variable \"%s\" is not abstracted over in term %s" x (compute_comment_for_position s e)
+  | Vacuous_abstraction (x,(s,e)) -> Printf.sprintf "This linear variable \"%s\" is abstracted over but not used in term %s" x (compute_comment_for_position s e)
 
 let env_error_to_string = function
   | Duplicated_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" is used twice in this environment" s

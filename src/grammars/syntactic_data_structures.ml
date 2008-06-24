@@ -78,19 +78,19 @@ struct
     match t with
       | Abstract_syntax.Var(s,_) -> s
       | Abstract_syntax.Const (s,_) -> s
-      | Abstract_syntax.LAbs (s,t,_) -> 
+      | Abstract_syntax.LAbs (s,_,t,_) -> 
 	  let vars,u=unfold_labs [s] t in
 	    sprintf
 	      "(lambda %s. %s)"
 	      (Utils.string_of_list " " (fun x -> x) (List.rev vars))
 	      (term_to_string u sg)
-      | Abstract_syntax.Abs (s,t,_) -> 
+      | Abstract_syntax.Abs (s,_,t,_) -> 
 	  let vars,u=unfold_abs [s] t in
 	    sprintf
 	      "(Lambda %s. %s)"
 	      (Utils.string_of_list " " (fun x -> x) (List.rev vars))
 	      (term_to_string u sg)
-      | Abstract_syntax.App (Abstract_syntax.Const (s,_),(Abstract_syntax.LAbs(x,u,_) as t),l) when is_binder s sg ->
+      | Abstract_syntax.App (Abstract_syntax.Const (s,_),(Abstract_syntax.LAbs(x,_,u,_) as t),l) when is_binder s sg ->
 	  let vars,u= unfold_binder s sg [x] u in
 	  sprintf
 	    "(%s %s. %s)"
@@ -109,16 +109,16 @@ struct
 	    (term_to_string t1 sg)
 	    (term_to_string t2 sg)
   and unfold_abs acc = function
-    | Abstract_syntax.Abs (s,t,_) -> unfold_abs (s::acc) t
+    | Abstract_syntax.Abs (s,_,t,_) -> unfold_abs (s::acc) t
     | t -> acc,t
   and unfold_labs acc = function
-    | Abstract_syntax.LAbs (s,t,_) -> unfold_labs (s::acc) t
+    | Abstract_syntax.LAbs (s,_,t,_) -> unfold_labs (s::acc) t
     | t -> acc,t
   and unfold_app acc = function
     | Abstract_syntax.App (t1,t2,_) -> unfold_app (t2::acc) t1
     | t -> acc,t
   and unfold_binder binder sg acc = function
-    | Abstract_syntax.App (Abstract_syntax.Const (s,_),(Abstract_syntax.LAbs(x,u,_) as t),l) when (is_binder s sg)&&(s=binder) -> unfold_binder binder sg (x::acc) u
+    | Abstract_syntax.App (Abstract_syntax.Const (s,_),(Abstract_syntax.LAbs(x,_,u,_) as t),l) when (is_binder s sg)&&(s=binder) -> unfold_binder binder sg (x::acc) u
     | t -> acc,t
 	
   let rec is_atomic_type = function

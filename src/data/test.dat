@@ -25,7 +25,7 @@ signature toto =
 	bidule = Ex x y . - (x +x) : a; 
 	c_n_l : a => a;
 (*	example = lambda x.c_n_l (t1 x):a ->a;*)
-(*	tugudu = (lambda x.x) a : a -> a;*)
-(*	vacuous = lambda x.t1 d : a-> a;*)
+(*	tugudu = (lambda x.x) a : a -> a; *)
+	vacuous = lambda x.t1 d : a-> a;
 end
 

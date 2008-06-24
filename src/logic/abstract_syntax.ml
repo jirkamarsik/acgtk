@@ -19,9 +19,9 @@ struct
 	(** If the term is variable (bound by a binder)*)
     | Const of string * location
 	(** If the term is a constant (not bound by a binder) *)
-    | Abs of string * term * location
+    | Abs of string * location * term * location
 	(** If the term is a intuitionistic abstraction *)
-    | LAbs of string * term * location
+    | LAbs of string * location * term * location
 	(** If the term is a linear abstraction *)
     | App of term * term * location
 	(** If the term is an application *)	

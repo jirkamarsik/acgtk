@@ -27,12 +27,12 @@ let type_error e loc = raise (Error (Type_error (e,loc)))
 let rec abstr_synt_term_to_string sg = function
   | Abstract_syntax.Var(s,_) -> s
   | Abstract_syntax.Const(s,_) -> s
-  | Abstract_syntax.LAbs(s,t,_) ->
+  | Abstract_syntax.LAbs(s,_,t,_) ->
       Printf.sprintf
 	"(lambda° %s. %s)"
 	s
 	( abstr_synt_term_to_string sg t)
-  | Abstract_syntax.Abs(s,t,_) ->
+  | Abstract_syntax.Abs(s,_,t,_) ->
       Printf.sprintf
 	"(lambda %s. %s)"
 	s
@@ -270,7 +270,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
       with Not_found -> print_string "4\n";
 	type_error (Not_defined_var s) loc)
 
-  | Abstract_syntax.LAbs(s,t,loc) -> 
+  | Abstract_syntax.LAbs(s,_,t,loc) -> 
       if (verbose)
       then(print_string "check LAbs\n";);
       if (verbose)
@@ -318,7 +318,7 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
       | Lambda.Fun(tdef1,tdef2) -> type_error (Linear_var s) loc
       | _ -> raise (Not_yet_implemented "Typechecker.typecheck_term cas LAbs. type atomique")
       )
-  | Abstract_syntax.Abs(s,t,loc) -> 
+  | Abstract_syntax.Abs(s,_,t,loc) -> 
       if (verbose)
       then(print_string "check LAbs\n";);
       if (verbose)
@@ -487,7 +487,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
       with Not_found ->print_string "7\n";
 	type_error (Not_defined_const s) loc)
 
-  | Abstract_syntax.LAbs(s,t,loc) ->  
+  | Abstract_syntax.LAbs(s,_,t,_) ->  
       display_term sg term;
       raise (Failure "term is supposed to be normalized")
 (*       if (verbose) *)

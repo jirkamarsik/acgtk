@@ -321,11 +321,11 @@ struct
 and display_term sg = function
   | Abstract_syntax.Var(s,_) -> print_string s
   | Abstract_syntax.Const(s,_) -> print_string s
-  | Abstract_syntax.LAbs(s,t,_) -> 
+  | Abstract_syntax.LAbs(s,_,t,_) -> 
       print_string "(lambda° ";print_string s;print_string ". "; display_term sg t;
       print_string ")"
   | Abstract_syntax.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
-  | Abstract_syntax.Abs (s,t,_) ->       
+  | Abstract_syntax.Abs (s,_,t,_) ->       
       print_string "(lambda ";print_string s;
       print_string ". "; display_term sg t;
       print_string ")"
