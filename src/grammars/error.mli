@@ -32,7 +32,8 @@ type type_error =
   | Not_well_typed_term of string * string
   | Not_well_typed_term_plus of string * string * string
   | Not_well_kinded_type of string
-  | Not_linear_LAbs of string
+  | Non_linear_var of string
+  | Linear_var of string
   | Other
   | Is_Used of string * string
   | Two_occurrences_of_linear_variable of (Lexing.position * Lexing.position)

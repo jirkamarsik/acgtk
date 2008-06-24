@@ -47,7 +47,8 @@ type type_error =
   | Not_well_typed_term of string * string
   | Not_well_typed_term_plus of string * string * string
   | Not_well_kinded_type of string
-  | Not_linear_LAbs of string
+  | Non_linear_var of string
+  | Linear_var of string
   | Other
   | Is_Used of string * string
   | Two_occurrences_of_linear_variable of (Lexing.position * Lexing.position)
@@ -122,7 +123,9 @@ let type_error_to_string = function
       Printf.sprintf "Term \"%s\" not well typed.\n \"%s\" is of type %s but is here used with type  %s\n" s s typ wrong_typ
   | Not_well_kinded_type s ->
       Printf.sprintf "Type \"%s\" not well kinded" s
-  | Not_linear_LAbs s ->
+  | Non_linear_var s ->
+      Printf.sprintf "Var \"%s\" is supposed to be non linear" s
+  | Linear_var s ->
       Printf.sprintf "Var \"%s\" is supposed to be linear" s
   | Other -> "Not yet implemented"
   | Is_Used (s1,s2) -> Printf.sprintf "The type of this expression is \"%s\" but is used with type \"%s\"" s1 s2

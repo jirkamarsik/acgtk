@@ -23,6 +23,10 @@ module Tries =
     let add ?(override=false) id attr smtb =
       let rec insert1 lts (ST (a, s)) =
         match lts with
+(*           []    -> (match a with *)
+(*                       None   -> ST (Some attr, s) *)
+(*                     | Some b -> ST (Some attr, s)(\*raise Conflict*\)) *)
+(*         | l::rm -> ST (a, insert2 l rm s) *)
             []    -> (match a,override with
 			  None,_   -> ST (Some attr, s)
 			| Some b,true -> ST (Some attr, s)

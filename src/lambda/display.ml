@@ -4,14 +4,14 @@ open Lambda
 open Abstract_syntax
 (* open Syntactic_data_structures *)
 open Error
-open Sign
+open Utilitaires
 
 module Display =
 struct
 
-  let verbose = false
+  let verbose = true
 
-  let rec term_to_string t ind_assoc (sg:Sign.t) = 
+  let rec term_to_string t ind_assoc (sg:Utilitaires.t) = 
     if verbose
     then
       (print_string "term_to_string\n";
@@ -23,7 +23,7 @@ struct
 	then(
 	  print_int i;
 	  print_string ("Var "^(string_of_int i)););
-	let (x,_) = Sign.find i ind_assoc in
+	let (x,_) = Utilitaires.find i ind_assoc in
 	if verbose
 	then
 	  print_string ("Var"^x);
@@ -32,7 +32,7 @@ struct
 	if verbose
 	then
 	  print_string ("LVar "^(string_of_int i)^"\n");
-	let (x,_) = Sign.find i ind_assoc in
+	let (x,_) = Utilitaires.find i ind_assoc in
 	if verbose
 	then
 	  print_string ("LVar"^x);
@@ -40,72 +40,86 @@ struct
     | Lambda.Const (i) ->
 	if verbose
 	then
-	  print_string ("Const "^(Sign.string_of_const i sg)^"\n");
+	  print_string ("Const "^(Utilitaires.string_of_const i sg)^"\n");
 (* 	let (x,_) = find i ind_assoc in *)
 (* 	x *)
-	Sign.string_of_const i sg;
+	Utilitaires.string_of_const i sg;
     | Lambda.DConst (i) ->
 	if verbose
 	then
 	  print_string "DConst \n";
-	Sign.string_of_const i sg;
+	Utilitaires.string_of_const i sg;
     | Lambda.LAbs (s,t) ->
 	if verbose
 	then
 	  print_string ("LAbs "^s^"\n");
 	let vars,new_ind_assoc,u =
-	  unfold_labs [s] (Sign.add_assoc ind_assoc s) t in
+	  unfold_labs [s] (Utilitaires.add_assoc ind_assoc s) t in
+	Printf.sprintf
+	  "(lambda° %s. %s)"
+	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
+	  (term_to_string u new_ind_assoc sg)
+    | Lambda.Abs (s,t) ->
+	if verbose
+	then
+	  print_string ("LAbs "^s^"\n");
+	let vars,new_ind_assoc,u =
+	  unfold_abs [s] (Utilitaires.add_assoc ind_assoc s) t in
 	Printf.sprintf
 	  "(lambda %s. %s)"
 	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
 	  (term_to_string u new_ind_assoc sg)
 (*     | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) when is_binder (string_of_const i sg) sg -> print_string "App1 "; *)
-    | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) when Sign.is_binder (Sign.string_of_const i sg) sg ->
+    | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) when Utilitaires.is_binder (Utilitaires.string_of_const i sg) sg ->
 	if verbose
 	then
-	  print_string "App1 ";
-	let s = (Sign.string_of_const i sg) in
-	let vars,u= unfold_binder s sg ind_assoc [x] u in
+	  (
+	   print_string "App1 [";       
+	   List.iter (fun (x,i) -> print_string (x^", "^(string_of_int i)^" ; ")) ind_assoc;
+	   print_string "]\n";
+	  );
+	let s = (Utilitaires.string_of_const i sg) in
+	let vars,new_ind_assoc,u= unfold_binder s sg (Utilitaires.add_assoc ind_assoc x) [x] u in
 	Printf.sprintf
 	  "(%s %s. %s)"
 	  s
 	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
-	  (term_to_string u (Sign.add_assoc ind_assoc x) sg)
-    | Lambda.App (Lambda.DConst (i),(Lambda.LAbs(x,u) as t)) when Sign.is_binder (Sign.string_of_const i sg) sg ->
+	  (term_to_string u new_ind_assoc sg)
+    | Lambda.App (Lambda.DConst (i),(Lambda.LAbs(x,u) as t)) when Utilitaires.is_binder (Utilitaires.string_of_const i sg) sg ->
 	if verbose
 	then
 	  print_string "App1bis ";
-	let s = (Sign.string_of_const i sg) in
-	let vars,u= unfold_binder s sg ind_assoc [x] u in
+	let s = (Utilitaires.string_of_const i sg) in
+	let vars,new_ind_assoc,u= unfold_binder s sg (Utilitaires.add_assoc ind_assoc x) [x] u in
 	Printf.sprintf
 	  "(%s %s. %s)"
 	  s
 	  (Utils.string_of_list " " (fun x -> x) (List.rev vars))
-	  (term_to_string u (Sign.add_assoc ind_assoc x) sg)
+	  (term_to_string u new_ind_assoc sg)
 (*     | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when is_infix (string_of_const i sg) sg -> print_string "App2 "; *)
-    | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when Sign.is_infix (Sign.string_of_const i sg) sg -> 
+    | Lambda.App ((Lambda.App (Lambda.Const (i),t1)),t2) when Utilitaires.is_infix (Utilitaires.string_of_const i sg) sg -> 
 	if verbose
 	then
 	  (print_string "App2 : ";
 	   print_string (term_to_string t1 ind_assoc sg);
 	   print_string "\n string_of_const : ";
-	   print_string (Sign.string_of_const i sg);
+	   print_string (Utilitaires.string_of_const i sg);
 	   print_string "\nt2 : ";
 	   print_string (term_to_string t2 ind_assoc sg);
 	  );
 	Printf.sprintf
 	  "(%s %s %s)"
 	  (term_to_string t1 ind_assoc sg)
-	  (Sign.string_of_const i sg)
+	  (Utilitaires.string_of_const i sg)
 	  (term_to_string t2 ind_assoc sg)
-    | Lambda.App ((Lambda.App (Lambda.DConst (i),t1)),t2) when Sign.is_infix (Sign.string_of_const i sg) sg -> 
+    | Lambda.App ((Lambda.App (Lambda.DConst (i),t1)),t2) when Utilitaires.is_infix (Utilitaires.string_of_const i sg) sg -> 
 	if verbose
 	then
 	  print_string "App2bis ";
 	Printf.sprintf
 	  "(%s %s %s)"
 	  (term_to_string t1 ind_assoc sg)
-	  (Sign.string_of_const i sg)
+	  (Utilitaires.string_of_const i sg)
 	  (term_to_string t2 ind_assoc sg)
     | Lambda.App (t1,t2) -> 
 	if verbose
@@ -118,18 +132,21 @@ struct
 	  (*  and unfold_abs acc = function
 	      | Abs (s,t,_) -> unfold_abs (s::acc) t
 	      | t -> acc,t *)
-    | _ -> failwith "Not yet implemented"
+    | _ -> failwith "Not yet implemented 1"
   and unfold_labs acc ind_assoc = function
-    | Lambda.LAbs (s,t) -> unfold_labs (s::acc) (Sign.add_assoc ind_assoc s) t
+    | Lambda.LAbs (s,t) -> unfold_labs (s::acc) (Utilitaires.add_assoc ind_assoc s) t
+    | t -> acc,ind_assoc,t
+  and unfold_abs acc ind_assoc = function
+    | Lambda.Abs (s,t) -> unfold_abs (s::acc) (Utilitaires.add_assoc ind_assoc s) t
     | t -> acc,ind_assoc,t
   and unfold_app acc = function
     | Lambda.App (t1,t2) -> unfold_app (t2::acc) t1
     | t -> acc,t
   and unfold_binder binder sg ind_assoc acc = function
     | Lambda.App (Lambda.Const (i),(Lambda.LAbs(x,u) as t)) 
-      when let (s,_) = (Sign.find i ind_assoc) in (Sign.is_binder s sg)&&(s=binder) -> 
-	unfold_binder binder sg (Sign.add_assoc ind_assoc x) (x::acc) u
-    | t -> acc,t
+      when print_int i;let s = (Utilitaires.string_of_const i sg) in (Utilitaires.is_binder s sg)&&(s=binder) -> print_string x;
+	unfold_binder binder sg (Utilitaires.add_assoc ind_assoc x) (x::acc) u
+    | t -> acc,ind_assoc,t
 	
   let rec is_atomic_type = function
     | Lambda.Atom _ -> true
@@ -151,11 +168,16 @@ struct
 	if verbose
 	then
 	  print_string ("Atom "^(string_of_int i)^"\n");
-	Sign.string_of_atom i sg
+	Utilitaires.string_of_atom i sg
+    | Lambda.DAtom i ->
+	if verbose
+	then
+	  print_string ("DAtom "^(string_of_int i)^"\n");
+	Utilitaires.string_of_atom i sg
 (* Added by Sylvain : terms parameter are no more in the atomic type type *)
 (*	(match terms with
              [] -> 
-	       let v = Sign.string_of_atom i sg in
+	       let v = Utilitaires.string_of_atom i sg in
 	       v
            | _  -> Printf.sprintf "%i %s" i (Utils.string_of_list " " (fun x -> Printf.sprintf "(%s)" (term_to_string x ind_assoc sg )) terms)) *)
     | Lambda.LFun (t1,t2) -> 
@@ -171,7 +193,20 @@ struct
 	     (fun x -> if is_atomic_type x then type_def_to_string ind_assoc x sg  else Printf.sprintf "(%s)" (type_def_to_string ind_assoc x sg ))
 	     (List.rev arrows))
 	  u_string
-    | _ -> failwith "Not yet implemented"
+    | Lambda.Fun (t1,t2) -> 
+	if verbose
+	then
+	  print_string "Non Linear\n";
+	let arrows,u = unfold_linear_arrow [t1] t2 in
+	let u_string = if (is_atomic_type u)||(is_arrow u) then type_def_to_string ind_assoc u sg  else Printf.sprintf "(%s)" (type_def_to_string ind_assoc u sg ) in
+	Printf.sprintf
+	  "%s => %s"
+	  (Utils.string_of_list
+	     " => "
+	     (fun x -> if is_atomic_type x then type_def_to_string ind_assoc x sg  else Printf.sprintf "(%s)" (type_def_to_string ind_assoc x sg ))
+	     (List.rev arrows))
+	  u_string
+    | _ -> failwith "Not yet implemented 2"
 
   and unfold_linear_arrow acc = function
     | Lambda.LFun (t1,t2) -> unfold_linear_arrow (t1::acc) t2
@@ -187,7 +222,7 @@ struct
 	    | t -> acc,t *)
 	
   let entry_to_string sg = function
-    | Sign.Type_decl (id,_,k) ->     
+    | Utilitaires.Type_decl (id,_,k) ->     
 	if verbose
 	then
 	  print_string ("Type_decl "^id^"\n");
@@ -198,12 +233,12 @@ struct
 	  (match types 
 	   with [] -> Printf.sprintf "\t%s: type;" id
 	     | _  -> Printf.sprintf "\t%s: (%s)type;" id (Utils.string_of_list "," (fun s -> type_def_to_string [] s sg) types))
-    | Sign.Type_def (id,_,value) ->  
+    | Utilitaires.Type_def (id,_,value) ->  
 	if verbose
 	then
 	  print_string "Type_def\n";
 	Printf.sprintf "\t%s = %s: type;" id (type_def_to_string [] value sg)
-    | Sign.Term_decl (id,_,tk,ty) ->
+    | Utilitaires.Term_decl (id,_,tk,ty) ->
 	if verbose
 	then
 	  print_string ("Term_decl "^id^"\n");
@@ -214,7 +249,7 @@ struct
 	    | Abstract_syntax.Prefix -> "prefix "
 	    | Abstract_syntax.Binder -> "binder "in
 	  Printf.sprintf "\t%s%s: %s;" t id (type_def_to_string [] ty sg)
-    | Sign.Term_def (id,_,tk,value,type_def) -> 
+    | Utilitaires.Term_def (id,_,tk,value,type_def) -> 
 	if verbose
 	then
 	  print_string ("Term_def "^id^"\n");
@@ -246,8 +281,8 @@ struct
 
 
   let to_string sg =
-    let trie = Sign.get_trie sg 
-    and (name,_) = Sign.name sg in
+    let trie = Utilitaires.get_trie sg 
+    and (name,_) = Utilitaires.name sg in
       Printf.sprintf
 	"signature %s = \n%s\nend"
 	name
@@ -287,22 +322,26 @@ and display_term sg = function
   | Abstract_syntax.Var(s,_) -> print_string s
   | Abstract_syntax.Const(s,_) -> print_string s
   | Abstract_syntax.LAbs(s,t,_) -> 
-      print_string "(lambda ";print_string s;print_string ". "; display_term sg t;
+      print_string "(lambda° ";print_string s;print_string ". "; display_term sg t;
       print_string ")"
   | Abstract_syntax.App(t1,t2,_) -> display_term sg t1;print_string " ";display_term sg t2
-  | Abstract_syntax.Abs _ -> failwith "Not yet implemented"
+  | Abstract_syntax.Abs (s,t,_) ->       
+      print_string "(lambda ";print_string s;
+      print_string ". "; display_term sg t;
+      print_string ")"
+
 (* display a term well typed *)
   and display_wfterm sg = function
     | Lambda.Var(i) -> print_string ("("^(string_of_int i)^")");
     | Lambda.LVar(i) -> print_string ("("^(string_of_int i)^")");
     | Lambda.Const(i) -> print_string ("("^(string_of_int i)^")");
     | Lambda.DConst(i) -> print_string ("("^(string_of_int i)^")");
-(*       print_string (Sign.string_of_const i sg) *)
+(*       print_string (Utilitaires.string_of_const i sg) *)
     | Lambda.LAbs(s,t) -> 
 	print_string "(lambda ";print_string s;print_string ". "; display_wfterm sg t;
 	print_string ")"
     | Lambda.App(t1,t2) -> display_wfterm sg t1;print_string " ";display_wfterm sg t2
-    | _ -> failwith "Not yet implemented"
+    | _ -> failwith "Not yet implemented 4"
 	  
 (* display a type before typechecking *)
 and display_tdef sg = function
@@ -310,17 +349,24 @@ and display_tdef sg = function
   | Abstract_syntax.Linear_arrow(td1,td2,_) ->
       print_string "(";display_tdef sg td1;
       print_string " -> ";display_tdef sg td2;print_string ")";
-  | _ -> failwith "Not yet implemented"
+  | Abstract_syntax.Arrow(typ1,typ2,_) ->      
+      print_string "(";display_tdef sg typ1;
+      print_string " => ";display_tdef sg typ2;print_string ")";
+
 
 and display_typ_tdef sg = function
   | Lambda.Atom i -> 
-      (try print_string ("Atom("^(Sign.string_of_atom i sg)^") ");
-(* 	print_string (Sign.string_of_atom i sg) *)
+      (try print_string ("Atom("^(Utilitaires.string_of_atom i sg)^") ");
+(* 	print_string (Utilitaires.string_of_atom i sg) *)
+       with _ -> print_int i)
+  | Lambda.DAtom i -> 
+      (try print_string ("DAtom("^(Utilitaires.string_of_atom i sg)^") ");
+(* 	print_string (Utilitaires.string_of_atom i sg) *)
        with _ -> print_int i)
   | Lambda.LFun(td1,td2) ->
       print_string "(";display_typ_tdef sg td1;
       print_string " -> ";display_typ_tdef sg td2;print_string ")"
-  | _ -> failwith "Not yet implemented"
+  | _ -> failwith "Not yet implemented 6"
 	
 (* display a list of variables associated with there de Bruijn index *)
   and display_index_assoc = function
@@ -333,27 +379,27 @@ and display_typ_tdef sg = function
 
 (* display a signature *)
   and display_signature sg =
-    let size = Sign.size sg in
+    let size = Utilitaires.size sg in
     let rec display_one i =
       match i with
 	0 -> print_newline()
       | _ ->  
 	  try
-	    let entry = Sign.lookup i sg in
+	    let entry = Utilitaires.lookup i sg in
 	    display_entry entry;
 	    print_newline();
 	    display_one (i-1)
 	  with Not_found -> raise (Failure "lookup Not_found")
     and display_entry = function 
-      | Sign.Type_decl(s, i, k) ->
+      | Utilitaires.Type_decl(s, i, k) ->
 	  print_string ("Type_decl("^s^(string_of_int i))
-      | Sign.Type_def(s, i, tdef) ->
+      | Utilitaires.Type_def(s, i, tdef) ->
 	  print_string ("Type_def("^s^(string_of_int i)^" : ");
 	  display_typ_tdef sg tdef
-      | Sign.Term_decl(s, i, tk, tdef) ->
+      | Utilitaires.Term_decl(s, i, tk, tdef) ->
 	  print_string ("Term_decl("^s^(string_of_int i)^" : ");
 	  display_typ_tdef sg tdef
-      | Sign.Term_def(s, i, tk, t, tdef) ->
+      | Utilitaires.Term_def(s, i, tk, t, tdef) ->
 	  print_string ("Term_def("^s^(string_of_int i)^" = ");
 	  display_wfterm sg t;
 	  print_string " : ";

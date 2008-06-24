@@ -41,5 +41,5 @@ parser.ml : parser.dyp
 	dypgen.opt --noemit-token-type $<
 
 lexer.ml : lexer.mll
-	ocamllex.opt $<
+	ocamllex $<
 

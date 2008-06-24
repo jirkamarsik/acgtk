@@ -5,14 +5,14 @@ open Table
 open Abstract_syntax
 open Error
 open Lambda
-open Sign
+open Utilitaires
 open Display.Display
 exception Typing_error of string
 exception Not_yet_implemented of string
       
 (* module Table = Make_table (struct let b = 10 end) *)
 
-let verbose = false
+let verbose = true
  
 type symbol = string 
       
@@ -29,6 +29,11 @@ let rec abstr_synt_term_to_string sg = function
   | Abstract_syntax.Const(s,_) -> s
   | Abstract_syntax.LAbs(s,t,_) ->
       Printf.sprintf
+	"(lambda° %s. %s)"
+	s
+	( abstr_synt_term_to_string sg t)
+  | Abstract_syntax.Abs(s,t,_) ->
+      Printf.sprintf
 	"(lambda %s. %s)"
 	s
 	( abstr_synt_term_to_string sg t)
@@ -37,8 +42,6 @@ let rec abstr_synt_term_to_string sg = function
 	"%s %s"
 	(abstr_synt_term_to_string sg t1)
 	(abstr_synt_term_to_string sg t2)
-  | _ -> failwith "Not yet implemented"
-
 
 (*let type_def_to_string _ _ _ = "La fonction a disparue. Elle est remplacée par celle-ci pour que cela compile quand même"
 
@@ -93,6 +96,9 @@ and eq_typ t1 t2 sg =
       then (display_typ_tdef sg t1;print_newline();display_typ_tdef sg t2
        );*)
       (s = sbis)(* && (tl = tlbis)*)
+  | (Lambda.DAtom s, typ) |  (typ, Lambda.DAtom s) ->
+      let s1 = Utilitaires.get_type_def s sg in
+      eq_typ s1 typ sg
   | (Lambda.LFun(td1,td2),Lambda.LFun(td1bis,td2bis)) -> 
       (eq_typ td1 td1bis sg) && (eq_typ td2 td2bis sg)
   | _ -> (* display_typ_tdef sg t1;print_newline();display_typ_tdef sg t2; *)
@@ -102,39 +108,55 @@ and eq_typ t1 t2 sg =
 (* typecheck a definition or a declaration of a type or a term *)
 and typecheck_entry sg = function 
   | Abstract_syntax.Type_decl(s,loc,((Abstract_syntax.K tdefs) as k)) -> 
+      if (verbose)
+      then(
+	print_string ("Type_decl("^s^")\n");
+	); 
       let new_kd = 
 	typecheck_kind sg tdefs in
       let lambda_kind = List.fold_right (fun t k -> Lambda.Depend (t,k))  new_kd Lambda.Type in
-(*      let new_sg = Sign.insert_type_decl s (Lambda.K new_kd) sg in*)
-      let new_sg = Sign.insert_type_decl s lambda_kind sg in
+(*      let new_sg = Utilitaires.insert_type_decl s (Lambda.K new_kd) sg in*)
+      let new_sg = Utilitaires.insert_type_decl s lambda_kind sg in
       new_sg
 
   | Abstract_syntax.Type_def(s,loc,tdef,((Abstract_syntax.K tdefs) as k)) -> 
-(*      if (verbose)
+      if (verbose)
       then(
-	print_string ("Type_def("^s^" : ");
+	print_string ("Type_def("^s^" = ");
 	display_tdef sg tdef;
-	print_string ")\n"); *)
+	print_string ")\n"); 
       let new_kd = 
 	typecheck_kind sg tdefs in
       let new_tdef = 
 	typecheck_type sg tdef in
-      let new_sg = Sign.insert_type_def s new_tdef sg in
+      let new_sg = Utilitaires.insert_type_def s new_tdef sg in
       new_sg
 
   | Abstract_syntax.Term_decl(s,tk,loc,typ) -> 
+      if (verbose)
+      then(
+	print_string ("Term_decl("^s^" : ");
+	display_tdef sg typ;
+	print_string ")\n"); 
       let new_td = 
 	typecheck_type sg typ in
-      let new_sg = Sign.insert_term_decl s tk new_td sg in
+      let new_sg = Utilitaires.insert_term_decl s tk new_td sg in
       new_sg
 
   | Abstract_syntax.Term_def(s,tk,loc,t,typ) -> 
+      if (verbose)
+      then(
+	print_string ("Term_def("^s^" = ");
+	display_term sg t;
+	print_string " : ";
+	display_tdef sg typ;
+	print_string ")\n"); 
       let new_td = 
 	typecheck_type sg typ 
 	  in 
       let (wfterm,_,_(*new_sg*)) = typecheck_term t new_td [] sg [] in
       let new2_sg = 
-	Sign.insert_term_def s tk wfterm new_td (*new_*)sg in
+	Utilitaires.insert_term_def s tk wfterm new_td (*new_*)sg in
       new2_sg
 	    
 (* typecheck a kind *)
@@ -152,34 +174,36 @@ and typecheck_kind sg = function
 (* typecheck a type *)      	
 and typecheck_type sg = function
   | Abstract_syntax.Type_atom (s,loc,[]) -> 
-      (** WF types : type constant *)
       (try 
-	let (i,type_s) = Sign.get_atom sg s
-	in 
-	if type_s = Lambda.Type (*Lambda.K []*)
-	then 
-	  Lambda.Atom i
-	else  type_error (Not_well_kinded_type s) loc
-      with Not_found -> 
+	match Utilitaires.get_atom sg s with
+	  (i,true) ->
+	      Lambda.Atom i
+	| (i,false) ->
+	    Lambda.DAtom i
+      with Not_found -> print_string "1\n";
 	type_error (Not_defined_var s) loc)
   | Abstract_syntax.Linear_arrow(tdef1,tdef2,_) -> 
-      (** WF types : linear function *)
             let new_td1 = 
 	      typecheck_type sg tdef1 in
             let new_td2 = 
 	     typecheck_type sg tdef2 in
 	     Lambda.LFun(new_td1,new_td2)
-
+  | Abstract_syntax.Arrow(tdef1,tdef2,_) -> 
+            let new_td1 = 
+	      typecheck_type sg tdef1 in
+            let new_td2 = 
+	      typecheck_type sg tdef2 in
+	    Lambda.Fun(new_td1,new_td2)
   | _ -> raise(Not_yet_implemented "typecheck_type")
+
 (* typecheck a term *)
 and typecheck_term term wftype ind_assoc sg lvar_list = 
   match term with
   | Abstract_syntax.Var(s,loc) ->
       if (verbose)
       then(print_string ("\n\n\tcheck Var "^s^"\n"););
-      (** WT terms : variable *)
       (try 
-	let (_,_,type_s,_) = Sign.get_const sg s
+	let (_,_,type_s,_) = Utilitaires.get_const sg s
 	in 
 	if eq_typ type_s wftype sg
 	then 
@@ -188,77 +212,62 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	    then
 	      (* x is linear *)
 	      try
-		let s_index = Sign.get_ind ind_assoc s
+		let s_index = Utilitaires.get_ind ind_assoc s
 		in
 		let wfterm = Lambda.LVar s_index in
 		if verbose
 		then print_string "remove 1\n";
                 (* x is linear and used once *)
-		let new_ind_assoc =
-		  List.remove_assoc s ind_assoc in
+		let new_ind_assoc = List.remove_assoc s ind_assoc in
 		(wfterm,new_ind_assoc,sg)
 	      with Not_found -> 
 		print_string "premier\n";
-		type_error (Not_linear_LAbs s) loc
+		type_error (Non_linear_var s) loc
 	    else 
 	      (* x is non linear *)
 	      try
-		let s_index = Sign.get_ind ind_assoc s
-		in
+		let s_index = Utilitaires.get_ind ind_assoc s in
 		let wfterm = Lambda.Var s_index in
 		(wfterm,ind_assoc,sg)
-	      with Not_found -> 
+	      with Not_found -> print_string "2\n";
 		type_error (Not_defined_var s) loc
 	   )
 	else 
 	  (if (verbose)
 	  then (print_string "erreur 1"; );
 	   let new_ind_assoc =
-	     Sign.cut_assoc ind_assoc s in
+	     Utilitaires.cut_assoc ind_assoc s in
 	   type_error
 	     (Not_well_typed_term_plus(s, 
 				       type_def_to_string new_ind_assoc type_s sg,
 				       type_def_to_string new_ind_assoc wftype sg)) 
 	     loc)
-      with Not_found -> 
+      with Not_found -> print_string "3\n";
 	type_error (Not_defined_var s) loc)
 	
   | Abstract_syntax.Const(s,loc) ->
       if (verbose)
       then(print_string ("\n\n\tcheck Const "^s^"\n");
 	 );
-      (** WT terms : constant *)
       (try 
-	let (s_index,_,type_s,is_decl) = Sign.get_const sg s in
-	if (verbose)
-	then(
-	 );
+	let (s_index,_,type_s,is_decl) = Utilitaires.get_const sg s in
 	if eq_typ type_s wftype sg
 	then 
-	  (
-	   let wfterm = 
-	     if is_decl
-	     then
-	       Lambda.Const(s_index)
-	     else
-	       Lambda.DConst(s_index)
-	   in
-	   (wfterm,ind_assoc,sg))
+	  (let wfterm = 
+	    if is_decl
+	    then
+	      Lambda.Const(s_index)
+	    else
+	      Lambda.DConst(s_index)
+	  in
+	  (wfterm,ind_assoc,sg))
 	else 
-(*	  (if (verbose)
-	  then(
-	    print_string ("erreur 2 : "^s^" : "); 
-	    display_typ_tdef sg type_s;
-	    print_newline();
-	    display_typ_tdef sg wftype;
-	    print_newline();
-	   ); *)
-	   type_error
-	     (Not_well_typed_term_plus(s,
-				       type_def_to_string ind_assoc type_s sg,
-				       type_def_to_string ind_assoc wftype sg))
-	     loc
-      with Not_found -> 
+	  type_error
+	    (Not_well_typed_term_plus(s,
+				      type_def_to_string ind_assoc type_s sg,
+				      type_def_to_string ind_assoc wftype sg))
+	    loc
+      with Not_found -> print_string "4\n";
 	type_error (Not_defined_var s) loc)
 
   | Abstract_syntax.LAbs(s,t,loc) -> 
@@ -273,27 +282,30 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 (* 	print_newline(); *));
       (match wftype with
       | Lambda.Atom styp -> 
- 	  print_string "erreur 3"; 
+	  print_string "erreur 3"; 
 	  type_error(Not_well_typed_term(
 		     (abstr_synt_term_to_string sg term),
 		     ("'a -> 'b"))) loc
+      | Lambda.DAtom styp -> 
+	  let ty = Utilitaires.get_type_def styp sg in
+	  typecheck_term term ty ind_assoc sg lvar_list
       | Lambda.LFun(tdef1,tdef2) -> 
 	  if (verbose)
 	  then(
 (* 	    print_string "\t\tAFFICHE tdef1 LABS\n"; *)
 (* 	    display_typ_tdef sg tdef1; *)
 	   );
-	  let new_ind_assoc = Sign.add_assoc ind_assoc s in
+	  let new_ind_assoc = Utilitaires.add_assoc ind_assoc s in
 
 	  let new_sg =
-	    Sign.insert_var s Abstract_syntax.Default tdef1 sg 
+	    Utilitaires.insert_var s Abstract_syntax.Default tdef1 sg 
 	  in
 	  if (verbose)
 	  then(
 (* 	    print_string "\t\tAFFICHE NEW_SG\n"; *)
-(* 	    Sign.display_assoc ind_assoc; *)
+(* 	    Utilitaires.display_assoc ind_assoc; *)
 (*  	    print_string "appel typecheck_term 2\n";  *)
-(* 	    let (_,_,type_s2) = Sign.get_const new_sg s in *)
+(* 	    let (_,_,type_s2) = Utilitaires.get_const new_sg s in *)
 (* 	    print_string (s^" index : "); *)
 (* 	    print_string " : "; *)
 (* 	    display_typ_tdef new_sg type_s2; *)
@@ -303,39 +315,86 @@ and typecheck_term term wftype ind_assoc sg lvar_list =
 	    typecheck_term t tdef2 new_ind_assoc new_sg (s::lvar_list)
 	  in      
 	  (Lambda.LAbs(s,wfterm2),ind_assoc,sg)
-      | _ -> failwith "Not yet implemented"
+      | Lambda.Fun(tdef1,tdef2) -> type_error (Linear_var s) loc
+      | _ -> raise (Not_yet_implemented "Typechecker.typecheck_term cas LAbs. type atomique")
+      )
+  | Abstract_syntax.Abs(s,t,loc) -> 
+      if (verbose)
+      then(print_string "check LAbs\n";);
+      if (verbose)
+      then(
+(* 	print_string "LABS : lambda "; *)
+(* 	print_string s; *)
+(* 	print_string ". "; *)
+(* 	display_term sg t; *)
+(* 	print_newline(); *));
+      (match wftype with
+      | Lambda.Atom styp -> 
+	  print_string "erreur 3"; 
+	  type_error(Not_well_typed_term(
+		     (abstr_synt_term_to_string sg term),
+		     ("'a -> 'b"))) loc
+      | Lambda.DAtom styp -> 
+	  let ty = Utilitaires.get_type_def styp sg in
+	  typecheck_term term ty ind_assoc sg lvar_list
+      | Lambda.Fun(tdef1,tdef2) -> 
+	  let new_ind_assoc = Utilitaires.add_assoc ind_assoc s in
+
+	  let new_sg =
+	    Utilitaires.insert_var s Abstract_syntax.Default tdef1 sg 
+	  in
+	  let (wfterm2,_,new_sg2) = 
+	    typecheck_term t tdef2 new_ind_assoc new_sg (s::lvar_list)
+	  in      
+	  (Lambda.Abs(s,wfterm2),ind_assoc,sg)
+      | Lambda.LFun(tdef1,tdef2) -> type_error (Non_linear_var s) loc
+      | _ -> raise (Not_yet_implemented "Typechecker.typecheck_term cas LAbs. type atomique")
       )
 
   | Abstract_syntax.App(t1,t2,loc) ->
-(*      if (verbose)
+      if (verbose)
       then(print_string "check App\n";
 	display_term sg t1;
 	print_newline();
 	display_term sg t2;
-	print_newline();); *)
-      let (type_t2,wfterm2,ind_assoc2) = 
-	typeinf_term t2 None ind_assoc sg lvar_list
-      in 
-      if verbose 
-      then 	   print_string "\nappel typecheck_term 3\n";  
-      let new_type = (Lambda.LFun(type_t2,wftype)) in
-(*      if verbose
-      then (
-	display_typ_tdef sg new_type;);*)
+	print_newline();); 
+
+      let (type_t1,wfterm1,_)=
+	typeinf_term t1 None ind_assoc sg lvar_list
+      in
+      let (wfterm2,_,sg) =
+	(match type_t1 with
+	  Lambda.LFun(typ1,typ2) -> 
+	    typecheck_term t2 typ1 ind_assoc sg lvar_list
+	| _ -> raise (Not_yet_implemented "Typechecker.typecheck_term cas App match type_t1")
+	)
+      in
+      let wfterm_app = Lambda.App(wfterm1,wfterm2) in
+      (wfterm_app,ind_assoc,sg)
+(*       let (type_t2,wfterm2,ind_assoc2) =  *)
+(* 	typeinf_term t2 None ind_assoc sg lvar_list *)
+(*       in  *)
+(*       if verbose  *)
+(*       then 	   print_string "\nappel typecheck_term 3\n";   *)
+(*       let new_type = (Lambda.LFun(type_t2,wftype)) in *)
+(* (\*      if verbose *)
+(*       then ( *)
+(* 	display_typ_tdef sg new_type;);*\) *)
       
-      let (wfterm1,_,new_sg) = 
-	typecheck_term t1 new_type ind_assoc
-	  sg lvar_list
-      in
-     let wfterm_app =
-	Lambda.App(wfterm1,wfterm2)
-      in
-      if (verbose)
-      then(
-(* 	    print_string "\n RES = "; *)
-       );
-      (wfterm_app,ind_assoc,(*new_*)sg)
-  | _ -> failwith "Not yet implemented"
+(*       let (wfterm1,_,new_sg) =  *)
+(* 	typecheck_term t1 new_type ind_assoc *)
+(* 	  sg lvar_list *)
+(*       in *)
+(*      let wfterm_app = *)
+(* 	Lambda.App(wfterm1,wfterm2) *)
+(*       in *)
+(*       if (verbose) *)
+(*       then( *)
+(* (\* 	    print_string "\n RES = "; *\) *)
+(*        ); *)
+(*       (wfterm_app,ind_assoc,(\*new_*\)sg) *)
+
+(*   | _ -> raise (Not_yet_implemented "Typechecker.typecheck_term match principal") *)
 	
 and typeinf_term term typelabs ind_assoc sg lvar_list =
   match term with
@@ -348,7 +407,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 (* 	print_newline(); *)
        );
       (try 
-	let (_,_,type_s,_) = Sign.get_const sg s in
+	let (_,_,type_s,_) = Utilitaires.get_const sg s in
 	(match typelabs,type_s with
 	  None,_ -> ()
 	| Some type_arg,Lambda.LFun(type_s1,type_s2) -> 
@@ -356,7 +415,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	    if not (eq_typ type_s1 type_arg sg)
 	    then 
 	      let new_ind_assoc =
-		Sign.cut_assoc ind_assoc s in
+		Utilitaires.cut_assoc ind_assoc s in
 	      type_error
 		(Not_well_typed_term_plus(s, 
 					  type_def_to_string new_ind_assoc type_s sg,
@@ -368,7 +427,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	then
 	  (* x is linear *)
 	  try
-	    let s_index = Sign.get_ind ind_assoc s
+	    let s_index = Utilitaires.get_ind ind_assoc s
 	    in
 	    let wfterm = Lambda.LVar s_index in
 	    if verbose
@@ -378,24 +437,24 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	    (type_s,wfterm,new_ind_assoc)
 	  with Not_found ->
 	    print_string "deuxieme\n";
-	    type_error (Not_linear_LAbs s) loc
+	    type_error (Non_linear_var s) loc
 	else
 	  (* x is non linear *)
 	  try
-	    let s_index = Sign.get_ind ind_assoc s
+	    let s_index = Utilitaires.get_ind ind_assoc s
 	    in
 	    let wfterm = Lambda.Var s_index in
 	    (type_s,wfterm,ind_assoc)
-	  with Not_found ->
+	  with Not_found ->print_string "5\n";
 	    type_error (Not_defined_var s) loc
-      with Not_found -> 
+      with Not_found -> print_string "6\n";
 	type_error (Not_defined_var s) loc)
   | Abstract_syntax.Const(s,loc) ->
       if (verbose)
       then(
       print_string ("Const : "^s^" "););
       (try 
-	let (i,_,type_s,is_decl) = Sign.get_const sg s in
+	let (i,_,type_s,is_decl) = Utilitaires.get_const sg s in
 	(match typelabs,type_s with
 	  None,_ -> ()
 	| Some type_arg,Lambda.LFun(type_s1,type_s2) ->
@@ -425,10 +484,11 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	then (
 	);
 	(type_s,wfterm,ind_assoc)
-      with Not_found ->
+      with Not_found ->print_string "7\n";
 	type_error (Not_defined_const s) loc)
 
   | Abstract_syntax.LAbs(s,t,loc) ->  
+      display_term sg term;
       raise (Failure "term is supposed to be normalized")
 (*       if (verbose) *)
 (*       then(print_string "inf LAbs\n";); *)
@@ -436,10 +496,10 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 (* 	None ->  *)
 (* 	  let new_sg =  *)
 (* 	    try 	     *)
-(* 	      Sign.insert_var s Abstract_syntax.Default (new_type loc) sg  *)
+(* 	      Utilitaires.insert_var s Abstract_syntax.Default (new_type loc) sg  *)
 (* 	    with _ -> raise (Typing_error "errr") *)
 (* 	  in *)
-(* 	  let new_ind_assoc = Sign.add_assoc ind_assoc s in  *)
+(* 	  let new_ind_assoc = Utilitaires.add_assoc ind_assoc s in  *)
 (* 	  let (type2,wfterm2,ind_assoc2) =  *)
 (* 	    typeinf_term t None new_ind_assoc new_sg (s::lvar_list) *)
 (* 	  in *)
@@ -447,16 +507,16 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 (* 	    Lambda.LAbs(s,wfterm2) *)
 (* 	  in *)
 (* 	  let s_type = *)
-(* 	    (try  let (_,_,tdef,_)= Sign.get_const new_sg s  in tdef *)
+(* 	    (try  let (_,_,tdef,_)= Utilitaires.get_const new_sg s  in tdef *)
 (* 	    with Not_found -> new_type loc) *)
 (* 	  in *)
 (* 	  (Lambda.Linear_arrow(s_type,type2),wfterm_labs,ind_assoc) *)
 (*       | Some s_type ->  *)
 (* 	  let new_sg =  *)
-(* 	    try Sign.insert_var s Abstract_syntax.Default s_type sg  *)
+(* 	    try Utilitaires.insert_var s Abstract_syntax.Default s_type sg  *)
 (* 	    with _ -> raise (Typing_error "errr") *)
 (* 	  in *)
-(* 	  let new_ind_assoc = Sign.add_assoc ind_assoc s in *)
+(* 	  let new_ind_assoc = Utilitaires.add_assoc ind_assoc s in *)
 (* 	  let (type2,wfterm2,ind_assoc2) =  *)
 (* 	    typeinf_term t None new_ind_assoc new_sg (s::lvar_list) in *)
 (* 	  let wfterm_labs = *)
@@ -486,49 +546,56 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 	(*       print_string (term_to_string wfterm1 ind_assoc1 sg); *)
 	(*       print_newline(); *)
 	if (verbose)
-	then (
+	then (print_string "passage infapp\n";
 	);
 	let wfterm_app = Lambda.App(wfterm1,wfterm2) in
       
 	  (match t1_type with
-	    | Lambda.Atom _ -> type_error Other loc
-	    | Lambda.LFun(td1,td2) ->
-		let r2_assoc = 
-		  try (Sign.cut ind_assoc wfterm2) 
+	  | Lambda.Atom styp -> 
+	      print_string "erreur 3"; 
+	      type_error(Not_well_typed_term(
+			 (abstr_synt_term_to_string sg term),
+			 ("'a -> 'b"))) loc
+	  | Lambda.DAtom styp -> 
+	      let ty = Utilitaires.get_type_def styp sg in
+	      typeinf_term term (Some ty) ind_assoc sg lvar_list
+	  | Lambda.LFun(td1,td2) ->
+	      let r2_assoc = 
+		try (Utilitaires.cut ind_assoc wfterm2) 
+		with _ -> ind_assoc in
+	      let r1_assoc = 
+		try (Utilitaires.cut ind_assoc wfterm1)
 		  with _ -> ind_assoc in
-		let r1_assoc = 
-		  try (Sign.cut ind_assoc wfterm1)
-		  with _ -> ind_assoc in
-		  if (verbose)
-		  then(
+	      if (verbose)
+	      then(
 (* 		print_string "AVANT eq_typ 2 : "; *)
 (* 		display_typ_tdef sg td1; *)
-(* 		print_int (Sign.give_level r2); *)
-(* 		Sign.display_assoc r2_assoc; *)
+(* 		print_int (Utilitaires.give_level r2); *)
+(* 		Utilitaires.display_assoc r2_assoc; *)
 (* 		display_typ_tdef sg t2_type;	       *)
-(* 		Sign.display_assoc ind_assoc; *)
+(* 		Utilitaires.display_assoc ind_assoc; *)
 (* 		display_wfterm sg r2; *)
 (* 		display_wfterm sg r1; *)
-(* 		Sign.display_assoc r1_assoc; *)
+(* 		Utilitaires.display_assoc r1_assoc; *)
 (* 		print_newline(); *)
-	   );
-	  if eq_typ td1 t2_type sg
-	  then (
-	    if (verbose)
-	    then (
+	       );
+	      if eq_typ td1 t2_type sg
+	      then (
+		if (verbose)
+		then (
 (* 		  print_string "JUSTE AVANT\n"; *)
 (* 		  display_typ_tdef sg td2; *)
-	      );
-	    (td2,wfterm_app,ind_assoc))
-	  else 
-	    (print_string "\nerreur 4\n"; 
-	     type_error (Not_well_typed_term(
-			 (term_to_string wfterm2 ind_assoc sg),
-			 type_def_to_string (Sign.cut ind_assoc wfterm1) 
-			   t2_type sg))
-	       loc)
-	    | _ -> failwith "Not implemented")
-  | _ -> failwith "Not yet implemented" 
+		 );
+		(td2,wfterm_app,ind_assoc))
+	      else 
+		(print_string "\nerreur 4\n"; 
+		 type_error (Not_well_typed_term(
+			     (term_to_string wfterm2 ind_assoc sg),
+			     type_def_to_string (Utilitaires.cut ind_assoc wfterm1) 
+			       t2_type sg))
+		   loc)
+	  | _ -> raise (Not_yet_implemented "Typechecker.typeinf_term cas App match t1_type"))
+  | _ -> raise (Not_yet_implemented "Typechecker.typecheck_inf cas autre")
 	
 
 (* create a fresh type at the location loc *)
@@ -542,7 +609,7 @@ and typeinf_term term typelabs ind_assoc sg lvar_list =
 (*      
 let typecheck (sig_name,sig_loc,content :string * Abstract_sig.sig_content) = 
   let res = typecheck_sig 
-      (Sign.empty(sig_name,sig_loc))
+      (Utilitaires.empty(sig_name,sig_loc))
       content.Abstract_sig.entries
   in
   print_string "\nTyping done.\n";
@@ -551,7 +618,7 @@ let typecheck (sig_name,sig_loc,content :string * Abstract_sig.sig_content) =
 *)
 let typecheck (sig_name,sig_loc,sg) =
   let res = typecheck_sig 
-    (Sign.empty(sig_name,sig_loc))
+    (Utilitaires.empty(sig_name,sig_loc))
     sg
   in
     print_string "\nTyping done.\n";

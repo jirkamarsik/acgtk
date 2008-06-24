@@ -168,7 +168,7 @@ struct
 	    parameter is its value *)
 
 
-  module Table = Make_table (struct let b = 10 end)
+  module Table : TABLE = Make_table (struct let b = 10 end)
 
 
   type sig_content = 
@@ -350,38 +350,40 @@ end
 
 and Signature :     sig
       
-      val create : string * Abstract_typ.sig_content -> Abstract_typ.t
-       
-    val size : Abstract_typ.t -> int
+  val create : string * Abstract_typ.sig_content -> Abstract_typ.t
+      
+  val size : Abstract_typ.t -> int
+      
+  val insert_type_dcl : string -> Abstract_typ.kind ->
+    Abstract_typ.t -> Abstract_typ.t
+	
+  val insert_term_dcl : string -> Abstract_sig.term_kind ->
+    Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
 
-    val insert_type_dcl : string -> Abstract_typ.kind ->
-      Abstract_typ.t -> Abstract_typ.t
-
-    val insert_term_dcl : string -> Abstract_sig.term_kind ->
+  val insert_var : string -> Abstract_sig.term_kind ->
+    Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
+	
+  val insert_term_def : string -> Abstract_sig.term_kind ->
+    Abstract_typ.term ->
       Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
-
-    val insert_var : string -> Abstract_sig.term_kind ->
-      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
-
-    val insert_term_def : string -> Abstract_sig.term_kind ->
-      Abstract_typ.term ->
-      Abstract_typ.type_def -> Abstract_typ.t -> Abstract_typ.t
-
-    val lookup : int -> Abstract_typ.t -> Abstract_typ.sig_entry
-
-    val get_const : Abstract_typ.t -> string -> int *
-	Abstract_sig.term_kind * Abstract_typ.type_def
-
-    val get_const_ind : Abstract_typ.t -> string -> int 
-
-    val get_atom : Abstract_typ.t -> string -> int *
-        Abstract_typ.kind
 	  
-    val get_atom_ind : Abstract_typ.t -> string -> int
-	  
-    val string_of_const : int -> Abstract_typ.t -> string 
+  val lookup : int -> Abstract_typ.t -> Abstract_typ.sig_entry
+      
+  val get_const : Abstract_typ.t -> string -> int *
+      Abstract_sig.term_kind * Abstract_typ.type_def
+      
+  val get_const_ind : Abstract_typ.t -> string -> int 
+      
+  val get_atom : Abstract_typ.t -> string -> int *
+      Abstract_typ.kind
+      
+  val get_atom_ind : Abstract_typ.t -> string -> int
+      
+  val string_of_const : int -> Abstract_typ.t -> string 
+      
+  val string_of_atom : int -> Abstract_typ.t -> string 
 
-    val string_of_atom : int -> Abstract_typ.t -> string 
+  val get_size : Abstract_typ.t -> int
 
 (*
     let kind_of_atom i (Signature (_, tb)) =
@@ -511,7 +513,8 @@ open Abstract_typ
       with
 	| Tries.Not_found -> false
 
-	    
+    let get_size (Signature (_,s,_,_,_)) =
+      s
 
   end
 

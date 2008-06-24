@@ -6,16 +6,16 @@ signature essai =
 (*	t : a -> a -> a    ; 
 	c = lambda x. t x x   : a -> a;  *)
 
-(* Problème avec les types définis. c devrait être typabe *)
+(* OKProblème avec les types définis. c devrait être typabe *)
 (*	c = lambda x.x : string; *)
 
 
 (* Problème lorsqu'on définit une constante de même nom qu'un type :
 le type est perdu. De plus, message étrange : « Var "a" is not
 defined » *)
-(*	b:type;
+	b:type;
 	a:b-> a;
-	c = lambda x. a x : b -> a; *)
+	c = lambda x. a x : b -> a; 
 
 
 (* À améliorer :  le message d'erreur : 

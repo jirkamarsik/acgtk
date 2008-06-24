@@ -21,7 +21,7 @@ signature toto =
 	z =  lambda z.All x y . z+ x + y : a -> a ;
 	nonlinear = a => a : type;
 	truc = Lambda x. x: a => a;
-	binder Ex : (a => a) -> a;
+	binder Ex : (a -> a) -> a;
 	bidule = Ex x y . - (x +x) : a; 
 	c_n_l : a => a;
 (*	example = lambda x.c_n_l (t1 x):a ->a;*)
