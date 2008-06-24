@@ -1,0 +1,37 @@
+signature derivation_trees =
+	Na, N, VPa, S : type;
+	C_chien,C_chat:Na->N;
+	C_dort:VPa -> N -> S;
+	C_chasse:VPa -> N -> N -> S;
+	C_tout,C_un:Na;
+	C_paisiblement : VPa -> VPa ;
+	I_vp : VPa;
+	I_n : Na;
+end
+
+signature derived_trees =
+	tree:type;
+	N1,VP1 : tree -> tree;
+	N2,S2,VP2:tree -> tree -> tree;
+	tout,chien,chasse,un,chat,dort,paisiblement:tree;
+	n = lambda n . lambda a.a(N1 n) : tree -> (tree -> tree) -> tree;
+	iv = lambda v . lambda a np0 .S2 np0 (a (VP1 v)) : tree -> (tree -> tree) -> tree -> tree ;
+	tv = lambda v . lambda a np0 np1 .S2 np0 (a (VP2 v np1)) : tree -> (tree -> tree) -> tree -> tree -> tree ;
+	det = lambda d . lambda n . N2 d n : tree -> (tree -> tree) ;
+	adv = lambda adv . lambda a v . a (VP2 v adv) : tree -> (tree -> tree) -> (tree -> tree) ;
+end
+
+lexicon tag_syntax (derivation_trees) : derived_trees =
+	N, S := tree;
+	Na,VPa := tree -> tree ;
+(*	C_chien := lambda a : a(N1 chien);*)
+	C_chien := n chien;
+(*	C_chat := lambda a : a(N1 chat);*)
+	C_chat := n chat;
+	C_chasse :=  tv chasse;
+	C_dort := iv dort;
+	C_tout := det tout;
+	C_un := det un;
+	C_paisiblement := adv paisiblement;
+	I_n,I_vp := lambda x.x;
+end
