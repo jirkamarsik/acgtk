@@ -1,37 +1,122 @@
 signature derivation_trees =
-	Na, N, VPa, S : type;
-	C_chien,C_chat:Na->N;
-	C_dort:VPa -> N -> S;
-	C_chasse:VPa -> N -> N -> S;
-	C_tout,C_un:Na;
-	C_paisiblement : VPa -> VPa ;
+	Sa,Na, Na_d, N, VPa, S,WH : type;
+	C_dog,C_cat:Na_d -> Na-> N;
+	C_sleeps:Sa -> VPa -> N -> S;
+	C_chases, C_loves, C_to_love:Sa -> VPa -> N -> N -> S;
+	C_every,C_a:Na_d;
+	C_slowly,C_seems : VPa -> VPa ;
+	C_new,C_big,C_black : Na -> Na;
+	C_claims,C_said : Sa -> VPa -> N -> Sa ;
+	C_john,C_paul,C_mary,C_bill : N ;
+	C_who : WH;
+	C_liked : Sa -> VPa -> WH -> N -> S ;
+	C_does_think : Sa -> VPa -> N -> Sa ;
 	I_vp : VPa;
 	I_n : Na;
+	I_n_d : Na_d;
+	I_s : Sa;
 end
 
 signature derived_trees =
 	tree:type;
-	N1,VP1 : tree -> tree;
+	WH1,N1,VP1 : tree -> tree;
 	N2,S2,VP2:tree -> tree -> tree;
-	tout,chien,chasse,un,chat,dort,paisiblement:tree;
-	n = lambda n . lambda a.a(N1 n) : tree -> (tree -> tree) -> tree;
-	iv = lambda v . lambda a np0 .S2 np0 (a (VP1 v)) : tree -> (tree -> tree) -> tree -> tree ;
-	tv = lambda v . lambda a np0 np1 .S2 np0 (a (VP2 v np1)) : tree -> (tree -> tree) -> tree -> tree -> tree ;
+	every,dog,chases,a,cat,sleeps,slowly,new,big,black,seems,john,mary,bill,paul,
+	claims,loves,to_love,who,said,liked,does,think:tree;
+	n = lambda n . lambda d a.d (a(N1 n)) : tree -> (tree -> tree) -> (tree -> tree) -> tree;
+	iv = lambda v . lambda s a np0 .s (S2 np0 (a (VP1 v))) : tree -> (tree -> tree)  -> (tree -> tree) -> tree -> tree ;
+	tv = lambda v . lambda s a np0 np1 .s (S2 np0 (a (VP2 v np1))) : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree ;
+	ph_arg_v = lambda v . lambda s_root a np0 s_foot .s_root (S2 np0 (a (VP2 v s_foot))) : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree ;
 	det = lambda d . lambda n . N2 d n : tree -> (tree -> tree) ;
 	adv = lambda adv . lambda a v . a (VP2 v adv) : tree -> (tree -> tree) -> (tree -> tree) ;
+	l_adj = lambda adj. lambda a n . a (N2 adj n) : tree -> (tree -> tree) -> (tree -> tree) ;
+	r_adj = lambda adj. lambda a n . a (N2 n adj) : tree -> (tree -> tree) -> (tree -> tree) ;
+	ctrl_v = lambda v. lambda v_root v_foot .v_root (VP2 v v_foot) : tree -> (tree -> tree) -> (tree -> tree) ;
+	np = lambda proper_name . N1 proper_name : tree -> tree;
+	inf_tv = lambda v . lambda s a np0 np1 .S2 np1 (s (S2 np0 (a (VP1 v)))) : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree ;
+	wh_extract_tv = lambda v . lambda s adv wh subj . S2 wh (s (S2 subj (adv (VP1 v)))) : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree;
+end
+
+
+signature semantics =
+	e,t:type;
+
+	dog,cat,sleep : e->t;
+	love,chase:e -> e -> t;
+	j,m,b,p:e;
+
+	infix & : t -> t -> t;	
+	infix > : t -> t -> t;
+	binder All : (e=>t) -> t;
+	binder Ex : (e=>t) -> t;
+
+end
+
+
+lexicon tag_semantics(derivation_trees) : semantics =
+	S := t;
+	N := (e -> t) -> t;
+	Sa := (e -> t) -> (e -> t);
+	Na := (e ->t) -> (e ->t);
+	VPa := t -> t;
+	Na_d := (e ->t) -> (e -> t);
+	WH := (e ->t) -> t;
+
+	C_dog := lambda d a P. d (a (lambda x.dog x)) ;
+	C_cat := lambda x. cat x;
+	C_sleeps := lambda s a S.S(s(lambda x.a(sleep x)));
+	C_chases := lambda s a S O.S(s(lambda x.O(lambda y.a(chase x y))));
+	C_loves := lambda s a S O.S(s(lambda x.O(lambda y.a(love x y))));
+	C_to_love := lambda s a O S.S(s(lambda x.O(lambda y.a(love x y))));
+	C_every := lambda n.lambda P.All x. (n x) > (P x) ;
+	C_a := lambda n.lambda P.Ex x. (n x) & (P x);
+	C_slowly := lambda vp. slowly vpa;
+	C_seems := lambda vp. seem vpa;
+	C_new := lambda a n . a (Lambda x.(new x)&(n x));
+	C_big := lambda a n . a (Lambda x.(big x)&(n x));
+	C_black := lambda a n . a (Lambda x.(black x)&(n x));
+	C_claims := lambda sa a S comp.S(sa(lambda x.a(claim x comp)));
+	C_said := lambda sa  a S comp.S(sa(lambda x.a(say x comp)));
+	C_john := lambda P.P j;
+	C_mary := lambda P.P m;
+	C_paul := lambda P.P p;
+	C_bill := lambda P.P b;
+	C_who := lambda P.WHO P;
+	C_liked := lambda sa a w S.w(lambda y.S(sa(lambda x. a(like x y))));
+	C_does_think := lambda sa a S comp. S(sa(lambda x.s(think x comp)));
+	I_vp := lambda x.x;
+	I_n := lambda x.x;
+	I_n_d := lambda x.x;
+	I_s := lambda x.x;	
 end
 
 lexicon tag_syntax (derivation_trees) : derived_trees =
-	N, S := tree;
-	Na,VPa := tree -> tree ;
-(*	C_chien := lambda a : a(N1 chien);*)
-	C_chien := n chien;
-(*	C_chat := lambda a : a(N1 chat);*)
-	C_chat := n chat;
-	C_chasse :=  tv chasse;
-	C_dort := iv dort;
-	C_tout := det tout;
-	C_un := det un;
-	C_paisiblement := adv paisiblement;
-	I_n,I_vp := lambda x.x;
+	N, S, WH := tree;
+	Sa,Na,VPa,Na_d := tree -> tree ;
+	C_john := np john;
+	C_mary := np mary;
+	C_bill := np bill;
+	C_paul := np paul;
+	C_dog := n dog;
+	C_cat := n cat;
+	C_chases :=  tv chases;
+	C_loves := tv loves ;
+	C_to_love := inf_tv to_love ;
+	C_sleeps := iv sleeps;
+	C_seems := ctrl_v seems;
+	C_claims := ph_arg_v claims;
+	C_every := det every;
+	C_a := det a;
+	C_slowly := adv slowly;
+	C_new := l_adj new;
+	C_big := l_adj big;
+	C_black := l_adj black;
+
+	C_who := WH1 who ;
+	C_liked := wh_extract_tv liked;
+	C_said := ph_arg_v said;
+	C_does_think := lambda s_root a subj s_foot . s_root (S2 does (S2 subj (a (VP2 think s_foot))));
+
+
+	I_n,I_vp,I_n_d,I_s := lambda x.x;
 end
