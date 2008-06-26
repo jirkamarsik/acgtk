@@ -1,0 +1,104 @@
+ 	 	signature syntax =
+	NP,S,DEG:type;
+	JOHN,MARY:NP;
+	LIKE : DEG => NP => NP => S;
+	THE_MOST : DEG;
+	FOCUS : NP => (NP => DEG => S) => DEG => S;
+end
+
+signature semantics =
+	i,o,d:type;
+
+	J,M:i;
+	like : i => i =>o;
+
+	binder All : (i =>o) => o;
+
+	infix > : o => o => o;
+	
+	diff : i => i => o ;
+
+	infix < : d => d => o;
+
+	D : (i=>o) => (i => d); 
+end
+
+
+lexicon more(syntax) : semantics =
+	NP := (i => o ) => o;
+	S := o;
+	DEG := i => (i=>o) =>o;
+
+	JOHN := Lambda P.P J;
+	MARY := Lambda P.P M;
+	LIKE := Lambda d. Lambda O S.S(Lambda x.O(Lambda y.like x y));
+	THE_MOST := Lambda x P.All y. (diff y x) > ((D P y)<(D P x));
+
+	FOCUS := Lambda P Q .Lambda D.Q(Lambda X.P(Lambda y. D y X))D;
+end
+
+ 
+signature syntax2 =
+	NP,S,DEG:type;
+	JOHN,MARY:NP;
+	LIKE : DEG => NP -> NP -> S;
+	THE_MOST : DEG;
+	FOCUS : NP -> (NP -> DEG -> S) -> DEG -> S;
+end
+
+
+
+signature strings =
+	s : type;
+	string=s->s:type;
+	infix + = lambda f g x . f (g x) : string -> string -> string;
+	john,mary,likes,the,most:string;
+	prefix ` : string -> string;
+end
+
+
+lexicon more2(syntax2) : strings =
+	NP, S,DEG := string;
+
+	JOHN := john;
+	MARY := mary;
+	LIKE := Lambda d. lambda O S. S + likes + O + d;
+	THE_MOST := the+ most;
+
+	FOCUS := lambda n P d.P (`n) d;
+end
+
+
+signature semantics2 =
+	i,o,d:type;
+
+	J,M:i;
+	like : i -> i ->o;
+
+	binder All : (i =>o) -> o;
+
+	infix > : o -> o -> o;
+	
+	not_eq : i -> i -> o ;
+
+	infix < : d -> d -> o;
+
+	D : (i=>o) -> (i -> d); 
+
+	dummy : i => (i=>o) =>o;
+end
+
+
+lexicon more3(syntax2) : semantics2 =
+	NP := (i => o ) -> o;
+	S := o;
+	DEG := i => (i=>o) =>o;
+
+	JOHN := lambda P.P J;
+	MARY := lambda P.P M;
+	LIKE := Lambda d. lambda O S.S(Lambda x.O(Lambda y.like x y));
+	THE_MOST := Lambda x P.All y. (not_eq y x) > ((D P y)<(D P x));
+
+	FOCUS := lambda P Q D.Q(lambda X.P(Lambda y. D y X))dummy;
+end
+

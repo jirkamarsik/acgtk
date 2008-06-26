@@ -44,6 +44,8 @@ signature semantics =
 	dog,cat,sleep : e->t;
 	love,chase:e -> e -> t;
 	j,m,b,p:e;
+	slowly : t -> t;
+	seem : (e -> t) -> e -> t;
 
 	infix & : t -> t -> t;	
 	infix > : t -> t -> t;
@@ -58,20 +60,20 @@ lexicon tag_semantics(derivation_trees) : semantics =
 	N := (e -> t) -> t;
 	Sa := (e -> t) -> (e -> t);
 	Na := (e ->t) -> (e ->t);
-	VPa := t -> t;
-	Na_d := (e ->t) -> (e -> t);
+	VPa := (e -> t) -> (e -> t);
+	Na_d := (e ->t) -> (e -> t) -> t;
 	WH := (e ->t) -> t;
 
-	C_dog := lambda d a P. d (a (lambda x.dog x)) ;
-	C_cat := lambda x. cat x;
+	C_dog := lambda d a . d (a (lambda x.dog x)) ;
+	C_cat := lambda d a . d (a (lambda x.cat x)) ;
 	C_sleeps := lambda s a S.S(s(lambda x.a(sleep x)));
 	C_chases := lambda s a S O.S(s(lambda x.O(lambda y.a(chase x y))));
 	C_loves := lambda s a S O.S(s(lambda x.O(lambda y.a(love x y))));
 	C_to_love := lambda s a O S.S(s(lambda x.O(lambda y.a(love x y))));
 	C_every := lambda n.lambda P.All x. (n x) > (P x) ;
 	C_a := lambda n.lambda P.Ex x. (n x) & (P x);
-	C_slowly := lambda vp. slowly vpa;
-	C_seems := lambda vp. seem vpa;
+	C_slowly := lambda vp r. vp (lambda x. slowly (r x));
+	C_seems := lambda vp r.  vp (lambda x. seem r x);
 	C_new := lambda a n . a (Lambda x.(new x)&(n x));
 	C_big := lambda a n . a (Lambda x.(big x)&(n x));
 	C_black := lambda a n . a (Lambda x.(black x)&(n x));
