@@ -1,3 +1,5 @@
 load d ../data/more.acg;
-more2 analyse FOCUS JOHN (lambda x. Lambda d.LIKE d MARY x) THE_MOST : S;
-more2 analyse FOCUS MARY (lambda y .Lambda d.LIKE d y JOHN) THE_MOST : S;
+more analyse FOCUS JOHN (lambda x. Lambda d.LIKE d MARY x) THE_MOST : S;
+more analyse FOCUS MARY (lambda y .Lambda d.LIKE d y JOHN) THE_MOST : S;
+more analyse LIKE THE_MOST MARY JOHN :S;
+

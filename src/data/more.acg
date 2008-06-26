@@ -43,7 +43,7 @@ signature syntax2 =
 	JOHN,MARY:NP;
 	LIKE : DEG => NP -> NP -> S;
 	THE_MOST : DEG;
-	FOCUS : NP -> (NP -> DEG -> S) -> DEG -> S;
+(*	FOCUS : NP -> (NP -> DEG -> S) -> DEG -> S;*)
 end
 
 
@@ -65,7 +65,7 @@ lexicon more2(syntax2) : strings =
 	LIKE := Lambda d. lambda O S. S + likes + O + d;
 	THE_MOST := the+ most;
 
-	FOCUS := lambda n P d.P (`n) d;
+(*	FOCUS := lambda n P d.P (`n) d;*)
 end
 
 
@@ -99,6 +99,6 @@ lexicon more3(syntax2) : semantics2 =
 	LIKE := Lambda d. lambda O S.S(Lambda x.O(Lambda y.like x y));
 	THE_MOST := Lambda x P.All y. (not_eq y x) > ((D P y)<(D P x));
 
-	FOCUS := lambda P Q D.Q(lambda X.P(Lambda y. D y X))dummy;
+(*	FOCUS := lambda P Q D.Q(lambda X.P(Lambda y. D y X))dummy;*)
 end
 
