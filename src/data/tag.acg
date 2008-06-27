@@ -13,7 +13,7 @@ signature derivation_trees =
 	C_does_think : Sa -> VPa -> N -> Sa ;
 	I_vp : VPa;
 	I_n : Na;
-	I_n_d : Na_d;
+(*	I_n_d : Na_d;*)
 	I_s : Sa;
 end
 
@@ -42,10 +42,14 @@ signature semantics =
 	e,t:type;
 
 	dog,cat,sleep : e->t;
-	love,chase:e -> e -> t;
+	love,chase,like:e -> e -> t;
 	j,m,b,p:e;
 	slowly : t -> t;
 	seem : (e -> t) -> e -> t;
+	new,big,black:e ->t;
+	claim,say,think : e -> t -> t;
+
+	WHO : (e -> t) -> t;
 
 	infix & : t -> t -> t;	
 	infix > : t -> t -> t;
@@ -58,18 +62,18 @@ end
 lexicon tag_semantics(derivation_trees) : semantics =
 	S := t;
 	N := (e -> t) -> t;
-	Sa := (e -> t) -> (e -> t);
-	Na := (e ->t) -> (e ->t);
+	Sa := t -> t;
+	Na := (e =>t) -> (e =>t);
 	VPa := (e -> t) -> (e -> t);
-	Na_d := (e ->t) -> (e -> t) -> t;
+	Na_d := (e => t) -> (e -> t) -> t;
 	WH := (e ->t) -> t;
 
-	C_dog := lambda d a . d (a (lambda x.dog x)) ;
-	C_cat := lambda d a . d (a (lambda x.cat x)) ;
-	C_sleeps := lambda s a S.S(s(lambda x.a(sleep x)));
-	C_chases := lambda s a S O.S(s(lambda x.O(lambda y.a(chase x y))));
-	C_loves := lambda s a S O.S(s(lambda x.O(lambda y.a(love x y))));
-	C_to_love := lambda s a O S.S(s(lambda x.O(lambda y.a(love x y))));
+	C_dog := lambda d a . d (a (Lambda x.dog x)) ;
+	C_cat := lambda d a . d (a (Lambda x.cat x)) ;
+	C_sleeps := lambda s a S.s(S(a(lambda x.(sleep x))));
+	C_chases := lambda s a S O.s(S(a(lambda x.O(lambda y.(chase x y)))));
+	C_loves := lambda s a S O.s(S(a(lambda x.O(lambda y.(love x y)))));
+	C_to_love := lambda s a O S.s(S(a(lambda x.O(lambda y.(love x y)))));
 	C_every := lambda n.lambda P.All x. (n x) > (P x) ;
 	C_a := lambda n.lambda P.Ex x. (n x) & (P x);
 	C_slowly := lambda vp r. vp (lambda x. slowly (r x));
@@ -77,18 +81,18 @@ lexicon tag_semantics(derivation_trees) : semantics =
 	C_new := lambda a n . a (Lambda x.(new x)&(n x));
 	C_big := lambda a n . a (Lambda x.(big x)&(n x));
 	C_black := lambda a n . a (Lambda x.(black x)&(n x));
-	C_claims := lambda sa a S comp.S(sa(lambda x.a(claim x comp)));
-	C_said := lambda sa  a S comp.S(sa(lambda x.a(say x comp)));
+	C_claims := lambda sa a S comp. sa (S(a(lambda x.claim x comp)));
+	C_said := lambda sa a S comp. sa (S(a(lambda x.say x comp)));
 	C_john := lambda P.P j;
 	C_mary := lambda P.P m;
 	C_paul := lambda P.P p;
 	C_bill := lambda P.P b;
 	C_who := lambda P.WHO P;
-	C_liked := lambda sa a w S.w(lambda y.S(sa(lambda x. a(like x y))));
-	C_does_think := lambda sa a S comp. S(sa(lambda x.s(think x comp)));
+	C_liked := lambda sa a w S.w(lambda y.sa(S(a(lambda x.(like x y)))));
+	C_does_think := lambda sa a S comp. sa(S(a(lambda x.(think x comp))));
 	I_vp := lambda x.x;
 	I_n := lambda x.x;
-	I_n_d := lambda x.x;
+(*	I_n_d := lambda x.x;*)
 	I_s := lambda x.x;	
 end
 
@@ -120,5 +124,5 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
 	C_does_think := lambda s_root a subj s_foot . s_root (S2 does (S2 subj (a (VP2 think s_foot))));
 
 
-	I_n,I_vp,I_n_d,I_s := lambda x.x;
+	I_n,I_vp,I_s := lambda x.x;
 end
