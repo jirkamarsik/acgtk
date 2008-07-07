@@ -133,4 +133,5 @@ sig
   val interpret : Signature.term -> Signature.stype -> t -> (Signature.term*Signature.stype)
   val get_sig : t -> (signature*signature)
   val check : t -> unit
+  val compose: t -> t -> (string*Abstract_syntax.location) -> t
 end

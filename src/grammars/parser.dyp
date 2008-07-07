@@ -468,7 +468,7 @@ sig_entries :
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
 	      env
 	    
-  let parse_term ?(output=false) t sg = 
+  let parse_term ?(offset="") ?(output=false) t sg = 
     let lexbuf = Lexing.from_string t in
       try 
 	let () = Lexer.set_to_term () in
@@ -485,8 +485,9 @@ sig_entries :
 	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
 	    let () = Printf.fprintf 
 	      stderr
-	      "%s\n%s%s\nError: %s\n%!"
+	      "%s\n%s%s%s\nError: %s\n%!"
 	      t
+	      offset
 	      (String.make s' ' ') 
 	      (String.make (e'-s') '^')
 	      (Error.error_msg er "stdin") in
@@ -519,7 +520,7 @@ end}
     (** [term s sg] returns [Some t] with [t] being an
 	{!Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
 	and [None] otherwise *)
-    val parse_term : ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
+    val parse_term : ?offset:string -> ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
       
       
     type local_data =

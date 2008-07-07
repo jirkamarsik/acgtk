@@ -25,7 +25,7 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars ../lambda.sylvain
 
 # Source files in the right order of dependance
 
-ML = functions.ml script_lexer.ml script_parser.ml 
+ML = scripting_errors.ml functions.ml script_lexer.ml script_parser.ml 
 
 EXE_SOURCES = test.ml
 

@@ -4,7 +4,7 @@ module Make(E:Environment_sig) :
 sig
 
 
-  type file_type = | Data | Script
+  type file_type = | Data | Script of (string -> E.t -> E.t)
 
   val load : file_type -> string -> E.t -> E.t
 
@@ -18,7 +18,10 @@ sig
 
   val print : ?name:string -> E.t -> unit
 
-  val analyse : ?name:string -> E.t -> string -> unit
+  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> E.t -> ?offset:string -> string -> unit
 
-  val compose : string -> string -> string -> E.t -> E.t
+  val compose : 
+    string * (Lexing.position * Lexing.position) ->
+    string * (Lexing.position * Lexing.position) ->
+    string * (Lexing.position * Lexing.position) -> E.t -> E.t
 end

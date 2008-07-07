@@ -86,6 +86,7 @@ sig
   (** This exception can be raised when a signature or an entry is not
       found in the environmnent *)
   exception Signature_not_found of string
+  exception Lexicon_not_found of string
   exception Entry_not_found of string
 
   (** The modules implementing the signatures and the lexicons managed
@@ -113,6 +114,12 @@ sig
       {!Environment.Environment_sig.Signature_not_found} if such a
       signature does not exist *)
   val get_signature : string -> t -> Signature1.t
+
+  (** [get_lexicon name e] returns the signature of name [name] in
+      the environment [e]. Raise
+      {!Environment.Environment_sig.Lexicon_not_found} if such a
+      signature does not exist *)
+  val get_lexicon : string -> t -> Lexicon.t
 
   val get : string -> t -> entry
 

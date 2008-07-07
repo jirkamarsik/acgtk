@@ -74,6 +74,7 @@ end
 module type Environment_sig =
 sig
   exception Signature_not_found of string
+  exception Lexicon_not_found of string
   exception Entry_not_found of string
 
 
@@ -88,6 +89,7 @@ sig
   val empty : t
   val insert : entry -> t -> t
   val get_signature : string -> t -> Signature1.t
+  val get_lexicon : string -> t -> Lexicon.t
   val get : string -> t -> entry
   val iter : (entry -> unit) -> t -> unit
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
@@ -111,6 +113,7 @@ struct
   module Signature1=Sg
 
   exception Signature_not_found of string
+  exception Lexicon_not_found of string
   exception Entry_not_found of string
   module Env = Utils.StringMap
 
@@ -151,6 +154,15 @@ struct
     with
       | Not_found -> raise (Signature_not_found s)
 
+  let get_lexicon s {map=e} =
+    try
+      match Env.find s e with
+	| Signature _ -> raise (Lexicon_not_found s)
+	| Lexicon lex -> lex
+    with
+      | Not_found -> raise (Lexicon_not_found s)
+
+
   let get s {map=e} =
     try
       Env.find s e 
@@ -164,7 +176,7 @@ struct
 
   let focus {focus=f} =
     match f with
-      | None -> raise (Entry_not_found "focused entry")
+      | None -> raise (Entry_not_found "focused")
       | Some e -> e
 
 

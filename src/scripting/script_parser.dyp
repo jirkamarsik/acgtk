@@ -14,11 +14,14 @@
     (*    module Data_parser = Parser.Make(E)*)
     module F = Functions.Make(E)
 
+
+
+
   }
   
   {
     open Dyp
-    let local_data = E.empty
+    let local_data = (E.empty,fun _ -> failwith "Bug: Not yet defined")
 
   }
   
@@ -31,7 +34,7 @@ LIST
 SELECT
 UNSELECT
 TRACE
-PRINT
+<Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.location)>ANALYSE
 COMPOSE
 SEMICOLONN
@@ -42,47 +45,65 @@ AS
 
 %start <(E.t)> zzcommands
 
-%local_data_type <(E.t)>
+%local_data_type <(E.t * (string -> E.t -> E.t))>
 
 %%
 
   zzcommands :
-| EOII {dyp.last_local_data}
-| command[c] ...@{let e' = c (dyp.last_local_data) in
-		    e',[Local_data e']}
-      zzcommands {dyp.last_local_data}
+| EOII {fst dyp.last_local_data}
+| command[c] ...@{let e,f = (dyp.last_local_data) in
+		  let e' = c e in
+		    e',[Local_data (e',f)]}
+      zzcommands {fst dyp.last_local_data}
 
 
       command:
 | LOAD_DATA[(s,loc)]  {fun e ->  F.load F.Data  s e}
-| LOAD_SCRIPT[(s,loc)]  {fun e -> F.load F.Script  s e}
+| LOAD_SCRIPT[(s,loc)]  {fun e -> F.load (F.Script (snd dyp.last_local_data)) s e}
 | LIST SEMICOLONN {fun e -> let () = F.list e in e}
 | SELECT IDENTT[(name,_)]  SEMICOLONN {fun e -> F.select name e}
 | UNSELECT SEMICOLONN {F.unselect}
 | TRACE SEMICOLONN {fun e -> let () = F.trace () in e}
-| optional_ident[name] PRINT SEMICOLONN {fun e -> match name with
-					  | None -> let () = F.print e in e
-					  | Some (n,_) -> let () = F.print ~name:n e in e}
-| optional_ident[name] ANALYSE[(t,l)]   {fun e -> match name with
-					   | None -> let () = F.analyse e t in e
-					   | Some (n,_) -> let () = F.analyse ~name:n e t in e}
-| COMPOSE IDENTT[(n1,_)] IDENTT [(n2,_)] AS IDENTT[(n3,_)] SEMICOLONN {fun e -> F.compose n1 n2 n3 e}
+| optional_ident[name] PRINT[p] SEMICOLONN {fun e -> 
+					   let loc = 
+					     match name with
+					       | None -> p
+					       | Some (_,l) -> l in
+					     try
+					       match name with
+						 | None -> let () = F.print e in e
+						 | Some (n,l) -> let () = F.print ~name:n e in e
+					     with
+					       | E.Entry_not_found s -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment s,loc))}
+| optional_idents[names] ANALYSE[(t,l)]   {fun e -> 
+					     match names with
+					       | [] -> let () = F.analyse e t in e
+					       | _ -> let () = F.analyse  ~names e t in e}
+| COMPOSE IDENTT[n1] IDENTT [n2] AS IDENTT[n3] SEMICOLONN {fun e -> F.compose n1 n2 n3 e}
+
 
       optional_ident :
 | {None}
 | IDENTT[id] {Some id}
 
+
+      optional_idents :
+| {[]}
+| IDENTT[id] optional_idents[ids] {id::ids}
+
 %%
 
 {
-  let parse_file filename env =
+
+  let rec parse_file  filename env =
     let in_ch = open_in filename in
     let lexbuf = Lexing.from_channel in_ch in
     let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
       try
 	let new_env=
-	  try (fst (List.hd (zzcommands ~local_data:env  Script_lexer.lexer lexbuf))) with
+	  try (fst (List.hd (zzcommands ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
+	let () = Printf.printf "Done.\n%!" in
 	  new_env
       with
 	| Error.Error e -> 
@@ -90,7 +111,9 @@ AS
 	      env
 
 
+
   let bufferize () =
+    let () = Printf.printf "# " in
     let buf = Buffer.create 16 in
     let no_semi_colon=ref true in
     let () =
@@ -101,25 +124,31 @@ AS
 	    let () = Buffer.add_string buf (String.sub input 0 (semi_colon_index+1)) in
 	      no_semi_colon:=false
 	  with
-	    | Not_found -> Buffer.add_string buf input ;Buffer.add_char buf '\n'
+	    | Not_found ->
+		Buffer.add_string buf input ;
+		Buffer.add_char buf '\n';
+		  Printf.printf "  "
       done in
       Buffer.contents buf
 	
+
 	
   let parse_entry env =
     let in_str = bufferize () in
-(*    let () = Printf.printf "\texecute \"%s\"\n%!" in_str in*)
     let lexbuf = Lexing.from_string in_str in
+    let new_env=
       try
-	let new_env=
-	  try (fst (List.hd (zzcommands ~local_data:env  Script_lexer.lexer lexbuf))) with
-	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
-	  new_env
+	try (fst (List.hd (zzcommands ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
+	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e "stdin") in
+	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
 	      env
-
+	| Scripting_errors.Error (e,p) ->
+	    let () = Printf.fprintf stderr "Error: %s\n%!" (Scripting_errors.error_msg e p) in
+	      env in
+      new_env
+	
 
 end}
 

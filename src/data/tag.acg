@@ -37,6 +37,52 @@ signature derived_trees =
 	wh_extract_tv = lambda v . lambda s adv wh subj . S2 wh (s (S2 subj (adv (VP1 v)))) : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree;
 end
 
+signature strings =
+(*	s:type ;
+	string = s->s : type;
+	infix + = lambda g f x.g(f x) : string -> string -> string; *)
+
+	string: type;
+	infix + : string -> string -> string;
+
+	every,dog,chases,a,cat,sleeps,slowly,new,big,black,seems,john,mary,bill,paul,
+	claims,loves,to,love,who,said,liked,does,think:string;
+end
+
+lexicon tag_strings(derived_trees) : strings =
+	tree := string;
+
+	every := every; 
+	dog := dog;
+	chases := chases;
+	a := a;
+	cat := cat;
+	sleeps := sleeps;
+	slowly := slowly;
+	new := new;
+	big := big;
+	black := black;
+	seems := seems;
+	john := john;
+	mary := mary;
+	bill := bill;
+	paul := paul;
+	
+	claims := claims;
+	loves := loves;
+	to_love := to + love;
+	who := who;
+	said := said;
+	liked := liked;
+	does := does;
+	think:=think;
+
+
+	WH1,N1,VP1 := lambda f.f;
+	N2,S2,VP2:=lambda f g . f + g;
+
+end
+
 
 signature semantics =
 	e,t:type;

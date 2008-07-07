@@ -36,7 +36,7 @@ opt : $(PRELIMINARY) $(LOCAL_CMX) $(EXEOPT)
 
 ifdef EXE_SOURCES
 $(EXE) : $(CMO)
-	ocamlc -o $@ $(LIBDIR) $(LIBS) $(BYTEFLAGS) $^
+	ocamlc.opt -o $@ $(LIBDIR) $(LIBS) $(BYTEFLAGS) $^
 endif
 
 ifdef EXE_SOURCES
@@ -49,7 +49,7 @@ endif
 	$(foreach dir,$(PREVIOUS_DIRS),$(MAKE) -r -S -C $(dir) byte;)
 
 %.cmi : %.mli
-	ocamlc $(PP) -c $(LIBDIR) $(LIBS) $(BYTEFLAGS) $<
+	ocamlc.opt $(PP) -c $(LIBDIR) $(LIBS) $(BYTEFLAGS) $<
 
 ../%.cmo : ../%.ml 
 	$(foreach dir,$(PREVIOUS_DIRS),$(MAKE) -r -S -C $(dir) byte;)
@@ -60,10 +60,10 @@ endif
 #	$(MAKE) $(PP) -r -S -C $(@D) $(@F)
 
 %.cmo : %.ml $(PREVIOUS_FILES:.ml=.cmo) $(PREVIOUS_MLIS)
-	ocamlc $(PP) -c $(LIBDIR) $(BYTEFLAGS) $<
+	ocamlc.opt $(PP) -c $(LIBDIR) $(BYTEFLAGS) $<
 
 %.cmx : %.ml $(PREVIOUS_FILES:.ml=.cmx) $(PREVIOUS_MLIS)
-	ocamlopt $(PROFILEOPT) $(PP) -c $(LIBDIR) $(OPTFLAGS) $<
+	ocamlopt.opt $(PROFILEOPT) $(PP) -c $(LIBDIR) $(OPTFLAGS) $<
 
 # Dependancy graphs and types
 ##################
@@ -78,7 +78,7 @@ depend.ps : depend.dot
 	dot -Tps -o $@ $<
 
 %.dot : $(CMO)
-	ocamldoc $(PP) $(LIBDIR) -o $@ -dot $(DEP_FLAG) $(ML)
+	ocamldoc.opt $(PP) $(LIBDIR) -o $@ -dot $(DEP_FLAG) $(ML)
 
 
 # clean and depend
@@ -101,7 +101,7 @@ superclean: clean
 
 depend: $(LOCAL_MLI) $(LOCAL_ML) $(EXE_SOURCES)
 	rm -f depend
-	@(ocamldep $(PP) $(I_PREVIOUS_DIRS) $^ > depend)||(printf "\n\n****** WARNING: DEPEND FILE NOT GENERATED *******\n\n\n" ;rm depend)
+	@(ocamldep.opt $(PP) $(I_PREVIOUS_DIRS) $^ > depend)||(printf "\n\n****** WARNING: DEPEND FILE NOT GENERATED *******\n\n\n" ;rm depend)
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(MAKECMDGOALS),superclean)
@@ -117,8 +117,8 @@ endif
 #####################
 doc : $(CMO) $(MLI) $(ML)
 	mkdir -p doc
-	ocamldoc $(PP) $(OCAMLDOC_FLAGS) $(LIBDIR) -d $@ $(filter %.mli,$^) $(filter %.ml,$^)
-#	ocamldoc $(PP) $(OCAMLDOC_FLAGS) $(LIBDIR) -d $@ $(filter %.mli,$^)
+	ocamldoc.opt $(PP) $(OCAMLDOC_FLAGS) $(LIBDIR) -d $@ $(filter %.mli,$^) $(filter %.ml,$^)
+#	ocamldoc.opt $(PP) $(OCAMLDOC_FLAGS) $(LIBDIR) -d $@ $(filter %.mli,$^)
 
 
 .targets:

@@ -1,11 +1,9 @@
 load  d ../data/tag.acg;
-tag_syntax analyse C_sleeps I_s I_vp (C_dog C_a (C_black (C_big (C_new I_n)))) : S;
-tag_semantics analyse C_sleeps I_s I_vp (C_dog C_a (C_black (C_big (C_new I_n)))) : S;
-tag_syntax analyse C_chases I_s I_vp (C_dog C_every I_n) (C_cat C_a I_n) : S;
-tag_semantics analyse C_chases I_s I_vp (C_dog C_every I_n) (C_cat C_a I_n) : S;
-tag_syntax analyse C_loves (C_claims I_s I_vp C_paul) I_vp C_john C_mary : S;
-tag_semantics analyse C_loves (C_claims I_s I_vp C_paul) I_vp C_john C_mary : S;
-tag_syntax analyse C_to_love (C_claims I_s I_vp C_paul) (C_seems I_vp) C_john C_mary : S;
-tag_semantics analyse C_to_love (C_claims I_s I_vp C_paul) (C_seems I_vp) C_john C_mary : S;
-tag_syntax analyse C_liked ( C_said (C_does_think I_s I_vp C_paul) I_vp C_john) I_vp C_who C_bill : S;
-tag_semantics analyse C_liked ( C_said (C_does_think I_s I_vp C_paul) I_vp C_john) I_vp C_who C_bill : S;
+compose tag_strings tag_syntax as tag_yields;
+tag_syntax tag_yields tag_semantics analyse C_sleeps I_s I_vp (C_dog C_a (C_black (C_big (C_new I_n)))) : S;
+tag_syntax tag_yields tag_semantics analyse C_chases I_s I_vp (C_dog C_every I_n) (C_cat C_a I_n) : S;
+
+tag_syntax tag_yields tag_semantics analyse C_loves (C_claims I_s I_vp C_paul) I_vp C_john C_mary : S;
+tag_syntax tag_yields tag_semantics analyse C_to_love (C_claims I_s I_vp C_paul) (C_seems I_vp) C_john C_mary : S;
+
+tag_syntax tag_yields  tag_semantics analyse C_liked ( C_said (C_does_think I_s I_vp C_paul) I_vp C_john) I_vp C_who C_bill : S;

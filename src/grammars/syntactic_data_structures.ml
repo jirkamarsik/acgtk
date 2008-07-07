@@ -331,6 +331,8 @@ struct
 	     | Some s -> Printf.sprintf "%s\n" s)
 
   let check _ = Printf.printf "No checking of interpretations\n%!" 
+
+  let compose _ _ _ = failwith "No composition\n"
 end
 
 

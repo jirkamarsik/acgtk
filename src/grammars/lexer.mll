@@ -24,7 +24,8 @@
   let check_brackets () =
     match !brackets with
       | [] -> ()
-      | (p1,p2)::__ -> raise (Error (Lexer_error (Mismatch_parentheses,(p1,p2))))
+      | (p1,p2)::__ -> let () = brackets := [] in 
+	  raise (Error (Lexer_error (Mismatch_parentheses,(p1,p2))))
 	
 	  
   let data = ref (Data (Entry.start_data ()))
@@ -52,8 +53,9 @@ let newline = ('\010' | '\013' | "\013\010")
 let letter = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 let string = (letter|digit|'_')*
-
+  
   let symbol = ['!' '"' '#' '$' '%' '&' '\'' '*' '+' '-' '/' '<' '>' '?' '@' '[' '\\' ']' '^' '`' '{' '}' '~' ]
+
 
 
     rule lexer =
@@ -63,6 +65,7 @@ let string = (letter|digit|'_')*
       | "(*" {comment [loc lexbuf] lexbuf}
       | "*)" {raise (Error (Lexer_error (Unstarted_comment,loc lexbuf)))}
       | eof {let () = update_data Entry.EOI (loc lexbuf) in
+	     let () = check_brackets () in
 	       EOI}
       | ['='] {let () = update_data Entry.Equal (loc lexbuf) in
 	       let () = check_brackets () in
