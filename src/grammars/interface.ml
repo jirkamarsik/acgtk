@@ -22,6 +22,7 @@ sig
   val get_warnings : t -> Error.warning list
   val to_string : t -> string
   val term_to_string : term -> t -> string
+(*  val raw_to_string : term -> string*)
   val type_to_string : stype -> t -> string
   val convert_term : Abstract_syntax.term  -> Abstract_syntax.type_def -> t -> term*stype
   val convert_type : Abstract_syntax.type_def -> t -> stype

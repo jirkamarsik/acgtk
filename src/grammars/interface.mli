@@ -74,6 +74,7 @@ sig
   (** [term_to_string t sg] returns a string describing the term [t]
       wrt the signature [sg]. *)
   val term_to_string : term -> t -> string
+(*  val raw_to_string : term -> string*)
 
   (** [type_to_string t sg] returns a string describing the term [t]
       wrt the signature [sg]. *)

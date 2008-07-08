@@ -49,6 +49,7 @@ sig
   val kind_to_string :  kind -> (int -> Abstract_syntax.syntactic_behavior * string ) -> string
   val type_to_string : stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> string
   val term_to_string : term -> (int -> Abstract_syntax.syntactic_behavior * string) -> string
+  val raw_to_string : term -> string
   val normalize : ?id_to_term:(int -> term) -> term -> term
 
 end

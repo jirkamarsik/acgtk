@@ -52,6 +52,7 @@ module Lambda =
                                 (* matching                              *) 
 
 
+
     let rec generate_var_name x env =
       if List.exists (fun (_,s) -> x=s) env then
 	generate_var_name (Printf.sprintf "%s'" x) env
@@ -209,6 +210,16 @@ module Lambda =
 
 
 
+    let rec raw_to_string_aux = function
+      | (Var i | LVar i) -> Printf.sprintf "(%d)" i,true
+      | (Const i 
+	| DConst i)-> Printf.sprintf "[%d]" i,true
+      | Abs (_,t) -> Printf.sprintf "Lambda.%s" (fst (raw_to_string_aux t)),false
+      | LAbs (_,t) -> Printf.sprintf "lambda.%s" (fst (raw_to_string_aux t)),false
+      | App (t,u) -> Printf.sprintf "%s %s" (parenthesize (raw_to_string_aux t)) (parenthesize (raw_to_string_aux u)),false	  
+      | _ -> raise Not_yet_implemented
+
+    let raw_to_string t = fst (raw_to_string_aux t)
 
 
     (* [is_linear tm] true if the lambda-term [tm] is such *)
