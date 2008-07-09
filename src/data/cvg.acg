@@ -1,0 +1,167 @@
+signature CVG =
+	NP_S_S,NP_S_Q,NP_k12,NP_k23,NP,S,Q,S1,S2,S3,S_k:type;
+	
+	G_sem:NP_S_S -> (NP -> S) -> S;
+	G_filler:NP_S_Q -> (NP -> S) -> Q;
+	G_situ_1 : NP_k12 -> (NP -> S1) -> S2 ;
+	G_situ_2 : NP_k23 -> (NP -> S2) -> S3 ;
+
+	EV,SO:NP_S_S;
+
+	CHRIS,KIM,DANA,SANDY:NP;
+
+	LIKE:NP -> NP -> S;
+	BARKE:NP -> S;
+	THOUGHT : S -> NP -> S;
+	WONDERED1 : S1 -> (NP -> S);
+	WONDERED2 : S2 -> (NP -> S);
+	WHETHER : S -> S_k;
+
+	WHO_IN_SITU1 : NP_k12 ;
+	WHO_IN_SITU2 : NP_k23 ;
+	WHAT_IN_SITU1 : NP_k12 ;
+	WHAT_IN_SITU2 : NP_k23 ;
+	WHO_FILLER,WHAT_FILLER:NP_S_Q;
+
+	Promote1 : S -> S1;
+	Promote2 : S -> S2;
+
+
+end
+
+signature syntax =
+	NP,S,Q:type;
+	everybody,somebody:NP;
+	barked : NP -> S;
+	liked:NP -> NP -> S;
+	thought: S -> NP -> S;
+	wondered : S -> NP -> S;
+	whether : S -> S;
+
+	Chris,Kim,Dana,Sandy : NP;
+
+	who_in_situ,what_in_situ:NP;
+	who_filler,what_filler: (NP -> S) -> Q;
+
+
+	
+end
+
+lexicon CVG_syntax (CVG) : syntax =
+	NP_S_S := NP;
+	NP := NP;
+	S := S;
+	S1 := S;
+	S2 := S;
+	S3 := S;
+	S_k := S;
+	Q := Q;
+	NP_S_Q := (NP ->S)->Q;
+	NP_k12 := NP;
+	NP_k23 := NP;
+
+	Promote = lambda x.x;
+
+	G_sem := lambda q r.r q;
+	G_filler := lambda q r.q r;
+	G_situ_1 := lambda q r.r q;
+	G_situ_2 := lambda q r.r q;
+
+
+	EV := everybody;
+	SO := somebody;
+	LIKE := liked;
+
+	WHAT_IN_SITU1 := what_in_situ ;
+	WHAT_IN_SITU2 := what_in_situ ;
+	WHO_IN_SITU1 := who_in_situ ;
+	WHO_IN_SITU2 := who_in_situ ;
+	WHETHER := lambda s . whether s;
+	WONDERED1 := lambda q subj . wondered q subj ;
+	WONDERED2 := lambda q subj . wondered q subj ;
+	THOUGHT := lambda s subj . thought s subj ;
+	BARKE := barked ;
+
+	SANDY := Sandy;
+	DANA := Dana;
+	KIM := Kim;
+	CHRIS := Chris;
+	
+	WHAT_FILLER := lambda r. what_filler (lambda x .r x);
+	WHO_FILLER := lambda r. who_filler (lambda x .r x);
+
+end
+
+signature semantics =
+	e,t:type;
+	k,k1,k2,k3:type;
+	e_t_k1,e_k1_k2,e_k2_k3:type;
+
+	dummy:type;
+
+	everybody',somebody': (e->t) -> t;
+	chris',kim',dana',sandy':e;
+
+	like' : e -> e -> t;
+	barke' : e -> t;
+	think' : t -> e -> t;
+	wonder1' : k1 -> e -> t;
+	wonder2' : k2 -> e -> t;
+
+
+	whether' : t -> k;
+	who_filler : (e -> t) -> k1;
+	who_in_situ1 : (e -> k1) -> k2;
+	who_in_situ2 : (e -> k2) -> k3;
+	what_filler : (e -> t) -> k1;
+	what_in_situ1 : (e -> k1) -> k2;
+	what_in_situ2 : (e -> k2) -> k3;
+end
+
+lexicon CVG_semantics (CVG) : semantics =
+	NP_S_S := (e -> t) -> t;
+	NP := e;
+	S := t;
+	S1 := k1;
+	S2 := k2;
+	S_k := k;
+	Q := k1;
+
+	NP_S_Q := (e -> t) -> k1 ;
+
+	NP_k12 := (e -> k1) -> k2;
+	NP_k23 := (e -> k2) -> k3;
+
+	G_sem := lambda q r.q r;
+	G_filler := lambda q r.q r;
+	G_situ_1 := lambda q r.q r;
+	G_situ_2 := lambda q r.q r;
+
+	EV := everybody';
+	SO := somebody';
+
+	CHRIS := chris';
+	KIM := kim';
+	DANA := dana';
+	SANDY := sandy';
+
+	LIKE := like';
+	BARKE := barke' ;
+	THOUGHT := think' ;
+	WONDERED1 := wonder1' ;
+	WONDERED2 := wonder2' ;
+
+	WHETHER := whether' ;
+
+	WHO_IN_SITU1 := who_in_situ1 ;
+	WHO_IN_SITU2 := who_in_situ2 ;
+	WHAT_IN_SITU1 := what_in_situ1 ;
+	WHAT_IN_SITU2 := what_in_situ2 ;
+	WHO_FILLER := who_filler ;
+	WHAT_FILLER := what_filler ;
+	
+	
+
+end
+	
+

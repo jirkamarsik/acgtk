@@ -1,0 +1,7 @@
+load d ../data/cvg.acg;
+CVG_syntax CVG_semantics analyse G_sem EV (lambda x.G_sem SO (lambda y.LIKE x y)) : S;
+CVG_syntax CVG_semantics analyse G_sem SO (lambda y.G_sem EV (lambda x.LIKE x y)) : S;
+CVG_syntax analyse WHETHER (LIKE SANDY KIM): S_k ;
+CVG_syntax analyse G_filler WHAT_FILLER (lambda t. LIKE KIM t) :Q ;
+CVG_syntax analyse G_syn WHO_FILLER (lambda t. G_situ_1 (lambda y . LIKE y t)) :Q ;
+CVG_syntax analyse G_syn WHO_FILLER (lambda t. WONDERED (G_syn WHO_FILLER ( lambda t'. LIKE WHAT_IN_SITU t')) t) :Q ;

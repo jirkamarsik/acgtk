@@ -1,0 +1,189 @@
+signature syntax =
+
+	NP,S,NP_S_Q,Q : type;
+
+	G : NP_S_Q -> (NP -> S) -> Q;
+
+
+	CHRIS,KIM,DANA,SANDY,EV,SO:NP;
+
+	LIKE:NP -> NP -> S;
+	BARKE:NP -> S;
+	THOUGHT : S -> NP -> S;
+	WONDERED : Q -> NP -> S;
+	WHETHER : S -> S;
+
+	WHO_IN_SITU : NP;
+	WHAT_IN_SITU : NP;
+	WHO_FILLER,WHAT_FILLER: NP_S_Q;
+
+end
+
+signature simple_syntax =
+	NP,S,Q:type;
+	everybody,somebody:NP;
+	barked : NP -> S;
+	liked:NP -> NP -> S;
+	thought: S -> NP -> S;
+	wondered : S -> NP -> S;
+	whether : S -> S;
+
+	Chris,Kim,Dana,Sandy : NP;
+
+	who_in_situ,what_in_situ:NP;
+	who_filler,what_filler: (NP -> S) -> Q;
+
+
+	
+end
+
+lexicon CVG_syntax (syntax) : simple_syntax =
+	NP := NP;
+	S := S;
+	Q := Q;
+	NP_S_Q := (NP ->S)->Q;
+
+	G := lambda q r.q r;
+
+
+	EV := everybody;
+	SO := somebody;
+	LIKE := liked;
+
+	WHAT_IN_SITU := what_in_situ ;
+	WHO_IN_SITU := who_in_situ ;
+	WHETHER := lambda s . whether s;
+	WONDERED := lambda q subj . wondered q subj ;
+	THOUGHT := lambda s subj . thought s subj ;
+	BARKE := barked ;
+
+	SANDY := Sandy;
+	DANA := Dana;
+	KIM := Kim;
+	CHRIS := Chris;
+	
+	WHAT_FILLER := lambda r. what_filler (lambda x .r x);
+	WHO_FILLER := lambda r. who_filler (lambda x .r x);
+
+end
+
+signature simple_semantics =
+	e,t:type;
+
+	everybody',somebody': e ;
+	chris',kim',dana',sandy':e;
+
+	like' : e -> e -> t;
+	barke' : e -> t;
+	think' : t -> e -> t;
+	wonder' : t -> e -> t;
+
+
+	whether' : t -> t;
+	who_filler : (e -> t) -> t;
+	who_in_situ : e ;
+	what_filler : (e -> t) -> t;
+	what_in_situ : e;
+end
+
+lexicon CVG_simple_semantics (syntax) : simple_semantics =
+	NP := e;
+	S := t;
+	Q := t;
+
+	NP_S_Q := (e -> t) -> t ;
+
+	G := lambda q r.q r;
+
+
+	EV := everybody';
+	SO := somebody';
+
+	CHRIS := chris';
+	KIM := kim';
+	DANA := dana';
+	SANDY := sandy';
+
+	LIKE := like';
+	BARKE := barke' ;
+	THOUGHT := think' ;
+	WONDERED := wonder' ;
+
+	WHETHER := whether' ;
+
+	WHO_IN_SITU := who_in_situ ;
+	WHAT_IN_SITU := what_in_situ ;
+	WHO_FILLER := who_filler ;
+	WHAT_FILLER := what_filler ;
+	
+	
+
+end
+	
+
+signature semantics =
+	e,t,e_t_t:type;
+	
+	k,k1,k2,k3,e_t_k1,e_k1_k2,e_k2_k3:type;
+
+	G_q : e_t_t -> (e ->t) -> t;
+	G_w12 : e_t_k1 -> (e -> k1) -> k2;
+	G_w23 : e_t_k1 -> (e -> k2) -> k3;
+	
+
+	everybody',somebody': e_t_t;
+	chris',kim',dana',sandy':e;
+
+	like' : e -> e -> t;
+	barke' : e -> t;
+	think' : t -> e -> t;
+
+	wonder1' : k1 -> e -> t;
+	wonder2' : k2 -> e -> t;
+
+
+	whether' : t -> k;
+
+	who_filler : (e -> t) -> k1;
+	who_in_situ12 : e_k1_k2 ;
+	who_in_situ23 : e_k2_k3 ;
+	what_filler : (e -> t) -> k1;
+	what_in_situ12 : e_k1_k2 ;
+	what_in_situ23 : e_k2_k3 ;
+end
+
+lexicon CVG_semantics (semantics):simple_semantics =
+	e:=e;
+	t:=t;
+	e_t_t:=e;
+
+	k,k1,k2,k3:=t;
+	e_t_k1,e_k1_k2,e_k2_k3:=e;
+
+	G_q := lambda Q r.r Q;
+	G_w12 := lambda w r.r w;
+	G_w23 := lambda w r.r w;
+
+	everybody' := everybody';
+	somebody' := somebody';
+	chris' := chris';
+	kim' := kim';
+	dana' := dana';
+	sandy' := sandy';
+
+	like' := like';
+	barke' := barke';
+	think' := think';
+
+	wonder1' := wonder';
+	wonder2' := wonder';
+
+	whether' := whether';
+
+	who_filler := who_filler ;
+	who_in_situ12 := who_in_situ ;
+	who_in_situ23 := who_in_situ ;
+	what_filler := what_filler ;
+	what_in_situ12 := what_in_situ ;
+	what_in_situ23 := what_in_situ ;
+end
