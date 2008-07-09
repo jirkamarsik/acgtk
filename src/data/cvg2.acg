@@ -25,7 +25,7 @@ signature simple_syntax =
 	barked : NP -> S;
 	liked:NP -> NP -> S;
 	thought: S -> NP -> S;
-	wondered : S -> NP -> S;
+	wondered : Q -> NP -> S;
 	whether : S -> S;
 
 	Chris,Kim,Dana,Sandy : NP;
