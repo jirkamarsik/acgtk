@@ -29,6 +29,7 @@ type lex_error =
   | Mismatch_parentheses
   | Unclosed_comment
   | Expect of string
+  | Bad_token
 
 type parse_error =
   | Duplicated_term of string
@@ -72,6 +73,7 @@ type error =
   | Type_error of type_error * (Lexing.position * Lexing.position)
   | Env_error of env_error * (Lexing.position * Lexing.position)
   | Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
+  | System_error of string
 
 
 
@@ -99,6 +101,7 @@ let lex_error_to_string = function
   | Unclosed_comment -> "Syntax error: Unclosed comment"
   | Mismatch_parentheses -> "Syntax error: Unclosed parenthesis"
   | Expect s -> Printf.sprintf "Syntax error: %s expected" s
+  | Bad_token -> "Lexing error: no such token allowed"
 
 let parse_error_to_string = function
   | Duplicated_type ty ->  Printf.sprintf "Syntax error: Type \"%s\" has already been defined" ty
@@ -107,7 +110,7 @@ let parse_error_to_string = function
   | Unknown_constant id -> Printf.sprintf "Syntax error: Unknown constant \"%s\"" id
   | Unknown_type id -> Printf.sprintf "Syntax error: Unknown atomic type \"%s\"" id
   | Missing_arg_of_Infix  id -> Printf.sprintf "Syntax error: \"%s\" is defined as infix but used here with less than two arguments" id
-  | No_such_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" not in the current< environment" s
+  | No_such_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" not in the current environment" s
   | Dyp_error -> "Dyp: Syntax error"
 
 let type_error_to_string = function
@@ -149,12 +152,15 @@ let warning_to_string w =
 let error_msg e input_file =
   let msg,location_msg =
     match e with
-      | Parse_error (er,(s,e)) -> parse_error_to_string er,compute_comment_for_position s e
-      | Lexer_error (er,(s,e))  -> lex_error_to_string er,compute_comment_for_position s e
-      | Type_error (er,(s,e)) -> type_error_to_string er,compute_comment_for_position s e
-      | Env_error (er,(s,e)) -> env_error_to_string er,compute_comment_for_position s e 
-      | Lexicon_error (er,(s,e)) -> lexicon_error_to_string er,compute_comment_for_position s e  in
-    Printf.sprintf "File \"%s\", %s\n%s" input_file location_msg msg
+      | Parse_error (er,(s,e)) -> parse_error_to_string er,Some (compute_comment_for_position s e)
+      | Lexer_error (er,(s,e))  -> lex_error_to_string er,Some (compute_comment_for_position s e)
+      | Type_error (er,(s,e)) -> type_error_to_string er,Some (compute_comment_for_position s e)
+      | Env_error (er,(s,e)) -> env_error_to_string er,Some (compute_comment_for_position s e)
+      | Lexicon_error (er,(s,e)) -> lexicon_error_to_string er,Some (compute_comment_for_position s e)
+      | System_error s -> s,None in
+    match location_msg with
+      | None -> msg
+      | Some loc -> Printf.sprintf "File \"%s\", %s\n%s" input_file loc msg
 
 let dyp_error lexbuf input_file =
 (*  let pos1=Lexing.lexeme_start_p lexbuf in
@@ -190,3 +196,4 @@ let get_loc_error = function
   | Type_error (_,(s,e))
   | Env_error (_,(s,e))
   | Lexicon_error (_,(s,e)) -> (s,e)
+  | System_error _ -> failwith "Bug: should not occur"

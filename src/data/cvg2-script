@@ -1,7 +1,37 @@
-CVG_syntax CVG_simple_semantics analyse  LIKE EV SO :S ;
-CVG_semantics analyse G_q everybody' (lambda x.G_q somebody'(lambda y. like' x y)) : t;
-CVG_semantics analyse G_q somebody' (lambda y.G_q everybody'(lambda x. like' x y)) : t;
-CVG_syntax CVG_simple_semantics analyse WHETHER (LIKE SANDY KIM): S ;
-CVG_syntax CVG_simple_semantics analyse G WHAT_FILLER (lambda t. LIKE KIM t) :Q ;
-CVG_syntax CVG_simple_semantics analyse G WHO_FILLER (lambda y . LIKE y WHAT_IN_SITU) :Q ;
-CVG_syntax CVG_simple_semantics analyse G WHO_FILLER (lambda x. WONDERED (G WHO_FILLER ( lambda y. LIKE WHAT_IN_SITU y)) x) :Q ;
+load d ../data/strings.acg;
+load d ../data/cvg2.acg;
+compose CVG_strings CVG_syntax as CVG_phonology;
+# Scope ambiguity
+CVG_phonology CVG_syntax CVG_simple_semantics analyse  LIKE SO EV :S ;
+# Semantics
+CVG_semantics RC_ty analyse G_q everybody' (lambda x.G_q somebody'(lambda y. like' x y)) : t;
+CVG_semantics RC_ty analyse G_q somebody' (lambda y.G_q everybody'(lambda x. like' x y)) : t;
+
+# Embedded polar question
+CVG_phonology CVG_syntax CVG_simple_semantics analyse WHETHER (LIKE SANDY KIM): S ;
+# Semantics
+CVG_semantics RC_ty analyse whether' (like' kim' sandy') : k;
+
+# Embedded consituent question
+CVG_phonology CVG_syntax CVG_simple_semantics analyse G WHAT_FILLER (lambda t. LIKE t KIM) :Q ;
+# Semantics
+CVG_semantics RC_ty analyse what_filler (lambda y.like' kim' y) : k1;
+
+# Embedded consituent question
+CVG_phonology CVG_syntax CVG_simple_semantics analyse  LIKE WHAT_IN_SITU KIM : S ;
+# Semantics
+CVG_semantics RC_ty analyse G_w12 what_in_situ12 (lambda y.like' kim' y) : k2;
+
+
+# Binary consituent question
+CVG_phonology CVG_syntax CVG_simple_semantics analyse G WHO_FILLER (lambda y . LIKE WHAT_IN_SITU y) :Q ;
+# Semantics
+CVG_semantics RC_ty analyse G_w12 what_in_situ12 (lambda y. who_filler (lambda x.  like' x y)) : k2 ;
+
+
+# Baker ambiguity
+CVG_phonology CVG_syntax CVG_simple_semantics analyse G WHO_FILLER (lambda x. WONDERED (G WHO_FILLER ( lambda y. LIKE WHAT_IN_SITU y)) x) :Q ;
+# Semantics
+CVG_semantics RC_ty analyse who_filler (lambda z.(wonder2' (G_w12 what_in_situ12 (lambda y. who_filler (lambda x.like' x y))) z)) : k1 ;
+
+CVG_semantics RC_ty analyse G_w12 what_in_situ12 (lambda y.who_filler (lambda z.wonder1' (who_filler (lambda x.like' x y)) z)) : k2 ;

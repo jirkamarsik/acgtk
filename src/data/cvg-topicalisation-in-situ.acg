@@ -1,0 +1,108 @@
+signature syntax =
+
+	NP,S,T,NP_S_T,NP_S_T_in_situ : type;
+
+	G_top : NP_S_T -> (NP -> S) -> T;
+
+	G_top_in_situ : NP_S_T_in_situ -> (NP -> S) -> S;
+
+
+	CHRIS,KIM,DANA,SANDY:NP;
+
+	LIKE:NP -> NP -> S;
+
+	prefix ^ : NP -> NP_S_T ;
+
+	prefix " : NP -> NP_S_T_in_situ ;
+
+
+end
+
+signature simple_syntax =
+	NP,S,T:type;
+
+	liked:NP -> NP -> S;
+
+	Chris,Kim,Dana,Sandy : NP;
+
+	prefix ^ : NP -> (NP -> S) -> T ;
+
+	prefix " : NP -> NP ;
+end
+
+lexicon CVG_syntax (syntax) : simple_syntax =
+	NP := NP;
+	S := S;
+	T := T;
+	NP_S_T := (NP -> S)-> T;
+	NP_S_T_in_situ := NP ;
+
+	G_top := lambda q r.q r;
+
+	G_top_in_situ := lambda t r .r t;
+
+	LIKE := liked;
+
+	SANDY := Sandy;
+	DANA := Dana;
+	KIM := Kim;
+	CHRIS := Chris;
+	
+	^ := lambda n  . ^ n ;
+
+	" := lambda n . " n ;
+
+end
+
+lexicon CVG_strings (simple_syntax) : strings =
+	NP,S,T:= string;
+
+	liked := lambda o s . s + liked + o ;
+	Chris := Chris ;
+	Kim := Kim;
+	Dana := Dana ;
+	Sandy := Sandy ;
+
+	^ := lambda s r. s ! (r E) ;
+
+	" := lambda n . " n ;
+
+	
+
+end
+
+
+signature simple_semantics =
+	e,t:type;
+
+	everybody',somebody': e ;
+	chris',kim',dana',sandy':e;
+
+	like' : e -> e -> t;
+
+	top' : e -> (e ->t) -> t
+end
+
+lexicon CVG_simple_semantics (syntax) : simple_semantics =
+	NP := e;
+	S := t;
+	T := t;
+
+	NP_S_T := (e -> t) -> t ;
+	NP_S_T_in_situ := (e -> t) -> t ;
+
+	G_top := lambda q r.q r;
+	G_top_in_situ := lambda q r.q r;
+
+
+	CHRIS := chris';
+	KIM := kim';
+	DANA := dana';
+	SANDY := sandy';
+
+	LIKE := lambda o s .like' s o;
+	
+	^ := lambda n. top' n;
+	" := lambda n. top' n;
+
+end

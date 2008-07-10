@@ -54,7 +54,7 @@ let letter = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 let string = (letter|digit|'_')*'\''?
   
-  let symbol = ['!' '"' '#' '$' '%' '&' '\'' '*' '+' '-' '/' '<' '>' '?' '@' '[' '\\' ']' '^' '`' '{' '}' '~' ]
+  let symbol = ['|' '!' '"' '#' '$' '%' '&' '\'' '*' '+' '-' '/' '<' '>' '?' '@' '[' '\\' ']' '^' '`' '{' '}' '~' ]
 
 
 
@@ -124,6 +124,7 @@ let string = (letter|digit|'_')*'\''?
 			 IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
       | symbol {let () = update_data Entry.Sym (loc lexbuf) in
 		  SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
+      | _ as c {raise (Error.Error (Error.Lexer_error (Error.Bad_token,loc lexbuf)))}
     and comment depth = parse
       | "*)" {match depth with
 		| [a] -> lexer lexbuf

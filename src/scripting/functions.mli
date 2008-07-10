@@ -24,4 +24,10 @@ sig
     string * (Lexing.position * Lexing.position) ->
     string * (Lexing.position * Lexing.position) ->
     string * (Lexing.position * Lexing.position) -> E.t -> E.t
+
+  val wait : unit -> unit
+
+  val dont_wait : unit -> unit
+
+  val should_wait : unit -> bool
 end

@@ -349,7 +349,7 @@ let build_expectation lst =
     | Lex Abstract_sig_closing -> build_expectation [Colon,Lex Object_sig_opening]
     | Lex Object_sig_opening -> build_expectation [Id,Lex Object_sig_name]
     | Lex Object_sig_name -> build_expectation [Equal,Lex (Lex_def No_lex_entry)]
-    | Lex (Lex_def No_lex_entry) -> build_expectation [Id,Lex (Lex_def (Lex_entry_id No_interpretation));End_kwd,No_dec]
+    | Lex (Lex_def No_lex_entry) -> build_expectation [Id,Lex (Lex_def (Lex_entry_id No_interpretation));End_kwd,No_dec;Sym,Lex (Lex_def (Lex_entry_id No_interpretation))]
     | Lex (Lex_def (Lex_entry_id No_interpretation)) -> 
 	build_expectation [Comma,Lex (Lex_def No_lex_entry);
 			   Colon_equal,Lex (Lex_def (Lex_entry_id (Interpretation No_type_or_term_in_def)))]

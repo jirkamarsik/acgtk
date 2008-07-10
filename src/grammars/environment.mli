@@ -107,7 +107,7 @@ sig
 
   (** [insert c e] adds the content [c] into the environment [e] and
       returns the resulting environmnent *)
-  val insert : entry -> t -> t
+  val insert : ?override:bool -> entry -> t -> t
 
   (** [get_signature name e] returns the signature of name [name] in
       the environment [e]. Raise

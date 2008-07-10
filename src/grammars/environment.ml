@@ -87,7 +87,7 @@ sig
     | Signature of Signature1.t
     | Lexicon of Lexicon.t
   val empty : t
-  val insert : entry -> t -> t
+  val insert : ?override:bool -> entry -> t -> t
   val get_signature : string -> t -> Signature1.t
   val get_lexicon : string -> t -> Lexicon.t
   val get : string -> t -> entry
@@ -125,15 +125,15 @@ struct
 
   let empty = {map=Env.empty;sig_number=0;lex_number=0;focus=None}
 
-  let insert d e = match d with
+  let insert ?(override=false) d e = match d with
     | Signature s -> let name,(p1,p2) = Sg.name s in
-	if not (Env.mem name e.map)
+	if (not (Env.mem name e.map))||override
 	then
 	  {e with map=Env.add name d e.map ;sig_number=e.sig_number+1}
 	else
 	  raise (Error.Error (Error.Env_error (Error.Duplicated_signature name,(p1,p2))))
     | Lexicon l -> let name,(p1,p2) = Lex.name l in
-	if not (Env.mem name e.map)
+	if not (Env.mem name e.map)||override
 	then
 	  {e with map=Env.add name d e.map ;lex_number=e.lex_number+1}
 	else

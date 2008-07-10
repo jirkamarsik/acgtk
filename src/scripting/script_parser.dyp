@@ -14,7 +14,7 @@
     (*    module Data_parser = Parser.Make(E)*)
     module F = Functions.Make(E)
 
-
+    let echo s = Printf.printf "%s\n%!" s
 
 
   }
@@ -22,23 +22,26 @@
   {
     open Dyp
     let local_data = (E.empty,fun _ -> failwith "Bug: Not yet defined")
+    let global_data = false
 
   }
   
   
 %token
 EOII
-<(string*Abstract_syntax.location)>LOAD_DATA
-<(string*Abstract_syntax.location)>LOAD_SCRIPT
+<(string*Abstract_syntax.location*string)>LOAD_DATA
+<(string*Abstract_syntax.location*string)>LOAD_SCRIPT
 LIST
 SELECT
 UNSELECT
 TRACE
 <Abstract_syntax.location>PRINT
-<(string*Abstract_syntax.location)>ANALYSE
+<(string*Abstract_syntax.location*string)>ANALYSE
 COMPOSE
-SEMICOLONN
+<string>SEMICOLONN
 AS
+DONT
+WAIT
 <(string*Abstract_syntax.location)>IDENTT
 /*<(string*Abstract_syntax.location)>STRING*/
 
@@ -46,6 +49,7 @@ AS
 %start <(E.t)> zzcommands
 
 %local_data_type <(E.t * (string -> E.t -> E.t))>
+%global_data_type <bool>
 
 %%
 
@@ -53,18 +57,21 @@ AS
 | EOII {fst dyp.last_local_data}
 | command[c] ...@{let e,f = (dyp.last_local_data) in
 		  let e' = c e in
+		  let () = if dyp.global_data then ignore(read_line()) else () in
 		    e',[Local_data (e',f)]}
       zzcommands {fst dyp.last_local_data}
 
 
       command:
-| LOAD_DATA[(s,loc)]  {fun e ->  F.load F.Data  s e}
-| LOAD_SCRIPT[(s,loc)]  {fun e -> F.load (F.Script (snd dyp.last_local_data)) s e}
-| LIST SEMICOLONN {fun e -> let () = F.list e in e}
-| SELECT IDENTT[(name,_)]  SEMICOLONN {fun e -> F.select name e}
-| UNSELECT SEMICOLONN {F.unselect}
-| TRACE SEMICOLONN {fun e -> let () = F.trace () in e}
-| optional_ident[name] PRINT[p] SEMICOLONN {fun e -> 
+| WAIT SEMICOLONN[l] {fun e -> let () = echo l in let () = F.wait () in e}
+| DONT WAIT SEMICOLONN[l] {fun e ->  let () = echo l in let () = F.dont_wait () in e}
+| LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo l in  F.load F.Data  s e}
+| LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo l in F.load (F.Script (snd dyp.last_local_data)) s e}
+| LIST SEMICOLONN[l] {fun e ->  let () = echo l in let () = F.list e in e}
+| SELECT IDENTT[(name,_)]  SEMICOLONN[l] {fun e ->  let () = echo l in F.select name e}
+| UNSELECT SEMICOLONN[l] { let () = echo l in F.unselect}
+| TRACE SEMICOLONN[l] { let () = echo l in fun e -> let () = F.trace () in e}
+| optional_ident[name] PRINT[p] SEMICOLONN[l] { let () = echo l in fun e -> 
 					   let loc = 
 					     match name with
 					       | None -> p
@@ -75,11 +82,11 @@ AS
 						 | Some (n,l) -> let () = F.print ~name:n e in e
 					     with
 					       | E.Entry_not_found s -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment s,loc))}
-| optional_idents[names] ANALYSE[(t,l)]   {fun e -> 
+| optional_idents[names] ANALYSE[(t,l,line)]   { let () = echo line in fun e -> 
 					     match names with
 					       | [] -> let () = F.analyse e t in e
 					       | _ -> let () = F.analyse  ~names e t in e}
-| COMPOSE IDENTT[n1] IDENTT [n2] AS IDENTT[n3] SEMICOLONN {fun e -> F.compose n1 n2 n3 e}
+| COMPOSE IDENTT[n1] IDENTT [n2] AS IDENTT[n3] SEMICOLONN[l] { let () = echo l in fun e -> F.compose n1 n2 n3 e}
 
 
       optional_ident :
@@ -96,18 +103,18 @@ AS
 {
 
   let rec parse_file  filename env =
-    let in_ch = open_in filename in
+    let in_ch = try open_in filename with | Sys_error s -> raise (Error.Error (Error.System_error s)) in
     let lexbuf = Lexing.from_channel in_ch in
     let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
       try
 	let new_env=
-	  try (fst (List.hd (zzcommands ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
+	  try (fst (List.hd (zzcommands ~global_data:(F.should_wait ()) ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
 	let () = Printf.printf "Done.\n%!" in
 	  new_env
       with
 	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n" (Error.error_msg e filename) in
+	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
 	      env
 
 
@@ -138,7 +145,7 @@ AS
     let lexbuf = Lexing.from_string in_str in
     let new_env=
       try
-	try (fst (List.hd (zzcommands ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
+	try (fst (List.hd (zzcommands ~global_data:false ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
 	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Error.Error e -> 

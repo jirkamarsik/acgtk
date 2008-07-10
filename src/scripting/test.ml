@@ -1,13 +1,14 @@
 open Functions
 
-(*module Sg = Signature.Sylvains_signature*)
+let () = Sys.catch_break true
+
 module Lex = Lexicon.Sylvain_lexicon
   
 module E = Environment.Make(Lex)
 
 module P = Script_parser.Make(E)
 
-(*let _ = P.parse_file "../data/script" E.empty) *)
+
 
 let welcome_msg = 
   "\n\t\t\tWelcome to the ACG toplevel\n\n\n"
@@ -16,10 +17,13 @@ let _ =
   let () = Printf.printf "%s%!" welcome_msg in
   let continue = ref true in
   let env = ref E.empty in
+  let () = 
     while !continue do
       try
 	env := P.parse_entry !env
       with
-	| End_of_file -> continue := false
-    done
+	| End_of_file
+	| Sys.Break -> continue := false
+    done in
+    Printf.printf "\n%!"
   

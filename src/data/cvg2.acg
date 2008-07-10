@@ -17,6 +17,7 @@ signature syntax =
 	WHAT_IN_SITU : NP;
 	WHO_FILLER,WHAT_FILLER: NP_S_Q;
 
+
 end
 
 signature simple_syntax =
@@ -32,7 +33,6 @@ signature simple_syntax =
 
 	who_in_situ,what_in_situ:NP;
 	who_filler,what_filler: (NP -> S) -> Q;
-
 
 	
 end
@@ -65,7 +65,30 @@ lexicon CVG_syntax (syntax) : simple_syntax =
 	WHAT_FILLER := lambda r. what_filler (lambda x .r x);
 	WHO_FILLER := lambda r. who_filler (lambda x .r x);
 
+
 end
+
+lexicon CVG_strings (simple_syntax) : strings =
+	NP,S,Q:= string;
+
+	everybody := everyone;
+	somebody := someone;
+	barked := lambda x. x + barked;
+	liked := lambda o s . s + liked + o ;
+	thought := lambda s x. x + thought + s;
+	wondered := lambda s x.x+wondered+s ;
+	whether := lambda s.whether+s ;
+	Chris := Chris ;
+	Kim := Kim;
+	Dana := Dana ;
+	Sandy := Sandy ;
+
+	who_in_situ := who;
+	who_filler := lambda P . who + (P E);
+	what_in_situ := what;
+	what_filler := lambda P. what + (P E);
+end
+
 
 signature simple_semantics =
 	e,t:type;
@@ -104,7 +127,7 @@ lexicon CVG_simple_semantics (syntax) : simple_semantics =
 	DANA := dana';
 	SANDY := sandy';
 
-	LIKE := like';
+	LIKE := lambda o s .like' s o;
 	BARKE := barke' ;
 	THOUGHT := think' ;
 	WONDERED := wonder' ;
@@ -127,8 +150,8 @@ signature semantics =
 	k,k1,k2,k3,e_t_k1,e_k1_k2,e_k2_k3:type;
 
 	G_q : e_t_t -> (e ->t) -> t;
-	G_w12 : e_t_k1 -> (e -> k1) -> k2;
-	G_w23 : e_t_k1 -> (e -> k2) -> k3;
+	G_w12 : e_k1_k2 -> (e -> k1) -> k2;
+	G_w23 : e_k2_k3 -> (e -> k2) -> k3;
 	
 
 	everybody',somebody': e_t_t;
@@ -147,10 +170,11 @@ signature semantics =
 	who_filler : (e -> t) -> k1;
 	who_in_situ12 : e_k1_k2 ;
 	who_in_situ23 : e_k2_k3 ;
-	what_filler : (e -> t) -> k1;
+	what_filler :  (e -> t) -> k1;
 	what_in_situ12 : e_k1_k2 ;
 	what_in_situ23 : e_k2_k3 ;
 end
+
 
 lexicon CVG_semantics (semantics):simple_semantics =
 	e:=e;
@@ -186,4 +210,93 @@ lexicon CVG_semantics (semantics):simple_semantics =
 	what_filler := what_filler ;
 	what_in_situ12 := what_in_situ ;
 	what_in_situ23 := what_in_situ ;
+end
+
+signature ty_n =
+	e,t:type;
+
+	everybody',somebody': (e -> t) -> t ;
+	chris',kim',dana',sandy':e;
+	
+	person',thing' : e -> t;
+	whether' : t -> t -> t;
+	
+	infix & : t -> t -> t;
+	infix | : t -> t -> t; 
+
+	which0 : (e ->t) -> (e -> t) -> e -> t -> t ;
+	which1 : (e ->t) -> (e -> e -> t -> t) -> e -> e -> t -> t ;
+	which2 : (e ->t) -> (e -> e -> e -> t -> t) -> e -> e -> e -> t -> t ;
+
+	who = which0 person' : (e -> t) -> e -> t -> t ;
+	who12 = which1 person' : (e -> e -> t -> t) -> e -> e -> t -> t;
+	who23 = which2 person' : (e -> e -> e -> t -> t ) -> e -> e -> e -> t -> t;
+	what = which0 thing' : (e -> t) -> e -> t -> t ;
+	what12 = which1 thing' : (e -> e -> t -> t) -> e -> e -> t -> t;
+	what23 = which2 thing' : (e -> e -> e -> t -> t) -> e -> e -> e -> t -> t;
+	
+	like' : e -> e -> t;
+	barke' : e -> t;
+	think' : t -> e -> t;
+
+	k = t -> t:type;
+	k1 = e -> t -> t:type;
+	k2 = e -> e -> t -> t:type;
+	k3 = e -> e -> e -> t -> t:type;
+
+	wonder1' : k1 -> e -> t;
+	wonder2' : k2 -> e -> t;
+
+(*	who : (e -> t) -> k1;
+	who12 : (e -> k1) -> k2 ;
+	who23 :  (e -> k2) -> k3 ;
+	what : (e -> t) -> k1;
+	what12 : (e -> k1) -> k2;
+	what23 : (e -> k2) -> k3 ; *)
+end
+
+lexicon RC_ty (semantics) : ty_n =
+	e := e;
+	t :=t;
+	e_t_t:= (e ->t) -> t;
+
+	k := k;
+	k1 := k1;
+	k2 := k2;
+	k3 := k3;
+	
+	e_t_k1 := (e -> t) -> k1;
+	e_k1_k2 := (e -> k1) -> k2;
+	e_k2_k3 := (e -> k2) -> k3;
+
+	G_q := lambda Q r. Q r;
+	G_w12 := lambda Q r. Q r;
+	G_w23 := lambda Q r. Q r;
+	
+
+	everybody':= everybody';
+	somebody' := somebody';
+	chris':= chris';
+	kim':= kim';
+	dana':= dana';
+	sandy':= sandy';
+
+	like' := like' ;
+	barke' := barke';
+	think' := think';
+
+	wonder1' := wonder1' ;
+	wonder2' := wonder2' ;
+
+
+	whether' := whether' ;
+
+	who_filler := who ;
+	who_in_situ12 := who12 ;
+	who_in_situ23 := who23 ;
+	what_filler := what ;
+	what_in_situ12 := what12;
+	what_in_situ23 := what23 ;
+
+
 end

@@ -1,0 +1,95 @@
+signature CVG =
+	NP_S_S,NP,S:type;
+	
+	G_quant:NP_S_S -> (NP -> S) -> S;
+
+	EV,SO:NP_S_S;
+
+	CHRIS,KIM,DANA,SANDY:NP;
+
+	LIKE:NP -> NP -> S;
+
+end
+
+signature simple_syntax =
+	NP,S:type;
+	everybody,somebody:NP;
+
+	liked:NP -> NP -> S;
+
+	Chris,Kim,Dana,Sandy : NP;
+	
+end
+
+lexicon CVG_syntax (CVG) : simple_syntax =
+	NP_S_S := NP;
+	NP := NP;
+	S := S;
+
+	G_quant := lambda q r.r q;
+
+	EV := everybody;
+	SO := somebody;
+	LIKE := liked;
+
+	SANDY := Sandy;
+	DANA := Dana;
+	KIM := Kim;
+	CHRIS := Chris;
+
+end
+
+lexicon CVG_strings (simple_syntax) : strings =
+	NP := string;
+	S := string;
+	
+	everybody := everybody;
+	somebody := somebody;
+
+	liked := lambda o s. s + liked + o;
+
+	Sandy := Sandy;
+	Dana := Dana ;
+	Kim := Kim;
+	Chris := Chris;
+end
+
+signature semantics =
+	e,t:type;
+
+	chris',kim',dana',sandy':e;
+	like' : e -> e -> t;
+
+	binder All : (e =>t) -> t;
+	binder Ex : (e =>t) -> t;
+	
+	infix & : t -> t -> t;
+	infix > : t -> t -> t;
+
+
+	person' : e -> t;
+
+	everybody' = lambda P.All x. (person' x) > (P x): (e->t) -> t;
+	somebody' = lambda P. Ex x. (person' x) & (P x): (e->t) -> t;
+end
+
+lexicon CVG_semantics (CVG) : semantics =
+	NP_S_S := (e -> t) -> t;
+	NP := e;
+	S := t;
+
+	G_quant := lambda q r.q r;
+
+	EV := everybody';
+	SO := somebody';
+
+	CHRIS := chris';
+	KIM := kim';
+	DANA := dana';
+	SANDY := sandy';
+
+	LIKE := lambda o s. like' s o ;
+
+end
+	
+

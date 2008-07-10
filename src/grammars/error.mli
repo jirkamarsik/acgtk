@@ -10,6 +10,7 @@ type lex_error =
   | Mismatch_parentheses
   | Unclosed_comment
   | Expect of string
+  | Bad_token
 
 (** The type for errors raised by the parser. Names should be explicit
 *)
@@ -60,6 +61,7 @@ type error =
   | Type_error of type_error * (Lexing.position * Lexing.position)
   | Env_error of env_error * (Lexing.position * Lexing.position)
   | Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
+  | System_error of string
 
 (** The type for warnings *)
 type warning =

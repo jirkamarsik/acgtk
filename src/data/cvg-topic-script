@@ -1,0 +1,5 @@
+load d ../data/strings.acg;
+load d ../data/cvg-topicalisation-in-situ.acg;
+compose CVG_strings CVG_syntax as CVG_phonology;
+CVG_phonology CVG_simple_semantics analyse G_top_in_situ (" SANDY) (lambda y . LIKE y KIM) : S;
+CVG_phonology CVG_simple_semantics analyse G_top (^ SANDY) (lambda y . LIKE y KIM) : T;

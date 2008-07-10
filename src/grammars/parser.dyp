@@ -16,6 +16,7 @@
       | Signature of E.Signature1.t
       | Abs_and_obj of (E.Signature1.t * E.Signature1.t)
       | Env of E.t
+
 }
 
 {
@@ -34,6 +35,8 @@
   let emit_parse_error e loc = raise (Error.Error (Error.Parse_error (e,loc)))
 
   let local_data = None
+
+  let global_data = false
 
 (*  type abstraction =
     | Linear
@@ -144,13 +147,14 @@
 %relation atom<app<sym_app<binder atom_type<arrow_type
 
 %local_data_type <(local_data option)>
+%global_data_type <(bool)>
   
 %%
 
   data:
 | EOI {get_env_value dyp.last_local_data}
-| signature[s] ...@{s,[Local_data (Some (Env (E.insert (E.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
-| lexicon[l] ...@{let () = E.Lexicon.check l in l,[Local_data (Some (Env (E.insert (E.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| signature[s] ...@{s,[Local_data (Some (Env (E.insert ~override:dyp.global_data (E.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| lexicon[l] ...@{let () = E.Lexicon.check l in l,[Local_data (Some (Env (E.insert ~override:dyp.global_data (E.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
   
       signature : 
 | SIG_OPEN sig_ident EQUAL sig_entries {$4}
@@ -388,7 +392,7 @@ sig_entries :
   */
     
       lex_entry :
-| comma_ids[ids] COLON_EQUAL ...{
+| comma_ids_or_sym[ids] COLON_EQUAL ...{
     let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
     let kind =
       List.fold_left
@@ -437,18 +441,25 @@ sig_entries :
 			(fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Type (id,loc,actual_type)) acc)
 			lex
 			ids}
+
+	  comma_ids_or_sym :
+| IDENT[id] {[id]}
+| SYMBOL[id] {[id]}
+| IDENT[id] COMMA comma_ids[id_list] {id::id_list}
+| SYMBOL[id] COMMA comma_ids[id_list] {id::id_list}
+
     
 %%
 {
-  let parse_data ?(output=false) filename env =
-    let in_ch = open_in filename in
+  let parse_data ?(override=false) ?(output=false) filename env =
+    let in_ch = try open_in filename with | Sys_error s -> raise (Error.Error (Error.System_error s)) in
     let lexbuf = Lexing.from_channel in_ch in
     let actual_env = if env=E.empty then None else Some (Env env) in
       try
 	let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
 	let () = Lexer.set_to_data () in
 	let e = 
-	  try (fst (List.hd (data ~local_data:actual_env Lexer.lexer lexbuf))) with
+	  try (fst (List.hd (data ~global_data:override ~local_data:actual_env Lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
 	let () = Printf.printf "Done.\n%!" in
 	let () = match output with
@@ -473,10 +484,10 @@ sig_entries :
       try 
 	let () = Lexer.set_to_term () in
 	let abs_term,abs_type = 
-	  try fst (List.hd(term_alone ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf)) with
+	  try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf)) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
 	let () = match output with
-	  | true -> Printf.printf "\t %s : %s \n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
+	  | true -> Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
 	  | false -> () in
 	  Some (abs_term,abs_type)
       with
@@ -515,7 +526,7 @@ end}
     (** [parse_data filename e] adds the data (signatures or lexicons)
 	parsed from file [filename] to [e] and returns the resulting
 	environment *)
-    val parse_data : ?output:bool -> string -> E.t  -> E.t
+    val parse_data : ?override:bool -> ?output:bool -> string -> E.t  -> E.t
       
     (** [term s sg] returns [Some t] with [t] being an
 	{!Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
