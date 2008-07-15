@@ -25,11 +25,18 @@ signature syntax =
 	WHO_IN_SITU_1,WHAT_IN_SITU_1 : NP_Q1_Q2;
 	WHO_IN_SITU_2,WHAT_IN_SITU_2 : NP_Q2_Q3;
 
+	T,NP_S_T,NP_S_T_in_situ:type;
+
+	G_t : NP_S_T -> (NP -> S) -> T;
+	G_t_in_situ : NP_S_T_in_situ -> (NP -> S) -> S;
+
+	prefix ^ : NP -> NP_S_T;
+	prefix " : NP -> NP_S_T_in_situ;
 
 end
 
 signature simple_syntax =
-	NP,S,Q:type;
+	NP,S,Q,T:type;
 	everybody,somebody:NP;
 	barked : NP -> S;
 	liked:NP -> NP -> S;
@@ -41,6 +48,9 @@ signature simple_syntax =
 
 	who_in_situ,what_in_situ:NP;
 	who_filler,what_filler: (NP -> S) -> Q;
+
+	prefix ^ : NP -> (NP -> S) -> T ;
+	prefix " : NP -> NP ;
 
 	
 end
@@ -88,12 +98,23 @@ lexicon CVG_syntax (syntax) : simple_syntax =
 	WHAT_IN_SITU_2 := what_in_situ ;
 	WHO_IN_SITU_2 := who_in_situ ;
 
+	T := T;
+	NP_S_T := (NP -> S) -> T;
+	NP_S_T_in_situ := NP;
+
+	G_t := lambda t r . t r;
+	G_t_in_situ := lambda n r.r n;
+
+	^ := lambda n  . ^ n ;
+
+	" := lambda n . " n ;
+
 
 
 end
 
 lexicon CVG_strings (simple_syntax) : strings =
-	NP,S,Q:= string;
+	NP,S,Q,T:= string;
 
 	everybody := everyone;
 	somebody := someone;
@@ -111,6 +132,11 @@ lexicon CVG_strings (simple_syntax) : strings =
 	who_filler := lambda P . who + (P E);
 	what_in_situ := what;
 	what_filler := lambda P. what + (P E);
+
+	^ := lambda s r. s ! (r E) ;
+
+	" := lambda n . " n ;
+
 end
 
 
@@ -118,11 +144,6 @@ signature semantics =
 	e,t:type;
 	
 	k,k1,k2,k3:type;
-
-(*	G_w1 : (e ->t) -> k1;
-	G_w2 : (e -> k1) -> k2;
-	G_w3 : (e -> k2) -> k3;
-*)	
 
 	everybody',somebody': (e -> t) -> t;
 	chris',kim',dana',sandy':e;
@@ -141,6 +162,11 @@ signature semantics =
 	who_filler,what_filler : (e -> t) -> k1;
 	who_in_situ12,what_in_situ12 : (e -> k1) -> k2 ;
 	who_in_situ23,what_in_situ23 : (e -> k2) -> k3;
+
+	
+
+	top' : e -> (e ->t) -> t
+
 end
 
 
@@ -190,6 +216,15 @@ lexicon CVG_semantics (syntax) : semantics =
 	WHO_IN_SITU_2 := who_in_situ23 ;
 	WHAT_IN_SITU_2 := what_in_situ23 ;
 	
+	T := t;
+	NP_S_T := (e -> t) -> t;
+	NP_S_T_in_situ := (e ->t) -> t;
+
+	G_t := lambda t r . t r;
+	G_t_in_situ := lambda t r.t r;
+
+	^ := lambda n. top' n;
+	" := lambda n. top' n;
 	
 
 end
@@ -198,15 +233,28 @@ signature ty_n =
 
 	e,t:type;
 
-	everybody',somebody': (e -> t) -> t ;
+(*	everybody',somebody': (e -> t) -> t ;*)
 	chris',kim',dana',sandy':e;
 	
 	person',thing' : e -> t;
-	whether' : t -> t -> t;
+
+	binder All : (e =>t) -> t;
+	binder Ex : (e =>t) -> t;
 	
 	infix & : t -> t -> t;
-	infix | : t -> t -> t; 
+	infix > : t -> t -> t;
 
+
+
+
+	everybody' = lambda P.All x. (person' x) > (P x): (e->t) -> t;
+	somebody' = lambda P. Ex x. (person' x) & (P x): (e->t) -> t;
+
+
+
+
+	whether' : t -> t -> t;
+	
 	which0 : (e ->t) -> (e -> t) -> e -> t -> t ;
 	which1 : (e ->t) -> (e -> e -> t -> t) -> e -> e -> t -> t ;
 	which2 : (e ->t) -> (e -> e -> e -> t -> t) -> e -> e -> e -> t -> t ;
@@ -222,14 +270,16 @@ signature ty_n =
 	barke' : e -> t;
 	think' : t -> e -> t;
 
-	k = t -> t:type;
+(*	k = t -> t:type;
 	k1 = e -> t -> t:type;
 	k2 = e -> e -> t -> t:type;
-	k3 = e -> e -> e -> t -> t:type;
+	k3 = e -> e -> e -> t -> t:type; *)
 
-	wonder1' : k1 -> e -> t;
-	wonder2' : k2 -> e -> t;
-	wonder3' : k3 -> e -> t;
+	wonder1' : (e -> t -> t) -> e -> t;
+	wonder2' : (e -> e -> t -> t) -> e -> t;
+	wonder3' : (e -> e -> e -> t -> t) -> e -> t;
+
+	top' : e -> (e ->t) -> t
 
 end
 
@@ -266,6 +316,8 @@ lexicon RC_ty (semantics) : ty_n =
 	what_filler := what ;
 	what_in_situ12 := what12;
 	what_in_situ23 := what23 ;
+
+	top':=top';
 
 
 end

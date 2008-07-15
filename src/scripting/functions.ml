@@ -1,6 +1,46 @@
 open Environment
 
 
+type action =
+  | Load
+  | List
+  | Select
+  | Unselect
+  | Trace
+  | Print
+  | Analyse
+  | Compose
+  | Dont_wait
+  | Wait
+  | Help of action option
+
+let rec action_to_sting = function
+  | Load -> "load"
+  | List -> "list"
+  | Select -> "select"
+  | Unselect ->  "unselect"
+  | Trace -> "trace"
+  | Print -> "print"
+  | Analyse -> "analyse"
+  | Compose -> "compose"
+  | Dont_wait -> "don't wait"
+  | Wait -> "wait"
+  | Help None -> "help"
+  | Help (Some a) -> Printf.sprintf "%s help" (action_to_string a)
+
+
+
+
+let help_messages = [
+  Load,Printf.sprintf "%s d|s file: loads the file \"file\" as data (d option) or as a script (s option)" (action_to_string Load);
+  List,Printf.sprintf "%s d|s file: lists the signatures and the lexicons of the current environmnet" (action_to_string List);
+  Select,Printf.sprintf "%s name: selects the name signature or lexicon in the current environment and make it an implicit context for following commands" (action_to_string Select);
+  Unselect,Printf.sprintf "%s name: remove any selected signature or lexicon from the context" (action_to_string Unselect);
+  Trace,Printf.sprintf "%s: traces the interpretation (if a command is used in a context of a lexicon) and the beta-reduction process" (action_to_string Trace);
+  Untrace,Printf.sprintf "%s: stops tracing" (action_to_string Untrace);
+  
+
+
 module Make (E:Environment_sig) =
 struct
 

@@ -63,8 +63,8 @@ WAIT
 
 
       command:
-| WAIT SEMICOLONN[l] {fun e -> let () = echo l in let () = F.wait () in e}
-| DONT WAIT SEMICOLONN[l] {fun e ->  let () = echo l in let () = F.dont_wait () in e}
+| WAIT SEMICOLONN[l] @{(fun e -> let () = echo l in let () = F.wait () in e),[Global_data true]}
+| DONT WAIT SEMICOLONN[l] @{(fun e ->  let () = echo l in let () = F.dont_wait () in e),[Global_data false]}
 | LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo l in  F.load F.Data  s e}
 | LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo l in F.load (F.Script (snd dyp.last_local_data)) s e}
 | LIST SEMICOLONN[l] {fun e ->  let () = echo l in let () = F.list e in e}
