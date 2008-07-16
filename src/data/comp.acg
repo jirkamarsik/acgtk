@@ -1,0 +1,59 @@
+signature syntax =
+	NP,D,S,DNP_S_S,NP_S_S:type;
+	THE_MOST:NP -> DNP_S_S;
+	G_comp : DNP_S_S -> (D => NP ->S) -> S;
+	John_top,Mary_top : NP_S_S;
+	John,Mary:NP;
+	G_top : NP_S_S -> (NP ->S) -> S;
+	EARN : NP -> D => S;
+	LIKE : NP -> NP -> D => S;
+end
+
+signature form =
+	string : type;
+	infix + : string -> string -> string;
+	E,John,the,most,earn,like,Mary:string;
+end
+
+signature semantics =
+	e,d,t:type;
+	earn':e -> d -> t;
+	like' : e -> e -> d -> t;
+	john',mary':e;
+	lub: (d =>t) -> d;
+	um: e -> (e ->d) -> t;
+end
+
+lexicon surface (syntax) : form =
+	NP,D,S := string;
+	DNP_S_S := (string -> string) -> string;
+	NP_S_S := string;
+	THE_MOST := lambda x r. (r x) + the + most;
+	John,John_top := John;
+	Mary,Mary_top := Mary;
+	EARN := lambda x. Lambda d.x+earn;
+	LIKE := lambda y x.Lambda d.x+like+y;
+	G_top := lambda P Q.Q P;
+	G_comp := lambda P Q. P (Q E);
+end
+
+
+lexicon meaning (syntax) : semantics =
+	NP := e;
+	D := d;
+	S := t;
+	DNP_S_S := (d => e -> t) -> t;
+	NP_S_S := (e ->t) -> t;
+	THE_MOST := lambda y r.um y (lambda x.lub (Lambda d.r d x ));
+	G_comp := lambda P Q . P Q;
+	John_top := lambda P.P john';
+	John := john';
+	Mary_top := lambda P. P mary';
+	Mary := mary';
+	G_top := lambda P Q.P Q;
+	EARN := lambda x.Lambda d. earn' x d;
+	LIKE := lambda y x.Lambda d.like' x y d;
+end
+	
+	
+	

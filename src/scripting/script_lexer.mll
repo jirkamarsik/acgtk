@@ -11,6 +11,7 @@ type token =
   | EOII
   | LOAD_DATA of (string*Abstract_syntax.location*string)
   | LOAD_SCRIPT of (string*Abstract_syntax.location*string)
+  | LOAD_HELP
   | LIST
   | SELECT
   | UNSELECT
@@ -23,6 +24,7 @@ type token =
   | DONT
   | WAIT
   | IDENTT of (string*Abstract_syntax.location)
+  | HELP
 
 
   let loc lexbuf = Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf
@@ -66,6 +68,7 @@ let string = (letter|digit|'_')*
     | "select"  as c {let () = echo_str c in SELECT}
     | "unselect"  as c {let () = echo_str c in UNSELECT}
     | "trace"  as c {let () = echo_str c in TRACE}
+    | "help"  as c {let () = echo_str c in HELP}
     | "print"  as c {let () = echo_str c in PRINT (loc lexbuf)}
     | "analyse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string (fun x l -> ANALYSE (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
@@ -93,6 +96,7 @@ let string = (letter|digit|'_')*
     | [' ' '\t'] {load_options lexbuf}
     | newline {let () = Error.update_loc lexbuf None in load_options lexbuf}
     | eof {EOII}
+    | "help" {LOAD_HELP}
     | "#" {comment load_options lexbuf}
     | "data" as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string_wo_space (fun x l -> LOAD_DATA (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}

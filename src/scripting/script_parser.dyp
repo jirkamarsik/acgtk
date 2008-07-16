@@ -31,10 +31,12 @@
 EOII
 <(string*Abstract_syntax.location*string)>LOAD_DATA
 <(string*Abstract_syntax.location*string)>LOAD_SCRIPT
+LOAD_HELP
 LIST
 SELECT
 UNSELECT
 TRACE
+HELP
 <Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.location*string)>ANALYSE
 COMPOSE
@@ -56,7 +58,11 @@ WAIT
   zzcommands :
 | EOII {fst dyp.last_local_data}
 | command[c] ...@{let e,f = (dyp.last_local_data) in
-		  let e' = c e in
+		  let e' = 
+		    try
+		      c e
+		    with
+		      | F.Not_yet_implemented s-> raise (Scripting_errors.Error (Scripting_errors.Not_yet_implemented s,(Lexing.dummy_pos,Lexing.dummy_pos))) in
 		  let () = if dyp.global_data then ignore(read_line()) else () in
 		    e',[Local_data (e',f)]}
       zzcommands {fst dyp.last_local_data}
@@ -68,25 +74,39 @@ WAIT
 | LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo l in  F.load F.Data  s e}
 | LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo l in F.load (F.Script (snd dyp.last_local_data)) s e}
 | LIST SEMICOLONN[l] {fun e ->  let () = echo l in let () = F.list e in e}
-| SELECT IDENTT[(name,_)]  SEMICOLONN[l] {fun e ->  let () = echo l in F.select name e}
+| SELECT IDENTT[(name,loc)]  SEMICOLONN[l] {fun e ->  let () = echo l in F.select name loc e}
 | UNSELECT SEMICOLONN[l] { let () = echo l in F.unselect}
 | TRACE SEMICOLONN[l] { let () = echo l in fun e -> let () = F.trace () in e}
+| DONT TRACE SEMICOLONN[l] { let () = echo l in fun e -> let () = F.dont_trace () in e}
 | optional_ident[name] PRINT[p] SEMICOLONN[l] { let () = echo l in fun e -> 
 					   let loc = 
 					     match name with
 					       | None -> p
 					       | Some (_,l) -> l in
-					     try
 					       match name with
-						 | None -> let () = F.print e in e
-						 | Some (n,l) -> let () = F.print ~name:n e in e
-					     with
-					       | E.Entry_not_found s -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment s,loc))}
+						 | None -> let () = F.print e loc in e
+						 | Some (n,l) -> let () = F.print ~name:n e loc in e}
 | optional_idents[names] ANALYSE[(t,l,line)]   { let () = echo line in fun e -> 
 					     match names with
-					       | [] -> let () = F.analyse e t in e
-					       | _ -> let () = F.analyse  ~names e t in e}
+					       | [] -> let () = F.analyse e t l in e
+					       | _ -> let () = F.analyse  ~names e t l in e}
 | COMPOSE IDENTT[n1] IDENTT [n2] AS IDENTT[n3] SEMICOLONN[l] { let () = echo l in fun e -> F.compose n1 n2 n3 e}
+| HELP SEMICOLONN[l] {let () = echo l in fun e -> let () = F.help (F.Help None) in e}
+| all_commands[c] HELP SEMICOLONN[l] {let () = echo l in fun e -> let () = F.help (F.Help (Some c)) in e}
+| LOAD_HELP SEMICOLONN[l] {let () = echo l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
+
+      all_commands:
+| WAIT {F.Wait}
+| DONT WAIT {F.Dont_wait}
+| LIST {F.List}
+| SELECT {F.Select}
+| UNSELECT {F.Unselect}
+| TRACE {F.Trace}
+| DONT TRACE {F.Dont_trace}
+| PRINT {F.Print}
+| ANALYSE {F.Analyse}
+| COMPOSE {F.Compose}
+| HELP {F.Help None}
 
 
       optional_ident :
@@ -115,6 +135,7 @@ WAIT
       with
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
+	    let _ = Script_lexer.reset_echo () in
 	      env
 
 
@@ -150,9 +171,11 @@ WAIT
       with
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
+	    let _ = Script_lexer.reset_echo () in
 	      env
 	| Scripting_errors.Error (e,p) ->
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Scripting_errors.error_msg e p) in
+	    let _ = Script_lexer.reset_echo () in
 	      env in
       new_env
 	

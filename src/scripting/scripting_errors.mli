@@ -6,6 +6,7 @@ type error =
   | Not_in_environment of string
   | No_such_lexicon of string
   | Command_expected
+  | Not_yet_implemented of string
 
 
 exception Error of (error * (Lexing.position * Lexing.position))
