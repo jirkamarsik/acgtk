@@ -69,6 +69,8 @@ struct
     
   let analyse ?names e ?offset data l =
     try
+      let additional_offset = "\t" in
+      let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
       let entries =
 	match names with
 	  | None -> [E.focus e]
@@ -83,16 +85,16 @@ struct
 	     (match last_abs_sg with
 	       | Some previous_sg when (E.Signature1.name sg) = (E.Signature1.name previous_sg) -> (false,last_abs_sg)
 	       | _ ->
-		   let () = if first then Format.printf "In %s:\n\t%!" (fst (E.Signature1.name sg)) else () in
-		   (match Data_parser.parse_term ~output:true ?offset data sg with
+		   let () = if first then Format.printf "In %s:\n%s%!" (fst (E.Signature1.name sg)) additional_offset else () in
+		   (match Data_parser.parse_term ~output:true ~offset:actual_offset data sg with
 		      | None -> let () = in_sg sg in false, Some sg
 		      | Some _ -> false,None))
 	 | E.Lexicon lex -> 
 	     let abs,obj=E.Lexicon.get_sig lex in
 	       match last_abs_sg with
 		 |  Some previous_sg when (E.Signature1.name abs) = (E.Signature1.name previous_sg) -> (false,last_abs_sg)
-		 | _ -> let () = if first then Format.printf "In %s:\n\t%!" (fst (E.Signature1.name abs)) else () in
-		     match Data_parser.parse_term ~output:first ?offset data abs with
+		 | _ -> let () = if first then Format.printf "In %s:\n%s%!" (fst (E.Signature1.name abs)) additional_offset else () in
+		     match Data_parser.parse_term ~output:first ~offset:actual_offset data abs with
 		       | None -> false,Some abs
 		       | Some (t,ty) -> 
 			   let t',ty' = E.Lexicon.interpret t ty lex in

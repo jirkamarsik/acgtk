@@ -1,0 +1,4 @@
+load d ../data/comp.acg;
+surface meaning analyse G_top (John_top) (lambda y.G_comp (THE_MOST y) (Lambda d' .lambda z. EARN z d')) : S;
+surface meaning analyse G_top (John_top) (lambda y.G_comp (THE_MOST y) (Lambda d' .lambda z. LIKE Mary z d')) : S;
+surface meaning analyse G_top (Mary_top) (lambda y.G_comp (THE_MOST y) (Lambda d' .lambda z. LIKE z John d')) : S;
