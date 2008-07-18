@@ -115,12 +115,12 @@ module Lambda =
 	     | LFun (ty1,ty2) ->
 		 Printf.sprintf "%s -> %s"
 		   (parenthesize (type_to_string_aux ty1))
-		   (parenthesize (type_to_string_aux ty2)),
+		   (fst (type_to_string_aux ty2)),
 		 false
 	     | Fun (ty1,ty2) ->
 		 Printf.sprintf "%s => %s"
 		   (parenthesize (type_to_string_aux ty1))
-		   (parenthesize (type_to_string_aux ty2)),
+		   (fst (type_to_string_aux ty2)),
 		 false
 	     | _ -> failwith "Not yet implemented" in
 	 fst (type_to_string_aux ty)

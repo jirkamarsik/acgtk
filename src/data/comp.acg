@@ -1,18 +1,21 @@
 signature syntax =
-	NP,D,S,DNP_S_S,NP_S_S:type;
+	NP,D,S,DNP_S_S,DNP_S_S2,NP_S_T_in_situ:type;
 	THE_MOST:NP -> DNP_S_S;
+	THE_MOST2:NP => DNP_S_S2;
 	G_comp : DNP_S_S -> (D => NP ->S) -> S;
-	John_top,Mary_top : NP_S_S;
 	John,Mary:NP;
-	G_top : NP_S_S -> (NP ->S) -> S;
+	G_top : NP_S_T_in_situ -> (NP ->S) -> S;
 	EARN : NP -> D => S;
 	LIKE : NP -> NP -> D => S;
+	prefix ^ : NP -> NP_S_T_in_situ;
 end
 
 signature form =
 	string : type;
 	infix + : string -> string -> string;
 	E,John,the,most,earn,like,Mary:string;
+
+	prefix ^ : string -> string;
 end
 
 signature semantics =
@@ -20,21 +23,37 @@ signature semantics =
 	earn':e -> d -> t;
 	like' : e -> e -> d -> t;
 	john',mary':e;
+
+
+	top' : e -> (e ->t) -> t ;
+
+	binder All : (e =>t) -> t;
+	binder Ex : (e =>t) -> t;
+	
+	not_eq : e -> e -> t;
+	infix & : t -> t -> t;
+	infix > : t -> t -> t;
+	infix < : d -> d -> t;
+
 	lub: (d =>t) -> d;
-	um: e -> (e ->d) -> t;
+	um: e -> (e ->d) -> t; 
+	um2 = Lambda x R .All y. (not_eq x y) > ((R y)<(R x)): e => (e ->d) => t; 
 end
 
 lexicon surface (syntax) : form =
 	NP,D,S := string;
 	DNP_S_S := (string -> string) -> string;
-	NP_S_S := string;
+	DNP_S_S2 := (string -> string) -> string;
+	NP_S_T_in_situ := string;
 	THE_MOST := lambda x r. (r x) + the + most;
-	John,John_top := John;
-	Mary,Mary_top := Mary;
+	THE_MOST2 := Lambda x.lambda r. (r x) + the + most;
+	John(*,John_top*) := John;
+	Mary(*,Mary_top*) := Mary;
 	EARN := lambda x. Lambda d.x+earn;
 	LIKE := lambda y x.Lambda d.x+like+y;
 	G_top := lambda P Q.Q P;
 	G_comp := lambda P Q. P (Q E);
+	^ := lambda n.^ n;
 end
 
 
@@ -43,16 +62,20 @@ lexicon meaning (syntax) : semantics =
 	D := d;
 	S := t;
 	DNP_S_S := (d => e -> t) -> t;
-	NP_S_S := (e ->t) -> t;
+	DNP_S_S2 := (d => e -> t) => t;
+	NP_S_T_in_situ := (e ->t) -> t;
 	THE_MOST := lambda y r.um y (lambda x.lub (Lambda d.r d x ));
+	THE_MOST2 := Lambda y .Lambda r.um2 y (lambda x.lub (Lambda d.r d x ));
 	G_comp := lambda P Q . P Q;
-	John_top := lambda P.P john';
+(*	John_top := lambda P.P john';*)
 	John := john';
-	Mary_top := lambda P. P mary';
+(*	Mary_top := lambda P. P mary';*)
 	Mary := mary';
 	G_top := lambda P Q.P Q;
 	EARN := lambda x.Lambda d. earn' x d;
 	LIKE := lambda y x.Lambda d.like' x y d;
+(*	^ := lambda e r. top' e r;*)
+	^ := lambda e r.r e;
 end
 	
 	
