@@ -1977,7 +1977,7 @@ echo "$as_me: error: Cannot find ocamllex" >&2;}
 fi
 
 #Look for dypgen
-DYPGEN_NEEDED=20080204
+DYPGEN_NEEDED=20080702
 for ac_prog in dypgen.opt dypgen
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.

@@ -1,17 +1,19 @@
 %mltop {
 
-  open Abstract_syntax
+(*  open Abstract_syntax*)
   open Syntactic_data_structures
 
   module Env = Utils.StringSet
     
 
-  type token=Token.t
-  open Token
-(*  type token=Token.t *)
+  type token=Token.Token.t
+  open Token.Token
+(*  type token=t*) 
 
   module Make (E:Environment.Environment_sig) =
   struct  
+
+
     type local_data =
       | Signature of E.Signature1.t
       | Abs_and_obj of (E.Signature1.t * E.Signature1.t)
@@ -46,16 +48,16 @@
   let new_loc (s,_) (_,e) = (s,e)
 
   let get_term_location = function
-    | Abstract_syntax.Var (_,l) -> l
-    | Abstract_syntax.Const (_,l) -> l
-    | Abstract_syntax.Abs (_,_,_,l) -> l
-    | Abstract_syntax.LAbs (_,_,_,l) -> l
-    | Abstract_syntax.App (_,_,l) -> l
+    | Abstract_syntax.Abstract_syntax.Var (_,l) -> l
+    | Abstract_syntax.Abstract_syntax.Const (_,l) -> l
+    | Abstract_syntax.Abstract_syntax.Abs (_,_,_,l) -> l
+    | Abstract_syntax.Abstract_syntax.LAbs (_,_,_,l) -> l
+    | Abstract_syntax.Abstract_syntax.App (_,_,l) -> l
 
 
   let abs x l1 t = function
-    | Abstract_syntax.Linear -> Abstract_syntax.LAbs (x,l1,t,new_loc l1 (get_term_location t))
-    | Abstract_syntax.Non_linear -> Abstract_syntax.Abs (x,l1,t,new_loc l1 (get_term_location t))
+    | Abstract_syntax.Abstract_syntax.Linear -> Abstract_syntax.Abstract_syntax.LAbs (x,l1,t,new_loc l1 (get_term_location t))
+    | Abstract_syntax.Abstract_syntax.Non_linear -> Abstract_syntax.Abstract_syntax.Abs (x,l1,t,new_loc l1 (get_term_location t))
 
   let rec multiple_abs e ws k_a ids t k =
     match ids with
@@ -68,11 +70,11 @@
 	    multiple_abs new_env ws k_a tl t (fun r -> k (abs a l_a (fst r) k_a,(snd r)))
 
   let reset_location l = function
-    | Abstract_syntax.LAbs(x,l1,t,l2),ws -> Abstract_syntax.LAbs(x,l1,t,new_loc l l2),ws
-    | Abstract_syntax.Abs(x,l1,t,l2),ws -> Abstract_syntax.Abs(x,l1,t,new_loc l l2),ws
+    | Abstract_syntax.Abstract_syntax.LAbs(x,l1,t,l2),ws -> Abstract_syntax.Abstract_syntax.LAbs(x,l1,t,new_loc l l2),ws
+    | Abstract_syntax.Abstract_syntax.Abs(x,l1,t,l2),ws -> Abstract_syntax.Abstract_syntax.Abs(x,l1,t,new_loc l l2),ws
     | _ -> failwith "Bug"
 
-  let bind c x l t lin = Abstract_syntax.App (c,abs x l t lin,new_loc l (get_term_location t))
+  let bind c x l t lin = Abstract_syntax.Abstract_syntax.App (c,abs x l t lin,new_loc l (get_term_location t))
 
   let rec multiple_bind e ws binder lin ids t k =
     match ids with
@@ -85,7 +87,7 @@
 	    multiple_bind new_env ws binder lin tl t (fun r -> k (bind binder a l_a (fst r) lin,(snd r)))
 
   let reset_binder_location l1 = function
-    | Abstract_syntax.App(u,v,l2),ws -> Abstract_syntax.App(u,v,new_loc l1 l2),ws
+    | Abstract_syntax.Abstract_syntax.App(u,v,l2),ws -> Abstract_syntax.Abstract_syntax.App(u,v,new_loc l1 l2),ws
     | _ -> failwith "Bug"
 
 
@@ -119,35 +121,36 @@
 
 %token
  EOI
-<Abstract_syntax.location> EQUAL
-<Abstract_syntax.location> SEMICOLON
-<Abstract_syntax.location> COLON
-<Abstract_syntax.location> COMMA
-<Abstract_syntax.location> LPAREN
-<Abstract_syntax.location> RPAREN
-<Abstract_syntax.location> DOT
-<Abstract_syntax.location> SIG_OPEN
-<Abstract_syntax.location> LEX_OPEN
-<Abstract_syntax.location> END_OF_DEC
-<Abstract_syntax.location> TYPE
-<Abstract_syntax.location> PREFIX
-<Abstract_syntax.location> INFIX
-<Abstract_syntax.location> BINDER
-<Abstract_syntax.location> LAMBDA
-<Abstract_syntax.location> LAMBDA0
-<Abstract_syntax.location> ARROW
-<Abstract_syntax.location> COLON_EQUAL
-<Abstract_syntax.location> LIN_ARROW
-<(string*Abstract_syntax.location)> IDENT
-<(string*Abstract_syntax.location)> SYMBOL
+<Abstract_syntax.Abstract_syntax.location> EQUAL
+<Abstract_syntax.Abstract_syntax.location> SEMICOLON
+<Abstract_syntax.Abstract_syntax.location> COLON
+<Abstract_syntax.Abstract_syntax.location> COMMA
+<Abstract_syntax.Abstract_syntax.location> LPAREN
+<Abstract_syntax.Abstract_syntax.location> RPAREN
+<Abstract_syntax.Abstract_syntax.location> DOT
+<Abstract_syntax.Abstract_syntax.location> SIG_OPEN
+<Abstract_syntax.Abstract_syntax.location> LEX_OPEN
+<Abstract_syntax.Abstract_syntax.location> END_OF_DEC
+<Abstract_syntax.Abstract_syntax.location> TYPE
+<Abstract_syntax.Abstract_syntax.location> PREFIX
+<Abstract_syntax.Abstract_syntax.location> INFIX
+<Abstract_syntax.Abstract_syntax.location> BINDER
+<Abstract_syntax.Abstract_syntax.location> LAMBDA
+<Abstract_syntax.Abstract_syntax.location> LAMBDA0
+<Abstract_syntax.Abstract_syntax.location> ARROW
+<Abstract_syntax.Abstract_syntax.location> COLON_EQUAL
+<Abstract_syntax.Abstract_syntax.location> LIN_ARROW
+<(string*Abstract_syntax.Abstract_syntax.location)> IDENT
+<(string*Abstract_syntax.Abstract_syntax.location)> SYMBOL
   
 %start <E.t> data
 %start <(E.Signature1.term*E.Signature1.stype)> term_alone
   
 %relation atom<app<sym_app<binder atom_type<arrow_type
 
-%local_data_type <(local_data option)>
-%global_data_type <(bool)>
+/** Dypgen repository */
+/*%local_data_type <(local_data option)>
+%global_data_type <(bool)>*/
   
 %%
 
@@ -209,7 +212,7 @@ sig_entries :
 	List.fold_left
 	  (fun acc id ->
 	     try
-	       E.Signature1.add_entry (Abstract_syntax.Type_decl (fst id,snd id,(Abstract_syntax.K []))) acc
+	       E.Signature1.add_entry (Abstract_syntax.Abstract_syntax.Type_decl (fst id,snd id,(Abstract_syntax.Abstract_syntax.K []))) acc
 	     with
 	       | E.Signature1.Duplicate_type_definition -> 
 		   let pos1,pos2= snd id in
@@ -227,7 +230,7 @@ sig_entries :
     fun s ->
       let new_sig =
 	try
-	  E.Signature1.add_entry (Abstract_syntax.Type_def (fst $1,snd $1,fst ($3 s),Abstract_syntax.K [])) s
+	  E.Signature1.add_entry (Abstract_syntax.Abstract_syntax.Type_def (fst $1,snd $1,fst ($3 s),Abstract_syntax.Abstract_syntax.K [])) s
 	with
 	  | E.Signature1.Duplicate_type_definition -> 
 	      let pos1,pos2= snd $1 in
@@ -256,14 +259,14 @@ sig_entries :
 									  let new_loc = new_loc loc1 loc2 in (a (ty1,ty2,new_loc)),new_loc} arrow_type
 
  arrow :
-| LIN_ARROW {fun (ty1,ty2,l) ->Abstract_syntax.Linear_arrow (ty1,ty2,l)}
-| ARROW {fun (ty1,ty2,l) ->Abstract_syntax.Arrow (ty1,ty2,l)}
+| LIN_ARROW {fun (ty1,ty2,l) ->Abstract_syntax.Abstract_syntax.Linear_arrow (ty1,ty2,l)}
+| ARROW {fun (ty1,ty2,l) ->Abstract_syntax.Abstract_syntax.Arrow (ty1,ty2,l)}
       
       atomic_type :
 | IDENT {fun sg ->
 	   let id,((pos1,pos2) as l) = $1 in
 	     match E.Signature1.is_type id sg with
-	       | true -> Abstract_syntax.Type_atom (id,l,[]),l
+	       | true -> Abstract_syntax.Abstract_syntax.Type_atom (id,l,[]),l
 	       | false -> emit_parse_error (Error.Unknown_type id) (pos1,pos2)} atom_type
 | LPAREN type_expression RPAREN {fun sg -> fst ($2 sg),new_loc $1 $3} atom_type
       
@@ -275,7 +278,7 @@ sig_entries :
 	  (fun acc (id,kind,loc) -> 
 	     try
 	       let ty = fst ($3 s) in
-	       E.Signature1.add_entry (Abstract_syntax.Term_decl (id,kind,loc,ty)) acc
+	       E.Signature1.add_entry (Abstract_syntax.Abstract_syntax.Term_decl (id,kind,loc,ty)) acc
 	     with
 	       | E.Signature1.Duplicate_term_definition -> 
 		   let pos1,pos2= loc in
@@ -285,16 +288,16 @@ sig_entries :
 	new_sig}
 	  
 	  term_dec_start : 
-| comma_ids {List.map (fun (id,loc) -> (id,Abstract_syntax.Default,loc)) $1}
-| PREFIX SYMBOL[sym,l] {[sym,Abstract_syntax.Prefix,l]} 
-| INFIX SYMBOL[sym,l] {[sym,Abstract_syntax.Infix,l]}
-| BINDER IDENT {[fst $2,Abstract_syntax.Binder,snd $2]}
+| comma_ids {List.map (fun (id,loc) -> (id,Abstract_syntax.Abstract_syntax.Default,loc)) $1}
+| PREFIX SYMBOL[sym,l] {[sym,Abstract_syntax.Abstract_syntax.Prefix,l]} 
+| INFIX SYMBOL[sym,l] {[sym,Abstract_syntax.Abstract_syntax.Infix,l]}
+| BINDER IDENT {[fst $2,Abstract_syntax.Abstract_syntax.Binder,snd $2]}
       
       term_def_start : 
-| IDENT {fst $1,Abstract_syntax.Default,snd $1}
-| PREFIX SYMBOL[sym,l] {(sym,Abstract_syntax.Prefix,l)}
-| INFIX SYMBOL[sym,l] {(sym,Abstract_syntax.Infix,l)}
-| BINDER IDENT {fst $2,Abstract_syntax.Binder,snd $2}
+| IDENT {fst $1,Abstract_syntax.Abstract_syntax.Default,snd $1}
+| PREFIX SYMBOL[sym,l] {(sym,Abstract_syntax.Abstract_syntax.Prefix,l)}
+| INFIX SYMBOL[sym,l] {(sym,Abstract_syntax.Abstract_syntax.Infix,l)}
+| BINDER IDENT {fst $2,Abstract_syntax.Abstract_syntax.Binder,snd $2}
 
 
       term_definition :
@@ -303,7 +306,7 @@ sig_entries :
 						     let new_sig =
 						       try
 							 let term_value,ws = $3 Env.empty [] in
-							 let new_sig2 = E.Signature1.add_entry (Abstract_syntax.Term_def (id,k,l,term_value,fst ($5 s))) s  in 
+							 let new_sig2 = E.Signature1.add_entry (Abstract_syntax.Abstract_syntax.Term_def (id,k,l,term_value,fst ($5 s))) s  in 
 							   (match ws with
 							      | [] -> new_sig2
 							      | lst -> E.Signature1.add_warnings ws new_sig2) with
@@ -318,33 +321,33 @@ sig_entries :
 	  term :
 | LAMBDA0  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
-      fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Linear $2 $4 (fun x -> x))} binder
+      fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Abstract_syntax.Linear $2 $4 (fun x -> x))} binder
 | LAMBDA  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
-      fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Non_linear $2 $4 (fun x -> x))} binder
+      fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Abstract_syntax.Non_linear $2 $4 (fun x -> x))} binder
 | IDENT[b]  idents[ids] DOT ...{let sg = get_sig_value dyp.last_local_data in
 				let binder,((p1,p2) as l) = b in
 				  match E.Signature1.is_constant binder sg with
-				    | true,Some Abstract_syntax.Binder -> (
+				    | true,Some Abstract_syntax.Abstract_syntax.Binder -> (
 					match E.Signature1.get_binder_argument_functional_type binder sg with
 					  | None -> failwith "Binder of non functional type"
 					  | Some k -> k)
 				    | _ -> emit_parse_error (Error.Binder_expected binder) (p1,p2) }[lin]
       term[t] {
 	let binder,((p1,p2) as l) = b in
-	  fun env ws -> reset_binder_location l (multiple_bind env ws (Abstract_syntax.Const(binder,l)) lin ids t (fun x -> x))} binder 
+	  fun env ws -> reset_binder_location l (multiple_bind env ws (Abstract_syntax.Abstract_syntax.Const(binder,l)) lin ids t (fun x -> x))} binder 
 | application(<=app) {$1} app 
 | atomic_term(<=atom)[arg1] SYMBOL[sym] ...{let id,((pos1,pos2) as l) = sym in
 					    let sg = get_sig_value dyp.last_local_data in
 					      match E.Signature1.is_constant id sg with
-						| true,Some (Abstract_syntax.Infix) -> Error.unset_infix ()
+						| true,Some (Abstract_syntax.Abstract_syntax.Infix) -> Error.unset_infix ()
 						| true,_ -> raise Dyp.Giveup
 						| _ -> emit_parse_error (Error.Unknown_constant id) (pos1,pos2)}
       term(<=app)[arg2] {let id,((pos1,pos2) as l) = sym in
 			   (fun env ws->
 			      let u1,ws1 = arg1 env ws in
 			      let u2,ws2 = arg2 env ws1 in
-				(Abstract_syntax.App (Abstract_syntax.App(Abstract_syntax.Const(id,l),u1,new_loc (get_term_location u1) l),u2,new_loc (get_term_location u1) (get_term_location u2))),ws2)}  app 
+				(Abstract_syntax.Abstract_syntax.App (Abstract_syntax.Abstract_syntax.App(Abstract_syntax.Abstract_syntax.Const(id,l),u1,new_loc (get_term_location u1) l),u2,new_loc (get_term_location u1) (get_term_location u2))),ws2)}  app 
       
       atomic_term :
 | IDENT {let id,l=$1 in
@@ -352,29 +355,29 @@ sig_entries :
 	 let is_constant,_ = E.Signature1.is_constant id s in
 	   fun env ws -> 
 	     match Env.mem id env,is_constant with
-	       | true,false -> Abstract_syntax.Var (id,l),ws
-	       | true,true -> Abstract_syntax.Var (id,l),(Error.Variable_or_constant (id,fst l,snd l))::ws
-	       | false,true -> Abstract_syntax.Const (id,l),ws
+	       | true,false -> Abstract_syntax.Abstract_syntax.Var (id,l),ws
+	       | true,true -> Abstract_syntax.Abstract_syntax.Var (id,l),(Error.Variable_or_constant (id,fst l,snd l))::ws
+	       | false,true -> Abstract_syntax.Abstract_syntax.Const (id,l),ws
 	       | false,false ->emit_parse_error (Error.Unknown_constant id) (fst l,snd l)} atom
 | LPAREN term RPAREN {$2} atom
 | SYMBOL[sym] ...{let sg = get_sig_value dyp.last_local_data in
 	     let id,((pos1,pos2) as l) = sym in
 	       match E.Signature1.is_constant id sg with
-		 | true,Some (Abstract_syntax.Prefix) -> ()
+		 | true,Some (Abstract_syntax.Abstract_syntax.Prefix) -> ()
 		 | true,_ -> let () = Error.set_infix sym in
 		     raise Dyp.Giveup
 		 | _ -> emit_parse_error (Error.Unknown_constant id) (pos1,pos2)}
       term[t] {let id,((pos1,pos2) as l) = sym in
 		 (fun env ws ->
 		    let u2,ws2 = t env ws in
-		      (Abstract_syntax.App(Abstract_syntax.Const(id,l),u2,new_loc l (get_term_location u2))),ws2)} atom 
+		      (Abstract_syntax.Abstract_syntax.App(Abstract_syntax.Abstract_syntax.Const(id,l),u2,new_loc l (get_term_location u2))),ws2)} atom 
 	     
 	     application :
 | atomic_term(<=atom) {$1} app
 | application(<=app) atomic_term(<=atom) {fun e ws ->
 					    let u1,ws1 = $1 e ws in
 					    let u2,ws2 = $2 e ws1 in
-					      (Abstract_syntax.App(u1,u2,new_loc (get_term_location u1) (get_term_location u2))),ws2} app
+					      (Abstract_syntax.Abstract_syntax.App(u1,u2,new_loc (get_term_location u1) (get_term_location u2))),ws2} app
       
       idents :
 | {[]}
@@ -413,7 +416,7 @@ sig_entries :
 	      fun lex ->
 		let term = fst (t Env.empty []) in
 		  List.fold_left
-		    (fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Constant (id,loc,term)) acc)
+		    (fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Abstract_syntax.Constant (id,loc,term)) acc)
 		    lex
 		    ids}
 | comma_ids[ids] COLON_EQUAL ...{
@@ -438,7 +441,7 @@ sig_entries :
 		    let _,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
 		    let actual_type = fst (ty obj) in
 		      List.fold_left
-			(fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Type (id,loc,actual_type)) acc)
+			(fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Abstract_syntax.Type (id,loc,actual_type)) acc)
 			lex
 			ids}
 
@@ -510,14 +513,16 @@ sig_entries :
 end}
 
 %mlitop {
-  open Abstract_syntax
+  type token = Token.Token.t
+(*  open Abstract_syntax*)
+  module Env : Set.S with type elt = String.t
     
   (** This module implements the functor that provides parsing
       functions when provided with an implementation of an environment
       module *)
     
   (** A shortcut to the type of the tokens *)
-  type token=Token.t
+(*  type token=Token.t*)
       
   (** The functor *)
   module Make (E:Environment.Environment_sig) : 
@@ -529,7 +534,7 @@ end}
     val parse_data : ?override:bool -> ?output:bool -> string -> E.t  -> E.t
       
     (** [term s sg] returns [Some t] with [t] being an
-	{!Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
+	{!Abstract_syntax.Abstract_syntax..Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
 	and [None] otherwise *)
     val parse_term : ?offset:string -> ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
       

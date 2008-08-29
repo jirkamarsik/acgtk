@@ -1,8 +1,10 @@
 {
-  open Error
   open Entry
 (*  open Parser *)
-  open Abstract_syntax.Token
+  open Token
+(*  open Token*)
+
+
 
 
   type lexing_of =
@@ -18,14 +20,14 @@
   let add_bracket loc = brackets:=loc::!brackets
 
   let remove_bracket l = match !brackets with
-    | [] -> raise (Error (Lexer_error (Unstarted_bracket, l)))
+    | [] -> raise (Error.Error (Error.Lexer_error (Error.Unstarted_bracket, l)))
     | _::tl -> brackets := tl
 
   let check_brackets () =
     match !brackets with
       | [] -> ()
       | (p1,p2)::__ -> let () = brackets := [] in 
-	  raise (Error (Lexer_error (Mismatch_parentheses,(p1,p2))))
+	  raise (Error.Error (Error.Lexer_error (Error.Mismatch_parentheses,(p1,p2))))
 	
 	  
   let data = ref (Data (Entry.start_data ()))
@@ -45,7 +47,7 @@
     with
       | Entry.Expect l -> 
 	  let s = Utils.string_of_list " or " Entry.valuation_to_string l in
-	    raise (Error (Lexer_error (Expect s,(p1,p2))))
+	    raise (Error.Error (Error.Lexer_error (Error.Expect s,(p1,p2))))
 
 }
 
@@ -63,75 +65,75 @@ let string = (letter|digit|'_')*'\''?
       | [' ' '\t'] {lexer lexbuf}
       | newline {let () = Error.update_loc lexbuf None in lexer lexbuf}
       | "(*" {comment [loc lexbuf] lexbuf}
-      | "*)" {raise (Error (Lexer_error (Unstarted_comment,loc lexbuf)))}
+      | "*)" {raise (Error.Error (Error.Lexer_error (Error.Unstarted_comment,loc lexbuf)))}
       | eof {let () = update_data Entry.EOI (loc lexbuf) in
 	     let () = check_brackets () in
-	       EOI}
+	       Token.EOI}
       | ['='] {let () = update_data Entry.Equal (loc lexbuf) in
 	       let () = check_brackets () in
-		 EQUAL(loc lexbuf)}
+		 Token.EQUAL(loc lexbuf)}
       | [';'] {let () = update_data Entry.Semi_colon (loc lexbuf) in
 	       let () = check_brackets () in
-		 SEMICOLON(loc lexbuf)}
+		 Token.SEMICOLON(loc lexbuf)}
       | [':'] {let () = update_data Entry.Colon (loc lexbuf) in
 	       let () = check_brackets () in
-		 COLON(loc lexbuf)}
+		 Token.COLON(loc lexbuf)}
       | [','] {let () = update_data Entry.Comma (loc lexbuf) in
 	       let () = check_brackets () in
-		 COMMA(loc lexbuf)}
+		 Token.COMMA(loc lexbuf)}
       | ['('] {let () = update_data (Entry.Type_or_term Entry.LPAR) (loc lexbuf) in
 	       let l = loc lexbuf in
 	       let () = add_bracket l in
-		 LPAREN l}
+		 Token.LPAREN l}
       | [')'] {let () = update_data (Entry.Type_or_term Entry.RPAR) (loc lexbuf) in
 	       let brac_loc = loc lexbuf in
 	       let () = remove_bracket brac_loc in
-		 RPAREN brac_loc}
+		 Token.RPAREN brac_loc}
       | ['.'] {let () = update_data (Entry.Type_or_term Entry.DOT) (loc lexbuf) in
-		 DOT(loc lexbuf)}
+		 Token.DOT(loc lexbuf)}
       | "signature" {let () = update_data Entry.Sig_kwd (loc lexbuf) in
 		     let () = check_brackets () in
-		       SIG_OPEN(loc lexbuf)}
+		       Token.SIG_OPEN(loc lexbuf)}
       | "lexicon" {let () = update_data Entry.Lex_kwd (loc lexbuf) in
 		     let () = check_brackets () in
-		       LEX_OPEN(loc lexbuf)}
+		       Token.LEX_OPEN(loc lexbuf)}
       | "end" {let () = update_data Entry.End_kwd (loc lexbuf) in
 	       let () = check_brackets () in
-		 END_OF_DEC(loc lexbuf)}
+		 Token.END_OF_DEC(loc lexbuf)}
       | "type" {let () = update_data Entry.Type_kwd (loc lexbuf) in
 		let () = check_brackets () in
-		  TYPE(loc lexbuf)}
+		  Token.TYPE(loc lexbuf)}
       | "prefix" {let () = update_data Entry.Prefix_kwd (loc lexbuf) in
 		  let () = check_brackets () in
-		    PREFIX(loc lexbuf)}
+		    Token.PREFIX(loc lexbuf)}
       | "infix" {let () = update_data Entry.Infix_kwd (loc lexbuf) in
 		 let () = check_brackets () in
-		   INFIX(loc lexbuf)}
+		   Token.INFIX(loc lexbuf)}
       | "binder" {let () = update_data Entry.Binder_kwd (loc lexbuf) in
 		  let () = check_brackets () in
-		    BINDER(loc lexbuf)}
+		    Token.BINDER(loc lexbuf)}
       | "lambda" {let () = update_data (Entry.Type_or_term Entry.LAMBDA) (loc lexbuf) in
-		    LAMBDA0(loc lexbuf)}
+		    Token.LAMBDA0(loc lexbuf)}
       | "Lambda" {let () = update_data (Entry.Type_or_term Entry.LAMBDA) (loc lexbuf) in
-		    LAMBDA(loc lexbuf)}
+		    Token.LAMBDA(loc lexbuf)}
       | "->" {let () = update_data (Entry.Type_or_term Entry.ARROW) (loc lexbuf) in
-		LIN_ARROW(loc lexbuf)}
+		Token.LIN_ARROW(loc lexbuf)}
       | "=>" {let () = update_data (Entry.Type_or_term Entry.ARROW) (loc lexbuf) in
-		ARROW(loc lexbuf)}
+		Token.ARROW(loc lexbuf)}
       | ":=" {let () = update_data Entry.Colon_equal (loc lexbuf) in
-		COLON_EQUAL(loc lexbuf)}
+		Token.COLON_EQUAL(loc lexbuf)}
       | letter string {let () = update_data Entry.Id (loc lexbuf) in
-			 IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
+			 Token.IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
       | symbol {let () = update_data Entry.Sym (loc lexbuf) in
-		  SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
+		  Token.SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
       | _ as c {raise (Error.Error (Error.Lexer_error (Error.Bad_token,loc lexbuf)))}
     and comment depth = parse
       | "*)" {match depth with
 		| [a] -> lexer lexbuf
 		| a::tl -> comment tl lexbuf
-		| [] -> raise (Error (Lexer_error (Unstarted_comment,loc lexbuf)))}
+		| [] -> raise (Error.Error (Error.Lexer_error (Error.Unstarted_comment,loc lexbuf)))}
       | "(*" {comment ((loc lexbuf)::depth) lexbuf}
-      | eof {raise (Error (Lexer_error (Unclosed_comment, List.hd depth)))}
+      | eof {raise (Error.Error (Error.Lexer_error (Error.Unclosed_comment, List.hd depth)))}
       | newline {let () = Error.update_loc lexbuf None in comment depth lexbuf}
       | _ {comment depth lexbuf}
 

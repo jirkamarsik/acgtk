@@ -1,5 +1,5 @@
 %mltop{
-  open Abstract_syntax
+(*  open Abstract_syntax*)
     open Script_lexer
     
 (*  type token = Script_lexer.token *)
@@ -29,29 +29,29 @@
   
 %token
 EOII
-<(string*Abstract_syntax.location*string)>LOAD_DATA
-<(string*Abstract_syntax.location*string)>LOAD_SCRIPT
+<(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_DATA
+<(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_SCRIPT
 LOAD_HELP
 LIST
 SELECT
 UNSELECT
 TRACE
 HELP
-<Abstract_syntax.location>PRINT
-<(string*Abstract_syntax.location*string)>ANALYSE
+<Abstract_syntax.Abstract_syntax.location>PRINT
+<(string*Abstract_syntax.Abstract_syntax.location*string)>ANALYSE
 COMPOSE
 <string>SEMICOLONN
 AS
 DONT
 WAIT
-<(string*Abstract_syntax.location)>IDENTT
-/*<(string*Abstract_syntax.location)>STRING*/
+<(string*Abstract_syntax.Abstract_syntax.location)>IDENTT
+/*<(string*Abstract_syntax.Abstract_syntax.location)>STRING*/
 
 
 %start <(E.t)> zzcommands
 
-%local_data_type <(E.t * (string -> E.t -> E.t))>
-%global_data_type <bool>
+/*%local_data_type <(E.t * (string -> E.t -> E.t))>
+%global_data_type <bool>*/
 
 %%
 
@@ -183,11 +183,14 @@ WAIT
 end}
 
 %mlitop{
-  open Abstract_syntax
+(*  open Abstract_syntax*)
   open Script_lexer
 
   module Make(E:Environment.Environment_sig) : 
   sig
+
+
+    module F : Functions.Action_sig with type env=E.t
 
 (*    type token = Script_lexer.token*)
 

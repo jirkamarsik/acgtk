@@ -1,5 +1,7 @@
+help;
 load  d ../data/tag.acg;
 compose tag_strings tag_syntax as tag_yields;
+list;
 tag_syntax tag_yields tag_semantics analyse C_sleeps I_s I_vp (C_dog C_a (C_black (C_big (C_new I_n)))) : S;
 tag_syntax tag_yields tag_semantics analyse C_chases I_s I_vp (C_dog C_every I_n) (C_cat C_a I_n) : S;
 

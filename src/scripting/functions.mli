@@ -1,7 +1,9 @@
 open Environment
 
-module Make(E:Environment_sig) :
+module type Action_sig = 
 sig
+
+  type env
 
   exception Not_yet_implemented of string
 
@@ -22,27 +24,27 @@ sig
 
 
 
-  type file_type = | Data | Script of (string -> E.t -> E.t)
+  type file_type = | Data | Script of (string -> env -> env)
 
-  val load : file_type -> string -> E.t -> E.t
+  val load : file_type -> string -> env -> env
 
-  val list : E.t -> unit
+  val list : env -> unit
 
-  val select : string -> (Lexing.position * Lexing.position) -> E.t -> E.t
+  val select : string -> (Lexing.position * Lexing.position) -> env -> env
 
-  val unselect : E.t -> E.t
+  val unselect : env -> env
 
   val trace : unit -> unit
   val dont_trace : unit -> unit
 
-  val print : ?name:string -> E.t -> (Lexing.position * Lexing.position) -> unit
+  val print : ?name:string -> env -> (Lexing.position * Lexing.position) -> unit
 
-  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> E.t -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
   val compose : 
     string * (Lexing.position * Lexing.position) ->
     string * (Lexing.position * Lexing.position) ->
-    string * (Lexing.position * Lexing.position) -> E.t -> E.t
+    string * (Lexing.position * Lexing.position) -> env -> env
 
   val wait : unit -> unit
 
@@ -54,3 +56,6 @@ sig
 
   val exit : unit -> unit
 end
+
+
+module Make(E:Environment_sig) : Action_sig with type env=E.t
