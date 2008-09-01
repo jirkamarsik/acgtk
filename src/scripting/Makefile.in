@@ -27,6 +27,9 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars ../lambda.sylvain
 
 ML = scripting_errors.ml functions.ml script_lexer.ml script_parser.ml 
 
+DYP = script_parser.dyp
+CAMLLEX = script_lexer.mll
+
 EXE_SOURCES = test.ml
 
 ####################################
@@ -37,40 +40,14 @@ EXE_SOURCES = test.ml
 
 include ../Makefile.common
 
-script_parser.ml : script_parser.dyp
-	@DYPGEN@  --ocamlc "$(LIBDIR) $(I_PREVIOUS_DIRS)" --noemit-token-type $<
-
-script_lexer.ml : script_lexer.mll
-	@OCAMLLEX@ $<
-
-
-script_parser.cmi: script_lexer.cmo ../grammars/environment.cmi \
-    ../logic/abstract_syntax.cmi 
+script_parser.ml: scripting_errors.cmi script_lexer.cmo functions.cmi \
+    ../grammars/error.cmi ../grammars/environment.cmi \
+    ../logic/abstract_syntax.cmi
 
 script_parser.cmo: scripting_errors.cmi script_lexer.cmo functions.cmi \
     ../grammars/error.cmi ../grammars/environment.cmi \
-    ../logic/abstract_syntax.cmi script_parser.cmi 
+    ../logic/abstract_syntax.cmi script_parser.cmi
 script_parser.cmx: scripting_errors.cmx script_lexer.cmx functions.cmx \
     ../grammars/error.cmx ../grammars/environment.cmx \
-    ../logic/abstract_syntax.cmx script_parser.cmi 
-
-
-
-
-script_lexer.cmo: scripting_errors.cmi ../grammars/error.cmi \
-    ../logic/abstract_syntax.cmi 
-script_lexer.cmx: scripting_errors.cmx ../grammars/error.cmx \
-    ../logic/abstract_syntax.cmx 
-
-
-scripting_errors.cmo: ../grammars/error.cmi ../logic/abstract_syntax.cmi \
-    scripting_errors.cmi 
-scripting_errors.cmx: ../grammars/error.cmx ../logic/abstract_syntax.cmx \
-    scripting_errors.cmi 
-
-functions.cmi: ../grammars/environment.cmi 
-functions.cmo: ../utils/utils.cmi scripting_errors.cmi ../grammars/parser.cmi \
-    ../grammars/environment.cmi functions.cmi 
-functions.cmx: ../utils/utils.cmx scripting_errors.cmx ../grammars/parser.cmx \
-    ../grammars/environment.cmx functions.cmi 
+    ../logic/abstract_syntax.cmx script_parser.cmi
 

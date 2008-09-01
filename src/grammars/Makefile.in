@@ -31,6 +31,9 @@ PREVIOUS_DIRS = ../utils ../logic
 #ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
 ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml token.ml lexer.ml parser.ml  interactive.ml
 
+DYP = parser.dyp
+CAMLLEX = lexer.mll
+
 EXE_SOURCES = test.ml
 
 ####################################
@@ -41,55 +44,28 @@ EXE_SOURCES = test.ml
 
 include ../Makefile.common
 
-#DYPGEN_EXE = @DYPGEN@
-#DYPGEN_EXE = $(DYPPATH)/dypgen/dypgen --ocamlc "$(LIBDIR) $(I_PREVIOUS_DIRS)"
-DYPGEN_EXE = @DYPGEN@ --ocamlc "$(LIBDIR) $(I_PREVIOUS_DIRS)"
+# #DYPGEN_EXE = @DYPGEN@
+# #DYPGEN_EXE = $(DYPPATH)/dypgen/dypgen --ocamlc "$(LIBDIR) $(I_PREVIOUS_DIRS)"
+# DYPGEN_EXE = @DYPGEN@ --no-pp --no-obj-type --ocamlc "$(LIBDIR) $(I_PREVIOUS_DIRS)"
 
 
-parser.ml : parser.dyp
-	 $(DYPGEN_EXE) --noemit-token-type $<
+# parser.ml : parser.dyp
+# 	 $(DYPGEN_EXE) --noemit-token-type $<
 
-#parser.ml : parser.dyp
-#	$(DYPGEN_EXE)  --noemit-token-type $<
+# #parser.ml : parser.dyp
+# #	$(DYPGEN_EXE)  --noemit-token-type $<
 
-lexer.ml : lexer.mll
-	@OCAMLLEX@ $<
+# lexer.ml : lexer.mll
+# 	@OCAMLLEX@ $<
 
-
-parser.dyp: parser.cmo
-parser.cmi: token.cmi error.cmi environment.cmi ../logic/abstract_syntax.cmi 
-parser.cmo: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
+parser.ml: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
     lexer.cmo error.cmi environment.cmi entry.cmi \
-    ../logic/abstract_syntax.cmi parser.cmi 
+    ../logic/abstract_syntax.cmi
+
+parser.cmo: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
+     lexer.cmo error.cmi environment.cmi entry.cmi \
+     ../logic/abstract_syntax.cmi parser.cmi
 parser.cmx: ../utils/utils.cmx token.cmx syntactic_data_structures.cmx \
-    lexer.cmx error.cmx environment.cmx entry.cmx \
-    ../logic/abstract_syntax.cmx parser.cmi 
-
-token.cmi: ../logic/abstract_syntax.cmi 
-token.cmo: ../logic/abstract_syntax.cmi token.cmi 
-token.cmx: ../logic/abstract_syntax.cmx token.cmi 
-
-
-error.cmo: ../utils/utils.cmi error.cmi 
-error.cmx: ../utils/utils.cmx error.cmi 
-
-
-environment.cmi: interface.cmi ../logic/abstract_syntax.cmi 
-environment.cmo: ../utils/utils.cmi interface.cmi error.cmi \
-    ../logic/abstract_syntax.cmi environment.cmi 
-environment.cmx: ../utils/utils.cmx interface.cmx error.cmx \
-    ../logic/abstract_syntax.cmx environment.cmi 
-
-syntactic_data_structures.cmi: interface.cmi ../logic/abstract_syntax.cmi 
-syntactic_data_structures.cmo: ../utils/utils.cmi ../utils/tries.cmi \
-    ../utils/table.cmi error.cmi ../logic/abstract_syntax.cmi \
-    syntactic_data_structures.cmi 
-syntactic_data_structures.cmx: ../utils/utils.cmx ../utils/tries.cmx \
-    ../utils/table.cmx error.cmx ../logic/abstract_syntax.cmx \
-    syntactic_data_structures.cmi 
-
-
-lexer.cmo: ../utils/utils.cmi token.cmi error.cmi entry.cmi 
-lexer.cmx: ../utils/utils.cmx token.cmx error.cmx entry.cmx 
-
-interface.cmi: ../logic/lambda.cmi error.cmi ../logic/abstract_syntax.cmi 
+     lexer.cmx error.cmx environment.cmx entry.cmx \
+     ../logic/abstract_syntax.cmx parser.cmi
+parser.ml: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
