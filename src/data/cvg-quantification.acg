@@ -1,11 +1,11 @@
-signature CVG =
-	NP_S_S,NP,S:type;
-	
-	G_quant:NP_S_S -> (NP -> S) -> S;
+signature syntax =
 
-	EV,SO:NP_S_S;
+	NP,S,NP_S_S : type;
+
+	G_q : NP_S_S -> (NP -> S) -> S;
 
 	CHRIS,KIM,DANA,SANDY:NP;
+	EV,SO:NP_S_S;
 
 	LIKE:NP -> NP -> S;
 
@@ -14,19 +14,17 @@ end
 signature simple_syntax =
 	NP,S:type;
 	everybody,somebody:NP;
-
 	liked:NP -> NP -> S;
 
 	Chris,Kim,Dana,Sandy : NP;
-	
 end
 
-lexicon CVG_syntax (CVG) : simple_syntax =
-	NP_S_S := NP;
+lexicon CVG_syntax (syntax) : simple_syntax =
 	NP := NP;
 	S := S;
+	NP_S_S := NP;
 
-	G_quant := lambda q r.r q;
+	G_q  := lambda n r.r n;
 
 	EV := everybody;
 	SO := somebody;
@@ -40,45 +38,35 @@ lexicon CVG_syntax (CVG) : simple_syntax =
 end
 
 lexicon CVG_strings (simple_syntax) : strings =
-	NP := string;
-	S := string;
-	
-	everybody := everybody;
-	somebody := somebody;
+	NP,S:= string;
 
-	liked := lambda o s. s + liked + o;
-
-	Sandy := Sandy;
-	Dana := Dana ;
+	everybody := everyone;
+	somebody := someone;
+	liked := lambda o s . s + liked + o ;
+	Chris := Chris ;
 	Kim := Kim;
-	Chris := Chris;
+	Dana := Dana ;
+	Sandy := Sandy ;
 end
+
 
 signature semantics =
 	e,t:type;
-
-	chris',kim',dana',sandy':e;
-	like' : e -> e -> t;
-
-	binder All : (e =>t) -> t;
-	binder Ex : (e =>t) -> t;
 	
-	infix & : t -> t -> t;
-	infix > : t -> t -> t;
+	everybody',somebody': (e -> t) -> t;
+	chris',kim',dana',sandy':e;
 
-
-	person' : e -> t;
-
-	everybody' = lambda P.All x. (person' x) > (P x): (e->t) -> t;
-	somebody' = lambda P. Ex x. (person' x) & (P x): (e->t) -> t;
+	like' : e -> e -> t;
 end
 
-lexicon CVG_semantics (CVG) : semantics =
-	NP_S_S := (e -> t) -> t;
+
+lexicon CVG_semantics (syntax) : semantics =
 	NP := e;
 	S := t;
 
-	G_quant := lambda q r.q r;
+	NP_S_S := (e ->t) -> t;
+
+	G_q := lambda q r.q r;
 
 	EV := everybody';
 	SO := somebody';
@@ -88,8 +76,46 @@ lexicon CVG_semantics (CVG) : semantics =
 	DANA := dana';
 	SANDY := sandy';
 
-	LIKE := lambda o s. like' s o ;
+	LIKE := lambda o s .like' s o;
 
 end
 	
+signature ty_n =
 
+	e,t:type;
+
+	person',thing' : e -> t;
+
+	binder All : (e =>t) -> t;
+	binder Ex : (e =>t) -> t;
+	
+	infix & : t -> t -> t;
+	infix > : t -> t -> t;
+
+	everybody' = lambda P.All x. (person' x) > (P x): (e->t) -> t;
+	somebody' = lambda P. Ex x. (person' x) & (P x): (e->t) -> t;
+
+
+	chris',kim',dana',sandy':e;
+
+	like' : e -> e -> t;
+
+end
+
+lexicon RC_ty (semantics) : ty_n =
+	e := e;
+	t :=t;
+
+	everybody':= everybody';
+	somebody' := somebody';
+
+	chris':= chris';
+	kim':= kim';
+	dana':= dana';
+	sandy':= sandy';
+
+
+	like' := like' ;
+
+
+end

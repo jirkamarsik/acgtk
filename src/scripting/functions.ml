@@ -86,7 +86,16 @@ struct
 	    (fun d a -> 
 	       match d with
 		 | E.Signature sg -> (Format.sprintf "\tSignature\t%s%!" (fst (E.Signature1.name sg)))::a
-		 | E.Lexicon lx -> (Format.sprintf "\tLexicon\t\t%s%!" (fst (E.Lexicon.name lx)))::a)
+		 | E.Lexicon lx -> 
+		     let abs_name,obj_name =
+		       let abs,obj = E.Lexicon.get_sig lx in
+			 fst (E.Signature1.name abs),fst (E.Signature1.name obj) in
+		       (Format.sprintf
+			  "\tLexicon\t\t%s\t(%s --> %s)%!"
+			  (fst (E.Lexicon.name lx))
+			  abs_name
+			  obj_name)
+		       ::a)
 	    []
 	    e))
 
@@ -233,7 +242,7 @@ struct
     Wait,Format.sprintf "\t%s;\n\t\twaits a keyboard return event before going on in executing a script" (action_to_string Trace);
     Dont_wait,Format.sprintf "\t%s;\n\t\tstops waiting a keyboard return event before going on in executing a script" (action_to_string Trace);
     Print,Format.sprintf "\t[name] %s;\n\t\toutputs the content of the \"name\" signature or lexicon of the current environment. If no \"name\" is specified, check whether there is a selected data in the environment" (action_to_string Print);
-    Analyse,Format.sprintf "\t[name1 name2 ...] %s term:type;\n\tanalyses the given \"term:type\" with respect to the given \"name1\" ... signatures or lexicons, or if no such name is given, with respect to the selected data in the environment. In the context of a signature, this command just typechecks the given entry. In the context of a lexicon, it typechecks it and interprets it with respect to this lexicon" (action_to_string Print);
+    Analyse,Format.sprintf "\t[name1 name2 ...] %s term:type;\n\tanalyses the given \"term:type\" with respect to the given \"name1\" ... signatures or lexicons, or if no such name is given, with respect to the selected data in the environment. In the context of a signature, this command just typechecks the given entry. In the context of a lexicon, it typechecks it and interprets it with respect to this lexicon" (action_to_string Analyse);
     Compose,Format.sprintf "\t%s name1 name2 as name3;\n\t\tcreates a new lexicon with name \"name3\" by composing the \"name1\" and \"name2\" lexicons" (action_to_string Compose)
   ]
 
