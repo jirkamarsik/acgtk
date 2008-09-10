@@ -16,10 +16,13 @@ sig
     | Dont_trace
     | Print
     | Analyse
+    | Add
     | Compose
     | Dont_wait
     | Wait
     | Help of action option
+    | Create
+    | Save
 
 
 
@@ -41,6 +44,8 @@ sig
 
   val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
+  val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
+
   val compose : 
     string * (Lexing.position * Lexing.position) ->
     string * (Lexing.position * Lexing.position) ->
@@ -55,6 +60,16 @@ sig
   val help : action -> unit
 
   val exit : unit -> unit
+
+
+  val create_sig :  (string * (Lexing.position * Lexing.position)) -> env -> env
+
+
+  val create_lex :  abs:(string * (Lexing.position * Lexing.position)) -> obj:(string * (Lexing.position * Lexing.position)) -> (string * (Lexing.position * Lexing.position)) -> env -> env
+
+  val save : ?names:(string * (Lexing.position * Lexing.position)) list -> string -> env -> (Lexing.position * Lexing.position) -> unit
+
+
 end
 
 

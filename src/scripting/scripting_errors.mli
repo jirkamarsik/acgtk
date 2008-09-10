@@ -7,6 +7,7 @@ type error =
   | No_such_lexicon of string
   | Command_expected
   | Not_yet_implemented of string
+  | No_focus
 
 
 exception Error of (error * (Lexing.position * Lexing.position))

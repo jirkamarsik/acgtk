@@ -110,6 +110,10 @@ struct
 
   let start_term () = No_type_or_term_in_def
 
+  let start_sig_entry () = Sig (Sig_dec_id (Sig_dec_equal (No_entry)))
+
+  let start_lex_entry () = Lex(Lex_def No_lex_entry)
+
 let build_expectation lst =
     let rec build_expectation_rec lst k =
       match lst with

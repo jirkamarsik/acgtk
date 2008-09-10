@@ -18,6 +18,7 @@ type token =
   | TRACE
   | PRINT   of Abstract_syntax.location
   | ANALYSE  of (string*Abstract_syntax.location*string)
+  | ADD of (string*Abstract_syntax.location*string)
   | COMPOSE
   | SEMICOLONN of string
   | AS
@@ -25,6 +26,10 @@ type token =
   | WAIT
   | IDENTT of (string*Abstract_syntax.location)
   | HELP
+  | CREATE_SIG
+  | CREATE_LEX
+  | CREATE_HELP
+  | SAVE  of (string*Abstract_syntax.location*string)
 
 
   let loc lexbuf = Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf
@@ -64,6 +69,7 @@ let string = (letter|digit|'_')*
     | "#" {comment lexer lexbuf}
     | [';'] as c {let () = echo_chr c  in let s = reset_echo () in SEMICOLONN s}
     | "load" as c {let () = echo_str c in let t = load_options lexbuf in t}
+    | "create" as c {let () = echo_str c in let t = create_options lexbuf in t}
     | "list"  as c {let () = echo_str c in LIST}
     | "select"  as c {let () = echo_str c in SELECT}
     | "unselect"  as c {let () = echo_str c in UNSELECT}
@@ -72,10 +78,14 @@ let string = (letter|digit|'_')*
     | "print"  as c {let () = echo_str c in PRINT (loc lexbuf)}
     | "analyse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string (fun x l -> ANALYSE (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "add"  as c {let () = echo_str c in let () = Buffer.reset string_content in
+		string_wo_space (fun x l -> ADD (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "compose"  as c {let () = echo_str c in COMPOSE}
     | "don't"  as c {let () = echo_str c in DONT}
     | "wait"  as c {let () = echo_str c in WAIT}
     | "as"  as c {let () = echo_str c in AS}
+    | "save" as c {let () = echo_str c in let () = Buffer.reset string_content in
+		     string_wo_space (fun x l -> SAVE (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | letter string  as c {let () = echo_str c in IDENTT (Lexing.lexeme lexbuf,loc lexbuf)}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Command_expected,loc lexbuf))}
   and comment f_parser = parse
@@ -107,4 +117,16 @@ let string = (letter|digit|'_')*
     | "s" as c {let () = echo_chr c in let () = Buffer.reset string_content in
 		string_wo_space (fun x l -> LOAD_SCRIPT (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Missing_option Scripting_errors.Load,loc lexbuf))}
+  and create_options = parse
+    | [' ' '\t'] {create_options lexbuf}
+    | newline {let () = Error.update_loc lexbuf None in create_options lexbuf}
+    | eof {EOII}
+    | "help" {CREATE_HELP}
+    | "#" {comment create_options lexbuf}
+    | "s" as c {let () = echo_chr c in let () = Buffer.reset string_content in CREATE_SIG}
+    | "sig" as c {let () = echo_str c in let () = Buffer.reset string_content in CREATE_SIG}
+    | "l" as c {let () = echo_chr c in let () = Buffer.reset string_content in CREATE_LEX}
+    | "lex" as c {let () = echo_str c in let () = Buffer.reset string_content in CREATE_LEX}
+
+
 

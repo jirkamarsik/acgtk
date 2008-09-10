@@ -101,7 +101,7 @@ sig
 
   val unselect : t -> t
 
-  val focus : t -> entry
+  val focus : t -> entry option
 end
 
   
@@ -174,10 +174,7 @@ struct
 
   let unselect e = {e with focus=None}
 
-  let focus {focus=f} =
-    match f with
-      | None -> raise (Entry_not_found "focused")
-      | Some e -> e
+  let focus {focus=f} = f
 
 
 

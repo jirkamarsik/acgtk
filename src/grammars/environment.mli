@@ -148,7 +148,7 @@ sig
 
   val unselect : t -> t
 
-  val focus : t -> entry
+  val focus : t -> entry option
 end
 
 

@@ -48,9 +48,16 @@ sig
   initial state of the automaton *)
   val start_data : unit -> data
 
-  (** [start_term ()] returns an empty data corresponding to the
+  (** [start_term ()] returns an empty term corresponding to the
   initial state of the automaton *)
   val start_term : unit -> term
+
+  (** [start_sig_entry ()] returns a data corresponding to the state
+      of the automaton for entering a sig entry *)
+  val start_sig_entry : unit -> data
+    (** [start_lex_entry ()] returns a data corresponding to the
+	state of the automaton for entering a lex entry *)
+  val start_lex_entry : unit -> data
 
   (** [data_transition d v] returns the state of the automaton reached
       from [d] with valuation [v] *)

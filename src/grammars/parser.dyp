@@ -144,7 +144,9 @@
 <(string*Abstract_syntax.location)> IDENT
 <(string*Abstract_syntax.location)> SYMBOL
   
-%start <E.t> data
+%start <E.t> data  
+%start <E.Signature1.t -> E.Signature1.t> sig_entry  
+%start <E.Lexicon.t -> E.Lexicon.t> lex_entry
 %start <(E.Signature1.term*E.Signature1.stype)> term_alone
   
 %relation atom<app<sym_app<binder atom_type<arrow_type
@@ -389,11 +391,6 @@ sig_entries :
 | lex_entry[e] END_OF_DEC {fun lex -> e lex}
 | lex_entry[e] SEMICOLON lex_entries[es] {fun lex -> es (e lex)}
 
-
-/*      lex_entries :
-| lex_entry[e] optional_semi_colon_before_end {fun lex -> e lex}
-| lex_entry[e] SEMICOLON lex_entries[es] {fun lex -> es (e lex)}
-  */
     
       lex_entry :
 | comma_ids_or_sym[ids] COLON_EQUAL ...{
@@ -509,6 +506,52 @@ sig_entries :
 	      (Error.error_msg er "stdin") in
 	      None
 	| End_of_file -> None
+
+
+	    
+  let parse_sig_entry ?(offset="") t sg = 
+    let lexbuf = Lexing.from_string t in
+      try 
+	let () = Lexer.set_to_sig_entry () in
+	  try Some ((fst (List.hd(sig_entry ~global_data:false ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf))) sg) with
+	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
+      with
+	| Error.Error er -> 
+	    let s,e = Error.get_loc_error er in
+	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
+	    let () = Printf.fprintf 
+	      stderr
+	      "%s\n%s%s%s\nError: %s\n%!"
+	      t
+	      offset
+	      (String.make s' ' ') 
+	      (String.make (e'-s') '^')
+	      (Error.error_msg er "stdin") in
+	      None
+	| End_of_file -> None
+
+
+  let parse_lex_entry ?(offset="") t lex = 
+    let lexbuf = Lexing.from_string t in
+      try 
+	let () = Lexer.set_to_lex_entry () in
+	  try Some ((fst (List.hd(lex_entry ~global_data:false ~local_data:(Some (Abs_and_obj (E.Lexicon.get_sig lex))) Lexer.lexer lexbuf))) lex) with
+	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
+      with
+	| Error.Error er -> 
+	    let s,e = Error.get_loc_error er in
+	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
+	    let () = Printf.fprintf 
+	      stderr
+	      "%s\n%s%s%s\nError: %s\n%!"
+	      t
+	      offset
+	      (String.make s' ' ') 
+	      (String.make (e'-s') '^')
+	      (Error.error_msg er "stdin") in
+	      None
+	| End_of_file -> None
+
     
 
 
@@ -538,6 +581,10 @@ end}
 	{!Abstract_syntax.Abstract_syntax..Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
 	and [None] otherwise *)
     val parse_term : ?offset:string -> ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
+      
+    val parse_sig_entry : ?offset:string -> string -> E.Signature1.t -> E.Signature1.t option
+
+    val parse_lex_entry : ?offset:string -> string -> E.Lexicon.t -> E.Lexicon.t option
       
       
     type local_data =

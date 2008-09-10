@@ -39,13 +39,17 @@ TRACE
 HELP
 <Abstract_syntax.Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ANALYSE
+<(string*Abstract_syntax.Abstract_syntax.location*string)>ADD
 COMPOSE
 <string>SEMICOLONN
 AS
 DONT
 WAIT
 <(string*Abstract_syntax.Abstract_syntax.location)>IDENTT
-/*<(string*Abstract_syntax.Abstract_syntax.location)>STRING*/
+CREATE_SIG
+CREATE_LEX
+CREATE_HELP
+<(string*Abstract_syntax.Abstract_syntax.location*string)>SAVE
 
 
 %start <(E.t)> zzcommands
@@ -90,10 +94,20 @@ WAIT
 					     match names with
 					       | [] -> let () = F.analyse e t l in e
 					       | _ -> let () = F.analyse  ~names e t l in e}
+| optional_idents[names] ADD[(t,l,line)]   { let () = echo line in fun e -> 
+					     match names with
+					       | [] -> F.add e t l
+					       | _ -> F.add  ~names e t l}
 | COMPOSE IDENTT[n1] IDENTT [n2] AS IDENTT[n3] SEMICOLONN[l] { let () = echo l in fun e -> F.compose n1 n2 n3 e}
 | HELP SEMICOLONN[l] {let () = echo l in fun e -> let () = F.help (F.Help None) in e}
 | all_commands[c] HELP SEMICOLONN[l] {let () = echo l in fun e -> let () = F.help (F.Help (Some c)) in e}
 | LOAD_HELP SEMICOLONN[l] {let () = echo l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
+| CREATE_SIG IDENTT[n] SEMICOLONN[l] {let () = echo l in fun e -> F.create_sig n e}
+| CREATE_LEX IDENTT[n] IDENTT[n1] IDENTT[n2]  SEMICOLONN[l] {let () = echo l in fun e -> F.create_lex ~abs:n1 ~obj:n2 n e}
+| optional_idents[names] SAVE[(filename,l,line)]   { let () = echo line in fun e -> 
+						match names with
+						  | [] -> let () = F.save filename e l in e
+						  | _ -> let () = F.save ~names filename e l in e}
 
       all_commands:
 | WAIT {F.Wait}
@@ -105,6 +119,7 @@ WAIT
 | DONT TRACE {F.Dont_trace}
 | PRINT {F.Print}
 | ANALYSE {F.Analyse}
+| ADD {F.Add}
 | COMPOSE {F.Compose}
 | HELP {F.Help None}
 

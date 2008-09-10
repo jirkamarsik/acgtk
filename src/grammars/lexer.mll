@@ -38,6 +38,12 @@
   let set_to_term () =
     data := Term (Entry.start_term ())
 
+  let set_to_sig_entry () =
+    data := Data (Entry.start_sig_entry ())
+
+  let set_to_lex_entry () =
+    data := Data (Entry.start_lex_entry ())
+
 
   let update_data v (p1,p2) =
     try

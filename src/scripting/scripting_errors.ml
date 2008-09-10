@@ -9,6 +9,7 @@ type error =
   | No_such_lexicon of string
   | Command_expected
   | Not_yet_implemented of string
+  | No_focus
 
 exception Error of (error * Abstract_syntax.location)
 
@@ -19,5 +20,6 @@ let error_msg er (s,e) =
     | Not_in_environment s -> Printf.sprintf "No %s entry in the current environment" s 
     | No_such_lexicon  s -> Printf.sprintf "No lexicon \"%s\" in the current environmnet" s 
     | Command_expected -> "Command expected" 
+    | No_focus -> "No data on which to apply the command"
     | Not_yet_implemented s -> Printf.sprintf "\"%s\": Command not yet implemented" s in
     Printf.sprintf "%s:\n%s\n%!" loc msg
