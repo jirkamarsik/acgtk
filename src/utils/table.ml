@@ -9,10 +9,7 @@ module type TABLE =
     exception Not_found
     exception Conflict
     type 'a t
-    type key = int
-(*    val create : unit -> 'a t
-    val insert : int -> 'a -> 'a t -> 'a t
-    val lookup : int -> 'a t -> 'a *)
+    type key
     val empty : 'a t
     val add : ?override:bool -> key -> 'a -> 'a t -> 'a t
     val find : key -> 'a t -> 'a
@@ -24,8 +21,6 @@ module Make_table (Base : BASE)=
 
     exception Not_found
     exception Conflict
-
-(*    type 'a option = None | Some of 'a *)
 
     type 'a t = 
         Nil

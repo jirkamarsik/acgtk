@@ -14,6 +14,8 @@ sig
     | Infix 
     | Binder
 
+
+  (** The two types of abstraction *)
   type abstraction =
     | Linear
     | Non_linear
