@@ -7,8 +7,8 @@
   module Env = Utils.StringSet
     
 
-  type token=Token.Token.t
-  open Token.Token
+  type token=Acg_token.Token.t
+  open Acg_token.Token
 (*  type token=t*) 
 
   module Make (E:Environment.Environment_sig) =

@@ -29,7 +29,7 @@ PREVIOUS_DIRS = ../utils ../logic
 
 # Source files in the right order of dependance
 #ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
-ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml token.ml lexer.ml parser.ml  interactive.ml
+ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml acg_token.ml lexer.ml parser.ml  interactive.ml
 
 DYP = parser.dyp
 CAMLLEX = lexer.mll
@@ -58,14 +58,14 @@ include ../Makefile.common
 # lexer.ml : lexer.mll
 # 	@OCAMLLEX@ $<
 
-parser.ml: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
+parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
     lexer.cmo error.cmi environment.cmi entry.cmi \
     ../logic/abstract_syntax.cmi
 
-parser.cmo: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
+parser.cmo: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
      lexer.cmo error.cmi environment.cmi entry.cmi \
      ../logic/abstract_syntax.cmi parser.cmi
-parser.cmx: ../utils/utils.cmx token.cmx syntactic_data_structures.cmx \
+parser.cmx: ../utils/utils.cmx acg_token.cmx syntactic_data_structures.cmx \
      lexer.cmx error.cmx environment.cmx entry.cmx \
      ../logic/abstract_syntax.cmx parser.cmi
-parser.ml: ../utils/utils.cmi token.cmi syntactic_data_structures.cmi \
+parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \

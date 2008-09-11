@@ -1,7 +1,7 @@
 {
   open Entry
 (*  open Parser *)
-  open Token
+  open Acg_token
 (*  open Token*)
 
 

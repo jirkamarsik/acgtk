@@ -97,6 +97,7 @@ depend.ps : depend.dot
 	dot -Tps -o $@ $<
 
 %.dot : $(CMO)
+#	ocamldoc.opt $(PP) $(LIBDIR) -o $@ -dot $(DEP_FLAG) $(ML)
 	ocamldoc.opt $(PP) $(LIBDIR) -o $@ -dot $(DEP_FLAG) $(ML)
 
 

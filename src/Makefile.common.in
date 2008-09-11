@@ -97,6 +97,7 @@ depend.ps : depend.dot
 	dot -Tps -o $@ $<
 
 %.dot : $(CMO)
+#	@OCAMLDOC@ $(PP) $(LIBDIR) -o $@ -dot $(DEP_FLAG) $(ML)
 	@OCAMLDOC@ $(PP) $(LIBDIR) -o $@ -dot $(DEP_FLAG) $(ML)
 
 
