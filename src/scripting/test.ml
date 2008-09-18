@@ -12,11 +12,16 @@ module P = Script_parser.Make(E)
 
 let welcome_msg = 
   "\n\t\t\tWelcome to the ACG toplevel\n\t\t\t\t©INRIA 2008\nPlease send your comments or bug reports or featrure requests to sylvain.pogodalla@loria.fr\n\n\nType\n\t\thelp ;\nto get help.\n\n\n\n"
+
+
+let env = ref E.empty
+
+let anon_fun s = env := P.parse_file s !env
   
 let _ =
+  let () = Arg.parse [] anon_fun "toto" in
   let () = Printf.printf "%s%!" welcome_msg in
   let continue = ref true in
-  let env = ref E.empty in
   let () = 
     while !continue do
       try

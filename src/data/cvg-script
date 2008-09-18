@@ -1,35 +1,276 @@
+# A line starting with an hash is a comment
+
+
+# A first command just to have an interactive process while performing the script
 wait;
+
+# first load the signatures and lexicons 
 load d ../data/strings.acg;
 load d ../data/cvg.acg;
+
+# build two new lexicons by composing defined ones
 compose CVG_strings CVG_syntax as CVG_phonology;
 compose RC_ty CVG_semantics as ty_sem;
-# Scope ambiguity
+
+# we require to give the translation of the term:type pair occurring
+# after the "analyse" by all the lexicons specified before the
+# "analyse" command.
+
+###################
+# Scope ambiguity #
+###################
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_q SO (lambda y. G_q EV (lambda x.LIKE y x)) :S ;
+
+# The output is the following:
+#
+#
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse   G_q SO (lambda y. G_q EV (lambda x.LIKE y x)) :S ;
+# In syntax:
+#         G_q SO (lambda y. G_q EV (lambda x. LIKE y x)) : S
+# Interpreted by CVG_phonology in strings as:
+#         everyone + (liked + someone) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         liked somebody everybody : S
+# Interpreted by CVG_semantics in semantics as:
+#         somebody' (lambda y. everybody' (lambda x. like' x y)) : t
+# Interpreted by ty_sem in ty_n as:
+#         Ex x. (person' x) & (All x'. (person' x') > (like' x' x)) : t
+
+#
+# We can compare it with the output of the following command:
+#
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_q EV (lambda x. G_q SO (lambda y.LIKE y x)) :S ;
-# Embedded polar question
+
+# which is:
+#
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse   G_q EV (lambda x. G_q SO (lambda y.LIKE y x)) :S ;
+# In syntax:
+#         G_q EV (lambda x. G_q SO (lambda y. LIKE y x)) : S
+# Interpreted by CVG_phonology in strings as:
+#         everyone + (liked + someone) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         liked somebody everybody : S
+# Interpreted by CVG_semantics in semantics as:
+#         everybody' (lambda x. somebody' (lambda y. like' x y)) : t
+# Interpreted by ty_sem in ty_n as:
+#         All x. (person' x) > (Ex x'. (person' x') & (like' x x')) : t
+#
+#
+#
+# We can check that the two CVG interface proof terms, or syntax proof terms,
+# yields a single simple syntax (and string) term and two semantic terms
+
+
+###########################
+# Embedded polar question #
+###########################
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse WHETHER (LIKE SANDY KIM): Q0 ;
 
-# Embedded consituent question
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  WHETHER (LIKE SANDY KIM): Q0 ;
+# In syntax:
+#         WHETHER (LIKE SANDY KIM) : Q0
+# Interpreted by CVG_phonology in strings as:
+#         whether + (Kim + (liked + Sandy)) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         whether (liked Sandy Kim) : S
+# Interpreted by CVG_semantics in semantics as:
+#         whether' (like' kim' sandy') : k
+# Interpreted by ty_sem in ty_n as:
+#         whether' (like' kim' sandy') : t -> t
+
+#################################
+# Embedded constituent question #
+#################################
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w1 WHAT_FILLER (lambda y. LIKE y KIM) :Q1 ;
 
-# Embedded consituent question
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w1 WHAT_FILLER (lambda y. LIKE y KIM) :Q1 ;
+# In syntax:
+#         G_w1 WHAT_FILLER (lambda y. LIKE y KIM) : Q1
+# Interpreted by CVG_phonology in strings as:
+#         what + (Kim + (liked + E)) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         what_filler (lambda y. liked y Kim) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         what_filler (lambda y. like' kim' y) : k1
+# Interpreted by ty_sem in ty_n as:
+#         which0 thing' (lambda y. like' kim' y) : e -> t -> t
+
+
+################################
+# Embedded consituent question #
+################################
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w2 WHAT_IN_SITU_1 (lambda y.LIKE y KIM) : Q2 ;
 
-# Binary consituent question
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse   G_w2 WHAT_IN_SITU_1 (lambda y.LIKE y KIM) : Q2 ;
+# In syntax:
+#           G_w2 WHAT_IN_SITU_1 (lambda y.LIKE y KIM) : Q2
+#                                         ^^^^^^^^^^
+# Error: File "stdin", line 1, characters 32-42
+# The type of this expression is "Q1" but is used with type "S"
+#
+#
+# This show that using only in situ wh-word is impossible
+# it would correspond to somethink like "Kim liked what"
+
+
+##############################
+# Binary consituent question #
+##############################
+#
+# We give here example of two sentences with two wh-words : one which is in-situ
+# and the other one triggers an overt movement
+#
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda x . LIKE y x)) :Q2 ;
+
+# outputs:
+# 
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda x . LIKE y x)) :Q2 ;
+# In syntax:
+#         G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda x. LIKE y x)) : Q2
+# Interpreted by CVG_phonology in strings as:
+#         who + (E + (liked + what)) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         who_filler (lambda x. liked what_in_situ x) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         what_in_situ12 (lambda y. who_filler (lambda x. like' x y)) : k2
+# Interpreted by ty_sem in ty_n as:
+#         which1 thing' (lambda y. which0 person' (lambda x. like' x y)) : e -> e -> t -> t
+# 
 
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w2 WHO_IN_SITU_1 (lambda x. G_w1 WHAT_FILLER (lambda y . LIKE y x)) :Q2 ;
 
-# Baker ambiguity
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w2 WHO_IN_SITU_1 (lambda x. G_w1 WHAT_FILLER (lambda y . LIKE y x)) :Q2 ;
+# In syntax:
+#         G_w2 WHO_IN_SITU_1 (lambda x. G_w1 WHAT_FILLER (lambda y. LIKE y x)) : Q2
+# Interpreted by CVG_phonology in strings as:
+#         what + (who + (liked + E)) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         what_filler (lambda y. liked y who_in_situ) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         who_in_situ12 (lambda x. what_filler (lambda y. like' x y)) : k2
+# Interpreted by ty_sem in ty_n as:
+#         which1 person' (lambda x. which0 thing' (lambda y. like' x y)) : e -> e -> t -> t
+# 
+
+###################
+# Baker ambiguity #
+###################
+
+# These examples shows that the what in-situ can take scope
+# over the highest who filler word
+
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w1 WHO_FILLER (lambda x. WONDER2 (G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda z. LIKE y z))) x) : Q1;
+
+
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w1 WHO_FILLER (lambda x. WONDER2 (G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda z. LIKE y z))) x) : Q1;
+# In syntax:
+#         G_w1 WHO_FILLER (lambda x. WONDER2 (G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda z. LIKE y z))) x) : Q1
+# Interpreted by CVG_phonology in strings as:
+#         who + (E + (wondered + (who + (E + (liked + what))))) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         who_filler (lambda x. wondered (who_filler (lambda z. liked what_in_situ z)) x) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         who_filler (lambda x. wonder2' (what_in_situ12 (lambda y. who_filler (lambda z. like' z y))) x) : k1
+# Interpreted by ty_sem in ty_n as:
+#         which0 person' (lambda x. wonder2' (which1 thing' (lambda y. which0 person' (lambda z. like' z y))) x) : e -> t -> t
+
 
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda x. WONDER1 (G_w1 WHO_FILLER (lambda z. LIKE y z)) x)) : Q2;
 
+
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda x. WONDER1 (G_w1 WHO_FILLER (lambda z. LIKE y z)) x)) : Q2;
+# In syntax:
+#         G_w2 WHAT_IN_SITU_1 (lambda y. G_w1 WHO_FILLER (lambda x. WONDER1 (G_w1 WHO_FILLER (lambda z. LIKE y z)) x)) : Q2
+# Interpreted by CVG_phonology in strings as:
+#         who + (E + (wondered + (who + (E + (liked + what))))) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         who_filler (lambda x. wondered (who_filler (lambda z. liked what_in_situ z)) x) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         what_in_situ12 (lambda y. who_filler (lambda x. wonder1' (who_filler (lambda z. like' z y)) x)) : k2
+# Interpreted by ty_sem in ty_n as:
+#         which1 thing' (lambda y. which0 person' (lambda x. wonder1' (which0 person' (lambda z. like' z y)) x)) : e -> e -> t -> t
+# 
+
+
 CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w1 WHO_FILLER (lambda x. WONDER2 (G_w2 WHO_IN_SITU_1 (lambda z. G_w1 WHAT_FILLER (lambda y. LIKE y z))) x) : Q1;
 
-# Topicalisation
+
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics ty_sem analyse  G_w1 WHO_FILLER (lambda x. WONDER2 (G_w2 WHO_IN_SITU_1 (lambda z. G_w1 WHAT_FILLER (lambda y. LIKE y z))) x) : Q1;
+# In syntax:
+#         G_w1 WHO_FILLER (lambda x. WONDER2 (G_w2 WHO_IN_SITU_1 (lambda z. G_w1 WHAT_FILLER (lambda y. LIKE y z))) x) : Q1
+# Interpreted by CVG_phonology in strings as:
+#         who + (E + (wondered + (what + (who + (liked + E))))) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         who_filler (lambda x. wondered (what_filler (lambda y. liked y who_in_situ)) x) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         who_filler (lambda x. wonder2' (who_in_situ12 (lambda z. what_filler (lambda y. like' z y))) x) : k1
+# Interpreted by ty_sem in ty_n as:
+#         which0 person' (lambda x. wonder2' (which1 person' (lambda z. which0 thing' (lambda y. like' z y))) x) : e -> t -> t
+
+
+CVG_phonology CVG_syntax CVG_semantics ty_sem analyse G_w2 WHO_IN_SITU_1 (lambda z. G_w1 WHO_FILLER (lambda x. WONDER1 (G_w1 WHAT_FILLER (lambda y. LIKE y z)) x)) : Q2;
+
+
+# outputs:
+#         G_w2 WHO_IN_SITU_1 (lambda z. G_w1 WHO_FILLER (lambda x. WONDER1 (G_w1 WHAT_FILLER (lambda y. LIKE y z)) x)) : Q2
+# Interpreted by CVG_phonology in strings as:
+#         who + (E + (wondered + (what + (who + (liked + E))))) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         who_filler (lambda x. wondered (what_filler (lambda y. liked y who_in_situ)) x) : Q
+# Interpreted by CVG_semantics in semantics as:
+#         who_in_situ12 (lambda z. who_filler (lambda x. wonder1' (what_filler (lambda y. like' z y)) x)) : k2
+# Interpreted by ty_sem in ty_n as:
+#         which1 person' (lambda z. which0 person' (lambda x. wonder1' (which0 thing' (lambda y. like' z y)) x)) : e -> e -> t -> t
+
+##################
+# Topicalisation #
+##################
+
+# First we show in-situ topicatlization with stress
+
 CVG_phonology CVG_syntax CVG_semantics analyse G_t_in_situ (" SANDY) (lambda y . LIKE y KIM) : S;
+
+# outputs:
+# CVG_phonology CVG_syntax CVG_semantics analyse  G_t_in_situ (" SANDY) (lambda y . LIKE y KIM) : S;
+# In syntax:
+#         G_t_in_situ (" SANDY) (lambda y. LIKE y KIM) : S
+# Interpreted by CVG_phonology in strings as:
+#         Kim + (liked + (" Sandy)) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         liked (" Sandy) Kim : S
+# Interpreted by CVG_semantics in semantics as:
+#         top' sandy' (lambda y. like' kim' y) : t
+
+
+# Then topicalization by overt movement
+
 CVG_phonology CVG_syntax CVG_semantics analyse G_t (^ SANDY) (lambda y . LIKE y KIM) : T;
 
+# outputs:
 
 
+# CVG_phonology CVG_syntax CVG_semantics analyse  G_t (^ SANDY) (lambda y . LIKE y KIM) : T;In syntax:
+#         G_t (^ SANDY) (lambda y. LIKE y KIM) : T
+# Interpreted by CVG_phonology in strings as:
+#         Sandy ! (Kim + (liked + E)) : string
+# Interpreted by CVG_syntax in simple_syntax as:
+#         ^ Sandy (lambda y. liked y Kim) : T
+# Interpreted by CVG_semantics in semantics as:
+#         top' sandy' (lambda y. like' kim' y) : t
+# 
+
+list;

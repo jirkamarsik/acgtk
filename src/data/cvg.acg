@@ -1,41 +1,78 @@
+(* This file aims at provideing an ACG encoding of CVG examples as
+given in the handout of the NaTal workshop
+(http://www.ling.ohio-state.edu/~pollard/cvg/natal.pdf) *)
+
+
+
+(* This first syntax is used to build terms corresponding to CVG
+interface derivations *)
+
 signature syntax =
 
-	NP,S,NP_S_S,Q0,Q1,Q2,Q3,NP_S_Q1,NP_Q1_Q2,NP_Q2_Q3 : type;
+(* First we provide some basic types. Every type corresponds to a
+unique corresponding pair (syn_t,sem_t) where syn_t is the syntactic
+type and sem_t the semantic type that can occur in the CVG lexicon
+declaration for constant in the interface calculus. Q0, Q1, Q2, and Q3
+are respectively for the polar questions, the 1 place question, the 2
+and 3-place questions. *)
 
-	G_q : NP_S_S -> (NP -> S) -> S;
+	NP,S,Q0,Q1,Q2,Q3 : type;
 
-	G_w1 : NP_S_Q1 -> (NP -> S) -> Q1;
-	G_w2 : NP_Q1_Q2 -> (NP -> Q1) -> Q2;
-	G_w3 : NP_Q2_Q3 -> (NP -> Q2) -> Q3;
+(* Those types correspond to the one where the O[X,Y,Z] operator is
+used in a constant declaration *)
 
+	NP_S_S,NP_S_Q1,NP_Q1_Q2,NP_Q2_Q3 : type;
+
+	T,NP_S_T,NP_S_T_in_situ:type;
+
+(* Various standard constans *)
 
 	CHRIS,KIM,DANA,SANDY:NP;
-	EV,SO:NP_S_S;
 
 	LIKE:NP -> NP -> S;
-	BARKE:NP -> S;
+	BARK:NP -> S;
 	THINK : S -> NP -> S;
 	WONDER1 : Q1 -> NP -> S;
 	WONDER2 : Q2 -> NP -> S;
 	WONDER3 : Q3 -> NP -> S;
 	WHETHER : S -> Q0;
 
-
+(* Constants that trigger (in CVG words) a Gazdar rule in the proofs
+*)
+	EV,SO:NP_S_S;
 	WHO_FILLER,WHAT_FILLER: NP_S_Q1;
 	WHO_IN_SITU_1,WHAT_IN_SITU_1 : NP_Q1_Q2;
 	WHO_IN_SITU_2,WHAT_IN_SITU_2 : NP_Q2_Q3;
 
-	T,NP_S_T,NP_S_T_in_situ:type;
-
-	G_t : NP_S_T -> (NP -> S) -> T;
-	G_t_in_situ : NP_S_T_in_situ -> (NP -> S) -> S;
-
+(* Those ones are to for topicalisation *)
 	prefix ^ : NP -> NP_S_T;
 	prefix " : NP -> NP_S_T_in_situ;
 
+
+(* We now introduce the constants that simulate the Gazdar rule of
+CVG. They are instantiated by types. First we have the ones that
+trigger a covert movement, but no overt movement *)
+	G_q : NP_S_S -> (NP -> S) -> S;
+
+	G_w2 : NP_Q1_Q2 -> (NP -> Q1) -> Q2;
+	G_w3 : NP_Q2_Q3 -> (NP -> Q2) -> Q3;
+
+(* Then the ones that trigger both movements *)
+	G_w1 : NP_S_Q1 -> (NP -> S) -> Q1;
+
+(* And finally the "operizers" *)
+	G_t_in_situ : NP_S_T_in_situ -> (NP -> S) -> S;
+
+	G_t : NP_S_T -> (NP -> S) -> T;
 end
 
+
+(* Now we define a signature used to build term of the CVG syntax. I
+call the latter "simple syntax" in the ACG architecture *)
+
 signature simple_syntax =
+
+	(* These types and constants are just like in CVG *)
 	NP,S,Q,T:type;
 	everybody,somebody:NP;
 	barked : NP -> S;
@@ -47,71 +84,103 @@ signature simple_syntax =
 	Chris,Kim,Dana,Sandy : NP;
 
 	who_in_situ,what_in_situ:NP;
+	prefix " : NP -> NP ;
+
+(* Those constants are the one involved in overt movements. Hence the
+higher-order types *)
+
 	who_filler,what_filler: (NP -> S) -> Q;
 
 	prefix ^ : NP -> (NP -> S) -> T ;
-	prefix " : NP -> NP ;
+
 
 	
 end
 
+(* We can now define the translation from CVG interface proof terms to
+CVG syntactic terms, ie(with ACG words) from the syntax to the simple syntax *)
+
 lexicon CVG_syntax (syntax) : simple_syntax =
+(* These first translations are quite obvious *)
+
 	NP := NP;
 	S := S;
-	NP_S_S := NP;
 	Q0 := S;
 	Q1 := Q;
 	Q2 := Q;
 	Q3 := Q;
-	NP_S_Q1 := (NP ->S)->Q;
-	NP_Q1_Q2 := NP;
-	NP_Q2_Q3 := NP;
+	T := T;
 
-	G_q  := lambda n r.r n;
-
-	G_w1 := lambda w r.w r;
-	G_w2 := lambda n r. r n;
-	G_w3 := lambda n r. r n;
-
-
-	EV := everybody;
-	SO := somebody;
-	LIKE := liked;
+	SANDY := Sandy;
+	DANA := Dana;
+	KIM := Kim;
+	CHRIS := Chris;
 
 	WHETHER := lambda s . whether s;
 	WONDER1 := lambda q subj . wondered q subj ;
 	WONDER2 := lambda q subj . wondered q subj ;
 	WONDER3 := lambda q subj . wondered q subj ;
 	THINK := lambda s subj . thought s subj ;
-	BARKE := barked ;
+	LIKE := liked;
+	BARK := barked ;
 
-	SANDY := Sandy;
-	DANA := Dana;
-	KIM := Kim;
-	CHRIS := Chris;
-	
-	WHAT_FILLER := what_filler;
-	WHO_FILLER := who_filler;
+
+(* Now we give the translations for types that trigger only covert
+movement. Hence, their simple syntactic type are just plain atomic
+types *)
+
+	NP_S_S := NP;
+
+	EV := everybody;
+	SO := somebody;
+
+	NP_Q1_Q2 := NP;
+	NP_Q2_Q3 := NP;
 
 	WHAT_IN_SITU_1 := what_in_situ ;
 	WHO_IN_SITU_1 := who_in_situ ;
 	WHAT_IN_SITU_2 := what_in_situ ;
 	WHO_IN_SITU_2 := who_in_situ ;
 
-	T := T;
-	NP_S_T := (NP -> S) -> T;
+
 	NP_S_T_in_situ := NP;
-
-	G_t := lambda t r . t r;
-	G_t_in_situ := lambda n r.r n;
-
-	^ := lambda n  . ^ n ;
 
 	" := lambda n . " n ;
 
+(* And, accordingly, the translation of the corresponding Gazdar rule should internalize
+the fact that the types should be lowered. *)
+
+	G_q  := lambda n r.r n;
+
+	G_w2 := lambda n r. r n;
+	G_w3 := lambda n r. r n;
+
+	G_t_in_situ := lambda n r.r n;
+
+(* Now we give the translations of the types that trigger an overt
+movement *)
+
+	NP_S_Q1 := (NP ->S)->Q;
+
+	WHAT_FILLER := what_filler;
+	WHO_FILLER := who_filler;
+
+	NP_S_T := (NP -> S) -> T;
+
+	^ := lambda n  . ^ n ;
+
+(* Now, the translation of the Gazdar has nothing special to
+internalize and just reflect application *)
+
+	G_w1 := lambda w r.w r;
+
+	G_t := lambda t r . t r;
 
 
 end
+
+(* This lexicon is jsut to produce strings from the simple syntax and
+make them easier to read. The translation should be straightforward *)
 
 lexicon CVG_strings (simple_syntax) : strings =
 	NP,S,Q,T:= string;
@@ -133,12 +202,17 @@ lexicon CVG_strings (simple_syntax) : strings =
 	what_in_situ := what;
 	what_filler := lambda P. what + (P E);
 
-	^ := lambda s r. s ! (r E) ;
-
 	" := lambda n . " n ;
+
+(* We indicate fronting topicalization with the ! symbol *)
+
+	^ := lambda s r. s ! (r E) ;
 
 end
 
+(* We can now deal with the semantics. The following signature
+correspond to the CVG semantics signature, even if we don't use the
+iota and pi types *)
 
 signature semantics =
 	e,t:type;
@@ -149,13 +223,12 @@ signature semantics =
 	chris',kim',dana',sandy':e;
 
 	like' : e -> e -> t;
-	barke' : e -> t;
+	bark' : e -> t;
 	think' : t -> e -> t;
 
 	wonder1' : k1 -> e -> t;
 	wonder2' : k2 -> e -> t;
 	wonder3' : k3 -> e -> t;
-
 
 	whether' : t -> k;
 
@@ -163,37 +236,22 @@ signature semantics =
 	who_in_situ12,what_in_situ12 : (e -> k1) -> k2 ;
 	who_in_situ23,what_in_situ23 : (e -> k2) -> k3;
 
-	
-
+(* the constant indicating a topicalization *)
 	top' : e -> (e ->t) -> t
 
 end
 
+(* We now provide the translation from CVG interface proof terms
+(syntax terms) into CVG semantic terms (semantic terms) *)
 
 lexicon CVG_semantics (syntax) : semantics =
 	NP := e;
 	S := t;
-
-	NP_S_S := (e ->t) -> t;
-
 	Q0 := k;	
 	Q1 := k1;
 	Q2 := k2;
 	Q3 := k3;
-
-	NP_S_Q1 := (e -> t) -> k1 ;
-	NP_Q1_Q2 := (e -> k1) -> k2 ;
-	NP_Q2_Q3 := (e -> k2) -> k3 ;
-
-	G_q := lambda q r.q r;
-
-	G_w1 := lambda w r.w r;
-	G_w2 := lambda w r.w r;
-	G_w3 := lambda w r.w r;
-
-
-	EV := everybody';
-	SO := somebody';
+	T := t;
 
 	CHRIS := chris';
 	KIM := kim';
@@ -201,7 +259,7 @@ lexicon CVG_semantics (syntax) : semantics =
 	SANDY := sandy';
 
 	LIKE := lambda o s .like' s o;
-	BARKE := barke' ;
+	BARK := bark' ;
 	THINK := think' ;
 	WONDER1 := wonder1' ;
 	WONDER2 := wonder2' ;
@@ -209,31 +267,53 @@ lexicon CVG_semantics (syntax) : semantics =
 
 	WHETHER := whether' ;
 
+(* We now translate the terms that trigger a covert movement. It is
+exactly the same schems as for the terms triggering overt movement in
+the CVG_syntax lexicon *)
+
+	NP_S_S := (e ->t) -> t;
+
+	EV := everybody';
+	SO := somebody';
+
+	NP_S_Q1 := (e -> t) -> k1 ;
+	NP_Q1_Q2 := (e -> k1) -> k2 ;
+	NP_Q2_Q3 := (e -> k2) -> k3 ;
+
 	WHO_FILLER := who_filler ;
 	WHAT_FILLER := what_filler ;
 	WHO_IN_SITU_1 := who_in_situ12 ;
 	WHAT_IN_SITU_1 := what_in_situ12 ;
 	WHO_IN_SITU_2 := who_in_situ23 ;
 	WHAT_IN_SITU_2 := what_in_situ23 ;
-	
-	T := t;
+
 	NP_S_T := (e -> t) -> t;
 	NP_S_T_in_situ := (e ->t) -> t;
+
+	^ := lambda n. top' n;
+	" := lambda n. top' n;
+
+
+(* All the translations of the Gazdar rules have the same schema *)
+
+	G_q := lambda q r.q r;
+
+	G_w1 := lambda w r.w r;
+	G_w2 := lambda w r.w r;
+	G_w3 := lambda w r.w r;
 
 	G_t := lambda t r . t r;
 	G_t_in_situ := lambda t r.t r;
 
-	^ := lambda n. top' n;
-	" := lambda n. top' n;
-	
-
 end
+
+(* To make things possibly easier to read, we also provide a
+translation from CVG semantics into ty_n *)
 	
 signature ty_n =
 
 	e,t:type;
 
-(*	everybody',somebody': (e -> t) -> t ;*)
 	chris',kim',dana',sandy':e;
 	
 	person',thing' : e -> t;
@@ -244,14 +324,8 @@ signature ty_n =
 	infix & : t -> t -> t;
 	infix > : t -> t -> t;
 
-
-
-
 	everybody' = lambda P.All x. (person' x) > (P x): (e->t) -> t;
 	somebody' = lambda P. Ex x. (person' x) & (P x): (e->t) -> t;
-
-
-
 
 	whether' : t -> t -> t;
 	
@@ -267,13 +341,8 @@ signature ty_n =
 	what23 = which2 thing' : (e -> e -> e -> t -> t) -> e -> e -> e -> t -> t;
 	
 	like' : e -> e -> t;
-	barke' : e -> t;
+	bark' : e -> t;
 	think' : t -> e -> t;
-
-(*	k = t -> t:type;
-	k1 = e -> t -> t:type;
-	k2 = e -> e -> t -> t:type;
-	k3 = e -> e -> e -> t -> t:type; *)
 
 	wonder1' : (e -> t -> t) -> e -> t;
 	wonder2' : (e -> e -> t -> t) -> e -> t;
@@ -300,7 +369,7 @@ lexicon RC_ty (semantics) : ty_n =
 	sandy':= sandy';
 
 	like' := like' ;
-	barke' := barke';
+	bark' := bark';
 	think' := think';
 
 	wonder1' := wonder1' ;
@@ -318,6 +387,4 @@ lexicon RC_ty (semantics) : ty_n =
 	what_in_situ23 := what23 ;
 
 	top':=top';
-
-
 end

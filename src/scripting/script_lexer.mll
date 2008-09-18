@@ -89,7 +89,7 @@ let string = (letter|digit|'_')*
     | letter string  as c {let () = echo_str c in IDENTT (Lexing.lexeme lexbuf,loc lexbuf)}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Command_expected,loc lexbuf))}
   and comment f_parser = parse
-    | newline {f_parser lexbuf}
+    | newline {let () = Error.update_loc lexbuf None in f_parser lexbuf}
     | _ {comment f_parser lexbuf}
   and string f = parse
     | ";" {f (Buffer.contents string_content) (loc lexbuf)}

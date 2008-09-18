@@ -13,7 +13,7 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma
+LIBS += dyp.cma str.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,

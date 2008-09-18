@@ -60,7 +60,10 @@ CREATE_HELP
 %%
 
   zzcommands :
-| EOII {fst dyp.last_local_data}
+| EOII @{let e,f = dyp.last_local_data in
+	 let () = Printf.printf "End of parsing, getting:\n%!" in 
+	 let () = F.list e in 
+	   (e,[Local_data (e,f)])}
 | command[c] ...@{let e,f = (dyp.last_local_data) in
 		  let e' = 
 		    try
@@ -76,7 +79,11 @@ CREATE_HELP
 | WAIT SEMICOLONN[l] @{(fun e -> let () = echo l in let () = F.wait () in e),[Global_data true]}
 | DONT WAIT SEMICOLONN[l] @{(fun e ->  let () = echo l in let () = F.dont_wait () in e),[Global_data false]}
 | LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo l in  F.load F.Data  s e}
-| LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo l in F.load (F.Script (snd dyp.last_local_data)) s e}
+| LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo l in
+			   let new_env = F.load (F.Script (snd dyp.last_local_data)) s e in
+			   let () = Printf.printf "load script performed, getting:\n%!" in
+			   let () = F.list new_env in
+			     new_env}
 | LIST SEMICOLONN[l] {fun e ->  let () = echo l in let () = F.list e in e}
 | SELECT IDENTT[(name,loc)]  SEMICOLONN[l] {fun e ->  let () = echo l in F.select name loc e}
 | UNSELECT SEMICOLONN[l] { let () = echo l in F.unselect}
@@ -140,12 +147,14 @@ CREATE_HELP
   let rec parse_file  filename env =
     let in_ch = try open_in filename with | Sys_error s -> raise (Error.Error (Error.System_error s)) in
     let lexbuf = Lexing.from_channel in_ch in
-    let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
+    let () = Printf.printf "Parsing script file \"%s\"...\n%!" filename in
       try
 	let new_env=
 	  try (fst (List.hd (zzcommands ~global_data:(F.should_wait ()) ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
 	let () = Printf.printf "Done.\n%!" in
+	let () = Printf.printf "I parsed the script file and now:\n%!" in
+	let () = F.list new_env in
 	  new_env
       with
 	| Error.Error e -> 
@@ -153,7 +162,9 @@ CREATE_HELP
 	    let _ = Script_lexer.reset_echo () in
 	      env
 
+  let commented_regexp = Str.regexp "^[ \t#]*#"
 
+  let is_fully_commented_line s = Str.string_match commented_regexp s 0
 
   let bufferize () =
     let () = Printf.printf "# " in
@@ -162,15 +173,18 @@ CREATE_HELP
     let () =
       while !no_semi_colon do
 	let input = read_line () in
-	  try
-	    let semi_colon_index=String.index input ';' in
-	    let () = Buffer.add_string buf (String.sub input 0 (semi_colon_index+1)) in
-	      no_semi_colon:=false
-	  with
-	    | Not_found ->
-		Buffer.add_string buf input ;
-		Buffer.add_char buf '\n';
+	  if not (is_fully_commented_line input) then
+	    try
+	      let semi_colon_index=String.index input ';' in
+	      let () = Buffer.add_string buf (String.sub input 0 (semi_colon_index+1)) in
+		no_semi_colon:=false
+	    with
+	      | Not_found ->
+		  Buffer.add_string buf input ;
+		  Buffer.add_char buf '\n';
 		  Printf.printf "  "
+	  else
+	    ()
       done in
       Buffer.contents buf
 	
@@ -184,6 +198,7 @@ CREATE_HELP
 	try (fst (List.hd (zzcommands ~global_data:false ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
 	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
+	| Failure "lexing: empty token" -> env
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
 	    let _ = Script_lexer.reset_echo () in
