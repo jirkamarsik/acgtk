@@ -61,8 +61,8 @@ CREATE_HELP
 
   zzcommands :
 | EOII @{let e,f = dyp.last_local_data in
-	 let () = Printf.printf "End of parsing, getting:\n%!" in 
-	 let () = F.list e in 
+(*	 let () = Printf.printf "End of parsing, getting:\n%!" in 
+	 let () = F.list e in *)
 	   (e,[Local_data (e,f)])}
 | command[c] ...@{let e,f = (dyp.last_local_data) in
 		  let e' = 
@@ -153,8 +153,8 @@ CREATE_HELP
 	  try (fst (List.hd (zzcommands ~global_data:(F.should_wait ()) ~local_data:(env,parse_file)  Script_lexer.lexer lexbuf))) with
 	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
 	let () = Printf.printf "Done.\n%!" in
-	let () = Printf.printf "I parsed the script file and now:\n%!" in
-	let () = F.list new_env in
+(*	let () = Printf.printf "I parsed the script file and now:\n%!" in
+	let () = F.list new_env in *)
 	  new_env
       with
 	| Error.Error e -> 

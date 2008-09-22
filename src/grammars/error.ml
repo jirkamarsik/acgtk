@@ -131,9 +131,9 @@ let type_error_to_string = function
   | Linear_var s ->
       Printf.sprintf "Var \"%s\" is supposed to be linear" s
   | Other -> "Not yet implemented"
-  | Is_Used (s1,s2) -> Printf.sprintf "The type of this expression is \"%s\" but is used with type \"%s\"" s1 s2
+  | Is_Used (s1,s2) -> Printf.sprintf "The type of this expression is \"%s\" but is used with type %s" s1 s2
   | Two_occurrences_of_linear_variable (s,e) -> Printf.sprintf "This linear variable was already used: %s" (compute_comment_for_position s e)
-  | Non_empty_context (x,(s,e),funct_pos,funct_type) -> Printf.sprintf "This term contains a free linear variable \"%s\" at %s and is argument the term  of type %s at %s )" x (compute_comment_for_position s e)   funct_type (compute_comment_for_position (fst funct_pos) (snd funct_pos))
+  | Non_empty_context (x,(s,e),funct_pos,funct_type) -> Printf.sprintf "This term contains a free linear variable \"%s\" at %s and is argument the term  of type \"%s\" at %s )" x (compute_comment_for_position s e)   funct_type (compute_comment_for_position (fst funct_pos) (snd funct_pos))
   | Not_normal -> "This term is not in normal form"
   | Vacuous_abstraction (x,(s,e)) -> Printf.sprintf "This linear variable \"%s\" is abstracted over but not used in term %s" x (compute_comment_for_position s e)
 
