@@ -1,1 +1,24 @@
-./configure && make
+To install the ACG toolkit, first run:
+
+	./configure
+
+Then run:
+
+	make
+
+It should compile all the source under ./src/ and produce some of the
+executables. Then you can run for instance:
+
+	src/lambda/test
+
+or
+	src/acg-data/test
+
+or
+
+	src/acg-data/test --help
+
+to have some help,
+or
+
+	src/scripting/test

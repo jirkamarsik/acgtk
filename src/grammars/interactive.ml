@@ -9,7 +9,7 @@ let options =
   ("-i", Arg.Set interactive , "Enter the interaction loop to parse terms according to signatures")
   ]
   
-let usg_msg = "./test [options] file"
+let usg_msg = "./test [options] file1 file2 ...\n\nThis will parse the files which are supposed to be files containing acg signatures or lexicons."
 
 module Make(Lex:Interface.Lexicon_sig) =
 struct  
