@@ -21,14 +21,11 @@ LIBS += dyp.cma str.cma
 LIBDIR = -I +dypgen -I +camlp4
 
 # Directories to which the current source files depend on
-PREVIOUS_DIRS = ../utils ../logic ../grammars ../acg-data
+PREVIOUS_DIRS = ../utils ../logic ../grammars
 
 # Source files in the right order of dependance
 
-ML = scripting_errors.ml functions.ml script_lexer.ml script_parser.ml 
-
-DYP = script_parser.dyp
-CAMLLEX = script_lexer.mll
+ML = signature.ml lexicon.ml
 
 EXE_SOURCES = test.ml
 
@@ -39,15 +36,4 @@ EXE_SOURCES = test.ml
 ####################################
 
 include ../Makefile.common
-
-script_parser.ml: scripting_errors.cmi script_lexer.cmo functions.cmi \
-    ../grammars/error.cmi ../grammars/environment.cmi \
-    ../logic/abstract_syntax.cmi
-
-script_parser.cmo: scripting_errors.cmi script_lexer.cmo functions.cmi \
-    ../grammars/error.cmi ../grammars/environment.cmi \
-    ../logic/abstract_syntax.cmi script_parser.cmi
-script_parser.cmx: scripting_errors.cmx script_lexer.cmx functions.cmx \
-    ../grammars/error.cmx ../grammars/environment.cmx \
-    ../logic/abstract_syntax.cmx script_parser.cmi
 

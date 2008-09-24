@@ -2134,7 +2134,7 @@ echo "${ECHO_T}Compilation will be done with the $OCAML09WARNINGS option" >&6; }
 
 
 
-ac_config_files="$ac_config_files ./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/lambda/Makefile src/scripting/Makefile"
+ac_config_files="$ac_config_files ./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/lambda/Makefile src/acg-data/Makefile src/scripting/Makefile"
 
 
 { echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
@@ -2744,6 +2744,7 @@ do
     "src/logic/Makefile") CONFIG_FILES="$CONFIG_FILES src/logic/Makefile" ;;
     "src/grammars/Makefile") CONFIG_FILES="$CONFIG_FILES src/grammars/Makefile" ;;
     "src/lambda/Makefile") CONFIG_FILES="$CONFIG_FILES src/lambda/Makefile" ;;
+    "src/acg-data/Makefile") CONFIG_FILES="$CONFIG_FILES src/acg-data/Makefile" ;;
     "src/scripting/Makefile") CONFIG_FILES="$CONFIG_FILES src/scripting/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
