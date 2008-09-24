@@ -7,7 +7,7 @@ open Lambda
 module Utilitaires :
 sig
   
-  module Table : TABLE
+  module Table : TABLE with type key=int
 
   (** The type of the signature as abstract object *)
   type t

@@ -24,7 +24,7 @@ LIBDIR = -I +dypgen -I +camlp4
 PREVIOUS_DIRS = ../utils ../logic ../grammars
 
 # Source files in the right order of dependance
-ML =  sign.ml display.ml typechecker.ml
+ML =  utilitaires.ml display.ml    typechecker.ml  sign.ml
 EXE_SOURCES = test.ml
 
 ####################################

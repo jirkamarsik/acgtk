@@ -6,7 +6,7 @@ open Error
 
 module Utilitaires =
   struct
-    module Table : TABLE = Make_table (struct let b = 10 end)
+    module Table : TABLE with type key = int = Make_table (struct let b = 10 end) 
 	
     let verbose = false
 		
