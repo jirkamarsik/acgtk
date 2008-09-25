@@ -623,6 +623,7 @@ OCAMLDOC
 OCAMLDEP
 OCAMLLEX
 DYPGEN
+CAMLP4_LIB
 TYPES
 OCAML09WARNINGS
 OCAMLP4_LOC
@@ -2114,10 +2115,20 @@ fi
 { echo "$as_me:$LINENO: result: Compilation will be done with the $OCAML09WARNINGS option" >&5
 echo "${ECHO_T}Compilation will be done with the $OCAML09WARNINGS option" >&6; }
 
+if ($OCAML $ML_CHECK_FILE -ref 3.10 $OCAML_VERSION > /dev/null) ; then
+	CAMLP4_LIB="camlp4lib.cma"
+else
+	CAMLP4_LIB="camlp4.cma"
+fi
+{ echo "$as_me:$LINENO: result: $OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&5
+echo "${ECHO_T}$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
+
+
 
 
 ############################
 # substitutions to perform
+
 
 
 
@@ -2851,6 +2862,7 @@ OCAMLDOC!$OCAMLDOC$ac_delim
 OCAMLDEP!$OCAMLDEP$ac_delim
 OCAMLLEX!$OCAMLLEX$ac_delim
 DYPGEN!$DYPGEN$ac_delim
+CAMLP4_LIB!$CAMLP4_LIB$ac_delim
 TYPES!$TYPES$ac_delim
 OCAML09WARNINGS!$OCAML09WARNINGS$ac_delim
 OCAMLP4_LOC!$OCAMLP4_LOC$ac_delim
@@ -2859,7 +2871,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 51; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 52; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

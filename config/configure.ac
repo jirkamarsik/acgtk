@@ -104,6 +104,14 @@ else
 fi
 AC_MSG_RESULT(Compilation will be done with the $OCAML09WARNINGS option)
 
+if ($OCAML $ML_CHECK_FILE -ref 3.10 $OCAML_VERSION > /dev/null) ; then
+	CAMLP4_LIB="camlp4lib.cma"
+else
+	CAMLP4_LIB="camlp4.cma"
+fi
+AC_MSG_RESULT($OCAMLP4 calls will be done with the $CAMLP4_LIB library)
+
+
 
 
 ############################
@@ -111,6 +119,7 @@ AC_MSG_RESULT(Compilation will be done with the $OCAML09WARNINGS option)
 AC_SUBST(OCAMLC)
 AC_SUBST(OCAMLCOPT)
 AC_SUBST(OCAMLP4)
+AC_SUBST(CAMLP4_LIB)
 AC_SUBST(OCAMLDOC)
 AC_SUBST(OCAMLDEP)
 

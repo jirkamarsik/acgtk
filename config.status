@@ -520,6 +520,7 @@ s,@OCAMLDOC@,|#_!!_#|ocamldoc.opt,g
 s,@OCAMLDEP@,|#_!!_#|ocamldep.opt,g
 s,@OCAMLLEX@,|#_!!_#|ocamllex.opt,g
 s,@DYPGEN@,|#_!!_#|dypgen.opt,g
+s,@CAMLP4_LIB@,|#_!!_#|camlp4.cma,g
 s,@TYPES@,|#_!!_#|-dtypes,g
 s,@OCAML09WARNINGS@,|#_!!_#|-w yz,g
 s,@OCAMLP4_LOC@,|#_!!_#|-loc loc,g
