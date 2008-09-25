@@ -454,7 +454,11 @@ sig_entries :
 {
 
   let parse_data ?(override=false) ?(output=false) filename env =
-    let in_ch = try open_in filename with | Sys_error s -> raise (Error.Error (Error.System_error s)) in
+    let in_ch =
+      try
+	open_in filename
+      with
+	| Sys_error s -> raise (Error.Error (Error.System_error s)) in
     let lexbuf = Lexing.from_channel in_ch in
     let actual_env = if env=E.empty then None else Some (Env env) in
       try

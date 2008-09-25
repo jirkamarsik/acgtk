@@ -157,7 +157,7 @@ let error_msg e input_file =
       | Type_error (er,(s,e)) -> type_error_to_string er,Some (compute_comment_for_position s e)
       | Env_error (er,(s,e)) -> env_error_to_string er,Some (compute_comment_for_position s e)
       | Lexicon_error (er,(s,e)) -> lexicon_error_to_string er,Some (compute_comment_for_position s e)
-      | System_error s -> s,None in
+      | System_error s -> Printf.sprintf "System error: \"%s\"" s,None in
     match location_msg with
       | None -> msg
       | Some loc -> Printf.sprintf "File \"%s\", %s\n%s" input_file loc msg
