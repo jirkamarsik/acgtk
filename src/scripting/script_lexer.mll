@@ -39,6 +39,14 @@ type token =
     
   let space_added = ref true
 
+  let no_trailing_space_regexp = Str.regexp "^[ \t]*\\([^ \t].*[^ \t]\\)[ \t]*"
+
+  let strip_trailing_space s = 
+    if Str.string_match no_trailing_space_regexp s 0 
+    then
+      Str.matched_group 1 s
+    else
+      failwith "Bug: matched string expected"
 
   let add_space () =
     let () = if !space_added then () else Buffer.add_char echo_content ' ' in
@@ -77,15 +85,15 @@ let string = (letter|digit|'_')*
     | "help"  as c {let () = echo_str c in HELP}
     | "print"  as c {let () = echo_str c in PRINT (loc lexbuf)}
     | "analyse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string (fun x l -> ANALYSE (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string (fun x l -> ANALYSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "add"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> ADD (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> ADD (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "compose"  as c {let () = echo_str c in COMPOSE}
     | "don't"  as c {let () = echo_str c in DONT}
     | "wait"  as c {let () = echo_str c in WAIT}
     | "as"  as c {let () = echo_str c in AS}
     | "save" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		     string_wo_space (fun x l -> SAVE (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		     string_wo_space (fun x l -> SAVE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | letter string  as c {let () = echo_str c in IDENTT (Lexing.lexeme lexbuf,loc lexbuf)}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Command_expected,loc lexbuf))}
   and comment f_parser = parse
@@ -109,13 +117,13 @@ let string = (letter|digit|'_')*
     | "help" {LOAD_HELP}
     | "#" {comment load_options lexbuf}
     | "data" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_DATA (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "d" as c {let () = echo_chr c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_DATA (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "script" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_SCRIPT (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "s" as c {let () = echo_chr c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_SCRIPT (x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Missing_option Scripting_errors.Load,loc lexbuf))}
   and create_options = parse
     | [' ' '\t'] {create_options lexbuf}
