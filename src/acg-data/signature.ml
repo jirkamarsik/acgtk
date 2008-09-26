@@ -316,7 +316,7 @@ struct
 				let u_term,u_type,new_typing_env = 
 				  typecheck_aux
 				    u
-				    (Some ty2)
+				    (Some (local_expand ty2))
 				    {tenv with
 				       linear_level=tenv.linear_level+1;
 				       env=Utils.StringMap.add x (insert_lin_var ty1 tenv) tenv.env} in
@@ -347,7 +347,7 @@ struct
 				let u_term,u_type,new_typing_env = 
 				  typecheck_aux
 				    u
-				    (Some ty2)
+				    (Some (local_expand ty2))
 				    {tenv with
 				       level=tenv.level+1;
 				       env=Utils.StringMap.add x (insert_non_lin_var ty1 tenv) tenv.env} in
@@ -371,11 +371,11 @@ struct
 	      try
 		let v_term,_,new_new_typing_env = 
 		  match lin with
-		    | Abstract_syntax.Linear -> typecheck_aux v (Some ty1) new_typing_env
+		    | Abstract_syntax.Linear -> typecheck_aux v (Some (local_expand ty1)) new_typing_env
 		    | Abstract_syntax.Non_linear ->
 			let non_lin_env = remove_lin_context new_typing_env in
 (*			let () = Printf.printf "Inserting wrapper\n%!" in *)
-			let v_t,v_ty,{wrapper=w} = typecheck_aux v (Some ty1) {non_lin_env with wrapper=Some (get_location u,u_type,get_location v)} in
+			let v_t,v_ty,{wrapper=w} = typecheck_aux v (Some (local_expand ty1)) {non_lin_env with wrapper=Some (get_location u,u_type,get_location v)} in
 			  v_t,v_ty,{new_typing_env with wrapper=w} in
 		  match ty with
 		    | None -> Lambda.App (u_term,v_term),ty2,new_new_typing_env
