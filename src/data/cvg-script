@@ -12,6 +12,25 @@ load d ../data/cvg.acg;
 compose CVG_strings CVG_syntax as CVG_phonology;
 compose RC_ty CVG_semantics as ty_sem;
 
+# Let's look we we have as signatures and lexicons:
+list ;
+
+# Available data:
+#         Lexicon         ty_sem  (syntax --> ty_n)
+#         Signature       ty_n
+#         Signature       syntax
+#         Signature       strings
+#         Signature       simple_syntax
+#         Signature       semantics
+#         Lexicon         RC_ty   (semantics --> ty_n)
+#         Lexicon         CVG_syntax      (syntax --> simple_syntax)
+#         Lexicon         CVG_strings     (simple_syntax --> strings)
+#         Lexicon         CVG_semantics   (syntax --> semantics)
+#         Lexicon         CVG_phonology   (syntax --> strings)
+
+
+
+
 # we require to give the translation of the term:type pair occurring
 # after the "analyse" by all the lexicons specified before the
 # "analyse" command.

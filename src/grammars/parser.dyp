@@ -483,7 +483,7 @@ sig_entries :
       with
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
-	      env
+	      env 
 	    
   let parse_term ?(offset="") ?(output=false) t sg = 
     let lexbuf = Lexing.from_string t in

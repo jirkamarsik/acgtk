@@ -16,7 +16,7 @@ let welcome_msg =
 
 let env = ref E.empty
 
-let anon_fun s = env := P.parse_file s !env
+let anon_fun s = env := P.parse_file ~verbose:false s !env
   
 let _ =
   let () = Arg.parse [] anon_fun "toto" in
