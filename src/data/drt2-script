@@ -1,0 +1,9 @@
+load d ../data/drt2.acg;
+select drt;
+analyse connait Marie Jean:s;
+analyse connait (une fille) Jean:s;
+analyse (connait (une fille) Jean) ! (salue la Jean) :s;
+analyse (connait (une fille) Jean) ! (salue la il) :s;
+drt analyse ((ne_pas (connait (une fille))) Jean) ! (salue la il) :s;
+drt analyse ((ne_pas (connait (une fille))) Jean) ! (salue la Jean) :s;
+drt analyse ((ne_pas (connait (une fille))) Jean) :s;

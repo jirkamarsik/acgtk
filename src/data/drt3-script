@@ -1,0 +1,12 @@
+load d ../data/drt3.acg;
+drt analyse ((ne_pas (connait (une fille))) Jean) ! (salue la Jean) :s;
+drt analyse (connait (une fille) Jean) ! (salue la Jean) :s;
+drt analyse ((ne_pas (connait (une fille))) Jean) ! (salue la il) :s;
+drt analyse (connait (une fille) Jean) ! (salue la il) :s;
+drt analyse (connait (une fille) Jean) ! (dort Marie) :s;
+drt analyse ((ne_pas (connait (une fille))) Jean) ! (dort Marie) :s;
+drt analyse (((ne_pas (connait (une fille))) Jean) ! (dort Marie))!(dort Jean) :s;
+drt analyse (((ne_pas (connait (une fille))) Jean) ! (dort il))!(dort il) :s;
+drt analyse ((connait (une fille) Jean) ! (dort Marie))!(dort Jean) :s;
+drt analyse ((connait (une fille) Jean) ! (dort il))!(dort Jean) :s;
+drt analyse (((ne_pas (connait (une fille))) Jean) ! (dort il))!(dort Jean) :s;

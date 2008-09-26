@@ -1,0 +1,73 @@
+signature syntax =
+	np,n,s:type;
+
+	Jean,Marie:np;
+
+	connait,salue:np => np => s;
+
+	ne_pas : (np => s) => np => s;
+
+
+	fille:n;
+
+	il,la:np;
+
+	une:n=>np;
+
+	infix ! : s => s => s;
+end
+
+signature semantics =
+	e,t,g:type;
+
+	sel:g=>e;
+	infix + : e => g => g;
+	infix @ : g => g => g;
+
+	J,M:e;
+	connait,salue:e => e => t;
+	fille:e=>t;
+
+
+	Top,Bot:t;
+	infix & : t => t => t;
+	infix | : t => t => t;
+
+	binder Ex : (e => t) => t ;
+	binder All : (e => t) => t ;
+	prefix - : t => t ;
+
+	k = t => t => t :type ;
+	o = g => g => ( g => g => t =>t ) => t:type ;
+
+	vt = Lambda v O S.S(Lambda x.O(Lambda y.Lambda e1 e2 phi. phi e1 e2 (v x y))) : (e => e => t) => ((e =>o ) => o)  => ((e =>o ) => o) => o ;
+	n = Lambda n .Lambda x.Lambda c e1 e2 phi. phi e1 e2 (n x)  : (e => t) => e => o;
+end
+
+lexicon drt (syntax):semantics =
+	s := o;
+	np := (e => o) => o;
+	n := e => o;
+
+
+	! := Lambda s1 s2 e1 e2 phi. s1 e1 e2 (Lambda e1' e2' b'. s2 e1' e2' (Lambda e1'' e2'' b''. phi e1'' e2'' (b' & b''))) ;
+
+	Jean := Lambda P e1 e2 phi. P J (J+e1) e2 phi ;
+	Marie := Lambda P e1 e2 phi. P M (M+e1) e2 phi ;
+
+	connait := vt connait;
+
+	ne_pas := Lambda P S e1 e2 phi. phi e1 e2 (-((P S) c e1 e2 (Lambda e1 e2  b. b))); 
+
+(*	ne_pas := Lambda P S c e1 e2 phi. - ( (P S) (Lambda x y. - (c x y)) e1 e2 (Lambda c' e1' e2' b' . phi (Lambda x y. - (c x y)) e1' e2 b')); *)
+
+	salue := vt salue;
+	fille := n fille;
+
+	il,la := Lambda P c e1 e2 phi.P (sel (e1@e2)) c e1 e2 phi;
+
+	une := Lambda P Q c e1 e2 phi. Ex x. phi c e1 (x+e2) (c (P x c e1 e2 (Lambda c' e1' e2' b.b))  (Q x c e1 e2 (Lambda c' e1' e2' b.b)));
+end
+
+	
+
