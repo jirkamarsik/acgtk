@@ -16,11 +16,11 @@ let welcome_msg =
 
 let env = ref E.empty
 
-let anon_fun s = env := P.parse_file ~verbose:false s !env
+let anon_fun s = env := P.parse_file  s !env
   
 let _ =
-  let () = Arg.parse [] anon_fun "toto" in
   let () = Printf.printf "%s%!" welcome_msg in
+  let () = Arg.parse [] anon_fun "Expected arguments are script files" in
   let continue = ref true in
   let () = 
     while !continue do
