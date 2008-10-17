@@ -27,9 +27,9 @@ sig
 
 
 
-  type file_type = | Data | Script of (string -> env -> env)
+  type file_type = | Data | Script of (string -> string list -> env -> env)
 
-  val load : file_type -> string -> env -> env
+  val load : file_type -> string -> string list -> env -> env
 
   val list : env -> unit
 

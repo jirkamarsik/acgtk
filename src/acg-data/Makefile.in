@@ -27,7 +27,7 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars
 
 ML = signature.ml lexicon.ml
 
-EXE_SOURCES = test.ml
+EXE_SOURCES = acgc.ml
 
 ####################################
 #                                  #

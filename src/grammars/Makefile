@@ -13,7 +13,7 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma
+LIBS += dyp.cma str.cma
 
 DYPPATH = /home/pogodall/import/ocaml/dypgen
 DYPGEN_LIB = +dypgen

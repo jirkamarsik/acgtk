@@ -30,7 +30,7 @@ ML = scripting_errors.ml functions.ml script_lexer.ml script_parser.ml
 DYP = script_parser.dyp
 CAMLLEX = script_lexer.mll
 
-EXE_SOURCES = test.ml
+EXE_SOURCES = acg.ml
 
 ####################################
 #                                  #

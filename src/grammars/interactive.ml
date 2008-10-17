@@ -2,14 +2,16 @@ open Abstract_syntax
 
 let interactive = ref false
 
+let dirs = ref [""]
 
 
 let options =
   [
-  ("-i", Arg.Set interactive , "Enter the interaction loop to parse terms according to signatures")
+  ("-i", Arg.Set interactive , " Enter the interaction loop to parse terms according to signatures");
+    ("-I", Arg.String (fun dir -> dirs := (!dirs)@[dir]) , " -I dir sets dir as a directory in which file arguments can be looked for")
   ]
   
-let usg_msg = "./test [options] file1 file2 ...\n\nThis will parse the files which are supposed to be files containing acg signatures or lexicons."
+let usg_msg = Printf.sprintf "%s [options] file1 file2 ...\n\nThis will parse the files which are supposed to be files containing acg signatures or lexicons." Sys.executable_name
 
 module Make(Lex:Interface.Lexicon_sig) =
 struct  
@@ -41,7 +43,7 @@ struct
 	
 	
   let parse filename =
-    env := Actual_parser.parse_data filename !env
+    env := Actual_parser.parse_data filename !dirs !env
       
       
   let term_parsing i env =

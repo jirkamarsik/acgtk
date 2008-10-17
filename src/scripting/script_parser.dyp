@@ -1,63 +1,59 @@
 %mltop{
-(*  open Abstract_syntax*)
-    open Script_lexer
-    
-(*  type token = Script_lexer.token *)
-      
+  open Script_lexer
   let id = fun x -> x
-
+    
   let pr s = Printf.printf "%s\n%!" s
     
   module Make (E:Environment.Environment_sig) =
   struct  
-    
-    (*    module Data_parser = Parser.Make(E)*)
     module F = Functions.Make(E)
-
-
-
+      
   }
   
   {
     open Dyp
     let local_data = (E.empty,fun _ -> failwith "Bug: Not yet defined")
-    let global_data = false,true
+      (* for global_data, the first projection describe whether when
+	 executing a script, the interpreter should wait between two
+	 commands. The second projection is used to specify whether to
+	 echo the current command. The third projection correspond to
+	 the include dirs. *)
+    let global_data = false,true,[""]
 
-    let echo (_,b) s = if b then Printf.printf "%s\n%!" s else ()
+    let echo ((_:bool),b,(_:string list)) s = if b then Printf.printf "%s\n%!" s else ()
+    let wait  (b,(_:bool),(_:string list)) f = if b then ignore (f ())
 
 
   }
   
   
 %token
-EOII
+  EOII
 <(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_DATA
 <(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_SCRIPT
-LOAD_HELP
-LIST
-SELECT
-UNSELECT
-TRACE
-HELP
+  LOAD_HELP
+  LIST
+  SELECT
+  UNSELECT
+  TRACE
+  HELP
 <Abstract_syntax.Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ANALYSE
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ADD
-COMPOSE
+  COMPOSE
 <string>SEMICOLONN
-AS
-DONT
-WAIT
+  AS
+  DONT
+  WAIT
 <(string*Abstract_syntax.Abstract_syntax.location)>IDENTT
-CREATE_SIG
-CREATE_LEX
-CREATE_HELP
+  CREATE_SIG
+  CREATE_LEX
+  CREATE_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>SAVE
 
 
 %start <(E.t)> zzcommands
 
-/*%local_data_type <(E.t * (string -> E.t -> E.t))>
-%global_data_type <bool>*/
 
 %%
 
@@ -70,19 +66,22 @@ CREATE_HELP
 		      c e
 		    with
 		      | F.Not_yet_implemented s-> raise (Scripting_errors.Error (Scripting_errors.Not_yet_implemented s,(Lexing.dummy_pos,Lexing.dummy_pos))) in
-		  let () = if fst dyp.global_data then ignore(read_line()) else () in
+		  let () = wait dyp.global_data read_line in
 		    e',[Local_data (e',f)]}
       zzcommands @{let e,f = (dyp.last_local_data) in e,[Local_data (e,f)]}
 
 
-      command:
-| WAIT SEMICOLONN[l] @{let g_d1,g_d2 = dyp.global_data in (fun e -> let () = echo dyp.global_data l in let () = F.wait () in e),[Global_data (true,g_d2)]}
-| DONT WAIT SEMICOLONN[l] @{let g_d1,g_d2 = dyp.global_data in (fun e ->  let () = echo dyp.global_data l in let () = F.dont_wait () in e),[Global_data (false,g_d2)]}
-| LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo dyp.global_data l in  F.load F.Data  s e}
+		  command:
+| WAIT SEMICOLONN[l] @{let g_d1,g_d2,g_d3 = dyp.global_data in
+			 (fun e -> let () = echo dyp.global_data l in let () = F.wait () in e),[Global_data (true,g_d2,g_d3)]}
+| DONT WAIT SEMICOLONN[l] @{let g_d1,g_d2,g_d3 = dyp.global_data in
+			      (fun e ->  let () = echo dyp.global_data l in let () = F.dont_wait () in e),[Global_data (false,g_d2,g_d3)]}
+| LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo dyp.global_data l in
+			 let _,_,incl = dyp.global_data in
+			   F.load F.Data  s  incl e}
 | LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo dyp.global_data l in
-			   let new_env = F.load (F.Script (snd dyp.last_local_data)) s e in
-(*			   let () = Printf.printf "load script performed, getting:\n%!" in
-			   let () = F.list new_env in *)
+			   let _,_,includes = dyp.global_data in
+			   let new_env = F.load (F.Script (snd dyp.last_local_data)) s includes e in
 			     new_env}
 | LIST SEMICOLONN[l] {fun e ->  let () = echo dyp.global_data l in let () = F.list e in e}
 | SELECT IDENTT[(name,loc)]  SEMICOLONN[l] {fun e ->  let () = echo dyp.global_data l in F.select name loc e}
@@ -144,24 +143,32 @@ CREATE_HELP
 
 {
 
-  let rec parse_file ?(verbose=true)  filename env =
-    let in_ch = try open_in filename with | Sys_error s -> raise (Error.Error (Error.System_error s)) in
-    let lexbuf = Lexing.from_channel in_ch in
-    let () = Printf.printf "Parsing script file \"%s\"...\n%!" filename in
-      try
-	let new_env=
-	  try (fst (List.hd (zzcommands ~global_data:(F.should_wait (),verbose) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
-	    |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
-	let () = Printf.printf "Done.\n%!" in
-(*	let () = Printf.printf "I parsed the script file and now:\n%!" in
-	let () = F.list new_env in *)
-	  new_env
-      with
-	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
-	    let _ = Script_lexer.reset_echo () in
-	      env
-
+  let rec parse_file ?(verbose=true)  filename  includes env =
+    try
+      let in_ch =
+	let fullname = Utils.find_file filename includes  in
+	  open_in fullname in
+      let lexbuf = Lexing.from_channel in_ch in
+      let () = Printf.printf "Parsing script file \"%s\"...\n%!" filename in
+      let new_env=
+	try (fst (List.hd (zzcommands ~global_data:(F.should_wait (),verbose,includes) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
+	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
+      let () = Printf.printf "Done.\n%!" in
+	new_env
+    with
+      | Utils.No_file(f,msg) -> let e = Error.System_error (Printf.sprintf "No such file \"%s\" in %s" f msg) in
+	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
+	let _ = Script_lexer.reset_echo () in
+	  env
+      | Sys_error s -> let e = Error.System_error s in
+	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
+	let _ = Script_lexer.reset_echo () in
+	  env
+      | Error.Error e -> 
+	  let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
+	  let _ = Script_lexer.reset_echo () in
+	    env
+	      
   let commented_regexp = Str.regexp "^[ \t#]*#"
 
   let is_fully_commented_line s = Str.string_match commented_regexp s 0
@@ -190,12 +197,12 @@ CREATE_HELP
 	
 
 	
-  let parse_entry ?(verbose=true) env =
+  let parse_entry ?(verbose=true) includes env =
     let in_str = bufferize () in
     let lexbuf = Lexing.from_string in_str in
     let new_env=
       try
-	try (fst (List.hd (zzcommands ~global_data:(false,verbose) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
+	try (fst (List.hd (zzcommands ~global_data:(false,verbose,includes) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
 	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Failure "lexing: empty token" -> env
@@ -213,7 +220,6 @@ CREATE_HELP
 end}
 
 %mlitop{
-(*  open Abstract_syntax*)
   open Script_lexer
 
   module Make(E:Environment.Environment_sig) : 
@@ -222,11 +228,9 @@ end}
 
     module F : Functions.Action_sig with type env=E.t
 
-(*    type token = Script_lexer.token*)
+    val parse_file : ?verbose:bool -> string -> string list -> E.t -> E.t
 
-    val parse_file : ?verbose:bool -> string -> E.t -> E.t
-
-    val parse_entry : ?verbose:bool -> E.t -> E.t
+    val parse_entry : ?verbose:bool -> string list -> E.t -> E.t
   }
 
 %mli{end}

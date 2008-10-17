@@ -33,28 +33,41 @@ let string_of_list_rev sep to_string lst =
 exception No_file of (string * string )
 
 (** [find_file f dirs msg] tries to find a file with the name [f] in
-     the directories listed in [dirs]. If it finds it in [dir], it returns
-     the full name [Filename.concat dir f]. To check in the current
-     directory, add [""] to the list. It tries in the directories of [dirs]
-     in this order and stops when it finds such a file. If it can't find
-     any such file, raise the exception {!Utils.No_file(f,msg)}.*)
-let find_file name dirs msg=
-  try
-    let get_name f = 
-      if Sys.file_exists f
-      then 
-	f
-      else
-	raise (No_file (f,msg)) in
-    let rec rec_find_file = function
-      | [] -> raise (No_file (name,msg))
-      | dir::dirs ->
-	  try
-	    get_name (Filename.concat dir name)
-	  with
-	    | No_file _ -> rec_find_file dirs in
-      rec_find_file dirs
-  with
-    | Sys_error("Is a directory") -> 
-	failwith (Printf.sprintf "Failed while trying to trace file '%s'" name )
+     the directories listed in [dirs]. If it finds it in [dir], it
+     returns the full name [Filename.concat dir f]. To check in the
+     current directory, add [""] to the list. It tries in the
+     directories of [dirs] in this order and stops when it finds such
+     a file. If it can't find any such file, raise the exception
+     {!Utils.No_file(f,msg)}. Moreover, if [f] starts with ["/"] or
+     ["./"] or ["../"] then it checks wheter [f] exists only in the
+     current directory.*)
+let find_file name dirs =
+  let regexp = Str.regexp "\\(^\\./\\)\\|\\(^\\.\\./\\)\\|\\(^/\\)" in
+  let check_dirs = not (Str.string_match regexp name 0) in
+  let msg = if check_dirs then
+    string_of_list " nor in " (fun x -> if x = "" then "current directory" else Printf.sprintf "\"%s\"" x)  dirs
+  else
+    "current directory"
+  in
+    try
+      let get_name f = 
+	if Sys.file_exists f
+	then 
+	  f
+	else
+	  raise (No_file (f,msg)) in
+      let rec rec_find_file = function
+	| [] -> raise (No_file (name,msg))
+	| dir::dirs ->
+	    try
+	      get_name (Filename.concat dir name)
+	    with
+	      | No_file _ -> rec_find_file dirs in
+	if check_dirs then
+	  rec_find_file dirs
+	else
+	  get_name name
+    with
+      | Sys_error("Is a directory") -> 
+	  failwith (Printf.sprintf "Failed while trying to trace file '%s'" name )
 	  

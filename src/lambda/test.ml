@@ -2,8 +2,8 @@ let options = []
 
 
 
-module Sg = Syntactic_data_structures.Abstract_sig
-(*module Sg= Sign.Sign*)
+(*module Sg = Syntactic_data_structures.Abstract_sig*)
+module Sg= Sign.Sign
 module Lex = Syntactic_data_structures.Abstract_lex
 
 module Actual_env = Environment.Make(Lex)
@@ -19,7 +19,7 @@ let env = ref Actual_env.empty
 let usg_msg = ""
 
 let parse filename =
-  let () = env := Actual_parser.parse_data filename !env in
+  let () = env := Actual_parser.parse_data filename [""] !env in
   Actual_env.iter 
     (fun content ->
        match content with

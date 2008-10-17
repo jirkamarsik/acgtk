@@ -25,9 +25,9 @@ sig
     | Save
 
 
-  type file_type = | Data | Script of (string -> env -> env)
+  type file_type = | Data | Script of (string -> string list -> env -> env)
 
-  val load : file_type -> string -> env -> env
+  val load : file_type -> string -> string list -> env -> env
 
   val list : env -> unit
 
@@ -79,14 +79,14 @@ struct
 
   let interactive = ref false
 
-  type file_type = | Data | Script of (string -> env -> env)
+  type file_type = | Data | Script of (string -> string list -> env -> env)
 
   module Data_parser = Parser.Make(E)
     
-  let load t filename e =
+  let load t filename dirs e =
     match t with
-      | Data -> Data_parser.parse_data ~override:true filename e
-      | Script f  -> f filename e
+      | Data -> Data_parser.parse_data ~override:true filename dirs e
+      | Script f  -> f filename dirs e
 
 
   let list e =

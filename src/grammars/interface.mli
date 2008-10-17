@@ -103,10 +103,12 @@ sig
       have been inserted. *)
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
 
-  (** [get_functionnal_type s sg] returns [None] if the constant [s] is
-      not defined in [sg] with a functionnal type, and returns [Some abs]
+  (** [get_binder_argument_functionnal_type s sg] returns [None] if
+      the constant [s] is not defined in [sg] as a binder (that is
+      something of type [ ('a ?> 'b) ?> 'c ]) and returns [Some abs]
       where [abs] is {!Abstract_syntax.Abstract_syntax.Linear} or
-      {!Abstract_syntax.Abstract_syntax.Non_linear} otherwise *)
+      {!Abstract_syntax.Abstract_syntax.Non_linear} otherwise and
+      [abs] desribes the implication [?>] in [('a ?> 'b)] *)
   val get_binder_argument_functional_type : string -> t -> Abstract_syntax.abstraction option
 
   (** [is_declared e sg] returns [Some s] if the entry [e] is a

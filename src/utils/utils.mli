@@ -24,10 +24,12 @@ val string_of_list_rev : string -> ('a -> string) -> ('a list) -> string
 exception No_file of  (string * string)
 
 
-(** [find_file f dirs msg] tries to find a file with the name [f] in
-    the directories listed in [dirs]. If it finds it in [dir], it returns
+(** [find_file f dirs] tries to find a file with the name [f] in the
+    directories listed in [dirs]. If it finds it in [dir], it returns
     the full name [Filename.concat dir f]. To check in the current
-    directory, add [""] to the list. It tries in the directories of [dirs]
-    in this order and stops when it finds such a file. If it can't find
-    any such file, raise the exception [No_file(f,msg)].*)
-val find_file : string -> string list -> string -> string
+    directory, add [""] to the list. It tries in the directories of
+    [dirs] in this order and stops when it finds such a file. If it
+    can't find any such file, raise the exception [No_file(f,msg)]
+    where [msg] contains a string describing where the file [f] was
+    looked for.*)
+val find_file : string -> string list -> string
