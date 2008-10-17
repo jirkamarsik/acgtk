@@ -1,0 +1,35 @@
+# First print the help messasge that describes the commands
+help;
+
+# Require a user interaction (press return) to continue
+# between commands
+wait;
+
+# First load an acg
+load  d tag.acg;
+
+# List the available data
+list;
+
+# Then composte two of the present lexicon to
+# build a third one
+compose tag_strings tag_syntax as tag_yields;
+
+# Now look at the available data
+list;
+
+# Ok. We are ready to try to analyse some terms
+# We require to analyse in teh context of 3 lexicons (tag_syntax
+# tag_yields and tag_semantics) a term
+# build on the *SHARED* abstract vocabulary of the 3 lexicons
+tag_syntax tag_yields tag_semantics analyse C_sleeps I_s I_vp (C_dog C_a (C_black (C_big (C_new I_n)))) : S;
+
+# Ok, now we're ready to do the same for another term
+tag_syntax tag_yields tag_semantics analyse C_chases I_s I_vp (C_dog C_every I_n) (C_cat C_a I_n) : S;
+
+# And now let's see if we can get long distance dependancies
+tag_syntax tag_yields tag_semantics analyse C_loves (C_claims I_s I_vp C_paul) I_vp C_john C_mary : S;
+
+tag_syntax tag_yields tag_semantics analyse C_to_love (C_claims I_s I_vp C_paul) (C_seems I_vp) C_john C_mary : S;
+
+tag_syntax tag_yields  tag_semantics analyse C_liked ( C_said (C_does_think I_s I_vp C_paul) I_vp C_john) I_vp C_who C_bill : S;

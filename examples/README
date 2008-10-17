@@ -1,0 +1,37 @@
+We suppose that the executables are acgc and acg (they could have been
+acgc.opt or acg.opt)
+
+This directory provide the following files:
+
++ strings.acg : a file containing a very simple signature (with
+definitions). You can use it as follows:
+
+	acgc strings.acg
+
+It will say that it correctly parse the file. You can also run:
+
+	acgc -i strings.acg
+
+then, on the prompt, enter the following term:
+	every + dog ! chases + a + cat : string
+it does not complain, or the term:
+	lambda x. every + x : string -> string
+But with the term:
+	lambda x.every x : string -> string
+you will have a typing error
+
+
+
+
++ tag.acg : a file containing various signatures and lexicons to model
+TAG in ACG. You can run acgc on it
+
+
+
+
++ tag-script : this file provide (commented) commands that you can run
+in acg. You can also run it with the following command:
+
+	acg tag-script
+
+(press return after each command)
