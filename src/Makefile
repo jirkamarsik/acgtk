@@ -2,7 +2,7 @@ PHONY: test
 
 SUBDIRS= utils logic grammars acg-data scripting lambda
 
-test:
+byte:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -r -S -C $(dir) byte;)
 
 opt:

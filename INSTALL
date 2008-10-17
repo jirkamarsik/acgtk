@@ -6,19 +6,34 @@ Then run:
 
 	make
 
-It should compile all the source under ./src/ and produce some of the
-executables. Then you can run for instance:
+to get the bytecode executable, or
 
-	src/lambda/test
+	make opt
 
-or
-	src/acg-data/test
+to get native code binaries
 
-or
+It should produce executables in the current directory: acgc (or
+acgc.opt for the native code executable) and acg (or acg.opt for the
+native code executable).
 
-	src/acg-data/test --help
+If you wan to install it (use ./configure --help to set the
+installation directory if you don't want to have it in
+/usr/local/bin), run:
 
-to have some help,
-or
+	make install
 
-	src/scripting/test
+If you wan to uninstall it then run:
+
+	make uninstall
+
+
+*********************
+** For developpers **
+*********************
+
+You can get the documented API in all ./src subdirectories getting
+there and running:
+
+	make doc
+
+It will create a doc subdirectory with htm files.

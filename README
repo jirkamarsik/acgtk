@@ -1,0 +1,42 @@
+This distribution provides two executables (possibly with the .opt
+extension, see the INSTALL file):
+
+	acgc
+and
+	acg
+
+
+************
+*** acgc ***
+************
+
+acgc is a "compiler" of ACG source code, i.e. files containing
+definitions of signarures and lexicons. It basically checks whether
+they are correctly written (syntactically and wrt types and constant
+typing). An interactive mode is available to parse terms according to
+signatures.
+
+Run
+
+	./acgc -help
+
+to get help
+
+***********
+*** acg ***
+***********
+
+acg is an interpreter of command meant to be useful when using
+ACGs. To get a list of command, run
+
+	./acg
+
+then on the prompt type
+
+	help;
+
+
+
+
+Example files are given in the ./examples directory
+
