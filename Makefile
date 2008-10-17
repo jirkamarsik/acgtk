@@ -16,7 +16,7 @@ superclean clean:
 	if test "$@" = clean ; then $(MAKE) -C config $@ ; fi
 	$(MAKE) -C src $@
 	rm -rf *.log  *~ autom4te.cache
-	find data/. -name "*~" -exec rm -f {} \;
+	find . -name "*~" -exec rm -f {} \;
 	-for file in $(BINARIES); do rm $$file ; done
 
 install:
