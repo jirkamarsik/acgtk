@@ -34,7 +34,6 @@ ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml 
 DYP = parser.dyp
 CAMLLEX = lexer.mll
 
-EXE_SOURCES = test.ml
 
 ####################################
 #                                  #
