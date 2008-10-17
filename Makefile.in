@@ -1,8 +1,10 @@
 PHONY: config test
 
-test: 
-	$(MAKE) -C src $@
+BINARIES=acgc acgc.opt acg acg.opt
 
+test opt: 
+	$(MAKE) -C src $@
+	for file in $(BINARIES); do find . -name "$$file" -exec cp {} . \; ; done
 
 
 superclean clean:
@@ -10,6 +12,7 @@ superclean clean:
 	$(MAKE) -C src $@
 	rm -rf *.log  *~ autom4te.cache
 	find data/. -name "*~" -exec rm -f {} \;
+	-for file in $(BINARIES); do rm $$file ; done
 
 
 

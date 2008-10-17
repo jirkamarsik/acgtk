@@ -40,7 +40,7 @@ EXE_SOURCES = acg.ml
 
 include ../Makefile.common
 
-script_parser.ml: scripting_errors.cmi script_lexer.cmo functions.cmi \
+script_parser.ml: scripting_errors.cmi script_lexer.cmi functions.cmi \
     ../grammars/error.cmi ../grammars/environment.cmi \
     ../logic/abstract_syntax.cmi
 

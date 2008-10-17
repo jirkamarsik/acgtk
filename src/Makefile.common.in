@@ -21,6 +21,8 @@ CMX = $(ML:.ml=.cmx)
 
 .PHONY : all byte opt clean $(PRELIMINARY) superclean
 
+.PRECIOUS : $(DYP:%.dyp=%.ml %.mli) $(CAMLLEX:%.mll=%.ml)
+
 PP = $(OCAMLPP)
 
 EXE = $(EXE_SOURCES:%.ml=%)
@@ -35,6 +37,7 @@ DYP_MLI=$(DYP:%.dyp=%.mli)
 
 # Makes byte the default goal
 byte : $(PRELIMINARY) $(LOCAL_CMO) $(EXE)
+byte_mli : $(PRELIMINARY) $(LOCAL_MLI:%.mli=%.cmi)
 opt : $(PRELIMINARY) $(LOCAL_CMX) $(EXEOPT)
 
 ifdef EXE_SOURCES
@@ -49,7 +52,7 @@ endif
 
 
 ../%.cmi : ../%.mli 
-	$(foreach dir,$(PREVIOUS_DIRS),$(MAKE) -r -S -C $(dir) byte;)
+	$(foreach dir,$(PREVIOUS_DIRS),$(MAKE) -r -S -C $(dir) byte_mli;)
 
 %.cmi : %.mli
 	@OCAMLC@ $(PP) -c $(LIBDIR) $(LIBS) $(BYTEFLAGS) $<

@@ -58,7 +58,7 @@ include ../Makefile.common
 # 	@OCAMLLEX@ $<
 
 parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
-    lexer.cmo error.cmi environment.cmi entry.cmi \
+    lexer.cmi error.cmi environment.cmi entry.cmi \
     ../logic/abstract_syntax.cmi
 
 parser.cmo: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
