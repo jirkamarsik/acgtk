@@ -22,7 +22,7 @@ PHONY: config byte opt clean superclean install
 BINARIES=acgc acgc.opt acg acg.opt
 
 
-DATE = $($DATE$:% =%)
+DATE = $DATE$
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
