@@ -12,12 +12,15 @@ byte opt:
 
 all: byte opt
 
-superclean clean:
+clean:
 	if test "$@" = clean ; then $(MAKE) -C config $@ ; fi
 	$(MAKE) -C src $@
 	rm -rf *.log  *~ autom4te.cache
 	find . -name "*~" -exec rm -f {} \;
 	-for file in $(BINARIES); do rm $$file ; done
+
+superclean: clean
+	-find . -name "*.in" -print | sed -e 's/\(.*\)\.in/\1/' | xargs -n 1 rm
 
 install:
 	for file in $(BINARIES); do if test -x $$file ; then cp $$file @bindir@/. ; fi ; done
