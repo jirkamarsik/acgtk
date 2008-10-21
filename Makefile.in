@@ -17,6 +17,8 @@
 #                                                                        #
 ##########################################################################
 
+# $Date$
+
 PHONY: config byte opt clean superclean install
 
 BINARIES=acgc acgc.opt acg acg.opt
