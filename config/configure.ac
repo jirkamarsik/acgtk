@@ -1,3 +1,11 @@
+(**************************************************************************)
+(*                                                                        *)
+(*  $Rev::                              $:  Revision of last commit       *)
+(*  $Author::                           $:  Author of last commit         *)
+(*  $Date::                             $:  Date of last commit           *)
+(*                                                                        *)
+(**************************************************************************)
+
 AC_INIT([ACG DTK],[0.1],[sylvain.pogodalla@loria.fr])
 
 #AC_COPYRIGHT([Cecill])

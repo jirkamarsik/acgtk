@@ -1,3 +1,11 @@
+(**************************************************************************)
+(*                                                                        *)
+(*  $Rev::                              $:  Revision of last commit       *)
+(*  $Author::                           $:  Author of last commit         *)
+(*  $Date::                             $:  Date of last commit           *)
+(*                                                                        *)
+(**************************************************************************)
+
 let version v =
   try
     let p = String.index_from v 0 '.' in
