@@ -22,10 +22,13 @@ PHONY: config byte opt clean superclean install
 BINARIES=acgc acgc.opt acg acg.opt
 
 
-DATE = $($Date$:% =%)
+DATE = $(\$Date: 2008-10-21 17:19:11 +0200 (Tue, 21 Oct 2008) \$:% =%)
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+
+essai:
+	echo $(DATE)
 
 byte opt: 
 	$(MAKE) -C src $@
