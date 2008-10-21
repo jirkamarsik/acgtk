@@ -1,3 +1,22 @@
+##########################################################################
+#                                                                        #
+#                 ACG development toolkit                                #
+#                                                                        #
+#                  Copyright 2008 INRIA                                  #
+#                                                                        #
+#  More information on "http://acg.gforge.loria.fr/"                     #
+#  License: CeCILL, see the LICENSE file or "http://www.cecill.info"     #
+#  Authors: see the AUTHORS file                                         #
+#                                                                        #
+#                                                                        #
+#                                                                        #
+#                                                                        #
+#  $Rev::                              $:  Revision of last commit       #
+#  $Author::                           $:  Author of last commit         #
+#  $Date::                             $:  Date of last commit           #
+#                                                                        #
+##########################################################################
+
 load d ../data/more-3.acg;
 more_sem analyse LIKE_1 THE_MOST (FOCUS MARY) JOHN : S;
 more_sem analyse LIKE_2 THE_MOST MARY (FOCUS JOHN) : S;

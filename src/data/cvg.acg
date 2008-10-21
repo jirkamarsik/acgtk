@@ -1,3 +1,22 @@
+(**************************************************************************)
+(*                                                                        *)
+(*                 ACG development toolkit                                *)
+(*                                                                        *)
+(*                  Copyright 2008 INRIA                                  *)
+(*                                                                        *)
+(*  More information on "http://acg.gforge.loria.fr/"                     *)
+(*  License: CeCILL, see the LICENSE file or "http://www.cecill.info"     *)
+(*  Authors: see the AUTHORS file                                         *)
+(*                                                                        *)
+(*                                                                        *)
+(*                                                                        *)
+(*                                                                        *)
+(*  $Rev::                              $:  Revision of last commit       *)
+(*  $Author::                           $:  Author of last commit         *)
+(*  $Date::                             $:  Date of last commit           *)
+(*                                                                        *)
+(**************************************************************************)
+
 (* This file aims at provideing an ACG encoding of CVG examples as
 given in the handout of the NaTal workshop
 (http://www.ling.ohio-state.edu/~pollard/cvg/natal.pdf) *)

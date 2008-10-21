@@ -1,3 +1,22 @@
+##########################################################################
+#                                                                        #
+#                 ACG development toolkit                                #
+#                                                                        #
+#                  Copyright 2008 INRIA                                  #
+#                                                                        #
+#  More information on "http://acg.gforge.loria.fr/"                     #
+#  License: CeCILL, see the LICENSE file or "http://www.cecill.info"     #
+#  Authors: see the AUTHORS file                                         #
+#                                                                        #
+#                                                                        #
+#                                                                        #
+#                                                                        #
+#  $Rev::                              $:  Revision of last commit       #
+#  $Author::                           $:  Author of last commit         #
+#  $Date::                             $:  Date of last commit           #
+#                                                                        #
+##########################################################################
+
 PREVIOUS_FILES = $(foreach dir,$(PREVIOUS_DIRS),$(addprefix $(dir)/,$(shell sed -n -e 's/^ML *= *\(.*\)/\1/p' $(dir)/Makefile)))
 
 PREVIOUS_MLIS = $(foreach mli,$(PREVIOUS_FILES:.ml=.mli),$(filter $(mli),$(foreach dir,$(PREVIOUS_DIRS),$(wildcard $(dir)/*.mli))))
