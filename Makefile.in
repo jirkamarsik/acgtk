@@ -17,12 +17,14 @@
 #                                                                        #
 ##########################################################################
 
-PHONY: config byte opt clean superclean install
+PHONY: config byte opt clean superclean install tar
 
 BINARIES=acgc acgc.opt acg acg.opt
 
+RELEASE = $(shell date "+acg-%y-%m-%d")
 
-DATE = $(\$Date: 2008-10-21 17:19:11 +0200 (Tue, 21 Oct 2008) \$:% =%)
+AR_EXCLUDE = 
+
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -60,3 +62,9 @@ config: configure
 configure: config/configure.ac
 	cd $(<D) && autoconf && mv configure .. & cd ..
 
+tar: superclean
+	if test -a ../$(RELEASE) ; then rm ../$(RELEASE) ; fi
+	cd .. && ln -s trunk $(RELEASE) && cd trunk
+	tar cvfz $(RELEASE).tar.gz -C .. -h $(RELEASE) --exclude="*\.svn*" --exclude "$(RELEASE)/data" --exclude "$(RELEASE)/src/data" --exclude "$(RELEASE)/src/*.old" --exclude "$(RELEASE)/*.tar*"
+	if test -a ../$(RELEASE) ; then rm ../$(RELEASE) ; fi
+	./configure
