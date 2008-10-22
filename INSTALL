@@ -17,6 +17,16 @@
 *                                                                        *
 **************************************************************************
 
+*****************
+* Prerequisites *
+*****************
+
+In order to compile the ACG toolkit, you need:
+	+ ocaml (>=3.07) installed (http://caml.inria.fr/)
+	+ dypgen (>=20080925) installed (http://dypgen.free.fr/)
+
+
+
 To install the ACG toolkit, first run:
 
 	./configure

@@ -79,7 +79,7 @@
   zzcommands :
 | EOII @{let e,f = dyp.last_local_data in
 	   (e,[Local_data (e,f)])}
-| command[c] ...@{let e,f = (dyp.last_local_data) in
+| command<c> ...@{let e,f = (dyp.last_local_data) in
 		  let e' = 
 		    try
 		      c e
@@ -91,23 +91,23 @@
 
 
 		  command:
-| WAIT SEMICOLONN[l] @{let g_d1,g_d2,g_d3 = dyp.global_data in
+| WAIT SEMICOLONN<l> @{let g_d1,g_d2,g_d3 = dyp.global_data in
 			 (fun e -> let () = echo dyp.global_data l in let () = F.wait () in e),[Global_data (true,g_d2,g_d3)]}
-| DONT WAIT SEMICOLONN[l] @{let g_d1,g_d2,g_d3 = dyp.global_data in
+| DONT WAIT SEMICOLONN<l> @{let g_d1,g_d2,g_d3 = dyp.global_data in
 			      (fun e ->  let () = echo dyp.global_data l in let () = F.dont_wait () in e),[Global_data (false,g_d2,g_d3)]}
-| LOAD_DATA[(s,loc,l)]  {fun e ->  let () = echo dyp.global_data l in
+| LOAD_DATA<s,loc,l>  {fun e ->  let () = echo dyp.global_data l in
 			 let _,_,incl = dyp.global_data in
 			   F.load F.Data  s  incl e}
-| LOAD_SCRIPT[(s,loc,l)]  {fun e ->  let () = echo dyp.global_data l in
+| LOAD_SCRIPT<s,loc,l>  {fun e ->  let () = echo dyp.global_data l in
 			   let _,_,includes = dyp.global_data in
 			   let new_env = F.load (F.Script (snd dyp.last_local_data)) s includes e in
 			     new_env}
-| LIST SEMICOLONN[l] {fun e ->  let () = echo dyp.global_data l in let () = F.list e in e}
-| SELECT IDENTT[(name,loc)]  SEMICOLONN[l] {fun e ->  let () = echo dyp.global_data l in F.select name loc e}
-| UNSELECT SEMICOLONN[l] { let () = echo dyp.global_data l in F.unselect}
-| TRACE SEMICOLONN[l] { let () = echo dyp.global_data l in fun e -> let () = F.trace () in e}
-| DONT TRACE SEMICOLONN[l] { let () = echo dyp.global_data l in fun e -> let () = F.dont_trace () in e}
-| optional_ident[name] PRINT[p] SEMICOLONN[l] { let () = echo dyp.global_data l in fun e -> 
+| LIST SEMICOLONN<l> {fun e ->  let () = echo dyp.global_data l in let () = F.list e in e}
+| SELECT IDENTT<name,loc>  SEMICOLONN<l> {fun e ->  let () = echo dyp.global_data l in F.select name loc e}
+| UNSELECT SEMICOLONN<l> { let () = echo dyp.global_data l in F.unselect}
+| TRACE SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> let () = F.trace () in e}
+| DONT TRACE SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> let () = F.dont_trace () in e}
+| optional_ident<name> PRINT<p> SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> 
 					   let loc = 
 					     match name with
 					       | None -> p
@@ -115,21 +115,21 @@
 					       match name with
 						 | None -> let () = F.print e loc in e
 						 | Some (n,l) -> let () = F.print ~name:n e loc in e}
-| optional_idents[names] ANALYSE[(t,l,line)]   { let () = echo dyp.global_data line in fun e -> 
+| optional_idents<names> ANALYSE<t,l,line>   { let () = echo dyp.global_data line in fun e -> 
 					     match names with
 					       | [] -> let () = F.analyse e t l in e
 					       | _ -> let () = F.analyse  ~names e t l in e}
-| optional_idents[names] ADD[(t,l,line)]   { let () = echo dyp.global_data line in fun e -> 
+| optional_idents<names> ADD<t,l,line>   { let () = echo dyp.global_data line in fun e -> 
 					     match names with
 					       | [] -> F.add e t l
 					       | _ -> F.add  ~names e t l}
-| COMPOSE IDENTT[n1] IDENTT [n2] AS IDENTT[n3] SEMICOLONN[l] { let () = echo dyp.global_data l in fun e -> F.compose n1 n2 n3 e}
-| HELP SEMICOLONN[l] {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help None) in e}
-| all_commands[c] HELP SEMICOLONN[l] {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some c)) in e}
-| LOAD_HELP SEMICOLONN[l] {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
-| CREATE_SIG IDENTT[n] SEMICOLONN[l] {let () = echo dyp.global_data l in fun e -> F.create_sig n e}
-| CREATE_LEX IDENTT[n] IDENTT[n1] IDENTT[n2]  SEMICOLONN[l] {let () = echo dyp.global_data l in fun e -> F.create_lex ~abs:n1 ~obj:n2 n e}
-| optional_idents[names] SAVE[(filename,l,line)]   { let () = echo dyp.global_data line in fun e -> 
+| COMPOSE IDENTT<n1> IDENTT <n2> AS IDENTT<n3> SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> F.compose n1 n2 n3 e}
+| HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help None) in e}
+| all_commands<c> HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some c)) in e}
+| LOAD_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
+| CREATE_SIG IDENTT<n> SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> F.create_sig n e}
+| CREATE_LEX IDENTT<n> IDENTT<n1> IDENTT<n2>  SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> F.create_lex ~abs:n1 ~obj:n2 n e}
+| optional_idents<names> SAVE<filename,l,line>   { let () = echo dyp.global_data line in fun e -> 
 						match names with
 						  | [] -> let () = F.save filename e l in e
 						  | _ -> let () = F.save ~names filename e l in e}
@@ -151,12 +151,12 @@
 
       optional_ident :
 | {None}
-| IDENTT[id] {Some id}
+| IDENTT<id> {Some id}
 
 
       optional_idents :
 | {[]}
-| IDENTT[id] optional_idents[ids] {id::ids}
+| IDENTT<id> optional_idents<ids> {id::ids}
 
 %%
 

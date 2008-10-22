@@ -69,7 +69,7 @@ if test "$OCAMLLEX" = no ; then
 fi
 
 #Look for dypgen
-DYPGEN_NEEDED=20080702
+DYPGEN_NEEDED=20080925
 AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
 if test "$DYPGEN" = no ; then
 	AC_MSG_ERROR(Cannot find dypgen)

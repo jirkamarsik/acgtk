@@ -178,23 +178,23 @@
 
   data:
 | EOI {get_env_value dyp.last_local_data}
-| signature[s] ...@{s,[Local_data (Some (Env (E.insert ~override:dyp.global_data (E.Signature s) (get_env_value dyp.last_local_data))))]} data[d] {d}
-| lexicon[l] ...@{let () = E.Lexicon.check l in l,[Local_data (Some (Env (E.insert ~override:dyp.global_data (E.Lexicon l) (get_env_value dyp.last_local_data))))]} data[d] {d}
+| signature<s> ...@{s,[Local_data (Some (Env (E.insert ~override:dyp.global_data (E.Signature s) (get_env_value dyp.last_local_data))))]} data<d> {d}
+| lexicon<l> ...@{let () = E.Lexicon.check l in l,[Local_data (Some (Env (E.insert ~override:dyp.global_data (E.Lexicon l) (get_env_value dyp.last_local_data))))]} data<d> {d}
   
       signature : 
 | SIG_OPEN sig_ident EQUAL sig_entries {$4}
 | SIG_OPEN sig_ident EQUAL sig_entries {$4}
 
       sig_ident :
-| IDENT[n] @{n,[Local_data (Some (Signature (E.Signature1.empty n)))]}
+| IDENT<n> @{n,[Local_data (Some (Signature (E.Signature1.empty n)))]}
 	  
 	  lexicon : 
-| LEX_OPEN lex_opening[l] EQUAL lex_entries[e] {e l}
-| LEX_OPEN lex_opening[l] EQUAL lex_entries[e] {e l}
+| LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e l}
+| LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e l}
 
 
       lex_opening :
-| IDENT[name] LPAREN IDENT[abs_name,abs_loc] RPAREN COLON IDENT[obj_name,obj_loc] @{
+| IDENT<name> LPAREN IDENT<abs_name,abs_loc> RPAREN COLON IDENT<obj_name,obj_loc> @{
     let env = get_env_value dyp.last_local_data in
     let abs = 
       try
@@ -244,8 +244,8 @@ sig_entries :
 	new_sig}
 	  
 	  comma_ids :
-| IDENT[id] {[id]}
-| IDENT[id] COMMA comma_ids[id_list] {id::id_list}
+| IDENT<id> {[id]}
+| IDENT<id> COMMA comma_ids<id_list> {id::id_list}
       
       type_definition :
 | IDENT EQUAL type_expression COLON TYPE {
@@ -275,7 +275,7 @@ sig_entries :
 	  
     type_expression :
 | atomic_type {$1} atom_type
-| atomic_type (<= atom_type) arrow[a] type_expression (<=arrow_type)  {fun sg ->
+| atomic_type (<= atom_type) arrow<a> type_expression (<=arrow_type)  {fun sg ->
 									  let ty1,loc1 = $1 sg in
 									  let ty2,loc2 = $3 sg in
 									  let new_loc = new_loc loc1 loc2 in (a (ty1,ty2,new_loc)),new_loc} arrow_type
@@ -311,14 +311,14 @@ sig_entries :
 	  
 	  term_dec_start : 
 | comma_ids {List.map (fun (id,loc) -> (id,Abstract_syntax.Default,loc)) $1}
-| PREFIX SYMBOL[sym,l] {[sym,Abstract_syntax.Prefix,l]} 
-| INFIX SYMBOL[sym,l] {[sym,Abstract_syntax.Infix,l]}
+| PREFIX SYMBOL<sym,l> {[sym,Abstract_syntax.Prefix,l]} 
+| INFIX SYMBOL<sym,l> {[sym,Abstract_syntax.Infix,l]}
 | BINDER IDENT {[fst $2,Abstract_syntax.Binder,snd $2]}
       
       term_def_start : 
 | IDENT {fst $1,Abstract_syntax.Default,snd $1}
-| PREFIX SYMBOL[sym,l] {(sym,Abstract_syntax.Prefix,l)}
-| INFIX SYMBOL[sym,l] {(sym,Abstract_syntax.Infix,l)}
+| PREFIX SYMBOL<sym,l> {(sym,Abstract_syntax.Prefix,l)}
+| INFIX SYMBOL<sym,l> {(sym,Abstract_syntax.Infix,l)}
 | BINDER IDENT {fst $2,Abstract_syntax.Binder,snd $2}
 
 
@@ -337,7 +337,7 @@ sig_entries :
 						       new_sig}
 	  
 	  term_alone :
-| term[t] COLON type_expression[ty] EOI {let sg = (get_sig_value dyp.last_local_data) in
+| term<t> COLON type_expression<ty> EOI {let sg = (get_sig_value dyp.last_local_data) in
 					   E.Signature1.convert_term (fst (t Env.empty [])) (fst (ty sg)) sg (*(E.Signature1.empty ("fake signature",(Lexing.dummy_pos,Lexing.dummy_pos)))*)}	  
 
 	  term :
@@ -347,25 +347,25 @@ sig_entries :
 | LAMBDA  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
       fun env ws -> reset_location $1 (multiple_abs env ws Abstract_syntax.Non_linear $2 $4 (fun x -> x))} binder
-| IDENT[b]  idents[ids] DOT ...{let sg = get_sig_value dyp.last_local_data in
+| IDENT<b>  idents<ids> DOT ...{let sg = get_sig_value dyp.last_local_data in
 				let binder,((p1,p2) as l) = b in
 				  match E.Signature1.is_constant binder sg with
 				    | true,Some Abstract_syntax.Binder -> (
 					match E.Signature1.get_binder_argument_functional_type binder sg with
 					  | None -> failwith "Binder of non functional type"
 					  | Some k -> k)
-				    | _ -> emit_parse_error (Error.Binder_expected binder) (p1,p2) }[lin]
-      term[t] {
+				    | _ -> emit_parse_error (Error.Binder_expected binder) (p1,p2) }<lin>
+      term<t> {
 	let binder,((p1,p2) as l) = b in
 	  fun env ws -> reset_binder_location l (multiple_bind env ws (Abstract_syntax.Const(binder,l)) lin ids t (fun x -> x))} binder 
 | application(<=app) {$1} app 
-| atomic_term(<=atom)[arg1] SYMBOL[sym] ...{let id,((pos1,pos2) as l) = sym in
+| atomic_term(<=atom)<arg1> SYMBOL<sym> ...{let id,((pos1,pos2) as l) = sym in
 					    let sg = get_sig_value dyp.last_local_data in
 					      match E.Signature1.is_constant id sg with
 						| true,Some (Abstract_syntax.Infix) -> Error.unset_infix ()
 						| true,_ -> raise Dyp.Giveup
 						| _ -> emit_parse_error (Error.Unknown_constant id) (pos1,pos2)}
-      term(<=app)[arg2] {let id,((pos1,pos2) as l) = sym in
+      term(<=app)<arg2> {let id,((pos1,pos2) as l) = sym in
 			   (fun env ws->
 			      let u1,ws1 = arg1 env ws in
 			      let u2,ws2 = arg2 env ws1 in
@@ -382,14 +382,14 @@ sig_entries :
 	       | false,true -> Abstract_syntax.Const (id,l),ws
 	       | false,false ->emit_parse_error (Error.Unknown_constant id) (fst l,snd l)} atom
 | LPAREN term RPAREN {$2} atom
-| SYMBOL[sym] ...{let sg = get_sig_value dyp.last_local_data in
+| SYMBOL<sym> ...{let sg = get_sig_value dyp.last_local_data in
 	     let id,((pos1,pos2) as l) = sym in
 	       match E.Signature1.is_constant id sg with
 		 | true,Some (Abstract_syntax.Prefix) -> ()
 		 | true,_ -> let () = Error.set_infix sym in
 		     raise Dyp.Giveup
 		 | _ -> emit_parse_error (Error.Unknown_constant id) (pos1,pos2)}
-      term[t] {let id,((pos1,pos2) as l) = sym in
+      term<t> {let id,((pos1,pos2) as l) = sym in
 		 (fun env ws ->
 		    let u2,ws2 = t env ws in
 		      (Abstract_syntax.App(Abstract_syntax.Const(id,l),u2,new_loc l (get_term_location u2))),ws2)} atom 
@@ -407,12 +407,12 @@ sig_entries :
 
       lex_entries :      
 | END_OF_DEC {fun lex -> lex}
-| lex_entry[e] END_OF_DEC {fun lex -> e lex}
-| lex_entry[e] SEMICOLON lex_entries[es] {fun lex -> es (e lex)}
+| lex_entry<e> END_OF_DEC {fun lex -> e lex}
+| lex_entry<e> SEMICOLON lex_entries<es> {fun lex -> es (e lex)}
 
     
       lex_entry :
-| comma_ids_or_sym[ids] COLON_EQUAL ...{
+| comma_ids_or_sym<ids> COLON_EQUAL ...{
     let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
     let kind =
       List.fold_left
@@ -429,14 +429,14 @@ sig_entries :
 	     | Some Type,_ -> failwith "Bug: should not occur")
 	None
 	ids in ()}
-	  term[t]  {
+	  term<t>  {
 	      fun lex ->
 		let term = fst (t Env.empty []) in
 		  List.fold_left
 		    (fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Constant (id,loc,term)) acc)
 		    lex
 		    ids}
-| comma_ids[ids] COLON_EQUAL ...{
+| comma_ids<ids> COLON_EQUAL ...{
     let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
     let kind =
       List.fold_left
@@ -453,7 +453,7 @@ sig_entries :
 	     | Some Cst,_ -> failwith "Bug: should not occur")
 	None
 	ids in ()}
-	      type_expression[ty]  {
+	      type_expression<ty>  {
 		  fun lex ->
 		    let _,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
 		    let actual_type = fst (ty obj) in
@@ -463,10 +463,10 @@ sig_entries :
 			ids}
 
 	  comma_ids_or_sym :
-| IDENT[id] {[id]}
-| SYMBOL[id] {[id]}
-| IDENT[id] COMMA comma_ids[id_list] {id::id_list}
-| SYMBOL[id] COMMA comma_ids[id_list] {id::id_list}
+| IDENT<id> {[id]}
+| SYMBOL<id> {[id]}
+| IDENT<id> COMMA comma_ids<id_list> {id::id_list}
+| SYMBOL<id> COMMA comma_ids<id_list> {id::id_list}
 
     
 %%
