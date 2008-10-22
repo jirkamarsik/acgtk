@@ -26,7 +26,8 @@ let dirs = ref [""]
 
 let options =
   [
-  ("-i", Arg.Set interactive , " Enter the interaction loop to parse terms according to signatures");
+    ("-version", Arg.Unit (fun () -> Printf.printf "%s\n" Version.version;exit 0), " Prints the version number");
+    ("-i", Arg.Set interactive , " Enters the interaction loop to parse terms according to signatures");
     ("-I", Arg.String (fun dir -> dirs := (!dirs)@[dir]) , " -I dir sets dir as a directory in which file arguments can be looked for")
   ]
   

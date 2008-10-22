@@ -27,6 +27,7 @@ let dirs = ref [""]
 
 let options =
   [
+    ("-version", Arg.Unit (fun () -> Printf.printf "%s\n" Version.version;exit 0), " Prints the version number");
     ("-I", Arg.String (fun dir -> dirs := (!dirs)@[dir]) , " -I dir sets dir as a directory in which file arguments can be looked for")
   ]
 
@@ -42,7 +43,9 @@ module P = Script_parser.Make(E)
 
 
 let welcome_msg = 
-  "\n\t\t\tWelcome to the ACG toplevel\n\t\t\t\t©INRIA 2008\nPlease send your comments or bug reports or featrure requests to sylvain.pogodalla@loria.fr\n\n\nType\n\t\thelp ;\nto get help.\n\n\n\n"
+  Printf.sprintf
+    "\n\t\t\tWelcome to the ACG toplevel\n\t\t\t    Version %s\n\t\t\t\t©INRIA 2008\nPlease send your comments or bug reports or featrure requests to sylvain.pogodalla@loria.fr\n\n\nType\n\t\thelp ;\nto get help.\n\n\n\n"
+    Version.version
 
 
 let env = ref E.empty
