@@ -17,11 +17,12 @@
 #                                                                        #
 ##########################################################################
 
-PHONY: config byte opt clean superclean install tar
+PHONY: config byte opt clean superclean install tar version release
 
 BINARIES=acgc acgc.opt acg acg.opt
 
-RELEASE = $(shell date "+acg-%y-%m-%d")
+VERSION = $(shell date "+%Y-%m-%d")
+RELEASE = acg-$(VERSION)
 
 AR_EXCLUDE = 
 
@@ -62,9 +63,14 @@ config: configure
 configure: config/configure.ac
 	cd $(<D) && autoconf && mv configure .. & cd ..
 
-tar: superclean
+tar: version superclean
 	if test -a ../$(RELEASE) ; then rm ../$(RELEASE) ; fi
 	cd .. && ln -s trunk $(RELEASE) && cd trunk
 	tar cvfz $(RELEASE).tar.gz -C .. -h $(RELEASE) --exclude="*\.svn*" --exclude "$(RELEASE)/data" --exclude "$(RELEASE)/src/data" --exclude "$(RELEASE)/src/*.old" --exclude "$(RELEASE)/*.tar*"
 	if test -a ../$(RELEASE) ; then rm ../$(RELEASE) ; fi
 	./configure
+
+version :
+	sed -i 's/@VERSION@/$(VERSION)/' src/utils/version.ml
+
+release :

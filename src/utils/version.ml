@@ -17,7 +17,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-DEFINE VERSION= "081021"
+DEFINE VERSION= "@VERSION@"
 
 
 let version = VERSION
