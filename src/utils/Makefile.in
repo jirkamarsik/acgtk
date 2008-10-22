@@ -37,7 +37,7 @@ LIBDIR = -I +camlp4
 PREVIOUS_DIRS =
 
 # Source files in the right order of dependance
-ML = utils.ml table.ml tries.ml
+ML = utils.ml table.ml tries.ml version.ml
 
 # Uncomment the next line and put the name of the exe of this directory, if relevant
 # EXE_SOURCES =
