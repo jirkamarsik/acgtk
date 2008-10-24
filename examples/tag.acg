@@ -26,6 +26,11 @@ for adjunction. See https://hal.inria.fr/inria-00141913 for further
 explanation of the TAG into ACG encoding *)
 
 	Sa,Na, Na_d, N, VPa, S,WH : type;
+
+	(* Declatiation of abstract constants together with their
+types. -> stands for the linear implication and => (not used in this
+signature) stands for the intuituinnistic implication *)
+
 	C_dog,C_cat:Na_d -> Na-> N;
 	C_sleeps:Sa -> VPa -> N -> S;
 	C_chases, C_loves, C_to_love:Sa -> VPa -> N -> N -> S;
@@ -82,6 +87,9 @@ end
 signature strings =
 
 	string: type;
+
+	(* we can define infix and prefix symbols. Note that as for now, the length of symbols can only be 1 *)
+
 	infix + : string -> string -> string;
 
 	every,dog,chases,a,cat,sleeps,slowly,new,big,black,seems,john,mary,bill,paul,

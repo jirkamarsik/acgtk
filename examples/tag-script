@@ -17,6 +17,8 @@
 #                                                                        #
 ##########################################################################
 
+# Comments are from # symbols to the end of the line
+
 # First print the help messasge that describes the commands
 help;
 

@@ -60,3 +60,75 @@ then on the prompt type
 Example files are given in the ./examples directory. Read the
 ./examples/README file
 
+
+
+************************************
+* Syntax of signature and lexicons *
+************************************
+
+(see the examples/tag.acg file for an example)
+
+Signatures are defined by:
+
+signature my_sig_name=
+	sig_entries
+end
+
+Sig_entries always ends with a ; and can be:
++ type declaration as in
+	NP,S : type;
+
++ type definition as in
+	o :type;
+	string = o -> o;
+
+Note that type constructors are -> and => for the linear and
+intuitionnistic arrow respectively.
+
++ constant declarations as in
+	foo:NP;
+	bar,dummy:NP -> S;
+	infix + : string -> string -> string;
+	prefix - : bool -> bool;
+	binder All : (e =>t) -> t;
+	infix > : bool -> bool -> bool; (*This means implication*)
+
+Note that infix and prefix are keywords to introduce symbols (of
+length 1. This probably will change).
+Also notes that comments are surrounded by (* and *)
+
++ constant definitions as in
+	n = lambda n. bar n : NP -> S;
+	infix + = lambda x y z.x(y z): string -> string -> string;
+	prefix - = lambda p.not p:bool -> bool;
+	everyone = lambda P. All x. (human x) > (P x) ;
+
+Note the syntax for binders (All in the last example). Available
+construction for terms are:
+	lambda x y z.t 
+for linear abstraction
+
+	Lambda x y z.t
+for non-linear abstraction
+
+	t u v
+for application (eauql to (t u) v)
+
+	t SYM u
+if SYM is a infix symbol (lowest priority)
+
+	SYM t
+if SYM is a prefic symbol (highest priority)
+
+	BINDER x y z.t
+if BINDER is a binder
+
+Lexicons are defined by:
+
+lexicon my_lex_name(abstract_sig_name) : object_sig_name =
+	lex_entries
+end
+
+Lex_entries always ends with a ; and have the following form:
+	abstract_atomic_type1, abstract_atomic_type2 := object_type;
+	abstract_const1, abstract_const2 := object_term;
