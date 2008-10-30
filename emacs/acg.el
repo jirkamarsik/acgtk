@@ -1,4 +1,24 @@
-;;(define-derived-mode acg-mode nil "ACG" "Major mode for ACG" nil)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                                                        
+;;                 ACG development toolkit                                
+;;                                                                        
+;;                  Copyright 2008 INRIA                                  
+;;                                                                        
+;;  More information on "http://acg.gforge.loria.fr/"                     
+;;  License: CeCILL, see the LICENSE file or "http://www.cecill.info"     
+;;  Authors: see the AUTHORS file                                         
+;;                                                                        
+;;                                                                        
+;;                                                                        
+;;                                                                        
+;;  $Rev::                              $:  Revision of last commit       
+;;  $Author::                           $:  Author of last commit         
+;;  $Date::                             $:  Date of last commit           
+;;                                                                        
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Main missing features: indentation
+
 (require 'generic-x)
 
 (define-generic-mode

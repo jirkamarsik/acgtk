@@ -60,7 +60,7 @@ signature semantics =
 	o = g => g => ( g => g => t =>t ) => t:type ;
 
 	vt = Lambda v O S.S(Lambda x.O(Lambda y.Lambda e1 e2 phi. phi e1 e2 (v x y))) : (e => e => t) => ((e =>o ) => o)  => ((e =>o ) => o) => o ;
-	n = Lambda n .Lambda x.Lambda c e1 e2 phi. phi e1 e2 (n x)  : (e => t) => e => o;
+	n = Lambda n .Lambda x.Lambda c e1 e2.Lambda phi. phi e1 e2 (n x)  : (e => t) => e => o;
 end
 
 lexicon drt (syntax):semantics =
