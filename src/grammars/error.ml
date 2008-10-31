@@ -111,7 +111,7 @@ let compute_comment_for_position pos1 pos2 =
     if line1=line2 then
       Printf.sprintf "line %d, characters %d-%d" line2 col1 col2
     else
-      Printf.sprintf "from l:%d, c:%d to l:%d,c:%d" line1 col1 line2 col2
+      Printf.sprintf "line %d, character %d to line %d, character %d" line1 col1 line2 col2
 
 
 let lex_error_to_string = function

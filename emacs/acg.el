@@ -95,7 +95,8 @@
 
 ;; find the line of the error
 (defconst acg-error-regexp
-  "^[^\0-@]+ \"\\([^\"\n]+\\)\", [^\0-@]+ \\([0-9]+\\)[-,:]"
+;;  "^[^\0-@]+ \"\\([^\"\n]+\\)\", [^\0-@]+ \\([0-9]+\\)[-,:]"
+  "^.*File \"\\([^\"]+\\)\",[^0-9]+\\([0-9]+\\),"
   "Regular expression matching the error messages produced by acgc.")
 
 (if (boundp 'compilation-error-regexp-alist)
@@ -108,8 +109,14 @@
 ;; A regexp to extract the range info.
 ;; Needs to be augmented with the possible optional range info
 ;; (for instance in case of non linear application on linear variable
-(defconst acg-error-chars-regexp
-  ".*, .*, [^\0-@]+ \\([0-9]+\\)-\\([0-9]+\\)"
+(defconst acg-error-chars-single-line-regexp
+;;  ".*, .*, [^\0-@]+ \\([0-9]+\\)-\\([0-9]+\\)"
+  ".*line [0-9]+, characters \\([0-9]+\\)-\\([0-9]+\\)"
+  "Regexp matching the char numbers in an error message produced by acgc.")
+
+
+(defconst acg-error-chars-multi-line-regexp
+  ".*line [0-9]+, character \\([0-9]+\\) to line \\([0-9]+\\), character \\([0-9]+\\)"
   "Regexp matching the char numbers in an error message produced by acgc.")
 
 
@@ -125,18 +132,42 @@ Puts the point and the mark exactly around the erroneous program
 fragment. The erroneous fragment is also temporarily highlighted if
 possible."
  (if (eq major-mode 'acg-mode)
-     (let ((beg nil) (end nil))
+     (let ((beg nil) (end nil) (line-end nil) (char-end nil))
        (save-excursion
 	 (set-buffer compilation-last-buffer)
 	 (save-excursion
 	   (goto-char (window-point (get-buffer-window (current-buffer) t)))
-	   (if (looking-at acg-error-chars-regexp)
+	   (if (looking-at acg-error-chars-single-line-regexp)
 	       (setq beg (string-to-int (acg-match-string 1))
-		     end (string-to-int (acg-match-string 2))))))
+		     end (string-to-int (acg-match-string 2)))
+	     (if (looking-at acg-error-chars-multi-line-regexp)
+	       (setq beg (string-to-int (acg-match-string 1))
+		     line-end (string-to-int (acg-match-string 2))
+		     char-end (string-to-int (acg-match-string 3))
+		     )))))
        (beginning-of-line)
        (if beg
 	   (progn
-	     (setq beg (+ (point) beg) end (+ (point) end))
-	     (goto-char beg) (push-mark end t t))))))
+	     (if end
+		 (progn
+		   (setq beg (+ (point) beg) end (+ (point) end))
+		   (goto-char beg)
+		   (push-mark (+ end 1) t t))
+	       (progn
+		 (setq beg (+ (point) beg))
+		 (goto-char beg)
+		 (setq current-position nil)
+		 (point-to-register current-position)
+		 (goto-line line-end)
+		 (beginning-of-line)
+		 (setq end (+ (point) char-end))
+		 (push-mark (+ end 1) t t)
+		 (jump-to-register current-position))
+	       )
+	     )
+	 )
+       )
+   )
+ )
 
 (ad-activate 'next-error)
