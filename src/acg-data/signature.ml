@@ -387,26 +387,29 @@ struct
 	      with 
 		| Not_functional_type -> let u_loc = get_location u in
 		    raise (Error.Error (Error.Type_error (Error.Is_Used (Lambda.type_to_string u_type (id_to_string sg),"\"'a -> 'b\" or \"'a => 'b\" in order to enable application"),(fst u_loc,snd u_loc)))) in
-	      try
-		let v_term,_,new_new_typing_env = 
-		  match lin with
-		    | Abstract_syntax.Linear -> typecheck_aux v (Some (local_expand ty1)) new_typing_env
-		    | Abstract_syntax.Non_linear ->
-			let non_lin_env = remove_lin_context new_typing_env in
-(*			let () = Printf.printf "Inserting wrapper\n%!" in *)
-			let v_t,v_ty,{wrapper=w} = typecheck_aux v (Some (local_expand ty1)) {non_lin_env with wrapper=Some (get_location u,u_type,get_location v)} in
-			  v_t,v_ty,{new_typing_env with wrapper=w} in
-		  match ty with
-		    | None -> Lambda.App (u_term,v_term),ty2,new_new_typing_env
-		    | Some l_ty when l_ty=local_expand ty2 -> Lambda.App (u_term,v_term),l_ty,new_new_typing_env
-		    | Some l_ty -> raise (Type_mismatch (l,l_ty,ty2)) 
-	      with
-		| Non_empty_linear_context (x,l) ->
-		    let func_loc,func_st,v_loc = match tenv.wrapper with
-		      | None -> failwith "Bug"
-		      | Some a  ->a in
-(*		    let v_loc = get_location v in*)
-		      raise (Error.Error (Error.Type_error (Error.Non_empty_context (x,l,func_loc,Lambda.type_to_string func_st (id_to_string sg)),v_loc))) in 
+	    let v_term,_,new_new_typing_env = 
+	      match lin with
+		| Abstract_syntax.Linear -> typecheck_aux v (Some (local_expand ty1)) new_typing_env
+		| Abstract_syntax.Non_linear ->
+		    let non_lin_env = remove_lin_context new_typing_env in
+		      (*			let () = Printf.printf "Inserting wrapper\n%!" in *)
+		    let wrapper = get_location u,u_type,get_location v in
+		      try
+			let v_t,v_ty,{wrapper=w} =
+			  typecheck_aux v (Some (local_expand ty1)) {non_lin_env with wrapper=Some wrapper} in
+			  v_t,v_ty,{new_typing_env with wrapper=w} 
+		      with
+			| Non_empty_linear_context (x,l) ->
+			    let func_loc,func_st,v_loc = match tenv.wrapper with
+			      | None -> wrapper
+			      | Some a  -> a in
+			      (*		    let v_loc = get_location v in*)
+			      raise (Error.Error (Error.Type_error (Error.Non_empty_context (x,l,func_loc,Lambda.type_to_string func_st (id_to_string sg)),v_loc)))
+	    in
+	      match ty with
+		| None -> Lambda.App (u_term,v_term),ty2,new_new_typing_env
+		| Some l_ty when l_ty=local_expand ty2 -> Lambda.App (u_term,v_term),l_ty,new_new_typing_env
+		| Some l_ty -> raise (Type_mismatch (l,l_ty,ty2))  in 
       try
 	let t_term,t_type,(_:typing_environment) = 
 	  typecheck_aux t (Some (local_expand ty)) {linear_level=0;level=0;env=Utils.StringMap.empty;wrapper=None} in    
