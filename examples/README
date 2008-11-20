@@ -40,7 +40,16 @@ But with the term:
 you will have a typing error
 
 
++ montague.acg : a file containing a very simple signature that illustrates
+(very basic) Montague semantics
 
+
++ montague-script : a file providing commands that you can run in acg.	
+You can also run it with the following command:	
+	
+	acg montague-script
+
+(press return after each command)
 
 + tag.acg : a file containing various signatures and lexicons to model
 TAG in ACG. You can run acgc on it
@@ -48,7 +57,7 @@ TAG in ACG. You can run acgc on it
 
 
 
-+ tag-script : this file provide (commented) commands that you can run
++ tag-script : this file provides (commented) commands that you can run
 in acg. You can also run it with the following command:
 
 	acg tag-script
