@@ -78,4 +78,4 @@ version :
 	sed -i 's/\(VERSION = \)".*"/\1"$(VERSION)"/' $(VERSION_FILE)
 
 release : version tar
-	if svn status -q -u | grep -v "^Status against" | grep -q -v "^\?" ; then printf "\n\nERROR:\nPlease commit before making a release\n\n" ; else svn cp svn+ssh://pogodall@scm.gforge.inria.fr/svn/acg/dev/trunk svn+ssh://pogodall@scm.gforge.inria.fr/svn/acg/dev/tags/release-$(VERSION) -m "Tagging the $(VERSION) release of the 'acg' project" ; fi
+	if svn status -q -u | grep -v "^Status against" | grep -q -v "^\?" ; then printf "\n\nERROR:\nPlease commit before making a release\n\n" ; else svn cp svn+ssh://pogodall@scm.gforge.inria.fr/svn/acg/dev/trunk svn+ssh://pogodall@scm.gforge.inria.fr/svn/acg/dev/tags/release-$(VERSION) -m "Tagging the $(VERSION) release of the 'acg' project" ; cp $(TAR_RELEASE).tar.gz ~/www-acg/software/. ; cp INSTALL ~/www-acg/software/. ; cp README ~/www-acg/software/. ; sed -i -e 's/acg-[0-9]*\.tar\.gz/$(TAR_RELEASE).tar.gz/' ~/www-acg/index.html ;fi
