@@ -84,9 +84,14 @@
 		    try
 		      c e
 		    with
-		      | F.Not_yet_implemented s-> raise (Scripting_errors.Error (Scripting_errors.Not_yet_implemented s,(Lexing.dummy_pos,Lexing.dummy_pos))) in
+		      | F.Not_yet_implemented s-> raise (Scripting_errors.Error (Scripting_errors.Not_yet_implemented s,(Lexing.dummy_pos,Lexing.dummy_pos)))
+		      | Scripting_errors.Error (er,loc_er) ->
+			  let () = Printf.fprintf stderr "Error: %s\n%!" (Scripting_errors.error_msg er loc_er) in
+			  let _ = Script_lexer.reset_echo () in
+			    e
+		  in
 		  let () = wait dyp.global_data read_line in
-		    e',[Local_data (e',f)]}
+		    (e',[Local_data (e',f)])}
       zzcommands @{let e,f = (dyp.last_local_data) in e,[Local_data (e,f)]}
 
 
@@ -185,6 +190,10 @@
 	  env
       | Error.Error e -> 
 	  let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
+	  let _ = Script_lexer.reset_echo () in
+	    env
+      | Scripting_errors.Error (e,p) ->
+	  let () = Printf.fprintf stderr "Error: %s\n%!" (Scripting_errors.error_msg e p) in
 	  let _ = Script_lexer.reset_echo () in
 	    env
 	      

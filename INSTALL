@@ -55,6 +55,39 @@ If you wan to uninstall it then run:
 
 	make uninstall
 
+********************
+** ACG emacs mode **
+********************
+
+There is an ACG emacs mode (acg.el) in the emacs directory.
+
+** Quick way to have it work:
+
+copy the following lines in your .emacs
+
+(setq load-path (cons "EMACS_DIR_PATH" load-path))
+(setq auto-mode-alist (cons '("\\.acg" . acg-mode) auto-mode-alist))
+(autoload 'acg-mode "acg" "Major mode for editing ACG definitions" t)
+
+where EMACS_DIR_PATH is the path of a directory where you copied acg.el (typically)
+
+
+** Site distribution:
+
+copy acg.el under an acg directory in your site-lisp directory
+(typically /usr/share/emacs/site-lisp/)
+
+create a 50acg.el file into the /etc/emacs/site-start.d directory and
+copy the following lines in it:
+
+(setq load-path (cons "EMACS_DIR_PATH" load-path))
+(setq auto-mode-alist (cons '("\\.acg" . acg-mode) auto-mode-alist))
+(autoload 'acg-mode "acg" "Major mode for editing ACG definitions" t)
+
+where now EMACS_DIR_PATH is the acg directory in your site-lisp
+directory (typically /usr/share/emacs/site-lisp/acg)
+
+
 
 *********************
 ** For developpers **
