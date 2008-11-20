@@ -60,6 +60,29 @@ then on the prompt type
 Example files are given in the ./examples directory. Read the
 ./examples/README file
 
+********************
+** ACG emacs mode **
+********************
+
+There is an ACG emacs mode (acg.el) in the emacs directory.
+
+Look at the INSTALL file to see how to install it.
+
+It's main feature is to be loaded when editing an acg data file (with
+signatures and lexicons). It is automatically loaded for files with a
+.acg extension
+
+It basically contains compilation directives and next-error
+searching.
+
+1. First load an acg file
+
+2. then run "M-x compile" (or C-cC-c) to call the compiler (acgc or
+acgc.opt)
+
+3. then run "M-x next-error" (or C-x`) to search for the next error
+(if any) and highlights it
+
 
 
 ************************************
