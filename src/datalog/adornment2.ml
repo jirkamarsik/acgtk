@@ -1,3 +1,7 @@
+open Signature
+open Program
+open Int_set
+
 module Adornment =
 struct 
   type adornment = Ad of Signature.predicate*((int*bool) list)

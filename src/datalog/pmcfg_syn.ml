@@ -1,3 +1,7 @@
+open Signature
+open String_map
+open Pmcfg
+
 module PMCFG_syn = 
 struct
 (*
@@ -14,7 +18,7 @@ RHS_ARG_LIST -> Ident F_RHS_ARG_LIST
 F_RHS_ARG_LIST -> COMMA RHS_ARG_LIST | RPAR PREMISSES
 *)
 
-  open Lexicalizer
+open Lexicalizer.Lexicalizer
 
 (*The parser*)
 

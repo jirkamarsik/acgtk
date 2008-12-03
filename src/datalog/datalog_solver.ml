@@ -1,3 +1,7 @@
+open Signature
+open Int_map
+open Program
+
 module Datalog_solver =
 struct
 

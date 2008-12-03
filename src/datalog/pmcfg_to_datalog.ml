@@ -1,3 +1,9 @@
+open Pmcfg
+open Signature
+open String_map
+open Int_map
+open Program
+
 module PMCFG_to_datalog = 
 struct
   open PMCFG

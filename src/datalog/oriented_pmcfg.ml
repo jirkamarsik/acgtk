@@ -1,3 +1,10 @@
+open Pmcfg
+open Signature
+open String_map
+open Int_map
+open Program
+
+
 module Oriented_pmcfg = 
   struct open PMCFG
 

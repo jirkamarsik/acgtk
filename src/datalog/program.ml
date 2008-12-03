@@ -1,3 +1,6 @@
+open Signature
+open Int_set
+
 module Program =
   struct
     type predicate = Pred of (Signature.predicate*(int list))

@@ -1,3 +1,6 @@
+open Program
+open Signature
+
 module Program_printer =
   struct
     open Program

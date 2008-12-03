@@ -1,3 +1,9 @@
+open Signature
+open String_map
+open Int_map
+open Program
+
+
 module PMCFG =
 struct
   type argument = Var of int | Val of string

@@ -1,3 +1,9 @@
+open Adornment2
+open Signature
+open Program
+open Int_map
+
+
 module Magic_set_rewritting = 
 struct
   

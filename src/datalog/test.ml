@@ -1,4 +1,4 @@
-#use "signature.ml";;
+(*#use "signature.ml";;
 #use "string_map.ml";;
 #use "int_map.ml";;
 #use "int_set.ml";;
@@ -13,7 +13,13 @@
 #use "adornment2.ml";;
 #use "magic_set_rewritting2.ml";;
 #use "kanazawa_transform.ml";;
-#use "datalog_solver.ml";;
+#use "datalog_solver.ml";;*)
+
+open Pmcfg_syn
+open Kanazawa_transform
+open Program_printer
+open Datalog_solver
+
 (*opening the file containing the grammar, here gram.pmcfg*)
 let ch_in = open_in "kan.pmcfg";;
 (*parsing the grammar*)

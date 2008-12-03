@@ -1,3 +1,13 @@
+open Adornment2
+open Program
+open Signature
+open Prefix_correct_program
+open Program_printer
+open Magic_set_rewritting2
+open Pmcfg
+open Oriented_pmcfg
+open Pmcfg_to_datalog
+
 module Kanazawa_transform = 
   struct
     let is_impermissible n= 

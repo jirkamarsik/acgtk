@@ -1,3 +1,8 @@
+open Signature
+open Int_map
+open Program
+open Int_set
+
 module Prefix_correct_program =
 struct
   
