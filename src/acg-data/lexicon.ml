@@ -125,8 +125,8 @@ struct
 	(fun e acc ->
 	   match Sg.is_declared e abs with
 	     | Some s ->
-		 (try
-		    let _ = Utils.StringMap.find s d in
+		 (let () = Printf.printf "%s\n" s in try
+		    let _ = Dico.find s d in
 		      acc
 		  with
 		    | Not_found -> s::acc) 
