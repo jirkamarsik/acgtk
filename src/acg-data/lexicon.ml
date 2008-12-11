@@ -125,7 +125,7 @@ struct
 	(fun e acc ->
 	   match Sg.is_declared e abs with
 	     | Some s ->
-		 (let () = Printf.printf "%s\n" s in try
+		 (try
 		    let _ = Dico.find s d in
 		      acc
 		  with

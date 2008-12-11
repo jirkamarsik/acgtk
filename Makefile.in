@@ -17,7 +17,7 @@
 #                                                                        #
 ##########################################################################
 
-PHONY: config byte opt clean superclean install tar version release
+.PHONY: config byte opt clean superclean install tar version release
 
 BINARIES=acgc acgc.opt acg acg.opt
 
@@ -31,8 +31,6 @@ TAR_RELEASE =acg-$(TAR_VERSION)
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
-
-
 
 byte opt: 
 	$(MAKE) -C src $@
@@ -48,7 +46,7 @@ clean:
 	-for file in $(BINARIES); do rm $$file ; done
 
 superclean: clean
-	-find . -wholename "./*/*.in" -print | sed -e 's/\(.*\)\.in/\1/' | xargs -n 1 rm
+	-find . -path "./*/*.in" -print | sed -e 's/\(.*\)\.in/\1/' | xargs -n 1 rm
 
 install:
 	for file in $(BINARIES); do if test -x $$file ; then cp $$file @bindir@/. ; fi ; done

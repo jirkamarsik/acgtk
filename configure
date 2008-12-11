@@ -622,6 +622,7 @@ OCAMLP4
 OCAMLDOC
 OCAMLDEP
 OCAMLLEX
+OCAMLFIND
 DYPGEN
 CAMLP4_LIB
 TYPES
@@ -1977,6 +1978,50 @@ echo "$as_me: error: Cannot find ocamllex" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+
+# Look for ocamlfind
+# Extract the first word of "ocamlfind", so it can be a program name with args.
+set dummy ocamlfind; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_OCAMLFIND+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $OCAMLFIND in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_OCAMLFIND="$OCAMLFIND" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_OCAMLFIND="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_OCAMLFIND" && ac_cv_path_OCAMLFIND="no"
+  ;;
+esac
+fi
+OCAMLFIND=$ac_cv_path_OCAMLFIND
+if test -n "$OCAMLFIND"; then
+  { echo "$as_me:$LINENO: result: $OCAMLFIND" >&5
+echo "${ECHO_T}$OCAMLFIND" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+
 #Look for dypgen
 DYPGEN_NEEDED=20080925
 for ac_prog in dypgen.opt dypgen
@@ -2040,6 +2085,32 @@ echo "$as_me: error: $DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEE
 	fi
 fi
 
+# Look for DYPGEN_LIB with or without ocamlfind
+{ echo "$as_me:$LINENO: checking Checking dypgen library" >&5
+echo $ECHO_N "checking Checking dypgen library... $ECHO_C" >&6; }
+if test "$OCAMLFIND" != no ; then
+   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
+      DYPGEN_INCLUDE=`$OCAMLFIND query dypgen`
+      DYPGEN_FINDLIB=yes
+   else
+      DYPGEN_FINDLIB=no
+   fi
+else
+      DYPGEN_FINDLIB=no
+fi
+if test "$DYPGEN_FINDLIB" = no ; then
+   DYPGEN_PLACE=`$OCAMLC -where`
+else
+   DYPGEN_PLACE=$DYPGEN_INCLUDE
+fi
+if test -f $DYPGEN_PLACE/dypgen/dyp.cma ; then
+      { echo "$as_me:$LINENO: result: dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma" >&5
+echo "${ECHO_T}dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma" >&6; }
+   else
+	{ { echo "$as_me:$LINENO: error: Could not find dypgen library in $DYPGEN_PLACE" >&5
+echo "$as_me: error: Could not find dypgen library in $DYPGEN_PLACE" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 
 # What is the OCAML version  ?
@@ -2145,7 +2216,7 @@ echo "${ECHO_T}$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
 
 
 
-ac_config_files="$ac_config_files ./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/lambda/Makefile src/acg-data/Makefile src/scripting/Makefile"
+ac_config_files="$ac_config_files ./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/lambda/Makefile src/acg-data/Makefile src/scripting/Makefile src/datalog/Makefile"
 
 
 { echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
@@ -2757,6 +2828,7 @@ do
     "src/lambda/Makefile") CONFIG_FILES="$CONFIG_FILES src/lambda/Makefile" ;;
     "src/acg-data/Makefile") CONFIG_FILES="$CONFIG_FILES src/acg-data/Makefile" ;;
     "src/scripting/Makefile") CONFIG_FILES="$CONFIG_FILES src/scripting/Makefile" ;;
+    "src/datalog/Makefile") CONFIG_FILES="$CONFIG_FILES src/datalog/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -2861,6 +2933,7 @@ OCAMLP4!$OCAMLP4$ac_delim
 OCAMLDOC!$OCAMLDOC$ac_delim
 OCAMLDEP!$OCAMLDEP$ac_delim
 OCAMLLEX!$OCAMLLEX$ac_delim
+OCAMLFIND!$OCAMLFIND$ac_delim
 DYPGEN!$DYPGEN$ac_delim
 CAMLP4_LIB!$CAMLP4_LIB$ac_delim
 TYPES!$TYPES$ac_delim
@@ -2871,7 +2944,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 52; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 53; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
