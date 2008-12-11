@@ -15,6 +15,24 @@
 #use "kanazawa_transform.ml";;
 #use "datalog_solver.ml";;*)
 
+(*#load  "signature.cmo";;
+#load  "string_map.cmo";;
+#load  "int_map.cmo";;
+#load  "int_set.cmo";;
+#load  "program.cmo";;
+#load  "pmcfg.cmo";;
+#load  "pmcfg_to_datalog.cmo";;
+#load  "oriented_pmcfg.cmo";;
+#load  "lexicalizer.cmo";;
+#load  "pmcfg_syn.cmo";;
+#load  "program_printer.cmo";;
+#load  "prefix_correct_program.cmo";;
+#load  "adornment2.cmo";;
+#load  "magic_set_rewritting2.cmo";;
+#load  "kanazawa_transform.cmo";;
+#load  "datalog_solver.cmo";;
+*)
+
 open Pmcfg_syn
 open Kanazawa_transform
 open Program_printer

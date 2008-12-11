@@ -68,6 +68,10 @@ if test "$OCAMLLEX" = no ; then
 	AC_MSG_ERROR(Cannot find ocamllex)
 fi
 
+
+# Look for ocamlfind
+AC_PATH_PROG(OCAMLFIND,ocamlfind,no)
+
 #Look for dypgen
 DYPGEN_NEEDED=20080925
 AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
@@ -83,6 +87,30 @@ else
 	fi
 fi
 
+# Look for DYPGEN_LIB with or without ocamlfind
+AC_MSG_CHECKING([dypgen library])
+if test "$OCAMLFIND" != no ; then
+   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
+      DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dypgen`
+      DYPGEN_FINDLIB=yes
+   else
+      DYPGEN_FINDLIB=no
+   fi
+else
+      DYPGEN_FINDLIB=no
+fi
+if test "$DYPGEN_FINDLIB" = no ; then
+   DYPGEN_PLACE=`$OCAMLC -where`
+   DYPGEN_INCLUDE=""
+else
+   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
+   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
+fi
+if test -f $DYPGEN_PLACE/dypgen/dyp.cma ; then
+      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma)
+   else
+	AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
+fi
 
 
 # What is the OCAML version  ?
@@ -145,6 +173,7 @@ AC_SUBST(OCAMLDEP)
 AC_SUBST(OCAMLLEX)
 #AC_SUBST(OCAMLYACC)
 AC_SUBST(DYPGEN)
+AC_SUBST(DYPGEN_INCLUDE)
 
 AC_SUBST(TYPES)
 AC_SUBST(OCAML09WARNINGS)
@@ -152,7 +181,7 @@ AC_SUBST(OCAMLP4_LOC)
 
 AC_SUBST(SET_MAKE)
 
-AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/lambda/Makefile src/acg-data/Makefile src/scripting/Makefile])
+AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/lambda/Makefile src/acg-data/Makefile src/scripting/Makefile src/datalog/Makefile])
 
 AC_PROG_MAKE_SET
 
