@@ -20,8 +20,9 @@ struct
     match grammar with
 	Grammar (_,rules,_) -> 
 	  List.filter (is_rule_defining_cat cat) rules
-	       
-  let program_of_pmcfg grammar = 
+	
+       
+  let program_of_pmcfg_gen grammar is_naive = 
     match grammar with
 	Grammar (sign,rules,init) -> 
 	  let new_sign = 
@@ -139,13 +140,22 @@ struct
                   (function s ->
                     function id ->
                       function rules ->
-                        (Program.Cl(Program.Pred(rg_eq,[0;2;3;5]),
-                                   [Program.Pred(neq,[0;2]);
-                                    Program.Pred(id,[0;1]);
-                                    Program.Pred(id,[3;4]);
-                                    Program.Pred(rg_eq,[1;2;4;5])
-                                   ]
-                        ))
+                        (if is_naive
+                        then
+                          (Program.Cl(Program.Pred(rg_eq,[0;2;3;5]),
+                                     [Program.Pred(id,[0;1]);
+                                      Program.Pred(id,[3;4]);
+                                      Program.Pred(rg_eq,[1;2;4;5])
+                                     ]
+                          ))
+                        else
+                          (Program.Cl(Program.Pred(rg_eq,[0;2;3;5]),
+                                     [Program.Pred(neq,[0;2]);
+                                      Program.Pred(id,[0;1]);
+                                      Program.Pred(id,[3;4]);
+                                      Program.Pred(rg_eq,[1;2;4;5])
+                                     ]
+                          )))
                         ::
                           rules
                   )
@@ -167,5 +177,8 @@ struct
 	  in
           let eq_clauses = get_eq_clauses string_predicates in
 	    Program.Prog (new_sign,(clauses @ eq_clauses))
+
+  let program_of_pmcfg grammar = program_of_pmcfg_gen grammar false 
+  let naive_program_of_pmcfg grammar = program_of_pmcfg_gen grammar true
 
 end

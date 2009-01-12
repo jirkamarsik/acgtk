@@ -272,10 +272,31 @@ struct
         program 
         (It(magic,[0])::(List.rev facts))
 
+  let init_solver3 program init_state list magic =
+    let Prog(sign,_) = program in
+    let facts = 
+      List.fold_left
+        (function l ->
+          function (string,(state1,state2)) ->
+            try
+              let (_,pred) = Signature.find_pred_of_name string sign in
+                It(pred,[state1;state2])::l
+            with
+                Not_found ->
+                  failwith ("init_solver3: predicate '"^string^"' is not defined.")
+        )
+        []
+        list
+    in
+      init_solver 
+        program 
+        (It(magic,[init_state])::(List.rev facts))
+
   let solve program facts = naive_solve(init_solver program facts)
             
-
   let solve2 program list magic = naive_solve(init_solver2 program list magic)
+
+  let solve3 program init_state list magic = naive_solve(init_solver3 program init_state list magic)
 
   let print_chart (M(sign,chart,_,_,_,step,_,_)) = 
     let res = Array.make (step+1) [] in

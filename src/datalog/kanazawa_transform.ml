@@ -71,7 +71,32 @@ module Kanazawa_transform =
       let (map,prog) = Magic_set_rewritting.magic ad_program in
         (Magic_set_rewritting.Adorned_predicate_map.find goal map,prog)
 
-    
+
+    let transform_pmcfg_0 grammar =
+      let program = 
+        PMCFG.naive_program_of_pmcfg (Oriented_pmcfg.orient_grammar grammar)
+      in
+      let Program.Prog(Signature.S (l,_,neq),_) = program in
+      let n = List.length l in
+      let program = Prefix_correct_program.prefix_correct_transform exceptions program in
+      let PMCFG.Grammar(_,_,init_id) = grammar in
+      let goal = Adornment.AdP(init_id,[true;false]) in
+      let ad_program = 
+        Adornment.adorn_program 
+          program
+          goal 
+          (is_impermissible n)
+          (Adornment.compare_adornments3 neq)
+      in
+      let _ =
+        print_string
+          (Program_printer.print_program 
+              (Adornment.program_of_adorned_program ad_program)
+          ) 
+      in
+      let (map,prog) = Magic_set_rewritting.magic ad_program in
+      (Magic_set_rewritting.Adorned_predicate_map.find goal map,prog)
+
     let transform_pmcfg_1 grammar =
       let program = 
         PMCFG.program_of_pmcfg (Oriented_pmcfg.orient_grammar grammar)
