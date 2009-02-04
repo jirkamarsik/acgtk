@@ -31,6 +31,24 @@ To install the ACG toolkit, first run:
 
 	./configure
 
+NOTE: if your dypgen installation is not in a standard location, run:
+
+	 ./configure --help
+
+It will tell you:
+"Some influential environment variables:
+  DYPGEN_PATH Directory where to find dypgen if not in a standard location
+  DYPGENLIB_PATH
+              Directory where to find dypgen library if not in a standard
+              location
+
+Use these variables to override the choices made by `configure' or to help
+it to find libraries and programs with nonstandard names/locations."
+
+For instance, run:
+	
+	./configure DYPGEN_PATH=/my/dypgen/installation/path/dypgen DYPGENLIB_PATH=/my/dypgen/installation/path/dyplib
+
 Then run:
 
 	make
