@@ -74,42 +74,58 @@ AC_PATH_PROG(OCAMLFIND,ocamlfind,no)
 
 #Look for dypgen
 DYPGEN_NEEDED=20080925
-AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
+AC_ARG_VAR(DYPGEN_PATH,[Directory where to find dypgen if not in a standard location])
+if test -n "$DYPGEN_PATH" ; then
+   AC_CHECK_PROG(DYPGEN,dypgen,$DYPGEN_PATH/dypgen,no,$DYPGEN_PATH)
+else
+	AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
+fi
 if test "$DYPGEN" = no ; then
-	AC_MSG_ERROR(Cannot find dypgen)
+   AC_MSG_ERROR(Cannot find dypgen)
 else
 	DYPGEN_VERSION=`$DYPGEN --version | grep version | sed 's/^.* \(.*\)$/\1/'`
 	AC_MSG_CHECKING([for $DYPGEN version])
 	if test $DYPGEN_VERSION -ge $DYPGEN_NEEDED ; then
-	   AC_MSG_RESULT($DYPGEN ($DYPGEN_VERSION) is ok)
+		   AC_MSG_RESULT($DYPGEN ($DYPGEN_VERSION) is ok)
 	else
-	   AC_MSG_ERROR($DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed)
+		   AC_MSG_ERROR($DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed)
 	fi
 fi
 
 # Look for DYPGEN_LIB with or without ocamlfind
 AC_MSG_CHECKING([dypgen library])
-if test "$OCAMLFIND" != no ; then
-   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
-      DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dypgen`
-      DYPGEN_FINDLIB=yes
-   else
-      DYPGEN_FINDLIB=no
-   fi
-else
-      DYPGEN_FINDLIB=no
-fi
-if test "$DYPGEN_FINDLIB" = no ; then
-   DYPGEN_PLACE=`$OCAMLC -where`
-   DYPGEN_INCLUDE=""
-else
-   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
-   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
-fi
-if test -f $DYPGEN_PLACE/dypgen/dyp.cma ; then
-      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma)
+AC_ARG_VAR(DYPGENLIB_PATH,[Directory where to find dypgen library if not in a standard location])
+if test -n "$DYPGENLIB_PATH" ; then
+   DYPGEN_PLACE=$DYPGENLIB_PATH
+   DYPGEN_INCLUDE="-I $DYPGEN_PLACE"
+   if test -f $DYPGEN_PLACE/dyp.cma ; then
+      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen.cma)
    else
 	AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
+   fi
+else
+	if test "$OCAMLFIND" != no ; then
+	   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
+	         DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dypgen`
+		 DYPGEN_FINDLIB=yes
+	   else
+	         DYPGEN_FINDLIB=no
+	   fi
+	else
+	      DYPGEN_FINDLIB=no
+	fi
+	if test "$DYPGEN_FINDLIB" = no ; then
+	   DYPGEN_PLACE=`$OCAMLC -where`
+	   DYPGEN_INCLUDE="-I +dypgen"
+	else
+	   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
+	   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
+	fi
+	if test -f $DYPGEN_PLACE/dypgen/dyp.cma ; then
+	      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma)
+	else
+	      AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
+	fi
 fi
 
 

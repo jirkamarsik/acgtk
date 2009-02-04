@@ -28,14 +28,10 @@ include ../Makefile.master
 # Used libraries
 LIBS += dyp.cma str.cma
 
-DYPPATH = /home/pogodall/import/ocaml/dypgen
-DYPGEN_LIB = +dypgen
-#DYPGEN_LIB = $(DYPPATH)/dyplib
-
 # The corresponding directories
 # (if not in the main ocaml lib directory,
 # ex. -I  +campl4
-LIBDIR = -I $(DYPGEN_LIB) -I +camlp4
+LIBDIR = @DYPGEN_INCLUDE@ -I +camlp4
 
 # Directories to which the current source files depend on
 PREVIOUS_DIRS = ../utils ../logic
