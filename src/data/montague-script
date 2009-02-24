@@ -20,7 +20,7 @@
 load d ../data/montague-drt.acg;
 list ;
 abstract print;
-abstract analyse beats (every farmer) a donkey) : s;
+#abstract analyse beats (every farmer) a donkey) : s;
 abstract analyse beats (every farmer) (a J) : s;
 abstract analyse beats (every farmer) (a donkey) : s;
 select object;

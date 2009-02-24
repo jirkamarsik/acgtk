@@ -47,11 +47,23 @@
 
   exception No_sig
 
+  let cpt = ref 0
+
+  let incr () = cpt := (!cpt)+1
+
+  let cpt_to_string () = Printf.sprintf "%d" !cpt
+
   type type_or_cst =
     | Nothing
     | Type
     | Cst
     | Both
+
+  let type_or_cst_to_string = function
+    | Nothing -> "Nothing"
+    | Type -> "Type"
+    | Cst -> "Cst"
+    | Both -> "Both"
 
   exception Is_type
   exception Is_cst
@@ -415,6 +427,7 @@ sig_entries :
     
       lex_entry :
 | comma_ids_or_sym<ids> COLON_EQUAL ...{
+    let () = incr () in
     let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
     let kind =
       List.fold_left
@@ -432,15 +445,18 @@ sig_entries :
       kind}<kind>
 	  term<t>  {
 	    try
-	      let term = fst (t Env.empty []) in
+(*	      let () = Printf.printf "(%s) Current id: %s\n%!" (cpt_to_string ()) (Utils.string_of_list " " (fun (x,_) -> x) ids ) in
+	      let () = Printf.printf "(%s) Current kind: %s\n%!"  (cpt_to_string()) (type_or_cst_to_string kind) in *)
 		fun lex ->
+		  let term = fst (t Env.empty []) in
+(*		  let () = Printf.printf "Ok for the term\n%!" in *)
 		  List.fold_left
 		    (fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Constant (id,loc,term)) acc)
 		    lex
 		    ids
 	    with
-	      | Error.Error (Error.Parse_error (Error.Unknown_constant _,_)) when kind = Both -> raise Dyp.Giveup
-	      | exc -> raise exc}
+	      | Error.Error (Error.Parse_error (Error.Unknown_constant _,_)) when kind = Both ->  raise Dyp.Giveup 
+	      | exc -> raise exc }
 | comma_ids<ids> COLON_EQUAL ...{
     let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
     let kind =

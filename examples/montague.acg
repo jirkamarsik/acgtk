@@ -84,6 +84,7 @@ signature logic =
 	binder All : (e=>t) -> t;
 	binder Ex : (e=>t) -> t;
 
+
 end
 
 lexicon semantics (syntax) : logic =
@@ -102,6 +103,6 @@ lexicon semantics (syntax) : logic =
 	(* Note that we interpret LOVE whose first argument is the object and the second one as a suject using the predicate "love" for which love x y is true whenever x loves y *)
 	LOVE := lambda x y. love y x ;
 	
-	EVERY := lambda P Q.All x. (P x) > (Q x);
+	EVERY := lambda P Q.All x. (P x) > (Q x); 
 	SOME :=  lambda P Q.Ex x. (P x) & (Q x) ;
 end

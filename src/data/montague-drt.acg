@@ -22,7 +22,7 @@ signature abstract =
 	J,M,he,her,it:np;
 	man,woman,farmer,donkey:n;
 	loves,beats,owns : np => np => s;
-	a,every:n=>np; 
+	a,every,most:n=>np; 
 	who: (np => s) => n => n;
 	
 end
@@ -42,6 +42,7 @@ signature object =
 	n = Lambda n .Lambda x.Lambda e phi.(n x) & (phi e) : (e => t) => e => o;
 	binder Ex : (e => t) => t ;
 	binder All : (e => t) => t ;
+	binder Most : (e => o) => o ;
 	prefix - : t => t ;
 	binder Ex_dyn = Lambda P . Lambda e phi.Ex x. P x (x+e) phi : (e => o) => o ;
 	prefix ~ = Lambda A . Lambda e phi. (-(A e (Lambda e.Top)))&(phi e) : o => o;
@@ -67,5 +68,6 @@ lexicon montague (abstract) : object =
 	he,her,it := Lambda P.Lambda e phi. P (sel e) e phi;
 	a := Lambda P Q . Ex_dyn x. (P x) @ (Q x);
 	every := Lambda P Q . All_dyn x. (P x) > (Q x);
+	most := Lambda P Q . Most x. (P x) > (Q x);
 	who := Lambda R Q x. (Q x) @ (R (Lambda P.P x));
 end
