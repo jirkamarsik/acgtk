@@ -29,7 +29,7 @@ module Actual_env = Environment.Make(Lex)
 
 let env = ref Actual_env.empty
 
-module Actual_parser = Parser.Make(Actual_env)
+module Actual_parser = Data_parser.Make(Actual_env)
 
 
 

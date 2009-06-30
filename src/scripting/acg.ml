@@ -34,7 +34,7 @@ let options =
 let usg_msg = Printf.sprintf "%s [options] file1 file2 ...\n\nThis will parse the files which are supposed to be files acripting commands and then run the ACG command interpreter." Sys.executable_name
 
 
-module Lex = Lexicon.Sylvain_lexicon
+module Lex = Acg_lexicon.Sylvain_lexicon
   
 module E = Environment.Make(Lex)
 

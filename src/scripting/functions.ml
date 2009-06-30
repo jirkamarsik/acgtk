@@ -100,7 +100,7 @@ struct
 
   type file_type = | Data | Script of (string -> string list -> env -> env)
 
-  module Data_parser = Parser.Make(E)
+  module Data_parser = Data_parser.Make(E)
     
   let load t filename dirs e =
     match t with
