@@ -26,22 +26,24 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma str.cma
+LIBS += dyp.cma str.cma zen.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
 # ex. -I  +campl4
-LIBDIR = @DYPGEN_INCLUDE@ -I +camlp4
+LIBDIR += @DYPGEN_INCLUDE@
 
 # Directories to which the current source files depend on
 PREVIOUS_DIRS = ../utils ../logic
 
 # Source files in the right order of dependance
-#ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
-ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml acg_token.ml lexer.ml parser.ml  interactive.ml
+#ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml data_parser.ml data_lexer.ml data_parsing.ml
+ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml acg_token.ml data_lexer.ml data_parser.ml  interactive.ml 
 
-DYP = parser.dyp
-CAMLLEX = lexer.mll
+EXE_SOURCES =   essai_sylvain.ml
+
+DYP = data_parser.dyp
+CAMLLEX = data_lexer.mll
 
 
 ####################################
@@ -57,23 +59,43 @@ include ../Makefile.common
 # DYPGEN_EXE = @DYPGEN@ --no-pp --no-obj-type --ocamlc "$(LIBDIR) $(I_PREVIOUS_DIRS)"
 
 
-# parser.ml : parser.dyp
+# data_parser.ml : data_parser.dyp
 # 	 $(DYPGEN_EXE) --noemit-token-type $<
 
-# #parser.ml : parser.dyp
+# #data_parser.ml : data_parser.dyp
 # #	$(DYPGEN_EXE)  --noemit-token-type $<
 
-# lexer.ml : lexer.mll
+# data_lexer.ml : data_lexer.mll
 # 	@OCAMLLEX@ $<
 
-parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
-    lexer.cmi error.cmi environment.cmi entry.cmi \
+data_parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+    data_lexer.cmi error.cmi environment.cmi entry.cmi \
     ../logic/abstract_syntax.cmi
 
-parser.cmo: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
-     lexer.cmo error.cmi environment.cmi entry.cmi \
-     ../logic/abstract_syntax.cmi parser.cmi
-parser.cmx: ../utils/utils.cmx acg_token.cmx syntactic_data_structures.cmx \
-     lexer.cmx error.cmx environment.cmx entry.cmx \
-     ../logic/abstract_syntax.cmx parser.cmi
-parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+data_parser.cmo: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+     data_lexer.cmo error.cmi environment.cmi entry.cmi \
+     ../logic/abstract_syntax.cmi data_parser.cmi
+data_parser.cmx: ../utils/utils.cmx acg_token.cmx syntactic_data_structures.cmx \
+     data_lexer.cmx error.cmx environment.cmx entry.cmx \
+     ../logic/abstract_syntax.cmx data_parser.cmi
+data_parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+
+
+example_dispatch.ml : example.aut
+	@OCAMLP4@ -I /usr/local/lib/ocaml/zen pr_r.cmo regular.cmo make_dispatch.cmo < $< > $@
+
+essai_sylvain.cmo : example_dispatch.cmo
+
+essai_sylvain.cmx : example_dispatch.cmx
+
+essai_sylvain : $(filter-out essai_sylvain.cmo,$(CMO)) example_dispatch.cmo essai_sylvain.cmo
+	@OCAMLC@ -o $@ $(LIBDIR) $(LIBS) $(BYTEFLAGS) $^
+
+essai_sylvain.opt : $(filter-out essai_sylvain.cmx,$(CMX)) example_dispatch.cmx essai_sylvain.cmx
+	@OCAMLCOPT@ -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
+
+truc :  $(filter-out essai_sylvain.cmo,$(CMO)) example_dispatch.cmo essai_sylvain.cmo
+	echo $^
+
+example_dispatch.cmo : PP=-pp "@OCAMLP4@ pa_r.cmo pa_rp.cmo pr_dump.cmo pa_extend.cmo"
+example_dispatch.cmx : PP=-pp "@OCAMLP4@ pa_r.cmo pa_rp.cmo pr_dump.cmo pa_extend.cmo"

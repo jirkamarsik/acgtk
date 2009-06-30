@@ -509,9 +509,9 @@ sig_entries :
       let lexbuf = Lexing.from_channel in_ch in
       let actual_env = if env=E.empty then None else Some (Env env) in
       let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
-      let () = Lexer.set_to_data () in
+      let () = Data_lexer.set_to_data () in
       let e = 
-	try (fst (List.hd (data ~global_data:override ~local_data:actual_env Lexer.lexer lexbuf))) with
+	try (fst (List.hd (data ~global_data:override ~local_data:actual_env Data_lexer.lexer lexbuf))) with
 	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf filename) in
       let () = Printf.printf "Done.\n%!" in
       let () = match output with
@@ -538,9 +538,9 @@ sig_entries :
   let parse_term ?(offset="") ?(output=false) t sg = 
     let lexbuf = Lexing.from_string t in
       try 
-	let () = Lexer.set_to_term () in
+	let () = Data_lexer.set_to_term () in
 	let abs_term,abs_type = 
-	  try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf)) with
+	  try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Data_lexer.lexer lexbuf)) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
 	let () = match output with
 	  | true -> Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
@@ -566,8 +566,8 @@ sig_entries :
   let parse_sig_entry ?(offset="") t sg = 
     let lexbuf = Lexing.from_string t in
       try 
-	let () = Lexer.set_to_sig_entry () in
-	  try Some ((fst (List.hd(sig_entry ~global_data:false ~local_data:(Some (Signature sg)) Lexer.lexer lexbuf))) sg) with
+	let () = Data_lexer.set_to_sig_entry () in
+	  try Some ((fst (List.hd(sig_entry ~global_data:false ~local_data:(Some (Signature sg)) Data_lexer.lexer lexbuf))) sg) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Error.Error er -> 
@@ -588,8 +588,8 @@ sig_entries :
   let parse_lex_entry ?(offset="") t lex = 
     let lexbuf = Lexing.from_string t in
       try 
-	let () = Lexer.set_to_lex_entry () in
-	  try Some ((fst (List.hd(lex_entry ~global_data:false ~local_data:(Some (Abs_and_obj (E.Lexicon.get_sig lex))) Lexer.lexer lexbuf))) lex) with
+	let () = Data_lexer.set_to_lex_entry () in
+	  try Some ((fst (List.hd(lex_entry ~global_data:false ~local_data:(Some (Abs_and_obj (E.Lexicon.get_sig lex))) Data_lexer.lexer lexbuf))) lex) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Error.Error er -> 

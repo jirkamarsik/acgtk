@@ -40,7 +40,7 @@ struct
 
   let env = ref Actual_env.empty
 
-  module Actual_parser = Parser.Make(Actual_env)
+  module Actual_parser = Data_parser.Make(Actual_env)
 
     
   let parse_term sg =
