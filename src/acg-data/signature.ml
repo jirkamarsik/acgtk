@@ -62,6 +62,8 @@ struct
   exception Duplicate_type_definition
   exception Duplicate_term_definition
 
+  exception Not_yet_implemented
+
   type entry = sig_entry
 
   type t = {name:string*Abstract_syntax.location;
@@ -82,6 +84,21 @@ struct
       | Term_definition(s,_,behavior,_,_) -> behavior,s
 
 
+  let type_to_string ty sg = Lambda.type_to_string ty (id_to_string sg)
+    
+  let term_to_string t sg = 
+    Lambda.term_to_string
+      t
+      (id_to_string sg)
+      (* (fun i -> match Id.find i ids with |
+	 Term_declaration(s,_,_) ->
+	 Abstract_syntax.Default,s |
+	 Term_definition(s,_,_,_) ->
+	 Abstract_syntax.Default,s | _ ->
+	 failwith "Call a term on a
+	 type")*)
+
+
   let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty}
 
   let name {name=n} = n
@@ -90,13 +107,13 @@ struct
     try
       match Symbols.find s syms with
 	| Type_declaration (x,id,_) when x=s -> Lambda.Atom id
-	| Type_declaration _ -> failwith "Bug"
+	| Type_declaration _ -> failwith "Bug in find_atomic_type"
 	| Type_definition (x,id,_,_) when x=s -> Lambda.DAtom id
-	| Type_definition _ -> failwith "Bug"
-	| Term_declaration _ -> failwith "Bug"
-	| Term_definition _ -> failwith "Bug"
+	| Type_definition _ -> failwith "Bug in find_atomic_type"
+	| Term_declaration _ -> failwith "Bug in find_atomic_type"
+	| Term_definition _ -> failwith "Bug in find_atomic_type"
     with
-      | Not_found -> failwith "Bug"
+      | Not_found -> failwith "Bug in find_atomic_type"
 
 
   let rec convert_type ty ({types=syms} as sg) = 
@@ -136,7 +153,7 @@ struct
       | Lambda.DAtom i ->
 	  (match Id.find i ids with
 	     | Type_definition (_,_,_,ty1) -> expand_type ty1 sg
-	     | _ -> failwith "Bug")
+	     | _ -> failwith "Bug in expand type")
       | Lambda.LFun (ty1,ty2) -> Lambda.LFun(expand_type ty1 sg,expand_type ty2 sg)
       | Lambda.Fun (ty1,ty2) -> Lambda.Fun(expand_type ty1 sg,expand_type ty2 sg)
       | _ -> failwith "Not yet implemented"
@@ -144,7 +161,7 @@ struct
   let unfold_type_definition i ({ids=ids} as sg) = 
     match Id.find i ids with
       | Type_definition (_,_,_,ty1) -> expand_type ty1 sg
-      | _ -> failwith "Bug"
+      | _ -> failwith "Bug in unfold_type_definition"
 
 
   let rec expand_term t ({ids=ids} as sg) = 
@@ -153,7 +170,7 @@ struct
       | Lambda.DConst i ->
 	  (match Id.find i ids with
 	     | Term_definition (_,_,_,_,u) -> expand_term u sg
-	     | _ -> failwith "Bug")
+	     | _ -> failwith "Bug in expand term")
       | Lambda.Abs (x,u) -> Lambda.Abs (x,expand_term u sg)
       | Lambda.LAbs (x,u) -> Lambda.LAbs (x,expand_term u sg)
       | Lambda.App (u,v) -> Lambda.App (expand_term u sg,expand_term v sg)
@@ -162,9 +179,18 @@ struct
   let unfold_term_definition i ({ids=ids} as sg) = 
     match Id.find i ids with
       | Term_definition (_,_,_,_,t) -> expand_term t sg
-      | _ -> failwith "Bug"
+      | _ -> failwith "Bug in unfold_term_definition"
 	  
 	  
+
+  let get_type_of_const_id i ({ids=ids} as sg) =
+    try
+      match Id.find i ids with
+	| Term_declaration (_,_,_,ty) -> expand_type ty sg
+	| Term_definition (_,_,_,ty,_) -> expand_type ty sg
+	| _ -> failwith "Should be applied only on constants"
+    with
+      | Id.Not_found -> failwith "Bug in get_type_of_const_id"
 
   let rec decompose_functional_type ty ({ids=ids} as sg) =
     match ty with
@@ -173,7 +199,7 @@ struct
       | Lambda.DAtom i ->
 	  (match Id.find i ids with
 	     | Type_definition (_,_,_,ty1) -> decompose_functional_type ty1 sg
-	     | _ -> failwith "Bug")
+	     | _ -> failwith "Bug in decompose_functional_type")
       | _ -> raise Not_functional_type
 
 
@@ -196,13 +222,13 @@ struct
   (* [get_typing x loc typing_env] returns [l,t,e] where [l] is the
      level of [x] and [t] its type in the typing environment
      [typing_env] when [x] is a variable located at [loc]. [e] is the
-     new environment where [x] as been marcked as used at location
-     [l]. If [x] has been used alread once (this is marked by the [Some
-     l], 3rd projection in the association list), the function raises
-     [Not_linear l] where [l] is the location of the former usage of
-     [x]. If [x] is not in the typing environment [typing_env], it
-     raises Not_found *)
-	  
+     new environment where [x] as been marked as used at location
+     [l]. If [x] has been used alread once (this is marked by the
+     [Some l], 3rd projection in the association list), the function
+     raises [Not_linear l] where [l] is the location of the former
+     usage of [x]. If [x] is not in the typing environment
+     [typing_env], it raises Not_found *)
+	    
   let get_typing x loc lst =
     let rec get_typing_aux lst k =
       match lst with
@@ -232,7 +258,7 @@ struct
     let () = Printf.printf "Linear environment:\n%s\n" (Utils.string_of_list "\n" (fun (x,(l,ty,u)) -> Printf.sprintf "%s (%d): %s (%s)" x l (Lambda.type_to_string ty f) (match u with | None -> "Not used" | Some _ -> "Used")) l_env) in
     let () = Printf.printf "Non linear environment:\n%s\n" (Utils.string_of_list "\n" (fun (x,(l,ty)) -> Printf.sprintf "%s (%d): %s" x l (Lambda.type_to_string ty f) ) env) in
       Printf.printf "Next usage:\n%s\n" (Utils.string_of_list "\n" (fun (x,ab) -> Printf.sprintf "%s : %s" x (match ab with | Abstract_syntax.Linear -> "Linear" | _ -> "Non Linear")) lin)
-      
+	
   type typing_env_content = 
     | Delay of (int -> int -> Abstract_syntax.location -> Lambda.term)
     | Eval of (int -> int -> Abstract_syntax.location -> (Lambda.term * typing_env_content))
@@ -419,8 +445,15 @@ struct
 	| Not_linear ((s1,e1),(s2,e2)) -> raise (Error.Error (Error.Type_error (Error.Two_occurrences_of_linear_variable (s2,e2),(s1,s1))))
 	| Vacuous_abstraction (x,l1,l2) -> raise (Error.Error (Error.Type_error (Error.Vacuous_abstraction (x,l2),l1)))
 	    
+  (* We assume here that [term] is well typed and in beta-normal form
+     and that types and terms definitions have been unfolded*)
 	    
-	    
+  let eta_long_form term stype sg =      
+    Lambda.eta_long_form (Lambda.normalize (expand_term term sg)) (expand_type stype sg) (fun id -> get_type_of_const_id id sg)
+			   
+			   
+			   
+			   
   let add_entry e ({size=s} as sg) =
     match e with
       | Abstract_syntax.Type_decl (t,_,Abstract_syntax.K k) -> 
@@ -434,7 +467,7 @@ struct
 	  let t_type = convert_type ty sg in
 	  let t_term = typecheck term t_type sg in
 	    add_sig_term t (Term_definition (t,s,behavior,t_type,t_term)) sg
-	      
+				     
   let is_type s {types=syms} =
     try
       match Symbols.find s syms with
@@ -443,7 +476,7 @@ struct
 	| _ -> false
     with
       | Symbols.Not_found -> false
-	  
+				 
   let is_constant s {terms=syms} =
     try
       match Symbols.find s syms with
@@ -452,47 +485,36 @@ struct
 	| _ -> false,None
     with
       | Symbols.Not_found -> false,None
-
+				 
   let add_warnings _ sg = sg
-
+			   
   let get_warnings _  = []
-
-  let type_to_string ty sg = Lambda.type_to_string ty (id_to_string sg)
-
-  let term_to_string t sg = 
-    Lambda.term_to_string
-      t
-      (id_to_string sg)
-      (*      (fun i -> 
-	      match Id.find i ids with
-	      | Term_declaration(s,_,_) -> Abstract_syntax.Default,s
-	      | Term_definition(s,_,_,_) -> Abstract_syntax.Default,s
-	      | _ -> failwith "Call a term on a type")*)
-
+    
+      
   let raw_to_string t = Lambda.raw_to_string t
-
+    
   let behavior_to_string = function
     | Abstract_syntax.Default -> ""
     | Abstract_syntax.Prefix -> "prefix "
     | Abstract_syntax.Infix -> "infix "
     | Abstract_syntax.Binder -> "binder "
-      
+	
   let entry_to_string f = function
     | Type_declaration(s,_,k) -> Printf.sprintf "\t%s : %s;" s (Lambda.kind_to_string k f)
     | Type_definition(s,_,k,ty) -> Printf.sprintf "\t%s = %s : %s;" s (Lambda.type_to_string ty f) (Lambda.kind_to_string k f)
     | Term_declaration(s,_,behavior,ty) -> Printf.sprintf "\t%s%s : %s;" (behavior_to_string behavior) s (Lambda.type_to_string ty f)
     | Term_definition(s,_,behavior,ty,t) -> Printf.sprintf "\t%s%s = %s : %s;" (behavior_to_string behavior) s (Lambda.term_to_string t f) (Lambda.type_to_string ty f)
-
+	
   let to_string ({name=n;ids=ids} as sg) =
     Printf.sprintf "signature %s = \n%send\n"
       (fst n)
       (fst (Id.fold 
-	 (fun _ e (acc,b) ->
-	    match b with
-	      | true -> Printf.sprintf "%s%s\n" acc (entry_to_string (id_to_string sg) e),true
-	      | false -> Printf.sprintf "%s\n" (entry_to_string (id_to_string sg) e),true)
-	 ("",false)
-	 ids))
+	      (fun _ e (acc,b) ->
+		 match b with
+		   | true -> Printf.sprintf "%s%s\n" acc (entry_to_string (id_to_string sg) e),true
+		   | false -> Printf.sprintf "%s\n" (entry_to_string (id_to_string sg) e),true)
+	      ("",false)
+	      ids))
 
   let convert_term t ty sg =
     let t_type = convert_type ty sg in
@@ -501,11 +523,11 @@ struct
   let type_of_constant x ({terms=syms} as sg) =
     try
       match Symbols.find x syms with
-      | Term_declaration (s,_,_,ty) when x = s -> ty
-      | Term_definition (s,_,_,ty,_) when x = s -> ty
-      | _ -> failwith "Bug"
+	| Term_declaration (s,_,_,ty) when x = s -> ty
+	| Term_definition (s,_,_,ty,_) when x = s -> ty
+	| _ -> failwith "Bug in type_of_constant"
     with
-      | Symbols.Not_found -> failwith "Bug"
+      | Symbols.Not_found -> failwith "Bug in type_of_constant"
 
   let fold f a {ids=ids} =
     Id.fold
@@ -522,32 +544,32 @@ struct
 end	  
   
 module Table = Table.Make_table(struct let b = 10 end)
-(*module Table =
-struct
-  module IntMap = Map.Make(struct type t=int let compare i j = i-j end)
-  type 'a t = 'a IntMap.t
-  type key = int
+  (*module Table =
+    struct
+    module IntMap = Map.Make(struct type t=int let compare i j = i-j end)
+    type 'a t = 'a IntMap.t
+    type key = int
 
-  exception Conflict
-  let empty = IntMap.empty
-  let add ?(override=false) k v t = 
+    exception Conflict
+    let empty = IntMap.empty
+    let add ?(override=false) k v t = 
     try 
-      let _ = IntMap.find k t in
-	if override then IntMap.add k v t else raise Conflict
+    let _ = IntMap.find k t in
+    if override then IntMap.add k v t else raise Conflict
     with
-      | Not_found -> IntMap.add k v t
+    | Not_found -> IntMap.add k v t
 
 
-  exception Not_found
+    exception Not_found
 
-  let find k t = 
+    let find k t = 
     try
-      IntMap.find k t
+    IntMap.find k t
     with
-      | Not_found -> raise Not_found
-  let fold f acc t = IntMap.fold f t acc
-end
-*)
+    | Not_found -> raise Not_found
+    let fold f acc t = IntMap.fold f t acc
+    end
+  *)
 
 module Sylvains_signature = Make(Tries.Tries)(Table)
 

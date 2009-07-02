@@ -82,13 +82,13 @@ module Lambda =
      let rec unfold_labs acc level env = function
        | LAbs (x,t) ->
 	   let x' = generate_var_name x env in
-	     unfold_labs ((level,x')::acc) (level+1) env t
+	     unfold_labs ((level,x')::acc) (level+1) ((level,x')::env) t
        | t -> acc,level,t
 
      let rec unfold_abs acc level env = function
        | Abs (x,t) -> 
 	   let x' = generate_var_name x env in
-	     unfold_abs ((level,x')::acc) (level+1) env t
+	     unfold_abs ((level,x')::acc) (level+1) ((level,x')::env) t
        | t -> acc,level,t
 
      let rec unfold_app acc = function
@@ -163,7 +163,7 @@ module Lambda =
 	   | DConst i -> let _,x = id_to_sym i in x,true
 	   | Abs (x,t) ->
 	       let x' = generate_var_name x env in
-	       let vars,l,u=unfold_abs [level,x'] (level+1) env t in
+	       let vars,l,u=unfold_abs [level,x'] (level+1) ((level,x')::env) t in
 		 Printf.sprintf
 		   "Lambda %s. %s"
 		   (Utils.string_of_list " " (fun (_,x) -> x) (List.rev vars))
@@ -171,7 +171,7 @@ module Lambda =
 	       false
 	   | LAbs (x,t) ->
 	       let x' = generate_var_name x l_env in
-	       let vars,l,u=unfold_labs [l_level,x'] (l_level+1) l_env t in
+	       let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env) t in
 		 Printf.sprintf
 		   "lambda %s. %s"
 		   (Utils.string_of_list " " (fun (_,x) -> x) (List.rev vars))
@@ -491,6 +491,84 @@ module Lambda =
            -> false
        in
        convert (type_normalize ty1) (type_normalize ty2)
+
+     let eta_expand t ty = 
+       let wrap t abstraction l_level nl_level =
+	 let f,l_length,nl_length,abs'=
+	   List.fold_left
+	     (fun (f,l_depth,nl_depth,acc) abs ->
+		match abs with
+		  | LVar _ -> (fun x -> App(f x,LVar (l_level-l_depth))),l_depth+1,nl_depth,abs::acc
+		  | Var _ -> (fun x -> App(f x,Var (nl_level-nl_depth))),l_depth,nl_depth+1,abs::acc
+		  | _ -> failwith "eta_expand should not be called here")
+	     ((fun x -> x),1,1,[])
+	     abstraction in
+	   List.fold_left
+	     (fun t abs ->
+		match abs with
+		  | Var _ -> Abs("x",t)
+		  | LVar _ -> LAbs("x",t)
+		  | _ -> failwith "eta_expand should not be called here")
+	     (f (lift (l_length-1) (nl_length-1) t))
+	     abs' in
+       let rec eta_expand_rec ty l_level nl_level acc =
+	 match ty with
+	   | Atom _ -> wrap t acc l_level nl_level 
+	   | DAtom _ -> failwith "type definitions should have been unfolded"
+	   | LFun (a,b) -> eta_expand_rec b (l_level+1) nl_level ((LVar 0)::acc)
+	   | Fun (a,b) -> eta_expand_rec b l_level (nl_level+1) ((Var 0)::acc)
+	   | _ -> failwith "Not yet implemented" in
+       let t' = eta_expand_rec ty 0 0 [] in
+	 t'
+	   
+       
+    (* We assume here that [term] is well typed and in beta-normal form
+       and that types and terms definitions have been unfolded*)
+     let eta_long_form term stype f_get_type_of_constant =  
+       let rec eta_long_form_rec term stype  linear_typing_env non_linear_typing_env =
+	 match term,stype with
+	   | LVar i , Some ty when ty = List.nth linear_typing_env i -> eta_expand term ty,ty
+	   | LVar i , Some _ -> failwith "Term should be well typed"
+	   | LVar i , None ->
+	       let ty = List.nth linear_typing_env i in
+		 eta_expand term ty,ty
+	   | Var i , Some ty when ty = List.nth non_linear_typing_env i -> eta_expand term ty,ty
+	   | Var i , Some _ -> failwith "Term should be well typed"
+	   | Var i , None ->
+	       let ty = List.nth non_linear_typing_env i in
+		 eta_expand term ty,ty
+	   | Const i , Some ty  -> eta_expand term ty,ty
+	   | Const i , None -> 
+	       let ty = f_get_type_of_constant i in
+		 eta_expand term ty,ty
+	   | DConst _ ,_ -> failwith "All the definitions should have been unfolded"
+	   | Abs (x,t),Some (Fun(a,b) as ty) -> 
+	       let t',_ = eta_long_form_rec t (Some b) linear_typing_env (a::non_linear_typing_env) in
+		 Abs(x,t'),ty
+	   | Abs (x,t), None -> failwith "Should be in beta normal form"
+	   | LAbs (x,t),Some (LFun(a,b) as ty) -> 
+	       let t',_ = eta_long_form_rec t (Some b) (a::linear_typing_env) non_linear_typing_env in
+		 LAbs(x,t'),ty
+	   | LAbs (x,t), None -> failwith "Should be in beta normal form"
+	   | App (u,v) , None ->
+	       let u',u_type = eta_long_form_rec u None linear_typing_env non_linear_typing_env in
+		 (match u_type with
+		    | (Fun (a,b)|LFun(a,b)) ->
+			let v',v_type =eta_long_form_rec v (Some a) linear_typing_env non_linear_typing_env  in
+			  eta_expand (normalize (App (u',v'))) b, b
+		    | _ -> failwith "Should be well typed")
+	   | App (u,v) , Some ty ->
+	       let u',u_type = eta_long_form_rec u None linear_typing_env non_linear_typing_env in
+		 (match u_type with
+		    | (Fun (a,b)|LFun(a,b)) when ty=b ->
+			let v',v_type =eta_long_form_rec v (Some a) linear_typing_env non_linear_typing_env  in
+			  eta_expand (normalize (App (u',v'))) b, b
+		    | _ -> failwith "Should be well typed")
+	   | _ -> raise Not_yet_implemented in
+       let t',_ = eta_long_form_rec term (Some stype) [] [] in
+	 normalize t'
+
+
 
 
   end

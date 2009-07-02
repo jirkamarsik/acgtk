@@ -50,6 +50,7 @@ sig
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
   val get_binder_argument_functional_type : string -> t -> Abstract_syntax.abstraction option
   val is_declared : entry -> t -> string option
+  val eta_long_form : term -> stype -> t -> term
 end
 
 module type Lexicon_sig =

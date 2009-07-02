@@ -135,6 +135,10 @@ sig
       [None] otherwise *)
   val is_declared : entry -> t -> string option
 
+    (** [eta_long_form t ty sg] returns the eta-long form of [t] with
+	respect to the type [ty] and signature [sg]*)
+  val eta_long_form : term -> stype -> t -> term
+
 end
 
 (** This module signature describes the interface for modules implementing lexicons *)

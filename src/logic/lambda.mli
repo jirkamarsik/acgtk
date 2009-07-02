@@ -70,5 +70,14 @@ sig
   val term_to_string : term -> (int -> Abstract_syntax.syntactic_behavior * string) -> string
   val raw_to_string : term -> string
   val normalize : ?id_to_term:(int -> term) -> term -> term
+    
+
+  (** [eta_long_form t ty type_of_cst] returns the eta-long form of
+      [t] with respect of type [ty]. [t] is supposed to be in
+      beta-normal form and all the definitions of [t] and [ty] should
+      have been unfolded. [type_of_cst i] is a function that returns
+      the type (with unfolded definitions) of the constant whose id is
+      [i]. [i] is supposed to be an actual id of a constant.*)
+  val eta_long_form : term -> stype -> (int -> stype) -> term
 
 end

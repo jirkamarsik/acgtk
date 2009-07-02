@@ -295,6 +295,8 @@ struct
     let get_binder_argument_functional_type _ _ = Some Abstract_syntax.Linear
 
     let is_declared _ _ = None
+      
+    let eta_long_form _ _ _ = failwith "Not implemented: useless"
 
   let raw_to_string _ = failwith "TUTUTUT"
 

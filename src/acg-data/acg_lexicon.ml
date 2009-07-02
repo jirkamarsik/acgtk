@@ -39,9 +39,11 @@ struct
     | Constant of (Abstract_syntax.location * Lambda.term )
 
 
-  let interpretation_to_string i sg = match i with
+  let interpretation_to_string abstract_type_or_cst_id fun_type_from_id i sg = match i with
     | Type (_,t) -> Printf.sprintf "\t%s" (Lambda.type_to_string t (Sg.id_to_string sg))
-    | Constant (_,c) -> Printf.sprintf "\t%s" (Lambda.term_to_string c (Sg.id_to_string sg))
+    | Constant (_,c) -> 
+	let eta_long = Sg.eta_long_form c (fun_type_from_id abstract_type_or_cst_id) sg  in
+	  Printf.sprintf "\t%s [eta-long form: %s {%s}]" (Lambda.term_to_string c (Sg.id_to_string sg)) (Lambda.term_to_string eta_long (Sg.id_to_string sg) ) (Lambda.raw_to_string eta_long)
 
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
@@ -103,7 +105,7 @@ struct
     | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
     | Abstract_syntax.Constant (id,loc,t) -> {lex with dico=Dico.add id (Constant (loc,Sg.typecheck t (interpret_type (Sg.type_of_constant id lex.abstract_sig) lex) lex.object_sig)) d}
 
-  let to_string {name=n,_;dico=d;abstract_sig=abs_sg;object_sig=obj_sg} =
+  let to_string ({name=n,_;dico=d;abstract_sig=abs_sg;object_sig=obj_sg} as lex) =
     Printf.sprintf
       "lexicon %s(%s): %s =\n%send"
       n
@@ -112,8 +114,8 @@ struct
       (match 
 	 Dico.fold
 	   (fun k i -> function
-	      | None -> Some (Printf.sprintf "\t%s := %s;" k (interpretation_to_string i obj_sg))
-	      | Some a -> Some (Printf.sprintf "%s\n\t%s := %s;" a k (interpretation_to_string i obj_sg)))
+	      | None -> Some (Printf.sprintf "\t%s := %s;" k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg))
+	      | Some a -> Some (Printf.sprintf "%s\n\t%s := %s;" a k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg)))
 	   d
 	   None with
 	     | None -> ""
