@@ -40,7 +40,7 @@ PREVIOUS_DIRS = ../utils ../logic
 #ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml data_parser.ml data_lexer.ml data_parsing.ml
 ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml acg_token.ml data_lexer.ml data_parser.ml  interactive.ml 
 
-EXE_SOURCES =   essai_sylvain.ml
+EXE_SOURCES =  
 
 DYP = data_parser.dyp
 CAMLLEX = data_lexer.mll

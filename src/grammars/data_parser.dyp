@@ -176,11 +176,20 @@ EOI
 					 <Abstract_syntax.location> LIN_ARROW
 					 <(string*Abstract_syntax.location)> IDENT
 					 <(string*Abstract_syntax.location)> SYMBOL
-  
+
+/*  
 %start <E.t> data  
 %start <E.Signature1.t -> E.Signature1.t> sig_entry  
 %start <E.Lexicon.t -> E.Lexicon.t> lex_entry
 %start <(E.Signature1.term*E.Signature1.stype)> term_alone
+*/
+
+/* optional types for entry points are removed due to a bug in dypgen 20090430 */
+%start data  
+%start sig_entry  
+%start lex_entry
+%start term_alone
+
   
 %relation atom<app<sym_app<binder atom_type<arrow_type
 
