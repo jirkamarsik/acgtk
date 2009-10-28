@@ -33,8 +33,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 
 byte opt: 
-	$(MAKE) -C src $@
-	for file in $(BINARIES); do find . -name "$$file" -exec cp {} . \; ; done
+	$(MAKE) -C src $@ && for file in $(BINARIES); do find . -name "$$file" -exec cp {} . \; ; done
 
 all: byte opt
 

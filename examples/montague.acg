@@ -70,7 +70,7 @@ signature logic =
 	(* Then few non logical-constants *)
 	love:e -> e -> t;
 	j,m:e;
-	man,woman : e->t;
+	man,woman : e -> t;
 
 	(* And finally, here are the logical constants *)
 
