@@ -552,7 +552,8 @@ sig_entries :
 	  try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Data_lexer.lexer lexbuf)) with
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
 	let () = match output with
-	  | true -> Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) 
+	  | true -> let () = Printf.printf "%s : %s\n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) in
+	      Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string (E.Signature1.unfold abs_term sg) sg) (E.Signature1.type_to_string abs_type sg) 
 	  | false -> () in
 	  Some (abs_term,abs_type)
       with

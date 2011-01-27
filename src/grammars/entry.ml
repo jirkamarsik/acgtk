@@ -271,7 +271,7 @@ let build_expectation lst =
 		   (match k_o_t with
 		      | (Unset|Term),(Id|Sym|Type_or_term (LPAR|DOT)) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Term,a))))))
 		      | (Unset|Term) as k,(Type_or_term RPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (k,a))))))
-		      | (Unset|Type),(Type_or_term ARROW) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Type,a))))))
+		      | (Unset|Type),(Type_or_term ARROW|Type_or_term LPAR) -> Sig (Sig_dec_id (Sig_dec_equal (Entry_id (Equal_def (Type_or_term_in_def (Type,a))))))
 		      | Unset, _ -> raise (Expect [Id;Sym;Type_or_term LPAR])
 		      | Type, _ -> raise (Expect [Type_or_term ARROW;Semi_colon])
 		      | Term, _ -> raise (Expect [Id;Sym;Type_or_term DOT])

@@ -139,6 +139,8 @@ sig
 	respect to the type [ty] and signature [sg]*)
   val eta_long_form : term -> stype -> t -> term
 
+  val unfold : term -> t -> term
+
 end
 
 (** This module signature describes the interface for modules implementing lexicons *)

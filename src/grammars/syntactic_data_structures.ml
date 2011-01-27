@@ -298,6 +298,8 @@ struct
       
     let eta_long_form _ _ _ = failwith "Not implemented: useless"
 
+    let unfold _ = failwith "Not implemented: useless"
+
   let raw_to_string _ = failwith "TUTUTUT"
 
 
@@ -358,6 +360,7 @@ struct
   let check _ = Printf.printf "No checking of interpretations\n%!" 
 
   let compose _ _ _ = failwith "No composition\n"
+
 end
 
 
