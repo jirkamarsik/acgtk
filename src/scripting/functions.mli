@@ -25,6 +25,7 @@ sig
   type env
 
   exception Not_yet_implemented of string
+  exception Stop
 
   type action =
     | Load

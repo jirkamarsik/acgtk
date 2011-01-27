@@ -40,9 +40,8 @@
     let global_data = false,true,[""]
 
     let echo ((_:bool),b,(_:string list)) s = if b then Printf.printf "%s\n%!" s else ()
-    let wait  (b,(_:bool),(_:string list)) f = if b then ignore (f ())
-
-
+    let wait  (b,(_:bool),(_:string list)) f = 
+      if b then ignore (f () )
   }
   
   
@@ -90,8 +89,12 @@
 			  let _ = Script_lexer.reset_echo () in
 			    e
 		  in
-		  let () = wait dyp.global_data read_line in
-		    (e',[Local_data (e',f)])}
+		    try
+		      let () = wait dyp.global_data read_line in
+			(e',[Local_data (e',f)])
+		    with
+		      | Sys.Break 
+		      | End_of_file -> raise F.Stop }
       zzcommands @{let e,f = (dyp.last_local_data) in e,[Local_data (e,f)]}
 
 
@@ -233,6 +236,7 @@
 	try (fst (List.hd (zzcommands ~global_data:(false,verbose,includes) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
 	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
+	| F.Stop -> env
 	| Failure "lexing: empty token" -> env
 	| Error.Error e -> 
 	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in

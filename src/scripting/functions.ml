@@ -25,6 +25,7 @@ sig
   type env
 
   exception Not_yet_implemented of string
+  exception Stop
 
   type action =
     | Load
@@ -95,6 +96,7 @@ struct
   type entry=E.entry
 
   exception Not_yet_implemented of string
+  exception Stop
 
   let interactive = ref false
 
@@ -103,9 +105,12 @@ struct
   module Data_parser = Data_parser.Make(E)
     
   let load t filename dirs e =
-    match t with
-      | Data -> Data_parser.parse_data ~override:true filename dirs e
-      | Script f  -> f filename dirs e
+    try
+      match t with
+	| Data -> Data_parser.parse_data ~override:true filename dirs e
+	| Script f  -> f filename dirs e
+    with
+      | Stop -> e
 
 
   let list e =

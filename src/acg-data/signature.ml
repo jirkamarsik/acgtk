@@ -451,8 +451,10 @@ struct
   let eta_long_form term stype sg =      
     Lambda.eta_long_form (Lambda.normalize (expand_term term sg)) (expand_type stype sg) (fun id -> get_type_of_const_id id sg)
 			   
-			   
-			   
+
+  let unfold t sg = Lambda.normalize (expand_term t sg)
+ 
+      
 			   
   let add_entry e ({size=s} as sg) =
     match e with
@@ -540,6 +542,9 @@ struct
       | Type_declaration (s,_,_) -> Some s
       | Term_declaration (s,_,_,_) -> Some s
       | _ -> None
+
+ 
+ 
 
 end	  
   
