@@ -26,7 +26,7 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma str.cma zen.cma
+LIBS += dyp.cma str.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
@@ -82,7 +82,7 @@ data_parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
 
 
 example_dispatch.ml : example.aut
-	@OCAMLP4@ -I /usr/local/lib/ocaml/zen pr_r.cmo regular.cmo make_dispatch.cmo < $< > $@
+	@OCAMLP4@ pr_r.cmo regular.cmo make_dispatch.cmo < $< > $@
 
 essai_sylvain.cmo : example_dispatch.cmo
 

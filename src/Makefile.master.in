@@ -32,8 +32,8 @@ TITLE="The ACG Development Toolkit Documentation"
 OCAMLDOC_FLAGS = -sort -keep-code -html -t $(TITLE)
 #CAMLDOC_FLAGS = -html -t $(TITLE)
 
-LIBS = @CAMLP4_LIB@ zen.cma
-LIBDIR = -I +camlp4 -I +zen
+LIBS = @CAMLP4_LIB@
+LIBDIR = -I +camlp4
 
 OCAMLPP = -pp "@OCAMLP4@ pa_extend.cmo pa_macro.cmo $(DEBUGFLAGS) @OCAMLP4_LOC@"
 
