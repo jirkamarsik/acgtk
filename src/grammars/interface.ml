@@ -20,12 +20,6 @@
 open Abstract_syntax
 open Lambda
 
-type sig_entry =
-  | Type_declaration of string * int * Lambda.kind
-  | Type_definition of string * int * Lambda.kind * Lambda.stype
-  | Term_declaration of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype
-  | Term_definition of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype * Lambda.term
-
 
 module type Signature_sig =
 sig
@@ -34,25 +28,26 @@ sig
   exception Not_found
 
   type t
-  type entry = sig_entry
+  type entry
 
   type term
   type stype
   val empty : (string*Abstract_syntax.location) -> t
   val name : t -> (string*Abstract_syntax.location)
   val add_entry : Abstract_syntax.sig_entry -> t -> t
-  val find_term : string -> t -> entry
+  val find_term : string -> t -> term * stype
   val is_type : string -> t -> bool
   val is_constant : string -> t -> bool*Abstract_syntax.syntactic_behavior option
-  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
-  val unfold_type_definition : int -> t -> Lambda.stype
-  val unfold_term_definition : int -> t -> Lambda.term
+  val type_to_string : stype -> t -> string
+  val term_to_string : term -> t -> string
+(*  val type_to_string : stype -> t -> string*)
+  val unfold_type_definition : int -> t -> Lambda.stype 
+  val unfold_term_definition : int -> t -> Lambda.term 
   val add_warnings : Error.warning list -> t -> t
   val get_warnings : t -> Error.warning list
   val to_string : t -> string
-  val term_to_string : term -> t -> string
+(*  val term_to_string : term -> t -> string *)
 (*  val raw_to_string : term -> string*)
-  val type_to_string : stype -> t -> string
   val convert_term : Abstract_syntax.term  -> Abstract_syntax.type_def -> t -> term*stype
   val convert_type : Abstract_syntax.type_def -> t -> stype
   val type_of_constant : string -> t -> stype

@@ -33,12 +33,11 @@ module type SIG_ACCESS =
 sig
   exception Not_found
   type t
-  type entry
-  type stype
 
-  val unfold_type_definition :  int -> t -> stype
-  val find_term : string -> t -> entry
-  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
+  val expand_type :  Lambda.stype -> t -> Lambda.stype 
+  val find_term : string -> t -> Lambda.term *Lambda.stype
+  val type_to_string : Lambda.stype -> t -> string
+(*  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string *)
 end
 
 
@@ -47,11 +46,7 @@ struct
 
 	
 	
-  module Make(Signature:SIG_ACCESS
-	      with
-(*		type term = Lambda.term
-	      and *) type stype = Lambda.stype 
-	      and type entry = Interface.sig_entry) =
+  module Make(Signature:SIG_ACCESS) =
   struct
 
   exception Not_functional_type
@@ -65,19 +60,19 @@ struct
   exception Type_mismatch of (Abstract_syntax.location * Lambda.stype * Lambda.stype)
 
     
-  let rec expand_type ty sg = 
+(*  let rec expand_type ty sg = 
     match ty with
       | Lambda.Atom _ -> ty
       | Lambda.DAtom i -> expand_type (Signature.unfold_type_definition i sg) sg
       | Lambda.LFun (ty1,ty2) -> Lambda.LFun(expand_type ty1 sg,expand_type ty2 sg)
       | Lambda.Fun (ty1,ty2) -> Lambda.Fun(expand_type ty1 sg,expand_type ty2 sg)
-      | _ -> failwith "Not yet implemented"
+      | _ -> failwith "Not yet implemented" *)
 
-  let rec decompose_functional_type ty sg =
-    match ty with
+  let decompose_functional_type ty sg =
+    match Signature.expand_type ty sg with
       | Lambda.LFun (ty1,ty2) -> ty1,ty2,Abstract_syntax.Linear
       | Lambda.Fun (ty1,ty2) -> ty1,ty2,Abstract_syntax.Non_linear
-      | Lambda.DAtom i -> decompose_functional_type (Signature.unfold_type_definition i sg) sg
+(*      | Lambda.DAtom i -> decompose_functional_type (Signature.unfold_type_definition i sg) sg *)
       | _ -> raise Not_functional_type
 
 
@@ -180,7 +175,7 @@ struct
 
 
     let typecheck t ty sg =
-    let local_expand ty = expand_type ty sg in
+    let local_expand ty = Signature.expand_type ty sg in
     let rec typecheck_aux t ty (tenv:typing_environment) =
       match t with
 	| Abstract_syntax.Var (x,l) -> 
@@ -201,18 +196,11 @@ struct
 	       | Not_found -> raise (Non_empty_linear_context (x,l)))
 	| Abstract_syntax.Const (x,l) ->
 	    (try
-	       match Signature.find_term x sg with
-		 | Interface.Term_declaration (y,id,_,const_type) when y=x->
-		     (match ty with
-			| None -> Lambda.Const id,const_type,tenv
-			| Some l_ty when (local_expand const_type)=l_ty -> Lambda.Const id,const_type,tenv
-			| Some l_ty -> raise (Type_mismatch (l,l_ty,const_type)))
-		 | Interface.Term_definition (y,id,_,const_type,_) when y=x->
-		     (match ty with
-			| None -> Lambda.DConst id,const_type,tenv
-			| Some l_ty when (local_expand const_type)=l_ty -> Lambda.DConst id,const_type,tenv
-			| Some l_ty -> raise (Type_mismatch (l,l_ty,const_type)))
-		 | _ -> failwith "Bug. Term expected"
+	       let l_term,l_type = Signature.find_term x sg in
+	       (match ty with
+		 | None -> l_term,l_type,tenv
+		 | Some l_ty when (local_expand l_type)=l_ty -> l_term,l_type,tenv
+		 | Some l_ty -> raise (Type_mismatch (l,l_ty,l_type)))
 	     with
 	       | Signature.Not_found -> failwith "Bug")
 	| Abstract_syntax.LAbs (x,l_x,u,l_u) ->
@@ -245,7 +233,7 @@ struct
 		      with
 			| Not_functional_type 
 			| Functional_type Abstract_syntax.Non_linear  ->
-			    raise (Error.Error (Error.Type_error (Error.Is_Used (Lambda.type_to_string l_ty (Signature.id_to_string sg),"\"'a -> 'b\" (linear abstraction)" ),l_u)))))
+			    raise (Error.Error (Error.Type_error (Error.Is_Used (Signature.type_to_string l_ty sg,"\"'a -> 'b\" (linear abstraction)" ),l_u)))))
 	| Abstract_syntax.Abs (x,l_x,u,l_u) ->
 	    (match ty with
 	       | None -> raise Not_normal_term
@@ -266,7 +254,7 @@ struct
 			    | Abstract_syntax.Linear as l -> raise (Functional_type l)
 		      with
 			| Not_functional_type 
-			| Functional_type _ -> raise (Error.Error (Error.Type_error (Error.Is_Used (Lambda.type_to_string l_ty (Signature.id_to_string sg),"\"'a => 'b\" (non-linear abstraction)"),l_u)))))
+			| Functional_type _ -> raise (Error.Error (Error.Type_error (Error.Is_Used (Signature.type_to_string l_ty sg,"\"'a => 'b\" (non-linear abstraction)"),l_u)))))
 	| Abstract_syntax.App (u,v,l) ->
 	    let u_term,u_type,new_typing_env = 
 	      try
@@ -278,7 +266,7 @@ struct
 		decompose_functional_type u_type sg
 	      with 
 		| Not_functional_type -> let u_loc = get_location u in
-		    raise (Error.Error (Error.Type_error (Error.Is_Used (Lambda.type_to_string u_type (Signature.id_to_string sg),"\"'a -> 'b\" or \"'a => 'b\" in order to enable application"),(fst u_loc,snd u_loc)))) in
+		    raise (Error.Error (Error.Type_error (Error.Is_Used (Signature.type_to_string u_type sg,"\"'a -> 'b\" or \"'a => 'b\" in order to enable application"),(fst u_loc,snd u_loc)))) in
 	    let v_term,_,new_new_typing_env = 
 	      match lin with
 		| Abstract_syntax.Linear -> typecheck_aux v (Some (local_expand ty1)) new_typing_env
@@ -296,7 +284,7 @@ struct
 			      | None -> wrapper
 			      | Some a  -> a in
 			      (*		    let v_loc = get_location v in*)
-			      raise (Error.Error (Error.Type_error (Error.Non_empty_context (x,l,func_loc,Lambda.type_to_string func_st (Signature.id_to_string sg)),v_loc)))
+			      raise (Error.Error (Error.Type_error (Error.Non_empty_context (x,l,func_loc,Signature.type_to_string func_st sg),v_loc)))
 	    in
 	      match ty with
 		| None -> Lambda.App (u_term,v_term),ty2,new_new_typing_env
@@ -307,7 +295,7 @@ struct
 	  typecheck_aux t (Some (local_expand ty)) {linear_level=0;level=0;env=Utils.StringMap.empty;wrapper=None} in    
 	  t_term
       with
-	| Type_mismatch ((p1,p2),t1,t2) -> raise (Error.Error (Error.Type_error (Error.Is_Used (Lambda.type_to_string t1 (Signature.id_to_string sg),Printf.sprintf "\"%s\"" (Lambda.type_to_string t2 (Signature.id_to_string sg))),(p1,p2))))
+	| Type_mismatch ((p1,p2),t1,t2) -> raise (Error.Error (Error.Type_error (Error.Is_Used (Signature.type_to_string t1 sg,Printf.sprintf "\"%s\"" (Signature.type_to_string t2 sg)),(p1,p2))))
 	| Not_linear ((s1,e1),(s2,e2)) -> raise (Error.Error (Error.Type_error (Error.Two_occurrences_of_linear_variable (s2,e2),(s1,s1))))
 	| Vacuous_abstraction (x,l1,l2) -> raise (Error.Error (Error.Type_error (Error.Vacuous_abstraction (x,l2),l1)))
 

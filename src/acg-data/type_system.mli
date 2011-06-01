@@ -24,22 +24,16 @@ module type SIG_ACCESS =
 sig
   exception Not_found
   type t
-  type entry
-  type stype
 
-  val unfold_type_definition :  int -> t -> stype
-  val find_term : string -> t -> entry
-  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
+  val expand_type :  Lambda.stype -> t -> Lambda.stype 
+  val find_term : string -> t -> Lambda.term *Lambda.stype
+  val type_to_string : Lambda.stype -> t -> string
+(*  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string*)
 end
 
 module Type_System :
 sig
-  module Make(Signature:SIG_ACCESS
-	      with
-	      (*		type term = Lambda.term
-				and *)
-		type stype = Lambda.stype 
-	      and type entry = Interface.sig_entry) : 
+  module Make(Signature:SIG_ACCESS) : 
   sig
     val typecheck : Abstract_syntax.term -> Lambda.stype -> Signature.t -> Lambda.term
   end

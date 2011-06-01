@@ -22,12 +22,6 @@ open Lambda
 
 (** This module signature describes the interface for modules implementing signatures *)
 
-type sig_entry =
-  | Type_declaration of string * int * Lambda.kind
-  | Type_definition of string * int * Lambda.kind * Lambda.stype
-  | Term_declaration of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype
-  | Term_definition of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype * Lambda.term
-      
 module type Signature_sig =
 sig
   (** Exceptions raised when definitions of types or constants are
@@ -46,7 +40,7 @@ sig
   type t
 
   (** The type of the entries of the signature *)
-  type entry = sig_entry
+  type entry
 
   (** The (ocaml) type for the terms of the signature *)
   type term
@@ -65,8 +59,10 @@ sig
       added *)
   val add_entry : Abstract_syntax.sig_entry -> t -> t
 
-  (** [find id s] returns the term declaration or definition corresponding to the symbol [id] in the signature [s] if it exists. Raise [Not_found] otherwise*)
-  val find_term : string -> t -> entry
+  (** [find_term id s] returns the term together with its type, as
+      declared or defined in the signature [s], corresponding to the
+      symbol [id] in [s] if it exists. Raise [Not_found] otherwise*)
+  val find_term : string -> t -> term * stype
 
     
   (** [is_atomic_ype id s ] returns [true] if [id] is the name of an
@@ -78,24 +74,27 @@ sig
       and [false,None] oterwise *)
   val is_constant : string -> t -> bool * Abstract_syntax.syntactic_behavior option
 
-  (** [id_to_string id sg] returns the a syntactic behaviour together
-      with a string describing the term or the type of [sg] whose
-      identifier in (as [i] in [Lambda.Atom i] of type
-      {!Lambda.Lambda.stype}) is [id]. If [id] corresponds to a type,
-      the syntactic behaviour is meaningless and should not be relied on *)
-  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
+  (** [type_to_string ty sg] returns the string corresponding to a
+      type [ty] of type {!Lambda.Lambda.stype}) with respect to the
+      signature [sg] *)
+    val type_to_string : stype -> t -> string 
+
+  (** [term_to_string t sg] returns the string corresponding to a
+      term [t] of type {!Lambda.Lambda.term}) with respect to the
+      signature [sg] *)
+    val term_to_string : term -> t -> string 
 
   (** [unfold_type_definition id t] returns the actual type for the
       type defined by [Lambda.DAtom id]. Fails with "Bug" if [id] does
       not correspond to a type definition *)
 
-  val unfold_type_definition : int -> t -> Lambda.stype
+  val unfold_type_definition : int -> t -> Lambda.stype 
 
   (** [unfold_term_definition id t] returns the actual term for the
       term defined by [Lambda.DConst id]. Fails with "Bug" if [id]
       does not correspond to a term definition *)
 
-  val unfold_term_definition : int -> t -> Lambda.term
+  val unfold_term_definition : int -> t -> Lambda.term 
     
   (** [add_warnings w s ] resturns a signature where the warning [w] have been added *)
   val add_warnings : Error.warning list -> t -> t
@@ -109,12 +108,12 @@ sig
 
   (** [term_to_string t sg] returns a string describing the term [t]
       wrt the signature [sg]. *)
-  val term_to_string : term -> t -> string
+(*  val term_to_string : term -> t -> string *)
 (*  val raw_to_string : term -> string*)
 
   (** [type_to_string t sg] returns a string describing the term [t]
       wrt the signature [sg]. *)
-  val type_to_string : stype -> t -> string
+(*  val type_to_string : stype -> t -> string *)
     
   (** [convert_term t ty sg] returns a the term corresponding to the
       parsed term [t] with parsed type [ty] wrt to the signature [sg]
