@@ -21,6 +21,13 @@ open Abstract_syntax
 open Lambda
 
 (** This module signature describes the interface for modules implementing signatures *)
+
+type sig_entry =
+  | Type_declaration of string * int * Lambda.kind
+  | Type_definition of string * int * Lambda.kind * Lambda.stype
+  | Term_declaration of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype
+  | Term_definition of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype * Lambda.term
+      
 module type Signature_sig =
 sig
   (** Exceptions raised when definitions of types or constants are
@@ -29,11 +36,17 @@ sig
   exception Duplicate_type_definition
   exception Duplicate_term_definition
 
+  (** Exception raised when no entry associated to a given symbol
+      exists in a signature *)
+
+  exception Not_found
+
+
   (** The type of the signature as abstract object *)
   type t
 
   (** The type of the entries of the signature *)
-  type entry
+  type entry = sig_entry
 
   (** The (ocaml) type for the terms of the signature *)
   type term
@@ -51,6 +64,10 @@ sig
   (** [add_entry e s] returns a signature where the entry [e] has been
       added *)
   val add_entry : Abstract_syntax.sig_entry -> t -> t
+
+  (** [find id s] returns the term declaration or definition corresponding to the symbol [id] in the signature [s] if it exists. Raise [Not_found] otherwise*)
+  val find_term : string -> t -> entry
+
     
   (** [is_atomic_ype id s ] returns [true] if [id] is the name of an
       atomic type in [s] and [false] oterwise *)

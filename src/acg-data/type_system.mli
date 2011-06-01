@@ -17,53 +17,32 @@
 (*                                                                        *)
 (**************************************************************************)
 
-module Base_grammar =
-struct
+open Abstract_syntax
+open Lambda
 
-  module type Base_grammar =
+module type SIG_ACCESS =
+sig
+  exception Not_found
+  type t
+  type entry
+  type stype
+
+  val unfold_type_definition :  int -> t -> stype
+  val find_term : string -> t -> entry
+  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
+end
+
+module Type_System :
+sig
+  module Make(Signature:SIG_ACCESS
+	      with
+	      (*		type term = Lambda.term
+				and *)
+		type stype = Lambda.stype 
+	      and type entry = Interface.sig_entry) : 
   sig
-    include Grammar.S with type te = Token.t
-    exception Parse_Error of string
-    val luident : string Entry.e
-    val luident_loc : (string*Token.flocation) Entry.e
-    val symbol : string list Entry.e
-  end
-    
-    
-  module Make(G:Grammar.S with type te = Token.t) =
-  struct
-    
-    include G
-      
-    exception Parse_Error of string
-
-    exception Stop
-      
-    let luident = G.Entry.create "identifier"
-    let luident_loc = G.Entry.create "identifier"
-    let symbol =
-      let rec symbol_parser strm =
-	match Stream.peek strm with
-	  | Some ("",s) when (s <> ":") && (s <> ".") -> let () = Stream.junk strm in
-	      s::(try
-		    symbol_parser strm
-		  with
-		    | Stream.Failure -> [])
-	  | _ -> raise Stream.Failure in
-	G.Entry.of_parser "symbol" symbol_parser
-
-      
-      GEXTEND G
-      luident :
-      [ [ x = UIDENT -> x
-	| x = LIDENT -> x ] ];
-      luident_loc :
-	[ [ x = UIDENT -> x,loc
-	  | x = LIDENT -> x,loc ] ];
-      END
-	
+    val typecheck : Abstract_syntax.term -> Lambda.stype -> Signature.t -> Lambda.term
   end
 end
 
-
-
+      

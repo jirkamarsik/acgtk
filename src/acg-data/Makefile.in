@@ -38,7 +38,7 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars
 
 # Source files in the right order of dependance
 
-ML = signature.ml acg_lexicon.ml
+ML = type_system.ml signature.ml acg_lexicon.ml
 
 EXE_SOURCES = acgc.ml
 

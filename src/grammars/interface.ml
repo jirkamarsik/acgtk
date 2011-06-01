@@ -20,18 +20,28 @@
 open Abstract_syntax
 open Lambda
 
+type sig_entry =
+  | Type_declaration of string * int * Lambda.kind
+  | Type_definition of string * int * Lambda.kind * Lambda.stype
+  | Term_declaration of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype
+  | Term_definition of string * int * Abstract_syntax.syntactic_behavior * Lambda.stype * Lambda.term
+
+
 module type Signature_sig =
 sig
   exception Duplicate_type_definition
   exception Duplicate_term_definition
+  exception Not_found
 
   type t
-  type entry
+  type entry = sig_entry
+
   type term
   type stype
   val empty : (string*Abstract_syntax.location) -> t
   val name : t -> (string*Abstract_syntax.location)
   val add_entry : Abstract_syntax.sig_entry -> t -> t
+  val find_term : string -> t -> entry
   val is_type : string -> t -> bool
   val is_constant : string -> t -> bool*Abstract_syntax.syntactic_behavior option
   val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string

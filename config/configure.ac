@@ -116,15 +116,22 @@ else
 	fi
 	if test "$DYPGEN_FINDLIB" = no ; then
 	   DYPGEN_PLACE=`$OCAMLC -where`
-	   DYPGEN_INCLUDE="-I +dypgen"
 	else
 	   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
 	   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
 	fi
+	# Old versions of dypgen where put in a dypgen directory
 	if test -f $DYPGEN_PLACE/dypgen/dyp.cma ; then
-	      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma)
+	   DYPGEN_INCLUDE="-I +dypgen"
+	   AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma)
 	else
-	      AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
+	# New versions of dypgen where put in a dyp directory
+		if test -f $DYPGEN_PLACE/dyp/dyp.cma ; then
+		   DYPGEN_INCLUDE="-I +dyp"
+		   AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dyp/dypgen.cma)
+		else
+		   AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
+		fi
 	fi
 fi
 
