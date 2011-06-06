@@ -64,11 +64,11 @@ configure: config/configure.ac
 tar: TAR_VERSION = $(shell grep "^DEFINE" $(VERSION_FILE) | sed -e 's/DEFINE.* = "\(.*\)"/\1/')
 
 tar: superclean
-	if test -a ../$(TAR_RELEASE) ; then rm ../$(TAR_RELEASE) ; fi
+	if test -d ../$(TAR_RELEASE) ; then rm ../$(TAR_RELEASE) ; fi
 	cd .. && ln -s trunk $(TAR_RELEASE) && cd trunk
 	echo $(TAR_RELEASE).tar.gz
-	tar cvfz $(TAR_RELEASE).tar.gz -C .. -h $(TAR_RELEASE) --exclude="*\.svn*" --exclude "$(TAR_RELEASE)/data" --exclude "$(TAR_RELEASE)/src/data" --exclude "$(TAR_RELEASE)/src/*.old" --exclude "$(TAR_RELEASE)/*.tar*"
-	if test -a ../$(TAR_RELEASE) ; then rm ../$(TAR_RELEASE) ; fi
+	tar cvfz $(TAR_RELEASE).tar.gz -C ..  $(TAR_RELEASE) --exclude="*\.svn*" --exclude "$(TAR_RELEASE)/data" --exclude "$(TAR_RELEASE)/src/data" --exclude "$(TAR_RELEASE)/src/*.old" --exclude "$(TAR_RELEASE)/*.tar*"
+	if test -d ../$(TAR_RELEASE) ; then rm ../$(TAR_RELEASE) ; fi
 	./configure
 
 version :
