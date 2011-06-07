@@ -20,7 +20,7 @@
  %mltop {
 
   open Abstract_syntax
-  open Syntactic_data_structures
+(*  open Syntactic_data_structures*)
   open Dyp
 
   module Env = Utils.StringSet

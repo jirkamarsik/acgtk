@@ -19,7 +19,7 @@
 
 open Abstract_syntax
 open Lambda
-open Signature
+open Signature 
 
 module Make (Sg:Interface.Signature_sig with type  term = Lambda.term and type stype = Lambda.stype) =
 struct
@@ -40,10 +40,10 @@ struct
 
 
   let interpretation_to_string abstract_type_or_cst_id fun_type_from_id i sg = match i with
-    | Type (_,t) -> Printf.sprintf "\t%s" (Lambda.type_to_string t (Sg.id_to_string sg))
+    | Type (_,t) -> Printf.sprintf "\t%s" (Signature.type_to_string t sg)
     | Constant (_,c) -> 
 	let eta_long = Sg.eta_long_form c (fun_type_from_id abstract_type_or_cst_id) sg  in
-	  Printf.sprintf "\t%s [eta-long form: %s {%s}]" (Lambda.term_to_string c (Sg.id_to_string sg)) (Lambda.term_to_string eta_long (Sg.id_to_string sg) ) (Lambda.raw_to_string eta_long)
+	  Printf.sprintf "\t%s [eta-long form: %s {%s}]" (Sg.term_to_string c sg) (Sg.term_to_string eta_long sg ) (Lambda.raw_to_string eta_long)
 
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
@@ -65,7 +65,7 @@ struct
   let rec interpret_type abs_ty ({abstract_sig=abs_sg;dico=dico} as lex) =
     match abs_ty with
       | Lambda.Atom i -> 
-	  (let _,abs_ty_as_str = Sg.id_to_string abs_sg i in
+	  (let abs_ty_as_str = Sg.type_to_string abs_ty abs_sg in
 	     try
 	       match Dico.find abs_ty_as_str dico with
 		 | Type (_,obj_ty) -> obj_ty
@@ -81,7 +81,7 @@ struct
     match abs_t with
       | (Lambda.Var i| Lambda.LVar i) -> abs_t
       | Lambda.Const i -> 
-	  (let _,abs_term_as_str = Sg.id_to_string abs_sg i in
+	  (let abs_term_as_str = Sg.term_to_string abs_t abs_sg in
 	     try
 	       match Dico.find abs_term_as_str dico with
 		 | Constant (_,obj_t) -> obj_t

@@ -17,3 +17,26 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open Abstract_syntax
+open Lambda
+
+module type SIG_ACCESS =
+sig
+  exception Not_found
+  type t
+
+  val expand_type :  Lambda.stype -> t -> Lambda.stype 
+  val find_term : string -> t -> Lambda.term *Lambda.stype
+  val type_to_string : Lambda.stype -> t -> string
+(*  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string*)
+end
+
+module Type_System :
+sig
+  module Make(Signature:SIG_ACCESS) : 
+  sig
+    val typecheck : Abstract_syntax.term -> Lambda.stype -> Signature.t -> Lambda.term
+  end
+end
+
+      

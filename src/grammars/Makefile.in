@@ -37,8 +37,8 @@ LIBDIR += @DYPGEN_INCLUDE@
 PREVIOUS_DIRS = ../utils ../logic
 
 # Source files in the right order of dependance
-#ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml data_parser.ml data_lexer.ml data_parsing.ml
-ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml acg_token.ml data_lexer.ml data_parser.ml  interactive.ml 
+#ML = error.ml interface.ml environment.ml entry.ml syntactic_data_structures.ml acg_token.ml data_lexer.ml data_parser.ml  interactive.ml 
+ML = error.ml interface.ml environment.ml entry.ml acg_token.ml data_lexer.ml data_parser.ml  interactive.ml 
 
 EXE_SOURCES =  
 
@@ -68,17 +68,17 @@ include ../Makefile.common
 # data_lexer.ml : data_lexer.mll
 # 	@OCAMLLEX@ $<
 
-data_parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+data_parser.ml: ../utils/utils.cmi acg_token.cmi \
     data_lexer.cmi error.cmi environment.cmi entry.cmi \
     ../logic/abstract_syntax.cmi
 
-data_parser.cmo: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+data_parser.cmo: ../utils/utils.cmi acg_token.cmi \
      data_lexer.cmo error.cmi environment.cmi entry.cmi \
      ../logic/abstract_syntax.cmi data_parser.cmi
-data_parser.cmx: ../utils/utils.cmx acg_token.cmx syntactic_data_structures.cmx \
+data_parser.cmx: ../utils/utils.cmx acg_token.cmx \
      data_lexer.cmx error.cmx environment.cmx entry.cmx \
      ../logic/abstract_syntax.cmx data_parser.cmi
-data_parser.ml: ../utils/utils.cmi acg_token.cmi syntactic_data_structures.cmi \
+data_parser.ml: ../utils/utils.cmi acg_token.cmi \
 
 
 example_dispatch.ml : example.aut
