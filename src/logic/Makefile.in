@@ -38,7 +38,7 @@ PREVIOUS_DIRS = ../utils
 
 # Source files in the right order of dependance
 #ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
-ML = abstract_syntax.ml lambda.ml
+ML = abstract_syntax.ml lambda.ml type_inference.ml
 
 EXE_SOURCES = 
 
