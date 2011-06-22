@@ -99,41 +99,73 @@ if test -n "$DYPGENLIB_PATH" ; then
    DYPGEN_PLACE=$DYPGENLIB_PATH
    DYPGEN_INCLUDE="-I $DYPGEN_PLACE"
    if test -f $DYPGEN_PLACE/dyp.cma ; then
-      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen.cma)
+      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dyp.cma)
    else
-	AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
+      AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
    fi
 else
 	if test "$OCAMLFIND" != no ; then
 	   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
 	         DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dypgen`
-		 DYPGEN_FINDLIB=yes
+		 DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
+	   	 DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
 	   else
-	         DYPGEN_FINDLIB=no
+		if $OCAMLFIND query dyp > /dev/null 2>&1 ; then
+		   DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dyp`
+		   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
+	   	   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
+		else
+		   AC_MSG_RESULT(dypgen library was not installed by ocamlfind)
+	        fi
 	   fi
 	else
-	      DYPGEN_FINDLIB=no
-	fi
-	if test "$DYPGEN_FINDLIB" = no ; then
-	   DYPGEN_PLACE=`$OCAMLC -where`
-	else
-	   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
-	   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
-	fi
-	# Old versions of dypgen where put in a dypgen directory
-	if test -f $DYPGEN_PLACE/dypgen/dyp.cma ; then
-	   DYPGEN_INCLUDE="-I +dypgen"
-	   AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dypgen/dypgen.cma)
-	else
-	# New versions of dypgen where put in a dyp directory
-		if test -f $DYPGEN_PLACE/dyp/dyp.cma ; then
-		   DYPGEN_INCLUDE="-I +dyp"
-		   AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dyp/dypgen.cma)
-		else
-		   AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
-		fi
+	   OCAML_LIB=`$OCAMLC -where`
+	   # Old versions of dypgen where put in a dypgen directory
+	   if test -d $OCAML_LIB/dypgen ; then
+	      DYPGEN_PLACE=$OCAML_LIB/dypgen
+	      DYPGEN_INCLUDE="-I +dypgen"
+	   else
+	   # New versions of dypgen where put in a dyp directory
+	     if test -d $OCAML_LIB/dyp ; then
+	      	DYPGEN_PLACE=$OCAML_LIB/dyp
+	      	DYPGEN_INCLUDE="-I +dyp"
+	     else
+		AC_MSG_ERROR(Could not find a suitable place for dypgen library in $OCAML_LIB)
+	     fi
+	   fi  
 	fi
 fi
+if test -f $DYPGEN_PLACE/dyp.cma ; then
+   AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dyp.cma)
+else
+   AC_MSG_ERROR(Could not find dypgen library "dyp.cma" in $DYPGEN_PLACE)
+fi
+
+# Look for KAPUTT_LIB with ocamlfind
+AC_MSG_CHECKING([(optional) kaputt library])
+if test "$OCAMLFIND" != no ; then
+   if $OCAMLFIND query kaputt > /dev/null 2>&1 ; then
+      KAPUTT_INCLUDE_DIR=`$OCAMLFIND query kaputt`
+      KAPUTT_PLACE=$KAPUTT_INCLUDE_DIR
+      KAPUTT_INCLUDE="-I $KAPUTT_INCLUDE_DIR"
+   else
+      AC_MSG_RESULT(kaputt library was not installed by ocamlfind)
+   fi
+else
+   OCAML_LIB=`$OCAMLC -where`
+   if test -d $OCAML_LIB/kaputt ; then
+	      KAPUTT_PLACE=$OCAML_LIB/kaputt
+	      KAPUTT_INCLUDE="-I +kaputt"
+   else
+   AC_MSG_RESULT(Could not find a suitable place for kaputt library in $OCAML_LIB. No link to the kaputt library will be allowed in compilation)
+   fi
+fi  
+if test -f $KAPUTT_PLACE/kaputt.cma ; then
+   AC_MSG_RESULT(kaputt library is $KAPUTT_PLACE/kaputt.cma)
+else
+   AC_MSG_RESULT(Could not find kaputt library "kaputt.cma" in $KAPUTT_PLACE. No link to the kaputt library will be allowed in compilation)
+fi
+
 
 
 # What is the OCAML version  ?
@@ -197,6 +229,7 @@ AC_SUBST(OCAMLLEX)
 #AC_SUBST(OCAMLYACC)
 AC_SUBST(DYPGEN)
 AC_SUBST(DYPGEN_INCLUDE)
+AC_SUBST(KAPUTT_INCLUDE)
 
 AC_SUBST(TYPES)
 AC_SUBST(OCAML09WARNINGS)
