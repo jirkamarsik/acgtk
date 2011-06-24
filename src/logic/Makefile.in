@@ -26,7 +26,7 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma
+LIBS += dyp.cma str.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
@@ -38,9 +38,9 @@ PREVIOUS_DIRS = ../utils
 
 # Source files in the right order of dependance
 #ML = error.ml abstract_syntax.ml interface.ml environment.ml entry.ml parser.ml lexer.ml data_parsing.ml
-ML = abstract_syntax.ml lambda.ml type_inference.ml
+ML = abstract_syntax.ml lambda.ml type_inference.ml reduction.ml type_inference_test.ml
 
-EXE_SOURCES = 
+EXE_SOURCES = type_inference_test.ml
 
 ####################################
 #                                  #

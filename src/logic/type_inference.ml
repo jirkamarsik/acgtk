@@ -45,7 +45,7 @@ struct
       | (s,Atom t)::q -> aux sigma ((Atom t,s)::q)
       | (LFun(t1,t2),LFun(s1,s2))::q -> aux sigma ((t1,s1)::(t2,s2)::q)
       | [] -> sigma
-      | ((DAtom _ | Fun(_,_) | Dprod(_,_,_) | Record(_,_) | Variant(_,_) | TAbs(_,_) | TApp(_,_)),_)::q -> raise NotImplemented
+      (*| ((DAtom _ | Fun(_,_) | Dprod(_,_,_) | Record(_,_) | Variant(_,_) | TAbs(_,_) | TApp(_,_)),_)::q -> raise NotImplemented*)
       | _ -> raise NotUnifiable in
     S(aux [] c)
 
@@ -84,7 +84,7 @@ let m4 = App(LAbs("x",App(LVar 0,Const 3)),Const 4) *)
       if a=b then a else aux b (f b) in
     aux d (f d)
 
-  let type_inference_aux m =
+  let type_inference m =
     let (n,r,c) = rename_vars m in
     let v = (nb_vars n) + 1 in
     let fresh_type = (+) v in
@@ -93,8 +93,13 @@ let m4 = App(LAbs("x",App(LVar 0,Const 3)),Const 4) *)
       | (LVar x, tau)::q -> aux ((Atom x,tau)::e) i j q
       | (App(m,p), tau)::q -> let t = fresh_type i in
                               aux e (i+1) j ((m,LFun(Atom t,tau))::(p,Atom t)::q)
-      | (LAbs(x,m), tau)::q -> let t = fresh_type i in
-                               aux ((tau,LFun(Atom (List.assoc j r),Atom t))::e) (i+1) (j+1) ((m,Atom t)::q)
+      | (LAbs(x,m), tau)::q -> (try
+				  let t = fresh_type i in
+				  aux ((tau,LFun(Atom (List.assoc j r),Atom t))::e) (i+1) (j+1) ((m,Atom t)::q)
+	with
+	    Not_found ->
+	      let t = fresh_type i in
+	      aux((tau,LFun(Atom (t+1),Atom t))::e) (i+2) (j+1) ((m,Atom t)::q))
       | (Const x, tau)::q -> aux ((Atom (-x),tau)::e) i j q
       | (DConst _,_)::_ -> failwith "Type not unfolded"
       | (Var _,_)::_ -> raise NonLinear
