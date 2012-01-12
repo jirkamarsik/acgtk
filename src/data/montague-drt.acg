@@ -18,12 +18,14 @@
 (**************************************************************************)
 
 signature abstract =
-	np,s,n:type;	
+	np,s,n,s':type;	
 	J,M,he,her,it:np;
 	man,woman,farmer,donkey:n;
 	loves,beats,owns : np => np => s;
 	a,every,most:n=>np; 
 	who: (np => s) => n => n;
+
+	CLOSE : s => s';
 	
 end
 
@@ -35,6 +37,7 @@ signature object =
 	infix + : e => g => g;
 	Top,Bot:t;
 	john,mary : e;
+	nil : g;
 	man,woman,farmer,donkey:e=>t;
 	infix & : t => t => t;
 	love,beat,own : e => e => t;
@@ -54,6 +57,7 @@ end
 
 lexicon montague (abstract) : object =
 	s := o;
+	s' := t;
 	np := (e => o) => o;
 	n := e => o;
 	J := Lambda P.P john;
@@ -70,4 +74,6 @@ lexicon montague (abstract) : object =
 	every := Lambda P Q . All_dyn x. (P x) > (Q x);
 	most := Lambda P Q . Most x. (P x) > (Q x);
 	who := Lambda R Q x. (Q x) @ (R (Lambda P.P x));
+
+	CLOSE := Lambda S.S nil (Lambda e.Top);
 end

@@ -231,6 +231,26 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
 	C_liked := wh_extract_tv liked;
 	C_said := ph_arg_v said;
 	C_does_think := lambda s_root a subj s_foot . s_root (S2 does (S2 subj (a (VP2 think s_foot))));
-
-	I_n,I_vp,I_s := lambda x.x;
+	
+		I_n,I_vp,I_s := lambda x.x;
 end
+
+signature toto =
+    tutu: type;
+    essai : type;
+    (* voici *)
+    a : toto ->
+	tutu ;
+    b; to; (Lambda ());
+    (* toto
+       sfsdf
+       tutu *)
+    (* toto *)
+     tutu;
+    
+    
+end
+essa;
+	
+end
+

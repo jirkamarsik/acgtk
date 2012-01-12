@@ -25,5 +25,7 @@ abstract analyse beats (every farmer) (a J) : s;
 abstract analyse beats (every farmer) (a donkey) : s;
 select object;
 print;
-abstract analyse beats it (every (who (owns (a donkey)) farmer)) : s;
+montague analyse beats (every farmer) (a donkey) : s;
+montague analyse beats it : np => s;
 montague analyse beats it (every (who (owns (a donkey)) farmer)) : s;
+montague analyse CLOSE (beats it (every (who (owns (a donkey)) farmer))) : s';
