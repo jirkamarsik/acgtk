@@ -235,22 +235,3 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
 		I_n,I_vp,I_s := lambda x.x;
 end
 
-signature toto =
-    tutu: type;
-    essai : type;
-    (* voici *)
-    a : toto ->
-	tutu ;
-    b; to; (Lambda ());
-    (* toto
-       sfsdf
-       tutu *)
-    (* toto *)
-     tutu;
-    
-    
-end
-essa;
-	
-end
-
