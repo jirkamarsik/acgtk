@@ -17,10 +17,17 @@
 (*                                                                        *)
 (**************************************************************************)
 
-signature essai =
-	a:type;
-	string = a -> a : type; 
+signature temp =
+end
 
+signature essai =
+    a:type;
+    string = a -> a : type; 
+    string' = a -> a : a -> a; 
+
+    t : a => a => a    ; 
+    k =  Lambda x. t x x   : a => a; 
+    
 (* Il arrive à typer c alors que ça devrait être linéaire *)
 (*	t : a -> a -> a    ; 
 	c = lambda x. t x x   : a -> a;  *)
