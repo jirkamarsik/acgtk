@@ -65,11 +65,11 @@ sig
   val find_term : string -> t -> term * stype
 
     
-  (** [is_atomic_ype id s ] returns [true] if [id] is the name of an
+  (** [is_atomic_type id s ] returns [true] if [id] is the name of an
       atomic type in [s] and [false] oterwise *)
   val is_type : string -> t -> bool
     
-  (** [is_constant id s ] returns [(true,Some b)] together with its
+  (** [is_constant id s] returns [(true,Some b)] together with its
       syntactic behaviour [b] if [id] is the name of a constant in [s]
       and [false,None] oterwise *)
   val is_constant : string -> t -> bool * Abstract_syntax.syntactic_behavior option
