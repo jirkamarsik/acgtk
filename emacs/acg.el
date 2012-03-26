@@ -273,17 +273,21 @@ possible."
   (setq offset-from-non-blank (acg-find-position-from-first-non-blank-char))
   (setq inside-comment-tab 3)
 ;  (message "the offset is %s" offset-from-non-blank)
+;  (message "Starting acg-indent-line at line: %d" (line-number-at-pos))
   (beginning-of-line)
+;  (message "set to: %d after beginning-of-line" (line-number-at-pos))
   (setq cur-indent nil)
   (if (acg-check-current-line-belongs-to-a-comment )
       (progn
-	()
+;	(message "current line is in a comment")
 	(save-excursion
 	  (acg-move-backward-line-skipping-empty-lines)
 	  (while (and (acg-check-current-line-belongs-to-a-comment) (not (bobp)))
 	    (acg-move-backward-line-skipping-empty-lines))
 	  (setq cur-indent (+ inside-comment-tab (current-indentation)))))
-     (if (bobp)
+     (progn
+;       (message "current line is %d and is not in a comment" (line-number-at-pos))
+       (if (bobp)
 					; if beginning of buffer, set
 					; indentation to 0
 	 (setq cur-indent 0)
@@ -305,8 +309,6 @@ possible."
 		 (setq cur-indent (max 0 (- (current-indentation) inside-comment-tab)))
 	       (progn
 		 (cond
-		  ((bobp)
-		   (setq cur-indent 0))
 		  ((looking-at "^[ \t]*\\(lexicon\\|signature\\)")
 		   (setq cur-indent  acg-default-indent)
 		   )
@@ -323,6 +325,7 @@ possible."
 		   (setq cur-indent (+ acg-default-indent acg-default-indent))
 		   )
 		  ))))))))
+     )
   (if cur-indent
       (indent-line-to cur-indent)
     (indent-line-to 0))
