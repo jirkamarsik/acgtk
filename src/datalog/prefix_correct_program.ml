@@ -1,4 +1,4 @@
-open Signature
+open Datalog_signature
 open Int_map
 open Program
 open Int_set
@@ -8,7 +8,7 @@ struct
   
   type prog_context = 
       Prog_context of 
-        Signature.signature *
+        Datalog_signature.signature *
           ((int list) Int_map.t) *
           (Program.clause list)
     
@@ -21,14 +21,14 @@ struct
 
   type snd_pass_prog_context = 
       Prog_context_snd_pass of 
-        Signature.signature *
+        Datalog_signature.signature *
           ((int list) Int_map.t) *
           (Program.clause list) *
           int
 
   type clause_context_snd_pass = 
       Cl_snd_pass of
-        Signature.signature* (*the signature we currently work in*)
+        Datalog_signature.signature* (*the signature we currently work in*)
           ((int list) Int_map.t)* (*added_predicates*)
           (Program.clause list) * (*clauses collected so far*)
           int * (*nb of treated clauses*)
@@ -46,14 +46,14 @@ struct
       if n=rank
       then (sign,l)
       else 
-        let id = Signature.fresh sign in
+        let id = Datalog_signature.fresh sign in
         let sign = 
-          Signature.add_pred n (name^"_"^(string_of_int (n/2))) sign 
+          Datalog_signature.add_pred n (name^"_"^(string_of_int (n/2))) sign 
         in
           add_pred rank name (n+2) sign (id::l)
     in
       (match sign with 
-          Signature.S (decl,_,_)->
+          Datalog_signature.S (decl,_,_)->
             let (_,new_sign,added_predicates)=
               List.fold_left
                 (function (n,sign,added_predicates) ->
@@ -308,7 +308,7 @@ struct
         remaining_lhs
     in
     let (id,signature) = 
-      Signature.add_pred_get_id 
+      Datalog_signature.add_pred_get_id 
         (List.length vars) 
         ("aux_"^(string_of_int n)^"_"^(string_of_int (List.length remaining_preds))) 
         signature 

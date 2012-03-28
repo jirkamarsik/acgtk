@@ -1,5 +1,5 @@
 open Pmcfg
-open Signature
+open Datalog_signature
 open String_map
 open Int_map
 open Program
@@ -17,13 +17,13 @@ struct
   module Pair_map = Map.Make(Ordered_int_pair)
 
   let gen_eq_name pred k sign =
-    "eq_"^(Signature.get_name pred sign)^"_"^(string_of_int k)
+    "eq_"^(Datalog_signature.get_name pred sign)^"_"^(string_of_int k)
 
   let get_program (Grammar(sign, rules, init) as grammar) =
     let new_sign = 
       (match sign with
-	  Signature.S(l,_,_) ->
-	    Signature.S(
+	  Datalog_signature.S(l,_,_) ->
+	    Datalog_signature.S(
 	      List.map 
 		(function (rank,name) ->(2*rank,name))
 		l
@@ -34,7 +34,7 @@ struct
 	    )
       )
     in
-    let (eq,new_sign) = Signature.add_eq_get_id new_sign in
+    let (eq,new_sign) = Datalog_signature.add_eq_get_id new_sign in
     let string_predicates = String_map.empty in
     let rec get_ranges_and_ext_pred_of_arg j l ranges ext_pred string_predicates sign=
       (match l with
@@ -61,8 +61,8 @@ struct
 	      with Not_found ->
 		let (id,sign) = 
                   if a=""
-                  then (Signature.add_eq_get_id sign)
-                  else (Signature.add_pred_get_id 2 a sign)
+                  then (Datalog_signature.add_eq_get_id sign)
+                  else (Datalog_signature.add_pred_get_id 2 a sign)
                 in
 		let string_predicates = String_map.add a id string_predicates in
 		let a_pred = Program.Pred (id,[j;j+1]) in
@@ -109,7 +109,7 @@ struct
                       (Pair_map.find (pred,kth) eq_predicates, sign, eq_predicates)
                     with Not_found ->
                       let name = (gen_eq_name pred kth sign) in
-                      let (id,sign) = Signature.add_pred_get_id 4 name sign in
+                      let (id,sign) = Datalog_signature.add_pred_get_id 4 name sign in
                         (id,sign,Pair_map.add (pred,kth) id eq_predicates)
                   )
                 in
@@ -167,7 +167,7 @@ struct
                               (Pair_map.find (pred,arg_nb) eq_predicates,sign,eq_predicates,eq_pred_to_create)
                             with Not_found ->
                               let name = (gen_eq_name pred kth sign) in
-                              let (id,sign) = Signature.add_pred_get_id 4 name sign in
+                              let (id,sign) = Datalog_signature.add_pred_get_id 4 name sign in
                                 (id,sign,Pair_map.add (pred,kth) id eq_predicates,((pred,kth),id)::eq_pred_to_create)
                           in
                           let eq_rhs = eq_rhs@[Program.Pred(id,[j;j+1;l;l+1])] in

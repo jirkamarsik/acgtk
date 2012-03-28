@@ -39,7 +39,7 @@ open Program_printer
 open Datalog_solver
 
 (*opening the file containing the grammar, here gram.pmcfg*)
-let ch_in = open_in "kan.pmcfg";;
+let ch_in = open_in "gram.pmcfg";;
 (*parsing the grammar*)
 let grammar = PMCFG_syn.parse (Stream.of_channel ch_in);;
 (*transforming the grammar *)

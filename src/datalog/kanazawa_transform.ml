@@ -1,6 +1,6 @@
 open Adornment2
 open Program
-open Signature
+open Datalog_signature
 open Prefix_correct_program
 open Program_printer
 open Magic_set_rewritting2
@@ -50,10 +50,10 @@ module Kanazawa_transform =
       with Invalid_argument _ -> false
 
     let transform_program program name= 
-      let Program.Prog(Signature.S(l,_,neq) as sign,_) = program in
+      let Program.Prog(Datalog_signature.S(l,_,neq) as sign,_) = program in
       let n = List.length l in
       let program = Prefix_correct_program.prefix_correct_transform exceptions program in
-      let (_,id) = Signature.find_pred_of_name name sign in
+      let (_,id) = Datalog_signature.find_pred_of_name name sign in
       let goal = Adornment.AdP(id,[true;false]) in
       let ad_program = 
         Adornment.adorn_program 
@@ -76,7 +76,7 @@ module Kanazawa_transform =
       let program = 
         PMCFG.naive_program_of_pmcfg (Oriented_pmcfg.orient_grammar grammar)
       in
-      let Program.Prog(Signature.S (l,_,neq),_) = program in
+      let Program.Prog(Datalog_signature.S (l,_,neq),_) = program in
       let n = List.length l in
       let program = Prefix_correct_program.prefix_correct_transform exceptions program in
       let PMCFG.Grammar(_,_,init_id) = grammar in
@@ -101,7 +101,7 @@ module Kanazawa_transform =
       let program = 
         PMCFG.program_of_pmcfg (Oriented_pmcfg.orient_grammar grammar)
       in
-      let Program.Prog(Signature.S (l,_,neq),_) = program in
+      let Program.Prog(Datalog_signature.S (l,_,neq),_) = program in
       let n = List.length l in
       let program = Prefix_correct_program.prefix_correct_transform exceptions program in
       let PMCFG.Grammar(_,_,init_id) = grammar in
@@ -126,7 +126,7 @@ module Kanazawa_transform =
       let program = 
         PMCFG_to_datalog.get_program (Oriented_pmcfg.orient_grammar grammar)
       in
-      let Program.Prog(Signature.S (l,_,neq),_) = program in
+      let Program.Prog(Datalog_signature.S (l,_,neq),_) = program in
       let n = List.length l in
       let program = Prefix_correct_program.prefix_correct_transform exceptions program in
       let PMCFG.Grammar(_,_,init_id) = grammar in

@@ -1,4 +1,4 @@
-open Signature
+open Datalog_signature
 open String_map
 open Int_map
 open Program
@@ -10,7 +10,7 @@ struct
   type rhs_cat = Rhs_cat of int*(int list)
   type lhs_cat = Lhs_cat of int*((argument list) list)
   type grule = R of lhs_cat*(rhs_cat list)
-  type grammar = Grammar of (Signature.signature*(grule list)*int)
+  type grammar = Grammar of (Datalog_signature.signature*(grule list)*int)
 
   let is_rule_defining_cat cat grule =
     match grule with 
@@ -27,8 +27,8 @@ struct
 	Grammar (sign,rules,init) -> 
 	  let new_sign = 
 	    (match sign with
-		Signature.S(l,_,_) ->
-		  Signature.S(
+		Datalog_signature.S(l,_,_) ->
+		  Datalog_signature.S(
 		    List.map 
 		      (function (rank,name) ->(2*rank,name))
 		      l
@@ -39,9 +39,9 @@ struct
 		  )
 	    )
 	  in
-          let (rg_eq,new_sign) = Signature.add_pred_get_id 4 "eq" new_sign in
-          let (eq,new_sign) = Signature.add_eq_get_id new_sign in
-          let (neq,new_sign) = Signature.add_neq_get_id new_sign in
+          let (rg_eq,new_sign) = Datalog_signature.add_pred_get_id 4 "eq" new_sign in
+          let (eq,new_sign) = Datalog_signature.add_eq_get_id new_sign in
+          let (neq,new_sign) = Datalog_signature.add_neq_get_id new_sign in
 	  let string_predicates = String_map.empty in
 	  let rec get_ranges_and_ext_pred_of_arg j l ranges ext_pred string_predicates sign=
 	    (match l with
@@ -68,9 +68,9 @@ struct
 		        let a_pred = Program.Pred (id,[j;j+1]) in
 			  get_ranges_and_ext_pred_of_arg (j+1) tl ranges (a_pred::ext_pred) string_predicates sign
 		      with Not_found ->
-		        let id = Signature.fresh sign in
+		        let id = Datalog_signature.fresh sign in
 		        let string_predicates = String_map.add a id string_predicates in
-		        let sign = Signature.add_pred 2 a sign in
+		        let sign = Datalog_signature.add_pred 2 a sign in
 		        let a_pred = Program.Pred (id,[j;j+1]) in
 			  get_ranges_and_ext_pred_of_arg (j+1) tl ranges (a_pred::ext_pred) string_predicates sign
 		    )

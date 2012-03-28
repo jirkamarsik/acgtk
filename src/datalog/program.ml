@@ -1,9 +1,12 @@
-open Signature
+open Datalog_signature
 open Int_set
 
 module Program =
   struct
-    type predicate = Pred of (Signature.predicate*(int list))
+
+    module Signature1 = Datalog_signature
+
+    type predicate = Pred of (Signature1.predicate*(int list))
       (*
 	a predicate is constituted with:
 	the identifier it has in the signature
@@ -15,14 +18,20 @@ module Program =
 	a predicate (its left hand side)
 	a list of predicates (its right had side)
       *)
-    type program = Prog of (Signature.signature*clause list)
+    type program = Prog of (Signature1.signature*clause list)
       (*
 	a program is constituted with:
 	the signature in which predicates are declared
 	the list of its clauses
       *)
 
-    let empty = Prog (Signature.empty, [])
+    let empty = Prog (Signature1.empty, [])
+
+    let make_pred p l = Pred(p,l)
+
+    let make_clause p l = Cl(p,l)
+
+    let make_program s l = Prog(s,l)
 
     let get_signature =  function Prog (sign,_) -> sign
 
@@ -30,19 +39,19 @@ module Program =
 
     let get_predicate p prog =
       let sign = get_signature prog in
-	Signature.get_predicate p sign
+	Signature1.get_predicate p sign
 
     let get_predicate_name p prog= 
       let sign = get_signature prog in
-	Signature.get_name p sign
+	Signature1.get_name p sign
 	  
     let get_predicate_arity p prog =
       let sign = get_signature prog in
-	Signature.get_arity p sign
+	Signature1.get_arity p sign
 
     let get_identifier_of_name name prog = 
       let sign = get_signature prog in
-	Signature.get_identifier_of_name name sign
+	Signature1.get_identifier_of_name name sign
 
     let is_p_predicate_of_clause p =
       function Cl (Pred(p1,_),_) -> p1=p
@@ -76,7 +85,7 @@ module Program =
           vars
 
     let transform_prog 
-      (init_prog_context:Signature.signature -> 'prog_context)
+      (init_prog_context:Signature1.signature -> 'prog_context)
       (update_prog_context:'prog_context -> clause -> 'prog_context)
       (extract_result: 'prog_context -> 'result)
         =

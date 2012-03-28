@@ -1,5 +1,5 @@
 open Pmcfg
-open Signature
+open Datalog_signature
 open String_map
 open Int_map
 open Program
@@ -36,13 +36,13 @@ module Oriented_pmcfg =
   type 'a transformation_info = 
       {map_ord_cat_to_id: 'a Ordered_cat_map.t ; 
        ordered_cat_to_treat:Ordered_cat_set.t ;  
-       old_sign : Signature.signature;
-       new_sign : Signature.signature}
+       old_sign : Datalog_signature.signature;
+       new_sign : Datalog_signature.signature}
 
   let get_category ord_cat sign= 
     (match ord_cat with
 	Ord_cat(k,Arg_order arg_ord) ->
-	  let (rank,name) = Signature.get_predicate k sign in
+	  let (rank,name) = Datalog_signature.get_predicate k sign in
           let arity = List.length arg_ord in
 	  let is_order_id arg_ord=
 	    let rec check_order_id l n =
@@ -81,7 +81,7 @@ module Oriented_pmcfg =
 
   let get_initial_trans_info ord_cat sign = 
     let (rank,name) = get_category ord_cat sign in
-    let new_sign = Signature.add_pred rank name Signature.empty in
+    let new_sign = Datalog_signature.add_pred rank name Datalog_signature.empty in
       {map_ord_cat_to_id = Ordered_cat_map.add ord_cat 0 Ordered_cat_map.empty; 
        ordered_cat_to_treat = Ordered_cat_set.singleton ord_cat ;
        old_sign=sign;
@@ -93,9 +93,9 @@ module Oriented_pmcfg =
 	let id = Ordered_cat_map.find ord_cat trans_info.map_ord_cat_to_id in
 	  (id,trans_info)
       with Not_found ->
-	let id = Signature.fresh trans_info.new_sign in
+	let id = Datalog_signature.fresh trans_info.new_sign in
 	let (rank,name) = get_category ord_cat trans_info.old_sign in
-	let new_sign = Signature.add_pred rank name trans_info.new_sign in
+	let new_sign = Datalog_signature.add_pred rank name trans_info.new_sign in
 	let map = Ordered_cat_map.add ord_cat id trans_info.map_ord_cat_to_id in
 	let to_treat = Ordered_cat_set.add ord_cat trans_info.ordered_cat_to_treat in
 	  (id,

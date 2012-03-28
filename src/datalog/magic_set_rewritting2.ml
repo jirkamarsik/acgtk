@@ -1,5 +1,5 @@
 open Adornment2
-open Signature
+open Datalog_signature
 open Program
 open Int_map
 
@@ -11,7 +11,7 @@ struct
 
   type prog_context = 
       Prog_context of
-        Signature.signature*
+        Datalog_signature.signature*
           ((int*int) Adorned_predicate_map.t) *
           int *
           (Program.clause list)* (*group_I*)
@@ -20,7 +20,7 @@ struct
 
   type clause_context = 
       Cl_context of
-        Signature.signature * (*signature that is enriched with magic and supplementary predicates*)
+        Datalog_signature.signature * (*signature that is enriched with magic and supplementary predicates*)
           ((int*int)  Adorned_predicate_map.t) * (*maps adorned predicates to their normal and magic counter-parts; when the two numbers are equal, this means that the predicate is extensional*)
           string * (*prefix of the names of the new supplementary predicates*)
           int * (* number 'i' of the  current supplementary predicate *)
@@ -39,7 +39,7 @@ struct
   let sup_name k = "sup_"^(string_of_int k)^"_"
 
   let mark_intensionality ad_program = 
-    let Adornment.AProg(Signature.S (l,_,_),_,clauses) = ad_program in
+    let Adornment.AProg(Datalog_signature.S (l,_,_),_,clauses) = ad_program in
     let n = (List.length l) - 1 in
     let rec intensional res n = 
       if n=(-1)
@@ -137,7 +137,7 @@ struct
       )
     in
     let Adornment.AProg(sign,interesting_adornments,ad_clauses) = ad_program in
-    let Signature.S(_,eq,neq) = sign in
+    let Datalog_signature.S(_,eq,neq) = sign in
     let ad_list = Adornment.Adorned_predicate_set.elements interesting_adornments in
     let (_,l,map,_,new_eq,new_neq) =
       List.fold_left
@@ -161,7 +161,7 @@ struct
                       extensional_map,eq_opt,neq_opt)
                   with 
                       Not_found ->
-                        let (arity,name) = Signature.get_predicate pred sign in
+                        let (arity,name) = Datalog_signature.get_predicate pred sign in
                         let new_eq = if(Some(pred)=eq) then Some(n) else eq_opt in
                         let new_neq = if(Some(pred)=neq) then Some(n) else neq_opt in
                           (n+1,
@@ -173,7 +173,7 @@ struct
         (0,[],Adorned_predicate_map.empty,Int_map.empty,None,None)
         ad_list
     in
-      (Signature.S(List.rev l,new_eq,new_neq), map)
+      (Datalog_signature.S(List.rev l,new_eq,new_neq), map)
 
   let init_prog_context ad_program = 
     let (sign,map) = get_new_signature ad_program in
@@ -249,7 +249,7 @@ struct
       if remaining_lhs=[]
       then (initial_rhs,sign)
       else 
-        let (sup_p,sign) = Signature.add_pred_get_id arity name sign in
+        let (sup_p,sign) = Datalog_signature.add_pred_get_id arity name sign in
         let new_sup_pred = Program.Pred(sup_p,sup_vars) in
           (new_sup_pred,sign)
     in

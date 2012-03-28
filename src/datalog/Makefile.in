@@ -38,7 +38,7 @@ PREVIOUS_DIRS =
 
 # Source files in the right order of dependance
 
-ML = signature.ml string_map.ml int_map.ml int_set.ml program.ml pmcfg.ml pmcfg_to_datalog.ml oriented_pmcfg.ml lexicalizer.ml pmcfg_syn.ml program_printer.ml prefix_correct_program.ml adornment2.ml magic_set_rewritting2.ml kanazawa_transform.ml datalog_solver.ml
+ML = datalog_signature.ml string_map.ml int_map.ml int_set.ml program.ml pmcfg.ml pmcfg_to_datalog.ml oriented_pmcfg.ml lexicalizer.ml pmcfg_syn.ml program_printer.ml prefix_correct_program.ml adornment2.ml magic_set_rewritting2.ml kanazawa_transform.ml datalog_solver.ml
 
 EXE_SOURCES = test.ml
 

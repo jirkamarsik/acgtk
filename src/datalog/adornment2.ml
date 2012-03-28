@@ -1,11 +1,11 @@
-open Signature
+open Datalog_signature
 open Program
 open Int_set
 
 module Adornment =
 struct 
-  type adornment = Ad of Signature.predicate*((int*bool) list)
-  type adorned_predicate = AdP of Signature.predicate*(bool list)
+  type adornment = Ad of Datalog_signature.predicate*((int*bool) list)
+  type adorned_predicate = AdP of Datalog_signature.predicate*(bool list)
   type adorned_clause = ACl of adornment*(adornment list)
 
   exception No_order_found
@@ -31,14 +31,14 @@ struct
 	    in
 	      comp_list l1 l2
 	  else 
-	    (Signature.compare_predicate p1 p2) 
+	    (Datalog_signature.compare_predicate p1 p2) 
 	    
   end
 
   module Adorned_predicate_set=Set.Make (Ordered_adorned_predicates)
     
   type adorned_program = AProg of 
-    Signature.signature*Adorned_predicate_set.t*(adorned_clause list)
+    Datalog_signature.signature*Adorned_predicate_set.t*(adorned_clause list)
       
   type prog_context = 
       Prog_context of
@@ -85,11 +85,11 @@ struct
     function AdP (k,l) ->
       let trans b= if b then "b" else "f" in
       let suffix = String.concat "" (List.map (trans) l) in
-        String.concat "_" [(Signature.get_name k sign);suffix]
+        String.concat "_" [(Datalog_signature.get_name k sign);suffix]
 
   let predicate_of_adornment sign = 
     function AdP(k,l) ->
-      let (arity,name) = Signature.get_predicate k sign in
+      let (arity,name) = Datalog_signature.get_predicate k sign in
       let trans b= if b then "b" else "f" in
       let suffix = String.concat "" (List.map (trans) l) in
         (arity,name^"_"^suffix)
@@ -640,9 +640,9 @@ let reset_prog_context prog_context =
         Program.Pred(k,vars)
     in
       match sign with
-          Signature.S(_,eq,neq) ->
+          Datalog_signature.S(_,eq,neq) ->
             Program.Prog
-              (Signature.S (ad_sign,eq,neq),
+              (Datalog_signature.S (ad_sign,eq,neq),
               List.map
                 (function ACl(rhs,lhs) ->
                   Program.Cl(

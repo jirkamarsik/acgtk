@@ -1,4 +1,4 @@
-module Signature = 
+module Datalog_signature = 
   struct
     type predicate = int
     type signature = S of ((int*string) list * (int option) * (int option))
@@ -9,6 +9,8 @@ module Signature =
     exception Undefined_predicate
 
     let empty = S ([],None,None)
+
+    let make_pred (i:int) = (i:predicate)
 
     let get_predicate k = 
       function S (l,_,_) -> List.nth l k

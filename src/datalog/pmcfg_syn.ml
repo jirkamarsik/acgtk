@@ -1,4 +1,4 @@
-open Signature
+open Datalog_signature
 open String_map
 open Pmcfg
 
@@ -24,7 +24,7 @@ open Lexicalizer.Lexicalizer
 
   type parse_context = 
       Parse of
-        Signature.signature * (*signature under construction*)
+        Datalog_signature.signature * (*signature under construction*)
           int * (*identifier of the start predicate*)
           pos * (*position in the stream*)
           ((int* bool) String_map.t) * (*variables of a rule, it associates to the name of the variable its identifier (an int), a boolean which sepcifies whether the variable has an occurrence that has been processed in the right hand side of the current rule*)
@@ -40,7 +40,7 @@ open Lexicalizer.Lexicalizer
           
 
   let empty_parse_context = 
-    Parse (Signature.empty,0,first_pos,String_map.empty,None,[],"",[],[],[],0,0,[])
+    Parse (Datalog_signature.empty,0,first_pos,String_map.empty,None,[],"",[],[],[],0,0,[])
 
   let parse_error pos message = 
     let P(line,col) = pos in
@@ -72,13 +72,13 @@ open Lexicalizer.Lexicalizer
     let Parse(sign,start,pos,variables,lhs,rhs,pred,top_lhs_arg,lhs_arg,rhs_arg,arity,fresh,rules) = 
       parse_context in
       (try
-          let (ar0,id) = Signature.find_pred_of_name name sign in
+          let (ar0,id) = Datalog_signature.find_pred_of_name name sign in
             if ar = ar0
             then (parse_context,id)
             else parse_error pos 
               ("The predicate "^name^" should have arity "^string_of_int (ar0)^" but is used with arity "^string_of_int(ar)^".")
         with Not_found ->
-          let (id,sign) = Signature.add_pred_get_id ar name sign in
+          let (id,sign) = Datalog_signature.add_pred_get_id ar name sign in
           let parse_context =  
             Parse(sign,start,pos,variables,lhs,rhs,pred,top_lhs_arg,lhs_arg,rhs_arg,arity,fresh,rules) 
           in

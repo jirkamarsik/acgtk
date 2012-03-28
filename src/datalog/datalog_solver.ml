@@ -1,28 +1,30 @@
-open Signature
+open Datalog_signature
 open Int_map
 open Program
 
 module Datalog_solver =
 struct
 
-  open Program
+  module Program1 = Program
 
   type item = It of (int*int list)
 
-  type eval_rule = ER of (predicate* predicate * predicate list * int Int_map.t ) (* the first predicate is the conclusion, the second is the next that need to be identified, the list contains the predicates that need to be proved and the int_map is the substitution that has been computed so far.*)
+  type eval_rule = ER of (Program1.predicate* Program1.predicate * Program1.predicate list * int Int_map.t ) (* the first predicate is the conclusion, the second is the next that need to be identified, the list contains the predicates that need to be proved and the int_map is the substitution that has been computed so far.*)
 
   type result = RER of eval_rule | RIt of item
 
   exception Not_unifiable
 
-  let get_eval_rule (Cl(lhs,rhs)) = 
+  let make_item i l = It(i,l)
+
+  let get_eval_rule (Program1.Cl(lhs,rhs)) = 
     (match rhs with
         [] -> failwith "get_eval_rule: rule with an empty right hand side?"
       | pred::rhs_tl ->     ER (lhs, pred, rhs_tl, Int_map.empty)
     )
        
 
-  let instanciate (Pred(k,args)) subst =
+  let instanciate (Program1.Pred(k,args)) subst =
     It(k,
       List.fold_right
         (function arg ->
@@ -35,7 +37,7 @@ struct
 
   let rec eliminate_eq_neq predicates eq neq subst =
     (match predicates with
-        Pred(k,[arg1;arg2])::predicates_tl ->
+        Program1.Pred(k,[arg1;arg2])::predicates_tl ->
           if k=eq
           then
             (try
@@ -112,7 +114,7 @@ struct
 
   type agenda = Item_set.t (*set containing pairs (predicate identifier, arg instanciation)*)
 
-  type memory = M of (Signature.signature*chart*eval_rules*agenda*(item list)*int*int*int)
+  type memory = M of (Datalog_signature.signature*chart*eval_rules*agenda*(item list)*int*int*int)
 
   exception No_more_step
 
@@ -126,16 +128,16 @@ struct
       let agenda = Item_set.add item agenda in
         M(sign,chart,ev_rules,agenda,facts,step,eq,neq)
 
-  let ev_rule_known (ER(_,Pred(k,_),_,_)as ev_rule) (M(_,_,ev_rules,_,_,_,_,_)) = 
+  let ev_rule_known (ER(_,Program1.Pred(k,_),_,_)as ev_rule) (M(_,_,ev_rules,_,_,_,_,_)) = 
     ER_set.mem ev_rule (Array.get ev_rules k)
 
-  let add_ev_rule (ER(_,Pred(k,_),_,_)as ev_rule) (M(sign,chart,ev_rules,agenda,facts,step,eq,neq)) = 
+  let add_ev_rule (ER(_,Program1.Pred(k,_),_,_)as ev_rule) (M(sign,chart,ev_rules,agenda,facts,step,eq,neq)) = 
     Array.set ev_rules k (ER_set.add ev_rule (Array.get ev_rules k));
     M(sign,chart,ev_rules,agenda,facts,step,eq,neq)
           
 
   let rec extend_eval_rule
-      (ER(res,Pred(k,args_pred),predicates,subst))
+      (ER(res,Program1.Pred(k,args_pred),predicates,subst))
       (It(l,args_item))
       (M(_,_,_,_,_,_,eq,neq) as mem)
       = 
@@ -166,8 +168,8 @@ struct
                   (try
                     add_mem (instanciate res subst) mem
                   with Not_found -> 
-                    (match res with Pred(k,_) -> failwith ("PB: pred "^(string_of_int k))))
-              | (subst,(Pred(k,_) as pred)::predicates) -> 
+                    (match res with Program1.Pred(k,_) -> failwith ("PB: pred "^(string_of_int k))))
+              | (subst,(Program1.Pred(k,_) as pred)::predicates) -> 
                   let ev_rule = (ER(res,pred,predicates,subst)) in
                   if ev_rule_known ev_rule mem
                   then mem
@@ -231,18 +233,18 @@ struct
 
   let init_solver program facts =
     match program with
-        Prog(sign,clauses) ->
-          let n = Signature.fresh sign in
+        Program1.Prog(sign,clauses) ->
+          let n = Datalog_signature.fresh sign in
           let chart = Array.make n (Item_map.empty) in
           let ev_rules = Array.make n (ER_set.empty) in
           let agenda = Item_set.empty in
           let step = -1 in
-          let (eq,sign) = Signature.add_eq_get_id sign in
-          let (neq,sign) = Signature.add_neq_get_id sign in
+          let (eq,sign) = Datalog_signature.add_eq_get_id sign in
+          let (neq,sign) = Datalog_signature.add_neq_get_id sign in
           let _ =  
             List.fold_left
               (function () ->
-                function Cl(pred,(Pred(k,args) as fst)::rem) ->
+                function Program1.Cl(pred,(Program1.Pred(k,args) as fst)::rem) ->
                   let ev_rule = ER(pred,fst,rem,Int_map.empty) in
                     Array.set ev_rules k (ER_set.add ev_rule (Array.get ev_rules k))
                   |_ -> failwith "init_solver: the program contains a clause with no rhs."
@@ -253,13 +255,13 @@ struct
             M(sign,chart,ev_rules,agenda,facts,step,eq,neq)
 
   let init_solver2 program list magic =
-    let Prog(sign,_) = program in
+    let Program1.Prog(sign,_) = program in
     let (_,facts) = 
       List.fold_left
         (function (n,l) ->
           function string ->
             try
-              let (_,pred) = Signature.find_pred_of_name string sign in
+              let (_,pred) = Datalog_signature.find_pred_of_name string sign in
                 (n+1,It(pred,[n;n+1])::l)
             with
                 Not_found ->
@@ -273,13 +275,13 @@ struct
         (It(magic,[0])::(List.rev facts))
 
   let init_solver3 program init_state list magic =
-    let Prog(sign,_) = program in
+    let Program1.Prog(sign,_) = program in
     let facts = 
       List.fold_left
         (function l ->
           function (string,(state1,state2)) ->
             try
-              let (_,pred) = Signature.find_pred_of_name string sign in
+              let (_,pred) = Datalog_signature.find_pred_of_name string sign in
                 It(pred,[state1;state2])::l
             with
                 Not_found ->
@@ -311,7 +313,7 @@ struct
                     Array.set 
                       res 
                       step0 
-                      ((Signature.get_name k sign,args)::(Array.get res step0))
+                      ((Datalog_signature.get_name k sign,args)::(Array.get res step0))
               )
               set
               ()
