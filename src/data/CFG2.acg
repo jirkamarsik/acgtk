@@ -1,0 +1,44 @@
+(* signature that defines the abstract language *)
+
+signature abstract =
+	R : type;
+	S : type;
+	T : type;
+
+	r1 : S;
+	r2 : S->S;
+	r3 : R->T;
+	r4 : T->R;
+
+end
+
+(* signature that defines the object language *)
+
+signature object =
+	n : type;
+	o : type;
+	string = o->o : type;
+
+	(*infix + : (o->o)->(o->o)->(o->o);*)
+	c : string->n;
+	d : n -> string;
+	infix + : string->string->string;
+
+	a,b : string;
+	(*a,b : o->o;*)
+end
+
+(* the syntactic realisation *)
+
+lexicon syntactic_realisation(abstract) : object =
+	R := n;
+	S := string;
+	(*S := o->o;*)
+	T := string;
+
+	r1 := lambda x.x;
+	r2 := lambda x.(a + x) + b;
+	r3 := d;
+	r4 := c;
+
+end
