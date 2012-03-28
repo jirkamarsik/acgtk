@@ -101,4 +101,4 @@ end
 
 (** The functor that builds the environment *)
 module Make  (Lex:Interface.Lexicon_sig) : Environment_sig 
-  with type Signature1.t=Lex.Signature.t and type Lexicon.t = Lex.t 
+  with type Signature1.t=Lex.Signature.t and type Lexicon.t = Lex.t and type Signature1.term = Lex.Signature.term and type Signature1.stype = Lex.Signature.stype

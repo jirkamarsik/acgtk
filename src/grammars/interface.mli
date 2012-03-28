@@ -169,7 +169,6 @@ sig
   module Signature:Signature_sig
   type signature = Signature.t
 
-
   val empty : (string*Abstract_syntax.location) -> abs:signature -> obj:signature -> t
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t
