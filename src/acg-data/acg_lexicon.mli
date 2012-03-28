@@ -19,4 +19,4 @@
 
 open Signature
 
-module Sylvain_lexicon : Interface.Lexicon_sig
+module Sylvain_lexicon : Interface.Lexicon_sig with type Signature.term=Lambda.Lambda.term and type Signature.stype=Lambda.Lambda.stype
