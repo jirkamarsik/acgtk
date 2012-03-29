@@ -64,18 +64,12 @@ struct
     let (n,_,_,c,r) = aux 0 0 0 [] m in
     (n,r,c)
 
-(* let m0 = App(LAbs("x",LVar 0),LAbs("y",LVar 0))
-let m1 = LAbs("x",LAbs("y",LAbs("z",App(LVar 2,App(LVar 1,LVar 0)))))
-let m2 = App(LAbs("x",LVar 0),Const 2)
-let m3 = LAbs("x",LAbs("y",App(LVar 0,LVar 1)))
-let m4 = App(LAbs("x",App(LVar 0,Const 3)),Const 4) *)
-
   let rec nb_vars = function
     | LVar _ -> 1
     | App(t1,t2) -> (nb_vars t1) + (nb_vars t2)
     | LAbs(_,t) -> nb_vars t
     | Const _ -> 0
-    | DConst _ -> failwith "Type not unfolded"
+    | DConst _ -> failwith "Error in : Type_inference.Type_inference.nb_vars (type not unfolded)"
     | (Var _ | Abs(_,_)) -> raise NonLinear
     | _ -> raise NotImplemented
 
@@ -101,7 +95,7 @@ let m4 = App(LAbs("x",App(LVar 0,Const 3)),Const 4) *)
 	      let t = fresh_type i in
 	      aux((tau,LFun(Atom (t+1),Atom t))::e) (i+2) (j+1) ((m,Atom t)::q))
       | (Const x, tau)::q -> aux ((Atom (-x),tau)::e) i j q
-      | (DConst _,_)::_ -> failwith "Type not unfolded"
+      | (DConst _,_)::_ -> failwith "Error in : Type_inference.Type_inference.type_inference (type not unfolded)"
       | (Var _,_)::_ -> raise NonLinear
       | (Abs(_,_),_)::_ -> raise NonLinear
       | _ -> raise NotImplemented in

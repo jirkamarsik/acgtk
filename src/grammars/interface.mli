@@ -65,7 +65,7 @@ sig
   val find_term : string -> t -> term * stype
 
     
-  (** [is_atomic_type id s ] returns [true] if [id] is the name of an
+  (** [is_atomic_type id s] returns [true] if [id] is the name of an
       atomic type in [s] and [false] oterwise *)
   val is_type : string -> t -> bool
     
@@ -173,6 +173,8 @@ sig
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t
   val to_string : t -> string
+  val interpret_type : Lambda.stype -> t -> Lambda.stype
+  val interpret_term : Lambda.term -> t -> Lambda.term
   val interpret : Signature.term -> Signature.stype -> t -> (Signature.term*Signature.stype)
   val get_sig : t -> (signature*signature)
   val check : t -> unit

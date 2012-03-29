@@ -207,7 +207,7 @@ struct
   (* We assume here that [term] is well typed and in beta-normal form
      and that types and terms definitions have been unfolded*)
 	    
-  let eta_long_form term stype sg =      
+  let eta_long_form term stype sg =
     Lambda.eta_long_form (Lambda.normalize (expand_term term sg)) (expand_type stype sg) (fun id -> get_type_of_const_id id sg)
 			   
 
@@ -317,8 +317,6 @@ struct
       | Term_declaration (s,_,_,_) -> Some s
       | _ -> None
 
- 
- 
 
 end	  
   

@@ -2338,7 +2338,7 @@ $as_echo "$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
 
 
 
-ac_config_files="$ac_config_files ./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/acg-data/Makefile src/scripting/Makefile src/datalog/Makefile"
+ac_config_files="$ac_config_files ./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/acg-data/Makefile src/scripting/Makefile src/datalog/Makefile src/reduction/Makefile"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} sets \$(MAKE)" >&5
@@ -3101,6 +3101,7 @@ do
     "src/acg-data/Makefile") CONFIG_FILES="$CONFIG_FILES src/acg-data/Makefile" ;;
     "src/scripting/Makefile") CONFIG_FILES="$CONFIG_FILES src/scripting/Makefile" ;;
     "src/datalog/Makefile") CONFIG_FILES="$CONFIG_FILES src/datalog/Makefile" ;;
+    "src/reduction/Makefile") CONFIG_FILES="$CONFIG_FILES src/reduction/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
