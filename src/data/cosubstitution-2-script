@@ -1,0 +1,37 @@
+load d cosubstitution-2.acg;
+
+compose derivation_to_derived cotag_to_tag as cotag_to_derived;
+
+sem cotag_to_tag cotag_to_derived  analyse c_some (c_person id_n) (lambda x. c_left id_vp x):S;
+
+# Interpreted by sem in logic as:
+#	Ex x. (person x) & (left x) : t
+# Interpreted by derivation_to_derived in derived_trees as:
+#	S_2 (DP_2 some (N_1 person)) (VP_1 left) : tree
+
+
+sem cotag_to_tag cotag_to_derived analyse c_every (c_city id_n) (lambda y.c_some (c_person (c_from y)) (lambda x. c_left id_vp x)):S;
+
+# Interpreted by sem in logic as:
+#	ALL x. (city x) > (Ex x'. ((person x') & (from x x')) & (left x')) : t
+# Interpreted by derivation_to_derived in derived_trees as:
+#	S_2 (DP_2 some (N_2 (N_1 person) (PP_2 (P_1 from) (DP_2 every (N_1 city))))) (VP_1 left) : tree
+
+sem cotag_to_tag cotag_to_derived analyse c_every (c_city id_n) (lambda y.(c_from_2 (lambda P.P y))(lambda n.c_some (c_person n) (lambda x. c_left id_vp x))):S;
+
+
+# Interpreted by sem in logic as:
+#	ALL x. (city x) > (Ex x'. ((person x') & (from x x')) & (left x')) : t
+# Interpreted by derivation_to_derived in derived_trees as:
+#	S_2 (DP_2 some (N_2 (N_1 person) (PP_2 (P_1 from) (DP_2 every (N_1 city))))) (VP_1 left) : tree
+
+sem cotag_to_tag cotag_to_derived  analyse (c_from_2 (c_every (c_city id_n)))(lambda n.c_some (c_person n) (lambda x. c_left id_vp x)):S;
+
+
+# Interpreted by sem in logic as:
+#	Ex x. ((person x) & (ALL x'. (city x') > (from x' x))) & (left x) : t
+# Interpreted by derivation_to_derived in derived_trees as:
+#	S_2 (DP_2 some (N_2 (N_1 person) (PP_2 (P_1 from) (DP_2 every (N_1 city))))) (VP_1 left) : tree
+
+
+cotag_derivations analyse c_every (c_city id_n) (lambda y.c_some (c_person (c_from_2 (SHIFT y))) (lambda x. c_left id_vp x)):S;
