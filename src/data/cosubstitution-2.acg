@@ -1,0 +1,184 @@
+signature cotag_derivations =
+    S, DP, DP', VP_a, PP, P , N, N_a :type ;
+    
+    c_john: DP;
+    c_left: VP_a -> DP -> S;
+    c_saw: DP -> DP -> S;
+    
+    c_city,c_person: N_a -> N;
+
+    c_everyone,c_someone,c_no_one: (DP -> S) -> S;
+
+    c_some,c_every: N -> (DP -> S) -> S;
+
+    (* Auxiliary trees *)
+
+    c_with: DP -> VP_a ;
+    c_from : DP -> N_a;
+    c_from_2 : ((DP ->S) -> S) -> ((N_a -> S) -> S);
+    c_from_3 : DP' -> N_a; 
+    id_vp : VP_a;
+    id_n : N_a;
+
+    SHIFT : DP -> DP';
+end
+
+signature tag_derivations =
+    S, DP, DP', VP, PP, P , N :type ;
+
+    c_john: DP;
+    c_left: (VP -> VP) -> DP -> S;
+    c_saw: DP -> DP -> S;
+    
+    c_city,c_person: (N -> N) -> N;
+
+    c_everyone,c_someone,c_no_one: DP;
+
+    c_some,c_every: N -> DP;
+
+    raise = lambda q.lambda P.P q : DP -> (DP -> S) -> S;
+
+    (* Auxiliary trees *)
+
+    c_with: DP -> VP  -> VP ;
+    c_from : DP -> N -> N;
+    c_from_2 : DP -> N -> N;
+    c_from_3 :  DP' -> N -> N; 
+
+    SHIFT : DP -> DP';
+end
+
+lexicon cotag_to_tag(cotag_derivations) : tag_derivations =
+    S := S;
+    DP := DP;
+    DP' := DP';
+    VP_a := VP -> VP;
+    PP := PP;
+    N := N;
+    P := P;
+    N_a := N -> N;
+
+    c_john := c_john;
+    c_left := c_left;
+    c_saw := c_saw;
+    c_city := c_city;
+    c_person := c_person;
+    c_with := c_with;
+    c_from := c_from;
+    c_from_2 := lambda Q R. Q(lambda x.R(c_from_2 x));
+    c_from_3 := c_from_3;
+    id_vp := lambda x.x;
+    id_n := lambda x.x;
+
+    c_everyone := raise c_everyone;
+    c_someone := raise c_someone;
+    c_no_one := raise c_no_one;
+    c_some := lambda n. raise (c_some n);
+    c_every := lambda n. raise (c_every n);
+
+    SHIFT := SHIFT;
+
+end
+
+signature derived_trees =
+    tree : type ;
+
+    left,everyone,someone,no_one,John,with,from,every,some,city,person,saw:tree;
+
+    DP_1, VP_1, PP_1, P_1, N_1:tree -> tree;
+    S_2, DP_2, VP_2, PP_2, P_2, N_2:tree -> tree -> tree;
+
+end
+
+
+signature logic =
+    e,t:type;
+
+    j :e;
+    left:e->t;
+    city,person : e => t;
+    saw,from:e->e->t;
+
+    with : e -> (e->t)->(e ->t);
+
+    binder ALL : (e=>t) -> t;
+    binder Ex : (e=>t) -> t;
+    
+    infix > : t -> t -> t;
+    infix & : t -> t -> t;
+
+
+
+end
+
+
+lexicon derivation_to_derived (tag_derivations) : derived_trees =
+
+    S, DP, DP',VP, PP, P , N :=tree ;
+
+    c_john:= DP_1 John;
+    c_left:= lambda a s.S_2 s (a (VP_1 left));
+    c_saw := lambda s o . S_2 (DP_1 s) (VP_2 saw (DP_1 o));
+    
+    c_city:= lambda a. a (N_1 city);
+    c_person:= lambda a. a (N_1 person);
+
+    c_everyone := DP_1 everyone;
+    c_someone := DP_1 someone;
+    c_no_one:= DP_1 no_one;
+
+    c_some := lambda n. DP_2 some n;
+    c_every:= lambda n. DP_2 every n;
+
+    (* Auxiliary trees *)
+
+    c_with:= lambda dp vp.VP_2 vp (PP_2 (P_1 with) dp);
+    c_from := lambda dp n.N_2 n (PP_2 (P_1 from) dp);
+    c_from_2 := lambda dp n.N_2 n (PP_2 (P_1 from) dp);
+    c_from_3 := lambda dp n.N_2 n (PP_2 (P_1 from) dp);
+
+    SHIFT := lambda x.x
+end
+
+
+lexicon sem (cotag_derivations) : logic =
+
+    S :=t;
+    DP := e;
+    DP' := (e -> t) -> t;
+    VP_a := (e -> t) -> e -> t;
+    PP := e => t;
+    P:= e => e => t;
+    N :=e=>t;
+    N_a :=(e=>t) -> e=>t;
+
+    c_john:= j;
+    c_left:= lambda a s. a left s;
+
+    c_saw := lambda s o . saw s o ;
+    
+    c_city:= lambda a. a city;
+    c_person:= lambda a. a person;
+
+    c_everyone := lambda P. ALL x.P x;
+    c_someone := lambda P. Ex x.P x;
+    c_no_one:= lambda P. Ex x.P x;
+
+    c_some := lambda n. lambda P. Ex x. (n x) & (P x);
+    c_every:= lambda n. lambda P. ALL x. (n x) > (P x);
+
+    (* Auxiliary trees *)
+
+    c_with:= lambda dp vp . (with dp) vp;
+    c_from := lambda dp n.Lambda x. (n x) & (from dp x);
+    (*    c_from_2 := lambda dp n.Lambda x.dp (lambda y. (n x) & (from y x));*)
+    c_from_2 := lambda dp r .r(lambda n. Lambda x.(n x) & dp (lambda y. (from y x))); 
+    c_from_3 := lambda dp n. Lambda x.(n x) & dp (lambda y. (from y x)); 
+    id_vp := lambda x.x;
+    id_n := lambda x.x;
+
+    SHIFT := lambda x.lambda Q.Q x;
+end
+
+    
+    
