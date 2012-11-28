@@ -1,0 +1,13 @@
+
+
+module UnionFind_Test=Make(Store_as_Map)
+
+let test_data_input =
+  [ UnionFind_Test.Value "var i";
+    UnionFind_Test.Link_to 1;
+    UnionFind_Test.Link_to 1;
+    UnionFind_Test.Link_to 1;
+    UnionFind_Test.Value "Var j";
+    UnionFind_Test.Value "Const c"
+  ]
+  
