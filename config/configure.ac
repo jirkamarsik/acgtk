@@ -166,6 +166,14 @@ else
    AC_MSG_RESULT(Could not find kaputt library "kaputt.cma" in $KAPUTT_PLACE. No link to the kaputt library will be allowed in compilation)
 fi
 
+if test -f $KAPUTT_PLACE/kaputt_pp.byte ; then
+   KAPUTT_PP=$KAPUTT_PLACE/kaputt_pp.byte
+   AC_MSG_RESULT(kaputt_pp.byte preprocessor is $KAPUTT_PP)
+else
+   AC_MSG_RESULT(Could not find kaputt_pp.byte preprocessor in $KAPUTT_PLACE.)
+fi
+
+
 
 
 # What is the OCAML version  ?
@@ -230,6 +238,7 @@ AC_SUBST(OCAMLLEX)
 AC_SUBST(DYPGEN)
 AC_SUBST(DYPGEN_INCLUDE)
 AC_SUBST(KAPUTT_INCLUDE)
+AC_SUBST(KAPUTT_PP)
 
 AC_SUBST(TYPES)
 AC_SUBST(OCAML09WARNINGS)
@@ -237,7 +246,7 @@ AC_SUBST(OCAMLP4_LOC)
 
 AC_SUBST(SET_MAKE)
 
-AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/acg-data/Makefile src/scripting/Makefile src/datalog/Makefile src/reduction/Makefile])
+AC_CONFIG_FILES([./Makefile config/Makefile src/Makefile.master src/Makefile.common src/Makefile src/utils/Makefile src/logic/Makefile src/grammars/Makefile src/acg-data/Makefile src/scripting/Makefile src/datalog/Makefile src/reduction/Makefile src/s_datalog/Makefile])
 
 AC_PROG_MAKE_SET
 
