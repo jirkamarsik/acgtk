@@ -50,5 +50,5 @@ ML = unify.ml
 
 include ../Makefile.common
 
-datalog.cmo : PP=-pp "@KAPUTT_PP@ on camlp4o"
-datalog.cmo : unify.mlt
+unify.cmo : PP=-pp "@KAPUTT_PP@ off camlp4o"
+unify.cmo : unify.mlt

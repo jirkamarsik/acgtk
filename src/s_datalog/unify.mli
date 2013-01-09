@@ -1,11 +1,12 @@
-module type UnionFind =
+module type UnionFind = 
   sig
     type 'a t
     type 'a content = Link_to of int | Value of 'a
-    val create : ('a content) list -> 'a t
-    val find : int -> 'a t -> (int * 'a t)
-    val union : ?use_rank:bool -> int -> int -> 'a t -> 'a t
-    val cyclic : int -> 'a t -> (bool*'a t)
+    exception Union_Failure
+    val create : 'a content list -> 'a t
+    val find : int -> 'a t -> ((int * 'a content) * 'a t)
+    val union : int -> int -> 'a t -> 'a t
+    val cyclic : int -> 'a t -> (bool * 'a t)
 end
     
 
@@ -19,4 +20,4 @@ sig
 end
 
 
-module Make (S:Store) : UnionFind 
+(*module Make (S:Store) : UnionFind  *)
