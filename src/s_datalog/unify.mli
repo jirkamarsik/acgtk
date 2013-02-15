@@ -14,7 +14,7 @@ module type Store =
 sig
   type 'a t
   exception Not_found
-  val empty : 'a t
+  val empty : int -> 'a t
   val get : int -> 'a t -> 'a
   val set : int -> 'a -> 'a t -> 'a t
 end

@@ -19,11 +19,17 @@
 
 (** This module provides some useful modules or functions *)
 
-(** [StringSet] is a module for set of [strings] *)
+(** [StringSet] is a module for sets of [strings] *)
 module StringSet : Set.S with type elt = String.t
   
-(** [StringMap] is a map from [strings] to type ['a] *)
+(** [StringMap] is module for maps from [strings] to type ['a] *)
 module StringMap : Map.S with type key = String.t
+
+(** [IntMap] is a module for maps from [int] to type ['a] *)
+module IntMap : Map.S with type key = int
+
+(** [IntSet] is a module for sets of [int] *)
+module IntSet : Set.S with type elt = int
   
 (** [string_of_list sep to_string [a_1;...;a_n]] returns a string made
     of the strings [to_string a_1] ... [to_string a_n] concatenated with

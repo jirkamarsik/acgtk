@@ -21,6 +21,9 @@ module StringSet = Set.Make (String)
 
 module StringMap = Map.Make (String)
 
+module IntMap = Map.Make (struct type t=int let compare i j = i-j end)
+module IntSet = Set.Make (struct type t=int let compare i j = i-j end)
+
 
 let string_of_list sep to_string = function
   | [] -> ""
