@@ -1,4 +1,5 @@
 open Utils
+open PersistentArray
 
 (** Modules with this module type should provide Union-Find algorithms
     and the indexed storage data structure. Note that we take the
@@ -31,6 +32,10 @@ sig
       (starting at 1 *)
   val create : 'a content list -> 'a t
 
+  (** [extract i t] returns a list of the [i] first elements of
+      [t] *)
+  val extract : int -> 'a t -> 'a content list
+
   (** [find i h] returns not only the index of the representative and
       the values it indexes, but also the storage data structure, so
       that the [find] algorithm can modify it, in particular with path
@@ -47,10 +52,17 @@ sig
       values [Value a] and [Value b] and [a != b]. *)
   val union : int -> int -> 'a t -> 'a t
 
+  (** [instantiate i t h] returns a new indexed storage data structure
+      where the value indexed by [i] and [t] have been unified. It
+      fails and raises the {! UnionFind.Union_Failure} exception if
+      [i]'s representative indexes an actual values [Value a] such
+      that [a] differs from [t]. *)
+  val instantiate : int ->  'a  -> 'a t -> 'a t
+
   (** [cyclic i h] returns a pair [(b,h')] where [b] is [true] if [h]
       has a cycle (following the [Link_to] links) containing [i] and
       [false] otherwise, and where [h'] contains the same information
-      as [h] (possibly differently stord, for instance using path
+      as [h] (possibly differently stored, for instance using path
       compression while checking [h] cyclicity. *)
   val cyclic : int -> 'a t -> (bool * 'a t)
 end
@@ -72,12 +84,12 @@ sig
   val set : int -> 'a -> 'a t -> 'a t
 end
 
-(** This (functor) module implements a UnionFind data structure. The
+(** This (functor) module implements a {! UnionFind} data structure. The
     [S] parameter is used to try different implementations of indexed
     data structure, in particular eventually persistent arrays as
     described in {{:
     http://www.lri.fr/~filliatr/ftp/publis/puf-wml07.ps}"A Persistent
-    Union-Find Data Structure" (Sylvain Concohn and Jean-Chrisophe
+    Union-Find Data Structure" (Sylvain Conchon and Jean-Chrisophe
     Filliâtre} *)
 module Make(S:Store) : UnionFind  = 
 struct
@@ -130,6 +142,17 @@ struct
 	({rank=S.empty ln;parents=S.empty ln},1)
 	contents in
     res
+
+  (** [extract i t] returns a list of the [i] first elements of
+      [t] *)
+  let extract i {parents=p} =
+    let rec extract_aux k res =
+      match k with
+      | 0 -> res
+      | i when i>0 -> extract_aux (i-1) ((S.get i p) :: res)
+      | _ -> failwith "Bug: you should ask for a positive index" in
+    extract_aux i []
+    
 
   
   (** [find_aux i f] returns a pair [(i',v),f'] where [i'] is the
@@ -190,35 +213,44 @@ struct
 	  {h'' with parents=S.set rep_i_index (Link_to rep_j_index) h''.parents}
 	else
 	  {rank=S.set rep_i_index (rk_i+1) h''.rank;parents=S.set rep_j_index (Link_to rep_i_index) h''.parents}
-    |  (_,Value v_i),(_,Value v_j) -> raise Union_Failure (* v_i=v_j is caught by the first case *)
+    |  (_,Value v_i),(_,Value v_j) -> raise Union_Failure
+  (* v_i=v_j is caught by the first case *)
 
-  (** [find_and_instantiate_aux i t f] returns a pair [f'] where [i']
-      is the index of the representative of the data indexed by
-      [i]. [i=i'] means that the [i]-th element is linked to itself:
-      it is meant to be a variable, not an actual value. It also
-      performs path compression.
-      
-      The difference with [find_aux] is that*)
+  (** [find_and_instantiate_aux i t f] returns a new indexed storage
+      datastructure [f'] where the content at index [i] (and the ones
+      it points to) has been set to [Value t]. If [i]'s representative
+      indexes a variable or a value equal to [Value t] then the
+      instantiation suceeds, otherwise it raises Union_failure. It
+      also performs path compression.  *)
   let rec find_and_instantiate_aux i term f =
-    match S.get i f,term with
-    | _ , Link_to _ -> failwith "Bug: should not happen since this function is meant to be applied to ground terms"
-    | Value _ as v,_ when v=term -> f 
-    | Value _,_ -> raise Union_Failure
-    (* An actual value was reached at index [i]. So [i] is returned
-       together with [v] and [f] *)
-    | Link_to next ,_ when next=i -> S.set i term f
+    match S.get i f with
+    | Value v when v=term -> f 
+    | Value _ -> raise Union_Failure
+    (* An actual value was reached at index [i] and we're in the case
+       that it differs from [term]. So the union fails *)
+    | Link_to next when next=i -> S.set i (Value term) f
     (* The content indexed by [i] points to [i]. [i] is then the
        representative for the variable it denotes and can be unified
        with [term]. [f] is updated. *)
-    | Link_to next, _ ->
+    | Link_to next ->
       (* In the other cases, we follow the links to reach the
 	 representative and the content it indexes *)
       let new_f = find_and_instantiate_aux next term f in
       (* Then we update the storage data structure linking the context
 	 indexed by [i] directly to the representative index. We know
 	 it's safe to do it now since unification succeeded. *)
-      let updated_f = S.set i term new_f in
+      let updated_f = S.set i (Value term) new_f in
       updated_f
+
+
+  (** [instantiate i t h] returns a new indexed storage data structure
+      where the value indexed by [i] and [t] have been unified. It
+      fails and raises the {! UnionFind.Union_Failure} exception if
+      [i]'s representative indexes an actual values [Value a] such
+      that [a] differs from [t]. *)
+  let instantiate i t h =
+    let f = find_and_instantiate_aux i t h.parents in
+    {h with parents=f}
 
 
 	
@@ -256,6 +288,9 @@ end
 module Const =
 struct
   type t = int
+  let eq i j = (i=j)
+(* TODO: in case the type become more complex, unification, based on
+   default equality, should be revised *)
 end
 
 module Store_as_Map =
@@ -280,7 +315,8 @@ sig
   type predicate={name:string;
 		  arity:int;
 		  components:content list
-	 (* It is assumed that the size of the list is the arity *)
+		 (* It is assumed that the size of the list is the
+		    arity *)
 		 }      
   type rule={id:int;
 	     lhs:predicate;
@@ -293,17 +329,26 @@ end
 module Pred_and_Rules =
 struct
   type content =  | Var of VarGen.var | Const of Const.t
-  type predicate={name:string;
+  type predicate_name=string
+  type predicate={name:predicate_name;
 		  arity:int;
 		  components:content list
-	 (* It is assumed that the size of the list is the arity *)
+		 (* It is assumed that the size of the list is the
+		    arity *)
 		 }      
   type rule={id:int;
 	     lhs:predicate;
 	     rhs:predicate list
 	    }
 end
-      
+
+module Facts=Map.Make(
+  struct
+    type t=string
+    let compare=String.compare
+  end)
+
+  
 module Unify (S:Store)(P:Pred_and_Rules_TYPE) =
 struct
   exception Fails
@@ -314,22 +359,26 @@ struct
 		 }
     
   (** In an [internal_rule], all the compoments of all the predicates
-      are stored in a UnionFind indexed data structure. We assume here
-      that from 1 to lhs.arity the components of the left hand side
-      predicate are stored, then from lhs.arity+1 to lhs.arity+1(hd
-      rhs).arity the components of the first predicate on the right
-      hand side are stored, etc. It is assumed that this structure is
-      correct (no cycle, links within the range, etc.) *)
+      are stored in a {! UnionFind} indexed data structure. We assume
+      here that from 1 to lhs.arity the components of the left hand
+      side predicate are stored, then from [lhs.arity+1] to
+      [lhs.arity+(hd rhs).arity] the components of the first predicate
+      on the right hand side are stored, etc. It is assumed that this
+      structure is correct (no cycle, links within the range, etc.) *)
   type rule={id:int;
 	     lhs:predicate;
 	     rhs:predicate list;
 	     content:Const.t UF.t
+	    (* TODO: Maybe but the label of the predicate in the
+	       content in order to enforce checking of the current
+	       instantiation *)
 	    }
+
+  type fact=P.predicate Facts.t
 
   (* {P.name=n;P.arity=k;P.components=comp} *)
 
   let make_predicate p = {name=p.P.name;arity=p.P.arity}
-    
 
   let add_pred_components_to_content components (content,idx,mapped_vars) =
     (* [components] is the list of components of some predicate *)
@@ -360,13 +409,18 @@ struct
     (* Be careful, the list of the rhs is reversed *)
     let lhs_content=
       add_pred_components_to_content lhs.P.components ([],1,VarGen.VarMap.empty) in
-    List.fold_left
-      (fun (rhs,content) {P.name=n;P.arity=k;P.components=pred_comps} ->
-	({name=n;arity=k} :: rhs,
-	 add_pred_components_to_content pred_comps content))
-      ([],lhs_content)
-      rhs
-
+    let rhs,(content,_,_) =
+      List.fold_left
+	(fun (rhs,content) {P.name=n;P.arity=k;P.components=pred_comps} ->
+	  ({name=n;arity=k} :: rhs,
+	   add_pred_components_to_content pred_comps content))
+	([],lhs_content)
+	rhs in
+    {id=id;
+     lhs=make_predicate lhs;
+     rhs=List.rev rhs;
+     content=UF.create (List.rev content)
+    }
 
   (* the [dag] parameter is meant to be the components of the
      predicates *)
@@ -376,8 +430,66 @@ struct
     | _, h' -> 
       (try UF.union i j h with
       | UF.Union_Failure -> raise Fails)
-
 	
+  (** [instantiate_idb_predicate_in_rule p (i,c)] returns a pair
+      [(i',c')] when [i] is the index of the first compoment of the
+      [p] predicate in the content [c] {e THIS IS NOT CHECKED
+      HERE}. [i'=i+a] where [a] is the arity of [p] (it means [i']
+      should index the first component of the next predicate in the
+      content of the rule) and [c'] is a new content where all the
+      components between [i] and [i'-1] have been instantiated with
+      the components of [p]. When such an instantiation fails, it
+      raises {! UF.Union_Failure} *)
+  let instantiate_idb_predicate_in_rule
+      {P.name=_;P.arity=_;P.components=components}
+      (idx,content) =
+    List.fold_left
+      (fun (i,cont) value -> (i+1,UF.instantiate i value cont))
+      (idx,content)
+      components
+
+
+  let extract_fact_from_rule r content =
+    {P.name=r.lhs.name;
+     P.arity=r.lhs.arity;
+     P.components=
+	List.map 
+	  (function
+	  | UF.Value v -> v
+	  | _ -> failwith "Bug: you're trying to extract non completely instanciated predicates")
+	  (UF.extract (r.lhs.arity) content)}
+	  
+(*  let rec instantiate_rule r idb =
+    let i = r.lhs.arity +1 in
+    let (next_i,new_content),resume = instantiate_rule_aux r.rhs i idb r.content [] in
+    
+    
+    
+    
+    let rec instantiate_rule_aux predicates i idb content resume =
+      match predicates with
+      | [] -> (Some content),resume
+      | pred::remaining_preds ->
+	let ground_instances_of_pred = Facts.find pred.P.name idb in
+	(* TODO: catch the exception *)
+	match ground_instances_of_pred with
+	| [] -> None,resume
+	| p::tl -> 
+	  let next_i,new_content = instantiate_idb_predicate_in_rule p (i,content) in
+	  instantiate_rule_aux
+	    remaining_preds
+	    next_i
+	    idb
+	    new_content
+	    (i,content,tl)::resume
+	    
+	    
+*)
+
+
+
+	    
+	    
 
 end
   

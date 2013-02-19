@@ -4,8 +4,10 @@ module type UnionFind =
     type 'a content = Link_to of int | Value of 'a
     exception Union_Failure
     val create : 'a content list -> 'a t
+    val extract : int -> 'a t -> ('a content) list
     val find : int -> 'a t -> ((int * 'a content) * 'a t)
     val union : int -> int -> 'a t -> 'a t
+    val instantiate : int ->  'a  -> 'a t -> 'a t
     val cyclic : int -> 'a t -> (bool * 'a t)
 end
     
