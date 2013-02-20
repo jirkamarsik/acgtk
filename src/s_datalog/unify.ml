@@ -374,7 +374,7 @@ struct
 	       instantiation *)
 	    }
 
-  type fact=P.predicate Facts.t
+  type fact=(P.predicate list) Facts.t
 
   (* {P.name=n;P.arity=k;P.components=comp} *)
 
@@ -460,6 +460,10 @@ struct
 	  (UF.extract (r.lhs.arity) content)}
 	  
 (*  let rec instantiate_rule r idb =
+    let make_search_array = List.map (fun pred -> Facts.find pred.P.name idb) r.rhs in
+
+
+
     let i = r.lhs.arity +1 in
     let (next_i,new_content),resume = instantiate_rule_aux r.rhs i idb r.content [] in
     
@@ -470,7 +474,6 @@ struct
       match predicates with
       | [] -> (Some content),resume
       | pred::remaining_preds ->
-	let ground_instances_of_pred = Facts.find pred.P.name idb in
 	(* TODO: catch the exception *)
 	match ground_instances_of_pred with
 	| [] -> None,resume
