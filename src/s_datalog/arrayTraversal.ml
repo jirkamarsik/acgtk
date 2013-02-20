@@ -2,67 +2,46 @@ module type Evaluator_TYPE =
   sig
     type state
     type cell
-    val update: state -> cell -> cell option
-    val collector: 'a -> state -> 'a
+    val init : state
+    val update: state -> cell -> state option
   end
 
 
-module ArrayTraversal =
+module Make (E:Evaluator_TYPE)=
   struct
-    type 'a row = 'a list
-    type 'a array = 'a row list
+    type row = E.cell list
+    type array = row list
 
-    type ('a,'b) return = Return of ('a*('a*'b row*'b array) list) | Stop
+    type return = Return of (E.state*(E.state*row*array) list) | Stop
 
-(*    let string_of_res res =
-      Printf.sprintf
-	"%s"
-	(List.fold_left (fun acc s -> Printf.sprintf "%d %s" s acc) "" res)
-
-    let rec string_of_array = function
-      | [] -> ""
-      | r::rows -> 
-	Printf.sprintf
-	  "%s\n%s"
-	  (string_of_res (List.rev r))
-	  (string_of_array rows)
-
-    let string_of_resumption (state,row,array) =
-      Printf.sprintf "Current state: %s\nCurrent row: %s\nCurrent array:\n%s\n"
-	(string_of_res state)
-	(string_of_res (List.rev row))
-	(string_of_array array)
-*)	
-	
-
-    let rec visit_row state row arr resume test =
+    let rec visit_row state row arr resume =
       match row with
-      | [] -> continue resume test
-      | elt::remaining when test elt -> visit_array (elt::state) arr ((state,remaining,arr)::resume) test
-      | _::remaining -> visit_row state remaining arr resume test
-    and visit_array state arr resume test =
+      | [] -> continue resume
+      | elt::remaining ->
+	begin
+	  match E.update state elt with
+	  | Some new_state -> visit_array new_state arr ((state,remaining,arr)::resume)
+	  | None -> visit_row state remaining arr resume
+	end
+    and visit_array state arr resume =
       match arr with
       | [] -> Return (state,resume)
-      | row::remaining -> visit_row state row remaining resume test
-    and continue resumption test = 
+      | row::remaining -> visit_row state row remaining resume
+    and continue resumption = 
       match resumption with
       | [] -> Stop
-      | (state,row,arr)::resume -> visit_row state row arr resume test
+      | (state,row,arr)::resume -> visit_row state row arr resume
 	
 	
-    let rec all_results_aux f acc state array resume test =
-      match visit_array state array resume test with
+    let rec all_results_aux f acc state array resume =
+      match visit_array state array resume with
       | Return (res,(current_state,r,arr)::resume) ->
-	(* let () = Printf.printf "State: %s\n" (string_of_res res) in *)
-	(* let () = Printf.printf "Continue with:\n%s"
-	   (string_of_resumption (current_state,r,arr)) in*)
-	all_results_aux f (f acc res) current_state (r::arr) resume test
+	all_results_aux f (f acc res) current_state (r::arr) resume
       | Return (res,[]) -> 
-	(* let () = Printf.printf "%s\n" (string_of_res res) in *)
 	f acc res
       | Stop -> acc
 	
-    let all_results f acc array test = all_results_aux f acc [] array [] test
+    let collect_results f acc array = all_results_aux f acc E.init array []
 end
 
       
