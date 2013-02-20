@@ -2,7 +2,6 @@ module type Evaluator_TYPE =
   sig
     type state
     type cell
-    val init : state
     val update: state -> cell -> state option
   end
 
@@ -41,7 +40,7 @@ module Make (E:Evaluator_TYPE)=
 	f acc res
       | Stop -> acc
 	
-    let collect_results f acc array = all_results_aux f acc E.init array []
+    let collect_results f acc init array = all_results_aux f acc init array []
 end
 
       

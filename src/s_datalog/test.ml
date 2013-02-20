@@ -34,7 +34,6 @@ module AllIntArray = ArrayTraversal.Make(
   struct
     type state=int list
     type cell=int
-    let init=[]
     let update s c = Some (c :: s)
   end
 )
@@ -43,7 +42,6 @@ module EvenIntArray = ArrayTraversal.Make(
   struct
     type state=int list
     type cell=int
-    let init=[]
     let update s c = if (c mod 2)=0 then Some (c :: s) else None
   end
 )
@@ -51,19 +49,33 @@ module OddIntArray = ArrayTraversal.Make(
   struct
     type state=int list
     type cell=int
-    let init=[]
     let update s c = if (c mod 2)=1 then Some (c :: s) else None
   end
 )
   
-let _ = AllIntArray.collect_results (fun _ res -> Printf.printf "State: %s\n%!" (string_of_res res)) () a
+let () =
+  AllIntArray.collect_results
+    (fun _ res -> Printf.printf "State: %s\n%!" (string_of_res res))
+    ()
+    []
+    a
 
 let () = print_newline()
   
-let _ = EvenIntArray.collect_results (fun _ res -> Printf.printf "State: %s\n%!" (string_of_res res)) () a
+let () =
+  EvenIntArray.collect_results
+    (fun _ res -> Printf.printf "State: %s\n%!" (string_of_res res))
+    ()
+    []
+    a
 let () = print_newline()
 
-let _ = OddIntArray.collect_results (fun _ res -> Printf.printf "State: %s\n%!" (string_of_res res)) () a
+let () = 
+  OddIntArray.collect_results
+    (fun _ res -> Printf.printf "State: %s\n%!" (string_of_res res))
+    ()
+    []
+    a
 
 
 

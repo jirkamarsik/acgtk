@@ -38,7 +38,7 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars ../acg-data
 
 # Source files in the right order of dependance
 
-ML = persistentArray.ml arrayTraversal.ml unify.ml
+ML = persistentArray.ml arrayTraversal.ml unionFind.ml unify.ml
 
 EXE_SOURCES = test.ml
 

@@ -7,7 +7,6 @@ module type Evaluator_TYPE =
   sig
     type state
     type cell
-    val init : state
     val update: state -> cell -> state option
   end
 
@@ -19,9 +18,13 @@ sig
   (** The type of the array *)
   type array = row list
 
-  (** [fold_on_results f acc a test] returns [f (... (f (f (f acc r1)
-      r2) r3)... ) rN] where the [r1 ... rN] are paths from top to
-      bottom of [a] such that for all [r=[a1 ; ... ; aK]] (all paths
-      have this shape) that for all J [test aJ] holds.  *)
-  val collect_results : ('a -> E.state -> 'a) -> 'a -> array -> 'a
+  (** [collect_results f acc init a] returns [f (... (f (f (f acc s1)
+      s2) s3)... ) sN] where [s1 ... aN] are the states when reaching
+      the end of the paths from top to bottom of [a] such that for all
+      [s] resulting from the path [c1 ; ... ; cK]] (all paths have
+      this shape) [s = E.update (... E.update (E.update (E.update init
+      c1) c2) ...) cK] and none of this [E.update] calls returned a
+      [None] value (hence the noation abuse of applying [E.update] to
+      a [state] instead of a [state option] in this description).*)
+  val collect_results : ('a -> E.state -> 'a) -> 'a -> E.state -> array -> 'a
 end
