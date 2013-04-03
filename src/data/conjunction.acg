@@ -1,0 +1,165 @@
+signature abstract_syntax=
+
+    QNP,NP,S:type;
+    
+    AND:QNP -> QNP -> ((NP ->S) => S);
+
+    JOHN,MARY: NP;
+
+    EVERYONE,SOMEONE:QNP;
+
+    LOVE: NP -> NP -> S;
+    SLEEP: NP -> S;
+
+    raise:NP -> QNP;
+
+    infix @:QNP -> (NP -> S) -> S;
+
+
+
+end
+
+signature intermediate_syntax=
+
+    NP,S:type;
+    
+    AND:((NP ->S) -> S) -> ((NP ->S) -> S) -> ((NP ->S) => S);
+
+    JOHN,MARY: NP;
+
+    EVERYONE,SOMEONE:(NP -> S)->S;
+
+    LOVE: NP -> NP -> S;
+    SLEEP: NP -> S;
+
+end
+
+
+lexicon abstract2intermediate(abstract_syntax):intermediate_syntax=
+    NP:=NP;
+    S:=S;
+    QNP := (NP ->S) -> S;
+
+    AND := AND;
+    JOHN := JOHN;
+    MARY := MARY;
+
+    SLEEP := SLEEP;
+    LOVE:=LOVE;
+
+    EVERYONE := EVERYONE;
+    SOMEONE := SOMEONE;
+
+    raise:=lambda x r .r x;
+
+    @ := lambda q r.q r;
+end
+
+
+
+
+signature simple_syntax=
+    NP,S:type;
+    
+    AND: NP -> NP -> NP;
+
+    JOHN,MARY: NP;
+
+    EVERYONE,SOMEONE:NP;
+
+    SLEEP: NP -> S;
+    LOVE: NP -> NP -> S;
+end
+
+
+
+lexicon intermediate2simple(intermediate_syntax):simple_syntax=
+    S:=S;
+    NP:=NP;
+
+    AND:=lambda P Q .Lambda r.P(lambda x.Q(lambda y.r(AND x y)));
+
+    JOHN:= JOHN;
+    MARY := MARY;
+
+    SLEEP := SLEEP;
+    LOVE:=LOVE;
+
+    EVERYONE := lambda P.P EVERYONE;
+    SOMEONE := lambda P.P SOMEONE;
+
+
+end
+
+
+
+(*lexicon abstract2simple(abstract_syntax):simple_syntax=
+    QNP := (NP->S)->S;
+    S:=S;
+    NP:=NP;
+
+    AND:=lambda P Q .Lambda r.P(lambda x.Q(lambda y.r(AND x y)));
+
+    JOHN:= JOHN;
+    MARY := MARY;
+
+    SLEEP := SLEEP;
+    LOVE:=LOVE;
+
+    EVERYONE := lambda P.P EVERYONE;
+    SOMEONE := lambda P.P SOMEONE;
+
+    raise := lambda n r.r n;
+end
+*)    
+
+signature strings=
+    string:type;
+    and,loves,sleeps,John,Mary,someone,everyone:string;
+    infix +:string-> string->string;
+    epsilon:string;
+end
+
+lexicon syntax2strings(simple_syntax):strings=
+    NP,S:=string;
+
+    AND:=lambda x y.x+and+y;
+    JOHN:=John;
+    MARY:=Mary;
+    
+    EVERYONE:=everyone;
+    SOMEONE:=someone;
+
+    SLEEP:=lambda s.s+sleeps;
+    LOVE:=lambda o s.s+loves+ o;
+end
+
+signature logic =
+	e,t:type;
+
+	sleep : e->t;
+	love:e -> e -> t;
+	j,m:e;
+
+	infix & : t -> t -> t;	
+	infix > : t -> t -> t;
+	binder All : (e=>t) -> t;
+	binder Ex : (e=>t) -> t;
+
+end
+
+lexicon semantics (intermediate_syntax):logic=
+    NP:= e;
+    S:=t;
+
+    AND := lambda P Q.Lambda r.(P r) & (Q r);
+
+    JOHN := j;
+    MARY := m;
+
+    EVERYONE := lambda P.All x.P x;
+    SOMEONE := lambda P.Ex x.P x;
+
+    SLEEP:=sleep;
+    LOVE:= lambda o s.love s o;
+end
