@@ -89,3 +89,5 @@ end
     Union-Find Data Structure" (Sylvain Conchon and Jean-Chrisophe
     Filliâtre} *)
 module Make(S:Store) : S
+
+module StoreAsMap:Store

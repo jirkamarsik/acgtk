@@ -274,3 +274,18 @@ struct
       
       
 end
+
+module StoreAsMap =
+struct
+  type 'a t = 'a IntMap.t
+  exception Not_found
+  let empty _ = IntMap.empty
+  let get k m = 
+    try
+      IntMap.find k m
+    with
+    | Not_found -> raise Not_found
+  let set k v m = IntMap.add k v m
+end
+
+

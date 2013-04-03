@@ -1,6 +1,5 @@
 open PersistentArray
 
-
 module VarGen =
 struct
   type var = Var of int
@@ -19,23 +18,7 @@ struct
    default equality, should be revised *)
 end
 
-module Store_as_Map =
-struct
-  module Map_from_int=Map.Make(struct type t=int let compare = Pervasives.compare end)
-  type 'a t = 'a Map_from_int.t
-  exception Not_found
-  let empty = Map_from_int.empty
-  let get k m = 
-    try
-      Map_from_int.find k m
-    with
-    | Not_found -> raise Not_found
-  let set k v m = Map_from_int.add k v m
-end
-
-
-
-module type Pred_and_Rules_TYPE =
+module type RulesAbstractSyntac_TYPE =
 sig
   type content =  | Var of VarGen.var | Const of Const.t
   type predicate={name:string;
@@ -75,7 +58,7 @@ module Facts=Map.Make(
   end)
 
   
-module Unify (S:UnionFind.Store)(P:Pred_and_Rules_TYPE) =
+module Unify (S:UnionFind.Store)(P:RulesAbstractSyntac_TYPE) =
 struct
   exception Fails
   module UF= UnionFind.Make(S)
@@ -95,29 +78,45 @@ struct
 	     lhs:predicate;
 	     rhs:predicate list;
 	     content:Const.t UF.t
-	    (* TODO: Maybe but the label of the predicate in the
+	    (* TODO: Maybe put the label of the predicate in the
 	       content in order to enforce checking of the current
-	       instantiation *)
+	       instanciation *)
 	    }
-
-(*  type fact=(P.predicate list) Facts.t*)
-
-  (* {P.name=n;P.arity=k;P.components=comp} *)
 
   let make_predicate p = {name=p.P.name;arity=p.P.arity}
 
+
+
+  (** [add_pred_components_to_content components
+      (content,idx,mapped_vars)] returns a triple
+      (content',idx'mapped_vars') where [content'] is the list
+      [content] to which has been added {e *in the reverse order*}
+      updated with information from components. The update is such
+      that if the component is a [Var i] then it is replaced by a
+      [Link_to j] such that [j] is the index at which the variable
+      [Var i] was met for the first time. If the component is a [Const
+      c], the a [Value c] is added at the current position. [idx'] is
+      the value of the next position if another list of component has
+      to be added. And [mapped_vars'] is a map from variables [Var i]
+      to positions (i.e. [int]) in which these variables first occur
+      in [content']
+
+      - [components] is the list of components of some predicate
+      
+      - [content] is a list meant to become the content of a rule,
+      i.e. an indexed storage data structure that is meant to be
+      extended with [components]. *BE CAREFUL: IT COMES IN INVERSE
+      ORDER*
+      
+      - [idx] is the index to be given for the next element of
+      [content]
+      
+      - [mapped_vars] is a mapping from [P.Var i] variables to the
+      index at which they've been stored in [content]. When such a
+      variable is met for the first time, as expected in the
+      UnionFind data structure, the content at [idx] is [Link_to]'ed
+      itself. *)
   let add_pred_components_to_content components (content,idx,mapped_vars) =
-    (* [components] is the list of components of some predicate *)
-    (* [content] is a list meant to become the content of a rule,
-       i.e. an indexed storage data structure that is meant to be
-       extended with [components]. *BE CAREFUL: IT COMES IN INVERSE
-       ORDER* *)
-    (* [idx] is the index to be given for the next element of [content]*)
-    (* [mapped_vars] is a mapping from [P.Var i] variables to the
-       index at which they've been stored in [content]. When such a
-       variable is met for the first time, as expected in the
-       UnionFind data structure, the content at [idx] is [Lin_to]'ed
-       itself. *)
     List.fold_left
       (fun (cont,i,vars)  -> function
       | P.Var v -> 
@@ -127,10 +126,14 @@ struct
 	    ((UF.Link_to idx) :: cont,idx+1,VarGen.VarMap.add v idx vars)
 	end
       | P.Const c -> ((UF.Value c) :: cont,idx+1,vars))
-
+      
       (content,idx,mapped_vars)
       components
-
+      
+  (** [make_rule r] returns an internal rule, that is one whous
+      content is now a {! UnionFind.UnionFind} indexed data
+      structure *)
+      
   let make_rule {P.id=id;P.lhs=lhs;P.rhs=rhs} =
     (* Be careful, the list of the rhs is reversed *)
     let lhs_content=
@@ -157,66 +160,76 @@ struct
       (try UF.union i j h with
       | UF.Union_Failure -> raise Fails)
 	
-  (** [instantiate_idb_predicate_in_rule p (i,c)] returns a pair
+  (** [instanciate_idb_predicate_in_rule p (i,c)] returns a pair
       [(i',c')] when [i] is the index of the first component of the
       [p] predicate in the content [c] {e THIS IS NOT CHECKED
       HERE}. [i'=i+a] where [a] is the arity of [p] (it means [i']
       should index the first component of the next predicate in the
       content of the rule) and [c'] is a new content where all the
-      components between [i] and [i'-1] have been instantiated with
-      the components of [p]. When such an instantiation fails, it
+      components between [i] and [i'-1] have been instanciated with
+      the components of [p]. When such an instanciation fails, it
       raises {! UF.Union_Failure} *)
-  let instantiate_idb_predicate_in_rule
+  let instanciate_idb_predicate_in_rule
       {P.name=_;P.arity=_;P.components=components}
       (idx,content) =
     List.fold_left
       (fun (i,cont) value ->
 	(i+1,
 	 match value with
-	 | P.Var _ -> failwith "Buh: you're trying to instantiate with a noun ground term"
+	 | P.Var _ -> failwith "Buh: you're trying to instanciate with a noun ground term"
 	 | P.Const v -> UF.instantiate i v cont))
       (idx,content)
       components
 
   (** [extract_fact_from_rule r content] returns a fact (that is
-      something of type [P.rule] whose components all are of the form [Const
-
+      something of type [P.rule] whose components all are of the form [Const c]
   *)
-  let extract_fact_from_rule r content =
+  let extract_consequence_from_rule r content =
     {P.name=r.lhs.name;
      P.arity=r.lhs.arity;
      P.components=
 	List.map 
 	  (function
-	  | UF.Value v -> v
+	  | UF.Value v -> P.Const v
 	  | _ -> failwith "Bug: you're trying to extract non completely instanciated predicates")
 	  (UF.extract (r.lhs.arity) content)}
 
 
+  (** [FactArray] is a module implementing a traversal of facts using
+      the {! ArrayTraversal.Make} functor. The [update] function is
+      such that we don't consider cells (i.e. facts) that don't unify
+      with the rule (i.e. a {! UF.Union_Failure} exception was
+      raised).*)
   module FactArray=ArrayTraversal.Make(
     struct
       type state = int*(Const.t UF.t)
       type cell = P.predicate
       let update s c =
 	try 
-	  Some (instantiate_idb_predicate_in_rule c s)
+	  Some (instanciate_idb_predicate_in_rule c s)
 	with
 	| UF.Union_Failure -> None
     end
-    )
-	  
-	  
-  let rec instantiate_rule r idb =
+  )
+    
+  (** [instanciate_rule r idb] returns a list of facts generated by
+      the rule [r] using the facts stored in [idb]. {e *these facts
+      are not added to [idb] when collecting the new facts}.
+
+      Note that it is important that resulting states need to be
+      processed otherwise they will be lost in backtracking when using
+      {! PersistentArray}.*)
+  let rec immediate_consequence_of_rule r idb =
     let make_search_array = List.map (fun pred -> Facts.find pred.name idb) r.rhs in
     FactArray.collect_results
-      (fun acc (_,s) -> s::acc)
+      (fun acc (_,content) -> (extract_consequence_from_rule r content)::acc)
       []
       (r.lhs.arity+1,r.content)
       make_search_array
       
 
-	    
-	    
+      
+      
 
 end
   

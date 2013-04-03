@@ -1,0 +1,16 @@
+load d conjunction.acg;
+compose syntax2strings intermediate2simple as intermediate2strings;
+compose intermediate2strings abstract2intermediate as abstract2strings;
+compose semantics abstract2intermediate as abstract2semantics;
+
+
+abstract2intermediate abstract2strings abstract2semantics analyse AND (raise JOHN) EVERYONE SLEEP:S;
+abstract2intermediate abstract2strings abstract2semantics analyse AND SOMEONE EVERYONE SLEEP:S;
+
+intermediate2strings semantics analyse EVERYONE (lambda x.SOMEONE (lambda y.AND (lambda P.P y)(lambda P.P x) SLEEP)):S;
+
+intermediate2strings semantics analyse SOMEONE (lambda y.EVERYONE (lambda x.AND (lambda P.P y)(lambda P.P x) SLEEP)):S;
+
+intermediate2strings semantics analyse AND SOMEONE EVERYONE SLEEP:S;
+
+abstract2intermediate abstract2strings abstract2semantics analyse SOMEONE @ (lambda y.EVERYONE @ (lambda x.AND (raise x)(raise y) SLEEP)):S;
