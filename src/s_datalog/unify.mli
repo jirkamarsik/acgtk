@@ -19,7 +19,8 @@ end
 module type RulesAbstractSyntac_TYPE =
 sig
   type content =  | Var of VarGen.var | Const of Const.t
-  type predicate={name:string;
+  type predicate_id_type=string
+  type predicate={p_id:predicate_id_type;
 		  arity:int;
 		  components:content list
 		 (* It is assumed that the size of the list is the
@@ -27,6 +28,7 @@ sig
 		 }      
   type rule={id:int;
 	     lhs:predicate;
-	     rhs:predicate list
+	     e_rhs:predicate list; (*represents the extensionnal predicates of the rule *)
+	     i_rhs:predicate list; (*represents the intensionnal predicates of the rule *)
 	    }
 end

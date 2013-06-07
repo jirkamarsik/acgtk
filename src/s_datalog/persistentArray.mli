@@ -61,4 +61,10 @@ sig
       so any further modifier version of this array becomes
       unaccessible. *)
   val print_and_reroot : ('a -> string) -> 'a t -> unit
+
+  (** [copy t] returns a copy of [t], that is, a fresh array
+      containing the same elements as [t]. [t] is unchanged.*)
+
+  val copy : 'a t -> 'a t
+
 end

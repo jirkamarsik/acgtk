@@ -21,7 +21,8 @@ end
 module type RulesAbstractSyntac_TYPE =
 sig
   type content =  | Var of VarGen.var | Const of Const.t
-  type predicate={name:string;
+  type predicate_id_type=string
+  type predicate={p_id:predicate_id_type;
 		  arity:int;
 		  components:content list
 		 (* It is assumed that the size of the list is the
@@ -29,7 +30,8 @@ sig
 		 }      
   type rule={id:int;
 	     lhs:predicate;
-	     rhs:predicate list
+	     e_rhs:predicate list; (*represents the extensionnal predicates of the rule *)
+	     i_rhs:predicate list; (*represents the intensionnal predicates of the rule *)
 	    }
 end
 
@@ -38,34 +40,36 @@ end
 module Pred_and_Rules =
 struct
   type content =  | Var of VarGen.var | Const of Const.t
-  type predicate_name=string
-  type predicate={name:predicate_name;
+  type predicate_id_type=string
+  type predicate={p_id:predicate_id_type;
 		  arity:int;
 		  components:content list
 		 (* It is assumed that the size of the list is the
 		    arity *)
 		 }      
-  type rule={id:int;
+  type rule={r_id:int;
 	     lhs:predicate;
-	     rhs:predicate list
+	     e_rhs:predicate list;
+	     i_rhs:predicate list;
 	    }
 end
 
-module Facts=Map.Make(
-  struct
-    type t=string
-    let compare=String.compare
-  end)
 
   
 module Unify (S:UnionFind.Store)(P:RulesAbstractSyntac_TYPE) =
 struct
   exception Fails
   module UF= UnionFind.Make(S)
-    
-  type predicate={name:string; (* TODO: Should be an int for efficiency*)
+
+  type predicate_id_type=string 
+  type predicate={p_id:P.predicate_id_type;    (* TODO: Should be an int for efficiency*)
 		  arity:int;
 		 }
+
+  module Facts=Utils.StringMap
+  (*Map.Make( struct type t=string let compare=String.compare end) *)
+
+  module Indexed_Facts=Utils.IntMap 
     
   (** In an [internal_rule], all the compoments of all the predicates
       are stored in a {! UnionFind} indexed data structure. We assume
@@ -76,20 +80,21 @@ struct
       structure is correct (no cycle, links within the range, etc.) *)
   type rule={id:int;
 	     lhs:predicate;
-	     rhs:predicate list;
+	     e_rhs:predicate list;
+	     i_rhs:predicate list;
 	     content:Const.t UF.t
 	    (* TODO: Maybe put the label of the predicate in the
 	       content in order to enforce checking of the current
 	       instanciation *)
 	    }
 
-  let make_predicate p = {name=p.P.name;arity=p.P.arity}
+  let make_predicate p = {p_id=p.P.p_id;arity=p.P.arity}
 
 
 
   (** [add_pred_components_to_content components
       (content,idx,mapped_vars)] returns a triple
-      (content',idx'mapped_vars') where [content'] is the list
+      (content',idx',mapped_vars') where [content'] is the list
       [content] to which has been added {e *in the reverse order*}
       updated with information from components. The update is such
       that if the component is a [Var i] then it is replaced by a
@@ -130,24 +135,32 @@ struct
       (content,idx,mapped_vars)
       components
       
-  (** [make_rule r] returns an internal rule, that is one whous
+  (** [make_rule r] returns an internal rule, that is one whose
       content is now a {! UnionFind.UnionFind} indexed data
       structure *)
       
-  let make_rule {P.id=id;P.lhs=lhs;P.rhs=rhs} =
+  let make_rule {P.id=id;P.lhs=lhs;P.e_rhs=e_rhs;P.i_rhs=i_rhs} =
     (* Be careful, the list of the rhs is reversed *)
     let lhs_content=
       add_pred_components_to_content lhs.P.components ([],1,VarGen.VarMap.empty) in
-    let rhs,(content,_,_) =
+    let e_rhs,e_rhs_content =
       List.fold_left
-	(fun (rhs,content) {P.name=n;P.arity=k;P.components=pred_comps} ->
-	  ({name=n;arity=k} :: rhs,
+	(fun (rhs,content) {P.p_id=n;P.arity=k;P.components=pred_comps} ->
+	  ({p_id=n;arity=k} :: rhs,
 	   add_pred_components_to_content pred_comps content))
 	([],lhs_content)
-	rhs in
+	e_rhs in
+    let i_rhs,(content,_,_) =
+      List.fold_left
+	(fun (rhs,content) {P.p_id=n;P.arity=k;P.components=pred_comps} ->
+	  ({p_id=n;arity=k} :: rhs,
+	   add_pred_components_to_content pred_comps content))
+	([],e_rhs_content)
+	i_rhs in
     {id=id;
      lhs=make_predicate lhs;
-     rhs=List.rev rhs;
+     e_rhs=List.rev e_rhs;
+     i_rhs=List.rev i_rhs;
      content=UF.create (List.rev content)
     }
 
@@ -170,7 +183,7 @@ struct
       the components of [p]. When such an instanciation fails, it
       raises {! UF.Union_Failure} *)
   let instanciate_idb_predicate_in_rule
-      {P.name=_;P.arity=_;P.components=components}
+      {P.p_id=_;P.arity=_;P.components=components}
       (idx,content) =
     List.fold_left
       (fun (i,cont) value ->
@@ -181,11 +194,11 @@ struct
       (idx,content)
       components
 
-  (** [extract_fact_from_rule r content] returns a fact (that is
-      something of type [P.rule] whose components all are of the form [Const c]
-  *)
+  (** [extract_consequence_from_rule r content] returns a fact (that
+      is something of type [P.rule] whose components all are of the
+      form [Const c] *)
   let extract_consequence_from_rule r content =
-    {P.name=r.lhs.name;
+    {P.p_id=r.lhs.p_id;
      P.arity=r.lhs.arity;
      P.components=
 	List.map 
@@ -212,24 +225,89 @@ struct
     end
   )
     
-  (** [instanciate_rule r idb] returns a list of facts generated by
-      the rule [r] using the facts stored in [idb]. {e *these facts
-      are not added to [idb] when collecting the new facts}.
+  (** [immediate_consequence_of_rule r idb] returns a list of facts
+      generated by the rule [r] using the facts stored in [idb]. {e
+      *these facts are not added to [idb] when collecting the new
+      facts}.
 
       Note that it is important that resulting states need to be
       processed otherwise they will be lost in backtracking when using
       {! PersistentArray}.*)
   let rec immediate_consequence_of_rule r idb =
-    let make_search_array = List.map (fun pred -> Facts.find pred.name idb) r.rhs in
+    (* We collect all the contents compatible with the facts of the
+       intensional database *)
+    let make_search_array_i_pred =
+      List.map (fun pred -> Facts.find pred.p_id idb) r.i_rhs in
+    (* We define the function to be run on each reached end state of
+       the instantiation with the extensional predicates *)
+    let resume_on_i_pred acc state =
+      FactArray.collect_results
+	(fun l_acc (_,content) -> (extract_consequence_from_rule r content)::l_acc)
+	acc
+	state
+	make_search_array_i_pred in
+    (* We now collect all the contents compatible with the facts of
+       the extensional database *)
+    let make_search_array_e_pred =
+      List.map (fun pred -> Facts.find pred.p_id idb) r.e_rhs in
     FactArray.collect_results
-      (fun acc (_,content) -> (extract_consequence_from_rule r content)::acc)
+      (fun acc s -> resume_on_i_pred acc s)
       []
       (r.lhs.arity+1,r.content)
-      make_search_array
-      
+      make_search_array_e_pred
 
+  (** [temp r time delta_position e_facts
+      time_indexed_intensional_facts
+      time_indexed_delta_intensional_facts] returns a list ot new
+      facts that are deduced from [temp{^ time+1}{_ S}] whrer [S] is
+      the head predicate of the rule [r] and [delta_position] the
+      index of the intensional predicate that is under focus as
+      described in {{:
+      http://webdam.inria.fr/Alice/pdfs/Chapter-13.pdf} Chap. 13 of
+      "Foundations of Databases", Abiteboul, Hull, and Vianu}
+      (p.315).*)
+  let temp r time (rev_pred_lst,delta_position,pred_lst) e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts =
+    (* We collect all the contents compatible with the facts of the
+       intensional database *)
+    let make_search_array_i_pred =
+      let delta_facts=
+	Facts.find delta_position.p_id (Indexed_Facts.find time time_indexed_delta_intensional_facts) in
+      let end_pred_facts =
+	List.map
+	  (fun pred -> Facts.find pred.p_id (Indexed_Facts.find (time-1) time_indexed_intensional_facts))
+	  pred_lst in
+      List.fold_left
+	(fun acc pred ->
+	  (Facts.find pred.p_id (Indexed_Facts.find time time_indexed_intensional_facts))::acc)
+	(delta_facts::end_pred_facts)
+	rev_pred_lst in
+    (* We define the function to be run on each reached end state of
+       the instantiation with the extensional predicates *)
+    let resume_on_i_pred acc state =
+      FactArray.collect_results
+	(fun l_acc (_,content) -> (extract_consequence_from_rule r content)::l_acc)
+	acc
+	state
+	make_search_array_i_pred in
+    (* We now collect all the contents compatible with the
+       facts of the extensional database *)
+    let make_search_array_e_pred =
+      List.map (fun pred -> Facts.find pred.p_id e_facts) r.e_rhs in
+    FactArray.collect_results
+      (fun acc s -> resume_on_i_pred acc s)
+      []
+      (r.lhs.arity+1,r.content)
+      make_search_array_e_pred
       
-      
+  type program = {i_db:rule list Facts.t;e_db:rule list Facts.t}
+    
+(*  let all_temp_results_for_predicate s {i_db=i_db;e_db=idb} time_indexed_intensional_facts time_indexed_delta_intensional_facts =
+    let rules =
+      List.fold_left
+	(fun acc rule -> )
+	Facts.find s i_db
+*)  
+
 
 end
   

@@ -26,7 +26,7 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma str.cma kaputt.cma
+LIBS += dyp.cma str.cma @KAPUTT_LIB@
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
@@ -50,5 +50,5 @@ EXE_SOURCES = test.ml
 
 include ../Makefile.common
 
-unify.cmo : PP=-pp "@KAPUTT_PP@ off camlp4o"
+unify.cmo : PP=$(KAPUTT_OCAMLPP)
 unify.cmo : unify.mlt

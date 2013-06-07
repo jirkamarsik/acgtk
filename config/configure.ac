@@ -161,6 +161,7 @@ else
    fi
 fi  
 if test -f $KAPUTT_PLACE/kaputt.cma ; then
+   KAPUTT_LIB=kaputt.cma
    AC_MSG_RESULT(kaputt library is $KAPUTT_PLACE/kaputt.cma)
 else
    AC_MSG_RESULT(Could not find kaputt library "kaputt.cma" in $KAPUTT_PLACE. No link to the kaputt library will be allowed in compilation)
@@ -238,6 +239,7 @@ AC_SUBST(OCAMLLEX)
 AC_SUBST(DYPGEN)
 AC_SUBST(DYPGEN_INCLUDE)
 AC_SUBST(KAPUTT_INCLUDE)
+AC_SUBST(KAPUTT_LIB)
 AC_SUBST(KAPUTT_PP)
 
 AC_SUBST(TYPES)

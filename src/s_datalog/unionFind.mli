@@ -62,6 +62,8 @@ sig
       as [h] (possibly differently stored, for instance using path
       compression while checking [h] cyclicity. *)
   val cyclic : int -> 'a t -> (bool * 'a t)
+
+  val copy : 'a t -> 'a t
 end
 
 (** Modules with this module type should provide an indexed (by [int]
@@ -79,6 +81,7 @@ sig
   val empty : int -> 'a t
   val get : int -> 'a t -> 'a
   val set : int -> 'a -> 'a t -> 'a t
+  val copy : 'a t -> 'a t
 end
   
 (** This (functor) module implements a {! UnionFind} data structure. The

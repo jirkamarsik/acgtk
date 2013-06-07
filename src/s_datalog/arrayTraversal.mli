@@ -1,23 +1,23 @@
 (** This module implements a depth-first array traversal. It is
     depth-first in order to fit with backtracking when cells contain
-    persitent array. *)
+    persistent array. *)
 
 
 module type Evaluator_TYPE =
-  sig
-    type state
-    type cell
-    val update: state -> cell -> state option
-  end
-
+sig
+  type state
+  type cell
+  val update: state -> cell -> state option
+end
+  
 module Make (E:Evaluator_TYPE) :
 sig
   (** The type of a row *)
   type row = E.cell list
-
+    
   (** The type of the array *)
   type array = row list
-
+    
   (** [collect_results f acc init a] returns [f (... (f (f (f acc s1)
       s2) s3)... ) sN] where [s1 ... aN] are the states when reaching
       the end of the paths from top to bottom of [a] such that for all

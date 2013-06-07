@@ -65,6 +65,8 @@ sig
       as [h] (possibly differently stored, for instance using path
       compression while checking [h] cyclicity. *)
   val cyclic : int -> 'a t -> (bool * 'a t)
+
+  val copy : 'a t -> 'a t
 end
 
 (** Modules with this module type should provide an indexed (by [int]
@@ -82,6 +84,7 @@ sig
   val empty : int -> 'a t
   val get : int -> 'a t -> 'a
   val set : int -> 'a -> 'a t -> 'a t
+  val copy : 'a t -> 'a t
 end
   
 (** This (functor) module implements a {! UnionFind} data structure. The
@@ -271,7 +274,8 @@ struct
   let cyclic i h = 
     let res,_,f = cyclic_aux i h.parents (IntSet.empty) in
     res,{h with parents=f}
-      
+
+  let copy {rank=r;parents=p}={rank=S.copy r;parents=S.copy p}
       
 end
 
@@ -286,6 +290,7 @@ struct
     with
     | Not_found -> raise Not_found
   let set k v m = IntMap.add k v m
+  let copy m=m
 end
 
 

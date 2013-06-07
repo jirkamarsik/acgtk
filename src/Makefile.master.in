@@ -35,7 +35,13 @@ OCAMLDOC_FLAGS = -sort -keep-code -html -t $(TITLE)
 LIBS = @CAMLP4_LIB@
 LIBDIR = -I +camlp4
 
-OCAMLPP = -pp "@OCAMLP4@ pa_extend.cmo pa_macro.cmo $(DEBUGFLAGS) @OCAMLP4_LOC@"
+OCAMLPP_ARG= pa_extend.cmo pa_macro.cmo $(DEBUGFLAGS) @OCAMLP4_LOC@
+OCAMLPP = -pp "@OCAMLP4@ $(OCAMLPP_ARG)"
+ifeq ($(strip @KAPUTT_PP@),)
+KAPUTT_OCAMLPP = $(OCAMLPP)
+else
+KAPUTT_OCAMLPP = -pp "@KAPUTT_PP@ off @OCAMLP4@ $(OCAMLPP_ARG)"
+endif
 
 @SET_MAKE@
 

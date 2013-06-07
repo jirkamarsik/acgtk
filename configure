@@ -591,6 +591,7 @@ OCAMLP4_LOC
 OCAML09WARNINGS
 TYPES
 KAPUTT_PP
+KAPUTT_LIB
 KAPUTT_INCLUDE
 DYPGEN_INCLUDE
 CAMLP4_LIB
@@ -2249,6 +2250,7 @@ $as_echo "Could not find a suitable place for kaputt library in $OCAML_LIB. No l
    fi
 fi
 if test -f $KAPUTT_PLACE/kaputt.cma ; then
+   KAPUTT_LIB=kaputt.cma
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: kaputt library is $KAPUTT_PLACE/kaputt.cma" >&5
 $as_echo "kaputt library is $KAPUTT_PLACE/kaputt.cma" >&6; }
 else
@@ -2357,6 +2359,7 @@ $as_echo "$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
 
 
 #AC_SUBST(OCAMLYACC)
+
 
 
 

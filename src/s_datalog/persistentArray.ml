@@ -26,7 +26,7 @@ struct
     | Arr a -> a.(i+1)
     | Diff (j,v,_) when j=i -> v
     | Diff (_,_,t') -> get_v1 i t'
-    | Invalid _ -> raise Unaccessible
+    | Invalid -> raise Unaccessible
 
   let set_v1 i v t =
     match !t with
@@ -37,7 +37,7 @@ struct
       let () = t := Diff(i,old_v,res) in
       res
     | Diff _ -> ref (Diff (i,v,t))
-    | Invalid _ -> raise Unaccessible
+    | Invalid  -> raise Unaccessible
 
   (* TODO: can it be made tail-recursive (see Filliatre &
      Conchon's paper) *)
@@ -103,7 +103,7 @@ struct
     | Diff (i,v,t') -> 
       let () = Printf.printf "d%i:%s\n" i (f v) in
       print f t'
-    | Invalid _ -> Printf.printf "Inaccessible value\n"
+    | Invalid  -> Printf.printf "Inaccessible value\n"
 
   let print_and_reroot f t =
     let () = reroot t in
@@ -117,6 +117,17 @@ struct
     | Arr a -> Array.length a
     | Diff _ -> failwith "Bug: rerooted array shoul be a Arr of a"      
     | Invalid -> failwith "Bug: rerooted array shoul be a Arr of a"      
+
+  let rec copy_aux t =
+    match !t with
+    | Arr a ->  Array.copy a
+    | Diff (i,v,a) -> 
+      let res = copy_aux a in
+      let () = res.(i) <- v in
+      res
+    | Invalid -> raise Unaccessible
+
+  let copy t = ref (Arr (copy_aux t))
 
 
 
