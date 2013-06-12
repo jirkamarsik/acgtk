@@ -44,14 +44,14 @@ sig
   (** [union i j h] returns a new indexed storage data structure where
       values indexed by [i] and [j] have been unified (ie one of the
       two is now linked to the index of the representative of the
-      other. It fails and raises the {! UnionFind.Union_Failure}
+      other. It fails and raises the {! Union_Failure}
       exception if both [i] and [j] representatives index actual
       values [Value a] and [Value b] and [a != b]. *)
   val union : int -> int -> 'a t -> 'a t
 
   (** [instantiate i t h] returns a new indexed storage data structure
       where the value indexed by [i] and [t] have been unified. It
-      fails and raises the {! UnionFind.Union_Failure} exception if
+      fails and raises the {! Union_Failure} exception if
       [i]'s representative indexes an actual values [Value a] such
       that [a] differs from [t]. *)
   val instantiate : int ->  'a  -> 'a t -> 'a t

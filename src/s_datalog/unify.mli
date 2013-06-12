@@ -16,6 +16,7 @@ sig
    default equality and not [eq], should be revised *)
 end
 
+(*
 module type RulesAbstractSyntac_TYPE =
 sig
   type content =  | Var of VarGen.var | Const of Const.t
@@ -32,3 +33,4 @@ sig
 	     i_rhs:predicate list; (*represents the intensionnal predicates of the rule *)
 	    }
 end
+*)

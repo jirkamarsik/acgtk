@@ -21,10 +21,10 @@ sig
   (** [collect_results f acc init a] returns [f (... (f (f (f acc s1)
       s2) s3)... ) sN] where [s1 ... aN] are the states when reaching
       the end of the paths from top to bottom of [a] such that for all
-      [s] resulting from the path [c1 ; ... ; cK]] (all paths have
-      this shape) [s = E.update (... E.update (E.update (E.update init
-      c1) c2) ...) cK] and none of this [E.update] calls returned a
-      [None] value (hence the noation abuse of applying [E.update] to
-      a [state] instead of a [state option] in this description).*)
+      [s] resulting from the path [c1 ; ... ; cK] (all paths have this
+      shape) [s = E.update (... E.update (E.update (E.update init c1)
+      c2) ...) cK] and none of this [E.update] calls returned a [None]
+      value (hence the notation abuse of applying [E.update] to a
+      [state] instead of a [state option] in this description).*)
   val collect_results : ('a -> E.state -> 'a) -> 'a -> E.state -> array -> 'a
 end
