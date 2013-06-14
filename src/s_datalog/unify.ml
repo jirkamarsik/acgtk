@@ -77,7 +77,7 @@ struct
   exception Fails
   module UF= UnionFind.Make(S)
 
-  type predicate_id_type=string 
+(*  type predicate_id_type=string *)
   type predicate={p_id:P.predicate_id_type;    (* TODO: Should be an int for efficiency*)
 		  arity:int;
 		 }
@@ -435,8 +435,32 @@ struct
       []
       (PredMap.find s.p_id rules)
 
-(*  let seminaive*)
       
+(*
+  let seminaive prog =
+    let seminaive_aux facts delta_facts =
+      if PredMap.is_empty indexed_delta_facts then
+	facts
+      else
+	(* TODO: Check that PredMap has all intentionsal predicates of
+	   prog *)
+	PredMap.fold
+	  (fun pred fact_list acc ->
+	    PredSet.
+	    p_semantics_for_predicate pred.lhs prog e_facts facts delta_facts
+	  )
+	  facts
+	  PredMap.empty
+	  (PredMap.merge
+	     (fun pred_id v1 v2 ->
+	       match v1,v2 with
+	       | Some l1,Some l2 -> Some (List.rev_append l1 l2)
+	       | _ -> failwith "Bug: this should not happen")
+	     facts
+	     delta_facts)
+*)	  
+	  
+	  
 
 
 end
