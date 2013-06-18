@@ -34,6 +34,7 @@ module AllIntArray = ArrayTraversal.Make(
   struct
     type state=int list
     type cell=int
+    let cell_compare i j=i-j
     let update s c = Some (c :: s)
   end
 )
@@ -41,6 +42,7 @@ module AllIntArray = ArrayTraversal.Make(
 module EvenIntArray = ArrayTraversal.Make(
   struct
     type state=int list
+    let cell_compare i j=i-j
     type cell=int
     let update s c = if (c mod 2)=0 then Some (c :: s) else None
   end
@@ -48,6 +50,7 @@ module EvenIntArray = ArrayTraversal.Make(
 module OddIntArray = ArrayTraversal.Make(
   struct
     type state=int list
+    let cell_compare i j=i-j
     type cell=int
     let update s c = if (c mod 2)=1 then Some (c :: s) else None
   end

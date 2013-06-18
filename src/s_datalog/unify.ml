@@ -8,6 +8,8 @@ struct
   let init () = Generator 0
   let get_fresh_var (Generator n) = Var n, Generator (n+1)
 
+  let compare (Var i) (Var j) = i-j
+
   module VarMap=Map.Make(struct type t=var let compare (Var i) (Var j)=i-j end)
 end
 
@@ -17,6 +19,8 @@ struct
   let eq i j = (i=j)
 (* TODO: in case the type become more complex, unification, based on
    default equality, should be revised *)
+
+  let compare i j = i-j
 end
 
 module type RulesAbstractSyntac_TYPE =
@@ -24,7 +28,7 @@ sig
   type _ content = 
   | Var : VarGen.var -> VarGen.var content
   | Const : Const.t -> Const.t content
-  type predicate_id_type=string
+  type predicate_id_type (*=string*)
   type 'a predicate={p_id:predicate_id_type;
 		     arity:int;
 		     components:'a content list 
@@ -41,8 +45,11 @@ sig
   type  fact = Const.t predicate
   type  ground_clause = Const.t rule
     
-    
+
+  val fact_compare : fact -> fact -> int
   val compare : predicate_id_type -> predicate_id_type -> int
+
+
 end
 
 (** These modules are the abstract syntactic representations of
@@ -68,6 +75,30 @@ struct
   type  fact = Const.t predicate
   type  ground_clause = Const.t rule
   let compare id1 id2 = String.compare id1 id2
+
+  let rec content_compare l1 l2 =
+    match l1,l2 with
+    | [],[] -> 0
+    | [],_ -> -1
+    | _,[] -> 1
+    | (Const a1)::tl1,(Const a2)::tl2 ->
+      let res = Const.compare a1 a2 in
+      if Const.compare a1 a2 <> 0 then
+	res
+      else
+	content_compare tl1 tl2
+
+  let fact_compare ({p_id=id1;arity=a1;components=l1}:fact) ({p_id=id2;arity=a2;components=l2}:fact) =
+    let res = compare id1 id2 in
+    if res<>0 then
+      res
+    else
+      let res = a1-a2 in
+      if res<>0 then
+	res
+      else
+	content_compare l1 l2
+
 end
 
 
@@ -88,7 +119,29 @@ struct
       type t=P.predicate_id_type
       let compare=P.compare 
      end)
-    
+
+  (** A map whose key is of type [predicate_id_type] *)
+  (* TODO : This should be a map recording the way each of this
+     predicate was derived *)
+  module FactSet=Set.Make
+    (struct
+      type t=P.fact
+      let compare = P.fact_compare 
+     end)
+
+  (** [conditionnal_add e s1 s2 s3] adds [e] to the set [s1] only if
+      [e] doesn't belong to [s2] nor to [s3]*)
+  let conditionnal_add e s1 s2 s3=
+    if FactSet.mem e s2 then
+      s1
+    else
+      if FactSet.mem e s3 then
+	s1
+      else
+	FactSet.add e s1
+	
+
+	
   (** A map indexed by integers to store facts at step (or time) [i]
       in the seminaive algorithm. These facts are also indexed by
       [predicate_id_type]. *)
@@ -232,10 +285,12 @@ struct
       such that we don't consider cells (i.e. facts) that don't unify
       with the rule (i.e. a {! UF.Union_Failure} exception was
       raised).*)
-  module FactArray=ArrayTraversal.Make(
+  module FactArray=ArrayTraversal.Make2(
     struct
       type state = int*(Const.t UF.t)
-      type cell = P.fact
+      type cell = FactSet.elt (*P.fact *)
+      module CellSet=FactSet
+(*      let cell_compare = P.fact_compare*)
       let update s c =
 	try 
 	  Some (instantiate_with c s)
@@ -343,22 +398,22 @@ struct
       []
       (PredMap.find s.p_id rules)
       
-  (** [temp_facts r time e_facts time_indexed_intensional_facts
-      time_indexed_delta_intensional_facts agg_f start] returns the
-      result of applying [agg_f] to [start] and to all the facts that
-      are deduced from [temp]{^ [time+1]}{_ [S]} where [S] is the head
-      predicate of the rule [r] and [temp] is the set of temporary
-      rules associated with [r] as in the algorithm described in {{:
+  (** [temp_facts r e_facts previous_step_facts facts delta_facts
+      agg_f start] returns the result of applying [agg_f] to [start]
+      and to all the facts that are deduced from [temp]{^ [time+1]}{_
+      [S]} where [S] is the head predicate of the rule [r] and [temp]
+      is the set of temporary rules associated with [r] as in the
+      algorithm described in {{:
       http://webdam.inria.fr/Alice/pdfs/Chapter-13.pdf} Chap. 13 of
-      "Foundations of Databases", Abiteboul, Hull, and Vianu}
-      (p.315).
+      "Foundations of Databases", Abiteboul, Hull, and Vianu} (p.315).
 
-      [time_indexed_delta_intensional_facts] and
-      [time_indexed_intensional_facts] are the databases from which
-      the facts for these deductions are taken, Hence they are indexed
-      by time (or step). *)
+      [previous_step_facts] and [facts] denote the intentional facts
+      at the two required successive steps and [delta_facts] denote
+      the new facts that are computed during this step. *)
 
-  let temp_facts r time e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts agg_function start =
+  (* TODO: if a set of facts for a predicate of the rhs is empty, we
+     can stop the computation *)
+  let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start =
     (* We firs collect all the contents compatible with the facts of
        the intensional database. They depend on the intensional
        predicate [delta_position] and the ones that are before it
@@ -367,14 +422,14 @@ struct
        type. *)
     let make_search_array_i_pred (rev_pred_lst,delta_position,pred_lst) =
       let delta_facts=
-	PredMap.find delta_position.p_id (Indexed_Facts.find time time_indexed_delta_intensional_facts) in
+	PredMap.find delta_position.p_id delta_facts in
       let end_pred_facts =
 	List.map
-	  (fun pred -> PredMap.find pred.p_id (Indexed_Facts.find (time-1) time_indexed_intensional_facts))
+	  (fun pred -> PredMap.find pred.p_id previous_step_facts)
 	  pred_lst in
       List.fold_left
 	(fun acc pred ->
-	  (PredMap.find pred.p_id (Indexed_Facts.find time time_indexed_intensional_facts))::acc)
+	  (PredMap.find pred.p_id facts)::acc)
 	(delta_facts::end_pred_facts)
 	rev_pred_lst in
     (* We now init the focused list corresponding to the intensional
@@ -413,14 +468,13 @@ struct
       (r.lhs.arity+1,r.content)
       make_search_array_e_pred
 
-  (** [p_semantics_for_predicate s time prog e_facts
-      time_indexed_intensional_facts
-      time_indexed_delta_intensional_facts] returns a list of all the
-      facts that can deduced by all the rules in [prog] at time [time]
-      whose lhs predicate is [s] when the edb is [e_facts], the time
-      indexed facts are [time_indexed_intensional_facts] and the time
-      indexed variation of facts are
-      [time_indexed_delta_intensional_facts].
+  (** [p_semantics_for_predicate s prog e_facts previous_step_facts
+      facts delta_facts] returns a set of all the facts that can
+      deduced by all the rules in [prog] at a given step and whose lhs
+      predicate is [s] when the edb is [e_facts], the step has
+      produced [facts] and the previous step has produced
+      [previous_step_facts] and the variation of facts at this step
+      are [delta_facts].
 
       It corresponds to [P]{^ [time]}{_ [S]} [(edb,T]{^ [time -1]}{_
       [1]}[,...,T]{^ [time-1]}{_ [l]}[,T]{^ [time]}{_ [1]}[,...,T]{^
@@ -428,39 +482,41 @@ struct
       [time]}{_ [T]{_ [l]}}) in {{:
       http://webdam.inria.fr/Alice/pdfs/Chapter-13.pdf} Chap. 13 of
       "Foundations of Databases", Abiteboul, Hull, and Vianu} *)
-  let p_semantics_for_predicate s time {rules=rules} e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts =
+  let p_semantics_for_predicate s_id {rules=rules} e_facts previous_step_facts facts delta_facts =
     List.fold_left
       (fun acc r ->
-	temp_facts r time  e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts  (fun hd tl -> hd::tl) acc)
-      []
-      (PredMap.find s.p_id rules)
+	temp_facts r e_facts previous_step_facts facts delta_facts  (fun hd tl -> conditionnal_add hd tl (PredMap.find r.lhs.p_id previous_step_facts) (PredMap.find r.lhs.p_id delta_facts)) acc)
+      FactSet.empty
+      (PredMap.find s_id rules)
 
       
-(*
+
   let seminaive prog =
+    let e_facts=PredMap.empty in
     let seminaive_aux facts delta_facts =
-      if PredMap.is_empty indexed_delta_facts then
+      if PredMap.is_empty delta_facts then
 	facts
       else
 	(* TODO: Check that PredMap has all intentionsal predicates of
 	   prog *)
 	PredMap.fold
 	  (fun pred fact_list acc ->
-	    PredSet.
-	    p_semantics_for_predicate pred.lhs prog e_facts facts delta_facts
-	  )
-	  facts
-	  PredMap.empty
+	    PredMap.add
+	      pred
+	      (p_semantics_for_predicate pred prog e_facts fact_list facts delta_facts)
+	      acc)
 	  (PredMap.merge
 	     (fun pred_id v1 v2 ->
 	       match v1,v2 with
 	       | Some l1,Some l2 -> Some (List.rev_append l1 l2)
+	       | Some _ as v,None -> v
 	       | _ -> failwith "Bug: this should not happen")
 	     facts
-	     delta_facts)
-*)	  
+	     delta_facts) 
+	  PredMap.empty in
+    ()
 	  
-	  
+      
 
 
 end

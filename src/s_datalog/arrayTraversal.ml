@@ -2,6 +2,7 @@ module type Evaluator_TYPE =
   sig
     type state
     type cell
+    val cell_compare : cell -> cell -> int
     val update: state -> cell -> state option
   end
 
@@ -41,6 +42,35 @@ module Make (E:Evaluator_TYPE)=
       | Stop -> acc
 	
     let collect_results f acc init array = all_results_aux f acc init array []
+end
+
+      
+
+module type Evaluator_TYPE2 =
+sig
+  type state
+  type cell
+  module CellSet:Set.S with type elt= cell
+  val update: state -> cell -> state option
+end
+
+module Make2 (E:Evaluator_TYPE2)=
+  struct
+    type row = E.CellSet.t
+    type array = row list
+
+    let rec fold_on_array f acc state = function
+      | [] -> f acc state
+      | row::remaining ->
+	E.CellSet.fold
+	  (fun elt l_acc ->
+	    match E.update state elt with
+	    | Some new_state -> fold_on_array f l_acc new_state remaining
+	    | None -> l_acc)
+	  row
+	  acc
+	  
+    let collect_results f acc init array = fold_on_array f acc init array
 end
 
       
