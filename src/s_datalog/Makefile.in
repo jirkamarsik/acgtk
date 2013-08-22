@@ -38,9 +38,11 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars ../acg-data
 
 # Source files in the right order of dependance
 
-ML = persistentArray.ml arrayTraversal.ml unionFind.ml unify.ml
+ML = persistentArray.ml arrayTraversal.ml unionFind.ml rules.ml unify.ml db_parser.ml db_lexer.ml
 
 EXE_SOURCES = test.ml
+
+CAMLLEX = db_lexer.mll
 
 ####################################
 #                                  #
@@ -52,3 +54,8 @@ include ../Makefile.common
 
 unify.cmo : PP=$(KAPUTT_OCAMLPP)
 unify.cmo : unify.mlt
+
+db_lexer.ml : db_parser.mli
+
+db_parser.mli : db_parser.mly
+	@OCAMLYACC@ $<

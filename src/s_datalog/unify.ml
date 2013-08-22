@@ -1,106 +1,6 @@
 open PersistentArray
 open Focused_list
-
-module VarGen =
-struct
-  type var = Var of int
-  type t = Generator of int
-  let init () = Generator 0
-  let get_fresh_var (Generator n) = Var n, Generator (n+1)
-
-  let compare (Var i) (Var j) = i-j
-
-  module VarMap=Map.Make(struct type t=var let compare (Var i) (Var j)=i-j end)
-end
-
-module Const =
-struct
-  type t = int
-  let eq i j = (i=j)
-(* TODO: in case the type become more complex, unification, based on
-   default equality, should be revised *)
-
-  let compare i j = i-j
-end
-
-module type RulesAbstractSyntac_TYPE =
-sig
-  type _ content = 
-  | Var : VarGen.var -> VarGen.var content
-  | Const : Const.t -> Const.t content
-  type predicate_id_type (*=string*)
-  type 'a predicate={p_id:predicate_id_type;
-		     arity:int;
-		     components:'a content list 
-		    (** It is assumed that the size of the list is the
-			arity *)
-		    }      
-  type 'a rule={id:int;
-		lhs:'a predicate;
-		e_rhs:'a predicate list;
-		(** represents the extensionnal predicates of the rule *)
-		i_rhs:'a predicate list; 
-	       (** represents the intensionnal predicates of the rule *)
-	       }
-  type  fact = Const.t predicate
-  type  ground_clause = Const.t rule
-    
-
-  val fact_compare : fact -> fact -> int
-  val compare : predicate_id_type -> predicate_id_type -> int
-
-
-end
-
-(** These modules are the abstract syntactic representations of
-    predicates and rules *)
-module Pred_and_Rules =
-struct
-  type _ content = 
-  | Var : VarGen.var -> VarGen.var content
-  | Const : Const.t -> Const.t content
-  type predicate_id_type=string
-  type 'a predicate={p_id:predicate_id_type;
-		     arity:int;
-		     components:'a content list
-		    (** It is assumed that the size of the list is the
-			arity *)
-		    }      
-  type 'a rule={r_id:int;
-		lhs:'a predicate;
-		e_rhs:'a predicate list;
-		i_rhs:'a predicate list;
-	       }
-
-  type  fact = Const.t predicate
-  type  ground_clause = Const.t rule
-  let compare id1 id2 = String.compare id1 id2
-
-  let rec content_compare l1 l2 =
-    match l1,l2 with
-    | [],[] -> 0
-    | [],_ -> -1
-    | _,[] -> 1
-    | (Const a1)::tl1,(Const a2)::tl2 ->
-      let res = Const.compare a1 a2 in
-      if Const.compare a1 a2 <> 0 then
-	res
-      else
-	content_compare tl1 tl2
-
-  let fact_compare ({p_id=id1;arity=a1;components=l1}:fact) ({p_id=id2;arity=a2;components=l2}:fact) =
-    let res = compare id1 id2 in
-    if res<>0 then
-      res
-    else
-      let res = a1-a2 in
-      if res<>0 then
-	res
-      else
-	content_compare l1 l2
-
-end
-
+open Rules
 
   
 module Unify (S:UnionFind.Store)(P:RulesAbstractSyntac_TYPE) =
@@ -158,7 +58,7 @@ struct
 	     lhs:predicate;
 	     e_rhs:predicate list;
 	     i_rhs:predicate list;
-	     content:Const.t UF.t
+	     content:ConstGen.id UF.t
 	    (* TODO: Maybe put the label of the predicate in the
 	       content in order to enforce checking of the current
 	       instantiation *)
@@ -200,9 +100,9 @@ struct
 	match content with
 	| P.Var v -> 
 	  begin
-	    try ((UF.Link_to(VarGen.VarMap.find v vars)) :: cont,idx+1,vars) with
+	    try ((UF.Link_to(VarGen.IdMap.find v vars)) :: cont,idx+1,vars) with
 	    | Not_found -> 
-	      ((UF.Link_to idx) :: cont,idx+1,VarGen.VarMap.add v idx vars)
+	      ((UF.Link_to idx) :: cont,idx+1,VarGen.IdMap.add v idx vars)
 	  end
 	| P.Const c -> ((UF.Value c) :: cont,idx+1,vars))
       (content,idx,mapped_vars)
@@ -215,7 +115,7 @@ struct
   let make_rule {P.id=id;P.lhs=lhs;P.e_rhs=e_rhs;P.i_rhs=i_rhs} =
     (* Be careful, the list of the rhs is reversed *)
     let lhs_content=
-      add_pred_components_to_content lhs.P.components ([],1,VarGen.VarMap.empty) in
+      add_pred_components_to_content lhs.P.components ([],1,VarGen.IdMap.empty) in
     let e_rhs,e_rhs_content =
       List.fold_left
 	(fun (rhs,content) {P.p_id=n;P.arity=k;P.components=pred_comps} ->
@@ -287,7 +187,7 @@ struct
       raised).*)
   module FactArray=ArrayTraversal.Make2(
     struct
-      type state = int*(Const.t UF.t)
+      type state = int*(ConstGen.id UF.t)
       type cell = FactSet.elt (*P.fact *)
       module CellSet=FactSet
 (*      let cell_compare = P.fact_compare*)
@@ -485,37 +385,61 @@ struct
   let p_semantics_for_predicate s_id {rules=rules} e_facts previous_step_facts facts delta_facts =
     List.fold_left
       (fun acc r ->
-	temp_facts r e_facts previous_step_facts facts delta_facts  (fun hd tl -> conditionnal_add hd tl (PredMap.find r.lhs.p_id previous_step_facts) (PredMap.find r.lhs.p_id delta_facts)) acc)
+	temp_facts
+	  r
+	  e_facts
+	  previous_step_facts
+	  facts
+	  delta_facts
+	  (fun hd tl -> conditionnal_add
+	    hd
+	    tl
+	    (PredMap.find r.lhs.p_id previous_step_facts)
+	    (PredMap.find r.lhs.p_id delta_facts))
+	  acc)
       FactSet.empty
       (PredMap.find s_id rules)
 
-      
-
   let seminaive prog =
     let e_facts=PredMap.empty in
-    let seminaive_aux facts delta_facts =
+    (** [seminaive_aux facts delta_facts] returns [(S]{^
+	[i]}[,][Delta]{^ [i+1]}{_ [S]}[)] for all [S] when [facts]
+	corresponds to [S]{^ [i-1]} for all [S] and [delta_facts] to
+	[Delta]{^ [i]}{_ [S]} for all [S] *)
+    let rec seminaive_aux facts delta_facts =
+      (* TODO: Check that PredMap has all intensional predicates of
+	 prog *)
+      let new_facts = 
+	PredMap.merge
+	  (fun pred_id v1 v2 ->
+	    match v1,v2 with
+	    | Some l1,Some l2 -> Some (FactSet.union l1 l2)
+	    | Some _ as v,None -> v
+	    | None, (Some _ as v) -> v
+	    | None,None -> None)
+	  facts
+	  delta_facts in
+      let new_delta_facts = 
+	PredMap.fold
+	  (fun pred previous_facts acc ->
+	    PredMap.add
+	      pred
+	      (p_semantics_for_predicate pred prog e_facts previous_facts facts delta_facts)
+	      acc) 
+	  PredMap.empty 
+	  new_facts in
+      (new_facts,new_delta_facts) in
+    (** [seminaive_rec (facts,delta_facts)] returns the result when
+	the fixpoint is reached, ie when [seminaive_aux facts delta_facts]
+	does not produce any new fact. This is the iteration at step 5 in
+	the seminaive algo. *)
+    let rec seminaive_rec (facts,delta_facts) = 
       if PredMap.is_empty delta_facts then
 	facts
       else
-	(* TODO: Check that PredMap has all intentionsal predicates of
-	   prog *)
-	PredMap.fold
-	  (fun pred fact_list acc ->
-	    PredMap.add
-	      pred
-	      (p_semantics_for_predicate pred prog e_facts fact_list facts delta_facts)
-	      acc)
-	  (PredMap.merge
-	     (fun pred_id v1 v2 ->
-	       match v1,v2 with
-	       | Some l1,Some l2 -> Some (List.rev_append l1 l2)
-	       | Some _ as v,None -> v
-	       | _ -> failwith "Bug: this should not happen")
-	     facts
-	     delta_facts) 
-	  PredMap.empty in
+	seminaive_rec (seminaive_aux facts delta_facts) in
     ()
-	  
+      
       
 
 
