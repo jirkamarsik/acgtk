@@ -2,31 +2,31 @@ open PersistentArray
 open Focused_list
 open Rules
 
+
+module Pred=AbstractSyntax.Predicate
+module Rule=AbstractSyntax.Rule
+module Prog=AbstractSyntax.Program
   
-module Unify (S:UnionFind.Store)(P:RulesAbstractSyntac_TYPE) =
+module Unify (S:UnionFind.Store) =
 struct
   exception Fails
   module UF= UnionFind.Make(S)
 
 (*  type predicate_id_type=string *)
-  type predicate={p_id:P.predicate_id_type;    (* TODO: Should be an int for efficiency*)
+  type predicate={p_id:Pred.pred_id;    (* TODO: Should be an int for efficiency*)
 		  arity:int;
 		 }
 
   (** A map whose key is of type [predicate_id_type] *)
-  module PredMap=Map.Make
-    (struct
-      type t=P.predicate_id_type
-      let compare=P.compare 
-     end)
+  module PredMap=Pred.PredIdMap
 
   (** A map whose key is of type [predicate_id_type] *)
   (* TODO : This should be a map recording the way each of this
      predicate was derived *)
   module FactSet=Set.Make
     (struct
-      type t=P.fact
-      let compare = P.fact_compare 
+      type t=Pred.predicate
+      let compare = Pred.fact_compare 
      end)
 
   (** [conditionnal_add e s1 s2 s3] adds [e] to the set [s1] only if
@@ -64,7 +64,7 @@ struct
 	       instantiation *)
 	    }
 
-  let make_predicate p = {p_id=p.P.p_id;arity=p.P.arity}
+  let make_predicate p = {p_id=p.Pred.p_id;arity=p.Pred.arity}
 
   (** [add_pred_components_to_content components
       (content,idx,mapped_vars)] returns a triple
@@ -96,15 +96,15 @@ struct
       itself. *)
   let add_pred_components_to_content components (content,idx,mapped_vars) =
     List.fold_left
-      (fun (type t) (cont,i,vars) (content : t P.content) -> 
+      (fun (cont,i,vars) (content : Pred.term) -> 
 	match content with
-	| P.Var v -> 
+	| Pred.Var v -> 
 	  begin
 	    try ((UF.Link_to(VarGen.IdMap.find v vars)) :: cont,idx+1,vars) with
 	    | Not_found -> 
 	      ((UF.Link_to idx) :: cont,idx+1,VarGen.IdMap.add v idx vars)
 	  end
-	| P.Const c -> ((UF.Value c) :: cont,idx+1,vars))
+	| Pred.Const c -> ((UF.Value c) :: cont,idx+1,vars))
       (content,idx,mapped_vars)
       components
       
@@ -112,20 +112,20 @@ struct
       content is now a {! UnionFind.UnionFind} indexed data
       structure *)
       
-  let make_rule {P.id=id;P.lhs=lhs;P.e_rhs=e_rhs;P.i_rhs=i_rhs} =
+  let make_rule {Rule.id=id;Rule.lhs=lhs;Rule.e_rhs=e_rhs;Rule.i_rhs=i_rhs} =
     (* Be careful, the list of the rhs is reversed *)
     let lhs_content=
-      add_pred_components_to_content lhs.P.components ([],1,VarGen.IdMap.empty) in
+      add_pred_components_to_content lhs.Pred.arguments ([],1,VarGen.IdMap.empty) in
     let e_rhs,e_rhs_content =
       List.fold_left
-	(fun (rhs,content) {P.p_id=n;P.arity=k;P.components=pred_comps} ->
+	(fun (rhs,content) {Pred.p_id=n;Pred.arity=k;Pred.arguments=pred_comps} ->
 	  ({p_id=n;arity=k} :: rhs,
 	   add_pred_components_to_content pred_comps content))
 	([],lhs_content)
 	e_rhs in
     let i_rhs,(content,_,_) =
       List.fold_left
-	(fun (rhs,content) {P.p_id=n;P.arity=k;P.components=pred_comps} ->
+	(fun (rhs,content) {Pred.p_id=n;Pred.arity=k;Pred.arguments=pred_comps} ->
 	  ({p_id=n;arity=k} :: rhs,
 	   add_pred_components_to_content pred_comps content))
 	([],e_rhs_content)
@@ -156,13 +156,14 @@ struct
       been instantiated with the components of [p]. When such an
       instantiation fails, it raises {! UF.Union_Failure} *)
   let instantiate_with
-      {P.p_id=_;P.arity=_;P.components=components}
+      {Pred.p_id=_;Pred.arity=_;Pred.arguments=components}
       (idx,content) =
     List.fold_left
       (fun  (i,cont) value ->
 	(i+1,
 	 match value with
-	 | P.Const v -> UF.instantiate i v cont))
+	 | Pred.Const v -> UF.instantiate i v cont
+	 | Pred.Var _ -> failwith "Bug: Trying to instantiate with a non-closed predicate"))
       (idx,content)
       components
       
@@ -170,12 +171,12 @@ struct
       components all are of the form [Const c] (that is something of
       type [P.rule]). *)
   let extract_consequence_from_rule r content =
-    {P.p_id=r.lhs.p_id;
-     P.arity=r.lhs.arity;
-     P.components=
+    {Pred.p_id=r.lhs.p_id;
+     Pred.arity=r.lhs.arity;
+     Pred.arguments=
 	List.map 
 	  (function
-	  | UF.Value v -> P.Const v
+	  | UF.Value v -> Pred.Const v
 	  | _ -> failwith "Bug: you're trying to extract non completely instantiated predicates")
 	  (UF.extract (r.lhs.arity) content)}
 

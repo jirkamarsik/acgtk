@@ -20,6 +20,8 @@ let string = (letter|digit|'_')*'\''*
   | ")" {RPAR}
   | ":-" {FROM}
   | letter string {IDENT (Lexing.lexeme lexbuf)}
+  | digit+ {let s = Lexing.lexeme lexbuf in
+	    INT (int_of_string s)}
 and comment level =
   parse
     | "*)" {

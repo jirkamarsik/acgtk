@@ -40,7 +40,7 @@ PREVIOUS_DIRS = ../utils ../logic ../grammars ../acg-data
 
 ML = persistentArray.ml arrayTraversal.ml unionFind.ml rules.ml unify.ml db_parser.ml db_lexer.ml
 
-EXE_SOURCES = test.ml
+EXE_SOURCES = test.ml db_test.ml
 
 CAMLLEX = db_lexer.mll
 

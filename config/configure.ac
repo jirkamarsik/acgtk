@@ -62,10 +62,16 @@ if test "$OCAMLDEP" = no ; then
         AC_MSG_ERROR(Cannot find ocamldep.)
 fi
 
-# Look for camllex
+# Look for ocamllex
 AC_CHECK_PROGS(OCAMLLEX,ocamllex.opt ocamllex,no)
 if test "$OCAMLLEX" = no ; then
 	AC_MSG_ERROR(Cannot find ocamllex)
+fi
+
+# Look for ocamlyacc
+AC_CHECK_PROGS(OCAMLYACC,ocamlyacc.opt ocamlyacc,no)
+if test "$OCAMLYACC" = no ; then
+	AC_MSG_ERROR(Cannot find ocamlyac)
 fi
 
 
@@ -235,7 +241,7 @@ AC_SUBST(OCAMLDOC)
 AC_SUBST(OCAMLDEP)
 
 AC_SUBST(OCAMLLEX)
-#AC_SUBST(OCAMLYACC)
+AC_SUBST(OCAMLYACC)
 AC_SUBST(DYPGEN)
 AC_SUBST(DYPGEN_INCLUDE)
 AC_SUBST(KAPUTT_INCLUDE)
