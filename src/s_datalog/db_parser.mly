@@ -1,6 +1,6 @@
 %{
   open IdGenerator
-  open Rules
+  open Datalog_AbstractSyntax
 %}
 
 %token <string> IDENT
@@ -9,8 +9,8 @@
 
 
 %start rule program
-%type <  (Rules.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Rules.AbstractSyntax.Predicate.PredIds.t) -> (Rules.AbstractSyntax.Rule.proto_rule*(Rules.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Rules.AbstractSyntax.Predicate.PredIds.t))> rule
-%type < Rules.AbstractSyntax.Rule.proto_rule list -> (Rules.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t) -> Rules.AbstractSyntax.Predicate.PredIds.t -> (Rules.AbstractSyntax.Rule.proto_rule list * Rules.AbstractSyntax.Predicate.PredIdTable.table * Rules.AbstractSyntax.Predicate.PredIds.t)> program
+%type <  (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t) -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule*(Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t))> rule
+%type < Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t)> program
    
 %%
   

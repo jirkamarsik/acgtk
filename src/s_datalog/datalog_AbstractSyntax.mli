@@ -28,10 +28,8 @@ sig
 		     arity *)
 		   }      
       
-    val predicate_to_string : predicate -> PredIdTable.table -> string
-
-    val fact_compare : predicate -> predicate -> int 
-    (*  val compare : pred_id -> pred_id -> int*)
+    val to_string : predicate -> PredIdTable.table -> string
+    val compare : predicate -> predicate -> int 
       
 
   end
@@ -45,8 +43,6 @@ sig
 		    }
     val proto_rule_to_string : proto_rule -> Predicate.PredIdTable.table -> string
       
-    val print_proto_rules : Predicate.PredIdTable.table -> proto_rule list -> unit
-      
     type rule={id:int;
 	       lhs:Predicate.predicate;
 	       e_rhs:Predicate.predicate list;
@@ -56,7 +52,6 @@ sig
 	      }
       
     module Rules : Set.S with type elt=rule
-      
   end
     
   module Program : 
@@ -67,9 +62,7 @@ sig
 		     i_preds:Predicate.PredIds.t}
       
     val make_program : Rule.proto_rule list -> Predicate.PredIdTable.table -> Predicate.PredIds.t -> program
-      
-    val print_program : program -> unit
-      
+    val to_buffer : program -> Buffer.t
   end
 end
 

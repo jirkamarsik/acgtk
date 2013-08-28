@@ -1,5 +1,5 @@
 open IdGenerator
-open Rules
+open Datalog_AbstractSyntax
 
 let parse_file filename =
     let in_ch = 
@@ -13,7 +13,7 @@ let parse_file filename =
     let sep=String.make 15 '*' in
     let () = Printf.printf "%s\n" sep in
     let program = AbstractSyntax.Program.make_program proto_rules pred_id_table i_preds in
-    let () = AbstractSyntax.Program.print_program program in
+    let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer program) in
     Printf.printf "%s\n" sep
       
 
