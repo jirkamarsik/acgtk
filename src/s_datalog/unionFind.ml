@@ -32,9 +32,10 @@ sig
       (starting at 1 *)
   val create : 'a content list -> 'a t
 
-  (** [extract i t] returns a list of the [i] first elements of
-      [t] *)
-  val extract : int -> 'a t -> 'a content list
+  (** [extract ~start:s i t] returns a list of the [i] first elements
+      of [t] starting from position [s] (default is 1, first
+      position) *)
+  val extract : ?start:int -> int -> 'a t -> 'a content list
 
   (** [find i h] returns not only the index of the representative and
       the values it indexes, but also the storage data structure, so
@@ -94,6 +95,8 @@ end
     http://www.lri.fr/~filliatr/ftp/publis/puf-wml07.ps}"A Persistent
     Union-Find Data Structure" (Sylvain Conchon and Jean-Chrisophe
     Filliâtre} *)
+
+
 module Make(S:Store) : S  = 
 struct
 
@@ -146,17 +149,6 @@ struct
 	contents in
     res
 
-  (** [extract i t] returns a list of the [i] first elements of
-      [t] *)
-  let extract i {parents=p} =
-    let rec extract_aux k res =
-      match k with
-      | 0 -> res
-      | i when i>0 -> extract_aux (i-1) ((S.get i p) :: res)
-      | _ -> failwith "Bug: you should ask for a positive index" in
-    extract_aux i []
-    
-
   
   (** [find_aux i f] returns a pair [(i',v),f'] where [i'] is the
       index of the representative of the data indexed by [i]. [i=i']
@@ -190,6 +182,24 @@ struct
   let find i h =
     let rep_i,f = find_aux  i h.parents in
     rep_i,{h with parents=f}
+
+  (** [extract ~start:s i t] returns a list of the [i] first elements
+      of [t] starting from position [s] (default is 1, first
+      position). It is ensured that the results only contain the
+      values of representatives (i.e it follows the [Link_to] links
+      until the value of the representative before returning it). *)
+  let extract ?(start=1) i {parents=p} =
+    let rec extract_aux k res =
+      match k-start with
+      | j when j>0 -> 
+	let (_,c),_= find_aux (start-1+j) p in
+	extract_aux (start+j-1) (c :: res)
+      | _ -> res in
+    extract_aux (start+i) []
+    
+
+
+
 
   (** [union i j h] returns a new storage data structure [h'] where
       [h'] has an equivalent content as [h] plus the unification

@@ -36,6 +36,13 @@ sig
 
   (** [print_table t] outputs the table [t] on [stdout].*)
   val print_table : table -> unit
+
+  (** [fold f table a] returns [f id1 sym1 (f id2 sym2 ( ... ( f idN
+      symN a) ... ))] where the [(id,sym)] pairs are the ones that are
+      stored in the table [table]. The order of these key-value pairs in
+      the table is unspecified. *)
+  val fold : (identifier -> string -> 'a -> 'a) -> table -> 'a -> 'a
+
 end
 
 (** Signature of modules encoding a generator of identifiers *)
@@ -140,6 +147,9 @@ struct
 	IdMap.iter
 	  (fun key value -> Printf.printf "\t%s\t<->\t%s\n%!" (ID.to_string key) value)
 	  ids
+
+      let fold f table start =
+	IdMap.fold f table.ids start
     end
 end
 

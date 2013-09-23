@@ -1,26 +1,28 @@
-module Pred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate
-module Rule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule
-module Prog:module type of Datalog_AbstractSyntax.AbstractSyntax.Program
+module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate
+module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule
+module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program
 
 module Unify :
   functor (S : UnionFind.Store) ->
     sig
       exception Fails
       module UF:UnionFind.S
+
       module Predicate :
         sig
-          type predicate = { p_id : Pred.pred_id; arity : int; }
-          val make_predicate : Pred.predicate -> predicate
+          type predicate = { p_id : ASPred.pred_id; arity : int; }
+          val make_predicate : ASPred.predicate -> predicate
 	  (*          val instantiate_with :
-		      Pred.predicate ->
+		      ASPred.predicate ->
 		      int * Datalog_AbstractSyntax.ConstGen.id UF.t ->
 		      int * Datalog_AbstractSyntax.ConstGen.id UF.t *)
-          module PredMap : Map.S with type key = Pred.pred_id
-          module FactSet :Set.S with type elt = Pred.predicate
+          module PredMap : Map.S with type key = ASPred.pred_id
+          module FactSet :Set.S with type elt = ASPred.predicate
           val conditionnal_add :
             FactSet.elt -> FactSet.t -> FactSet.t -> FactSet.t -> FactSet.t
           module Indexed_Facts : Map.S with type key = int
         end
+
       module Rule :
       sig
         type rule = {
@@ -31,15 +33,15 @@ module Unify :
           content : Datalog_AbstractSyntax.ConstGen.id UF.t;
         }
         val add_pred_arguments_to_content :
-          Pred.term list ->
+          ASPred.term list ->
           Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
             int Datalog_AbstractSyntax.VarGen.IdMap.t ->
           Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
             int Datalog_AbstractSyntax.VarGen.IdMap.t
-        val make_rule : Rule.rule -> rule
+        val make_rule : ASRule.rule -> rule
         val cyclic_unify : int -> int -> 'a UF.t -> 'a UF.t
         val extract_consequence :
-          rule -> Datalog_AbstractSyntax.ConstGen.id UF.t -> Pred.predicate
+          rule -> Datalog_AbstractSyntax.ConstGen.id UF.t -> ASPred.predicate
         module FactArray :
         sig
           type row = Predicate.FactSet.t
@@ -50,7 +52,7 @@ module Unify :
             int * Datalog_AbstractSyntax.ConstGen.id UF.t -> array -> 'a
         end
         val immediate_consequence_of_rule :
-          rule -> FactArray.row Predicate.PredMap.t -> Pred.predicate list
+          rule -> FactArray.row Predicate.PredMap.t -> ASPred.predicate list
         val temp :
           rule ->
           Predicate.Indexed_Facts.key ->
@@ -59,34 +61,40 @@ module Unify :
             FactArray.row Predicate.PredMap.t ->
             FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
             FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-            (Pred.predicate -> 'a -> 'a) -> 'a -> 'a
+            (ASPred.predicate -> 'a -> 'a) -> 'a -> 'a
         end
-      type program = {
-        rules : Rule.rule list Predicate.PredMap.t;
-        edb : Predicate.predicate list;
-        idb : Predicate.predicate list;
-      }
-      val all_temp_results_for_predicate :
-        Predicate.predicate ->
-        Predicate.Indexed_Facts.key ->
-        program ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-        Rule.FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-        Pred.predicate list
-      val temp_facts :
-        Rule.rule ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        (Pred.predicate -> 'a -> 'a) -> 'a -> 'a
-      val p_semantics_for_predicate :
-        Predicate.PredMap.key ->
-        program ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t ->
-        Rule.FactArray.row Predicate.PredMap.t -> Predicate.FactSet.t
-      val seminaive : program -> unit
+
+      module Program :
+      sig
+	type program = {
+          rules : Rule.rule list Predicate.PredMap.t;
+          edb : ASPred.pred_id list;
+          idb : ASPred.pred_id list;
+	  pred_table: ASPred.PredIdTable.table;
+	}
+	val all_temp_results_for_predicate :
+          Predicate.predicate ->
+          Predicate.Indexed_Facts.key ->
+          program ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
+          Rule.FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
+          ASPred.predicate list
+	val temp_facts :
+          Rule.rule ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          (ASPred.predicate -> 'a -> 'a) -> 'a -> 'a
+	val p_semantics_for_predicate :
+          Predicate.PredMap.key ->
+          program ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t ->
+          Rule.FactArray.row Predicate.PredMap.t -> Predicate.FactSet.t
+	val seminaive : program -> unit
+	val to_abstract : program -> ASProg.program
+      end
     end

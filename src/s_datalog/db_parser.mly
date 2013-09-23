@@ -9,38 +9,38 @@
 
 
 %start rule program
-%type <  (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t) -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule*(Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t))> rule
-%type < Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t)> program
+%type <  (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule*(Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table))> rule
+%type < Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table)> program
    
 %%
   
   program :
- | rule EOI { fun rules (pred_id_table,rule_id_gen) i_preds ->
-   let rule,(new_pred_id_table,_,new_i_preds) = $1 (pred_id_table ,rule_id_gen,i_preds) in
-   ((rule::rules),new_pred_id_table,new_i_preds)
+ | rule EOI { fun rules (pred_id_table,rule_id_gen,const_table) i_preds ->
+   let rule,(new_pred_id_table,_,new_i_preds,new_const_table) = $1 (pred_id_table,rule_id_gen,i_preds,const_table) in
+   ((rule::rules),new_pred_id_table,new_i_preds,new_const_table)
 	    }
- | rule program { fun rules (pred_id_table,rule_id_gen) i_preds ->
-     let rule,(new_pred_id_table,new_rule_id_gen,new_i_preds) = $1 (pred_id_table ,rule_id_gen,i_preds) in
-     $2 (rule::rules) (new_pred_id_table,new_rule_id_gen) new_i_preds }
- 
-       
-       rule :
- | predicate DOT { fun (pred_id_table,rule_id_gen,i_preds) -> 
+ | rule program { fun rules (pred_id_table,rule_id_gen,const_table) i_preds ->
+   let rule,(new_pred_id_table,new_rule_id_gen,new_i_preds,new_const_table) = $1 (pred_id_table ,rule_id_gen,i_preds,const_table) in
+   $2 (rule::rules) (new_pred_id_table,new_rule_id_gen,new_const_table) new_i_preds }
+     
+     
+     rule :
+ | predicate DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
    let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
-   let lhs,new_pred_id_table,_= $1 pred_id_table (VarGen.Table.empty,ConstGen.Table.empty) in
+   let lhs,new_pred_id_table,(_,new_const_table)= $1 pred_id_table (VarGen.Table.empty,const_table) in
    {AbstractSyntax.Rule.proto_id=rule_id;
     AbstractSyntax.Rule.proto_lhs=lhs;
     AbstractSyntax.Rule.proto_rhs=[]},
-   (new_pred_id_table,new_rule_id_gen,i_preds)}
+   (new_pred_id_table,new_rule_id_gen,i_preds,new_const_table)}
      
- | predicate FROM predicate_list DOT { fun (pred_id_table,rule_id_gen,i_preds) -> 
+ | predicate FROM predicate_list DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
    let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
-   let lhs,new_pred_id_table,new_tables=$1 pred_id_table (VarGen.Table.empty,ConstGen.Table.empty) in
-   let rhs,new_pred_id_table',_=$3 new_pred_id_table new_tables in
+   let lhs,new_pred_id_table,new_tables=$1 pred_id_table (VarGen.Table.empty,const_table) in
+   let rhs,new_pred_id_table',(_,new_const_table)=$3 new_pred_id_table new_tables in
    {AbstractSyntax.Rule.proto_id=rule_id;
     AbstractSyntax.Rule.proto_lhs=lhs;
     AbstractSyntax.Rule.proto_rhs=rhs},
-   (new_pred_id_table',new_rule_id_gen,AbstractSyntax.Predicate.PredIds.add lhs.AbstractSyntax.Predicate.p_id i_preds)}
+   (new_pred_id_table',new_rule_id_gen,AbstractSyntax.Predicate.PredIds.add lhs.AbstractSyntax.Predicate.p_id i_preds,new_const_table)}
      
      
      predicate_list :

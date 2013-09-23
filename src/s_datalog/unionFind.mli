@@ -29,9 +29,12 @@ sig
       (starting at 1 *)
   val create : 'a content list -> 'a t
 
-  (** [extract i t] returns a list of the [i] first elements of
-      [t] *)
-  val extract : int -> 'a t -> 'a content list
+  (** [extract ~start:s i t] returns a list of the [i] first elements
+      of [t] starting from position [s] (default is 1, first
+      position). It is ensured that the results only contain the
+      values of representatives (i.e it follows the [Link_to] links
+      until the value of the representative before returning it). *)
+  val extract : ?start:int -> int -> 'a t -> 'a content list
 
   (** [find i h] returns not only the index of the representative and
       the values it indexes, but also the storage data structure, so
@@ -91,6 +94,6 @@ end
     http://www.lri.fr/~filliatr/ftp/publis/puf-wml07.ps}"A Persistent
     Union-Find Data Structure" (Sylvain Conchon and Jean-Chrisophe
     Filliâtre} *)
-module Make(S:Store) : S
+module Make(St:Store) : S (*with type 'a t='a ST.t*)
 
 module StoreAsMap:Store
