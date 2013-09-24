@@ -1,6 +1,6 @@
 module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate
 module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule
-module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program
+module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program with type program = Datalog_AbstractSyntax.AbstractSyntax.Program.program
 
 module Unify :
   functor (S : UnionFind.Store) ->
@@ -72,6 +72,7 @@ module Unify :
           idb : ASPred.pred_id list;
 	  pred_table: ASPred.PredIdTable.table;
 	}
+        val make_program : ASProg.program -> program
 	val all_temp_results_for_predicate :
           Predicate.predicate ->
           Predicate.Indexed_Facts.key ->

@@ -67,6 +67,8 @@ sig
   val cyclic : int -> 'a t -> (bool * 'a t)
 
   val copy : 'a t -> 'a t
+
+  val to_string : 'a t  -> string
 end
 
 (** Modules with this module type should provide an indexed (by [int]
@@ -77,7 +79,7 @@ end
 module type Store =
 sig
   type 'a t
-  exception Not_found
+  exception Store_Not_found
     
   (** [empty i] should return an empty indexed storage data structure
       that will allow indexing {e with values from [1] to [i]}. *)
@@ -85,6 +87,7 @@ sig
   val get : int -> 'a t -> 'a
   val set : int -> 'a -> 'a t -> 'a t
   val copy : 'a t -> 'a t
+(*  val to_string : 'a t -> ('a -> string) -> string*)
 end
   
 (** This (functor) module implements a {! UnionFind} data structure. The

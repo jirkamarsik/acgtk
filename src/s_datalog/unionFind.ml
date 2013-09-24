@@ -68,6 +68,7 @@ sig
   val cyclic : int -> 'a t -> (bool * 'a t)
 
   val copy : 'a t -> 'a t
+  val to_string : 'a t -> string
 end
 
 (** Modules with this module type should provide an indexed (by [int]
@@ -78,7 +79,7 @@ end
 module type Store =
 sig
   type 'a t
-  exception Not_found
+  exception Store_Not_found
     
   (** [empty i] should return an empty indexed storage data structure
       that will allow indexing {e with values from [1] to [i]}. *)
@@ -86,6 +87,7 @@ sig
   val get : int -> 'a t -> 'a
   val set : int -> 'a -> 'a t -> 'a t
   val copy : 'a t -> 'a t
+(*  val to_string : 'a t -> ('a -> string) -> string *)
 end
   
 (** This (functor) module implements a {! UnionFind} data structure. The
@@ -108,6 +110,11 @@ struct
   | Link_to of int
   | Value of 'a
 
+  let content_to_string c =
+    match c with
+    | Link_to i -> Printf.sprintf "Linked to %d" i
+    | Value v -> Printf.sprintf "Some Value"
+
   (** The actual type of the data structure. The rank is used to
       implement weighted union. See {{:
       http://www.risc.jku.at/education/courses/ss2012/unification/slides/02_Syntactic_Unification_Improved_Algorithms.pdf}
@@ -127,26 +134,38 @@ struct
     let ln = List.length contents in
     let res,_=
       List.fold_left
-	(fun ({rank=r;parents=p},k) -> function
+	(fun ({rank=r;parents=p},k) content -> 
+	  let () = Printf.printf "Setting some content at address %d\n" k in
+	  match content with
 	| Link_to i as c ->
+	  let () = Printf.printf "Link to %d\n" i in
 	  (* rank is unset for contents that are initially a link *)
 	  ({rank=
 	      (try
 		let rank=S.get i r in
-		S.set i (rank+1) r
+		S.set i (rank+1) (S.set k 0 r)
 	      with
-	      | S.Not_found -> S.set i 1 r);
+	      | S.Store_Not_found -> S.set i 1 r);
 	    parents=S.set k c p},k+1)
 	| Value v as c ->
+	  let () = Printf.printf "Some value\n" in
 	  ({rank=
 	      (try
 		 let _ = S.get k r in
 		 r
 	       with
-	       | S.Not_found -> S.set k 0 r);
+	       | S.Store_Not_found -> S.set k 0 r);
 	    parents=S.set k c p},k+1))
 	({rank=S.empty ln;parents=S.empty ln},1)
 	contents in
+    let () = 
+      for i = 1 to ln do
+	Printf.printf "%d/%d\t<--->\t%s\t\t(%d)\n%!" 
+	  i
+	  ln 
+	  (content_to_string (S.get i res.parents))
+	  (S.get i res.rank)
+      done in
     res
 
   
@@ -189,6 +208,7 @@ struct
       values of representatives (i.e it follows the [Link_to] links
       until the value of the representative before returning it). *)
   let extract ?(start=1) i {parents=p} =
+    let () = Printf.printf "Going to extract %d elements starting at %d...\n" i start in
     let rec extract_aux k res =
       match k-start with
       | j when j>0 -> 
@@ -286,19 +306,35 @@ struct
     res,{h with parents=f}
 
   let copy {rank=r;parents=p}={rank=S.copy r;parents=S.copy p}
+
+  let to_string {rank=r;parents=p} =
+    let buff=Buffer.create 2 in
+    let to_string_aux i =
+      Printf.sprintf "%d\t<--->\t%s\t\t(%d)\n" i (content_to_string (S.get i p)) (S.get i r) in
+    let i=ref 1 in
+    try
+      let () =
+	while true do
+	  let () = Buffer.add_string buff (to_string_aux !i) in
+	  i:=!i+1
+	done in
+      "Bug!"
+    with
+    | S.Store_Not_found -> Buffer.contents buff
+    
       
 end
 
 module StoreAsMap =
 struct
   type 'a t = 'a IntMap.t
-  exception Not_found
+  exception Store_Not_found
   let empty _ = IntMap.empty
   let get k m = 
     try
       IntMap.find k m
     with
-    | Not_found -> raise Not_found
+    | Not_found -> raise Store_Not_found
   let set k v m = IntMap.add k v m
   let copy m=m
 end

@@ -50,6 +50,7 @@ sig
 	       i_rhs:Predicate.predicate list; 
 	    (** represents the intensionnal predicates of the rule *)
 	      }
+    val rule_to_string : rule -> Predicate.PredIdTable.table -> string
       
     module Rules : Set.S with type elt=rule
   end

@@ -11,17 +11,17 @@ struct
   end
 *)
 
-module Store =
-struct 
+module Store = UnionFind.StoreAsMap
+(*struct 
   include PersistentArray.PersistentArray
   let empty i =
     let value,_ = ConstGen.get_fresh_id (ConstGen.init ()) in
     init i (fun _ -> value)
 end
+*)
 
 
-
-module Datalog=Unify.Unify(UnionFind.Make(Store))
+module Datalog=Unify.Unify(Store)
 
 let parse_file filename =
     let in_ch = 
@@ -31,14 +31,19 @@ let parse_file filename =
     let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
     let proto_rules,pred_id_table,i_preds,_=Db_parser.program Db_lexer.lexer lexbuf [] (AbstractSyntax.Predicate.PredIdTable.empty,IntIdGen.init(),ConstGen.Table.empty) AbstractSyntax.Predicate.PredIds.empty in 
     let () = Printf.printf "Done.\n%!" in
+    let () = Printf.printf "Current symbol tables:\n%!" in
     let () = AbstractSyntax.Predicate.PredIdTable.print_table pred_id_table in
     let sep=String.make 15 '*' in
-    let () = Printf.printf "%s\n" sep in
+    let () = Printf.printf "%s\n%!" sep in
+    let () = Printf.printf "Create the abstract program and print it...\n" in
     let abs_program = AbstractSyntax.Program.make_program proto_rules pred_id_table i_preds in
     let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer abs_program) in
+    let () = Printf.printf "Done.\n" in
     let () = Printf.printf "%s\n" sep in
-(*    let program=Datalog.Program.make_program abs_program in 
-    let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract program)) in *)
+    let () = Printf.printf "Create the internal program and print it...\n" in
+    let program=Datalog.Program.make_program abs_program in 
+    let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract program)) in 
+    let () = Printf.printf "Done.\n" in
      Printf.printf "%s\n" sep
       
 
