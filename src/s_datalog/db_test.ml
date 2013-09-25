@@ -21,7 +21,7 @@ end
 *)
 
 
-module Datalog=Unify.Unify(Store)
+module Datalog=Datalog.Make(Store)
 
 let parse_file filename =
     let in_ch = 

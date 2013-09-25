@@ -2,7 +2,7 @@ module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate
 module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule
 module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program with type program = Datalog_AbstractSyntax.AbstractSyntax.Program.program
 
-module Unify :
+module Make :
   functor (S : UnionFind.Store) ->
     sig
       exception Fails

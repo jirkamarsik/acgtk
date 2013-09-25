@@ -7,7 +7,7 @@ module ASPred=AbstractSyntax.Predicate
 module ASRule=AbstractSyntax.Rule
 module ASProg=AbstractSyntax.Program
   
-module Unify (S:UnionFind.Store) =
+module Make (S:UnionFind.Store) =
 struct
   exception Fails
   module UF= UnionFind.Make(S)
