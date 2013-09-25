@@ -44,7 +44,9 @@ let parse_file filename =
     let program=Datalog.Program.make_program abs_program in 
     let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract program)) in 
     let () = Printf.printf "Done.\n" in
-     Printf.printf "%s\n" sep
+    let () = Printf.printf "%s\n" sep in
+    let _ = Datalog.Program.seminaive program in
+    ()
       
 
 let usage_msg="Usage: db_test file"

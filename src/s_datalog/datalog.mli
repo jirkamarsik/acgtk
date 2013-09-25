@@ -69,6 +69,7 @@ module Make :
 	type program = {
           rules : Rule.rule list Predicate.PredMap.t;
           edb : ASPred.pred_id list;
+	  edb_facts:Predicate.FactSet.t Predicate.PredMap.t;
           idb : ASPred.pred_id list;
 	  pred_table: ASPred.PredIdTable.table;
 	}
@@ -95,7 +96,7 @@ module Make :
           Rule.FactArray.row Predicate.PredMap.t ->
           Rule.FactArray.row Predicate.PredMap.t ->
           Rule.FactArray.row Predicate.PredMap.t -> Predicate.FactSet.t
-	val seminaive : program -> unit
+	val seminaive : program -> Rule.FactArray.row Predicate.PredMap.t
 	val to_abstract : program -> ASProg.program
       end
     end

@@ -109,6 +109,8 @@ struct
 	
     (** A map whose key is of type of the predicates identifers *)
     module PredMap=ASPred.PredIdMap
+
+      
       
     (* TODO : This should be a map recording the way each of this
        predicate was derived *)
@@ -120,6 +122,15 @@ struct
 	type t=ASPred.predicate
 	let compare = ASPred.compare 
        end)
+
+    let add_facts_to_buffer b pred_table f =
+      FactSet.iter (fun elt -> Buffer.add_string b (Printf.sprintf "%s.\n" (ASPred.to_string elt pred_table))) f 
+
+    let add_map_to_facts_to_buffer b pred_table map =
+      PredMap.iter
+	(fun _ v -> add_facts_to_buffer b pred_table v)
+	map
+
       
     (** [conditionnal_add e s1 s2 s3] adds [e] to the set [s1] only if
 	[e] doesn't belong to [s2] nor to [s3]*)
@@ -375,8 +386,11 @@ struct
 		     the id of this predicate *)
 		    edb:ASPred.pred_id list;
 		  (* the list of the ids of the extensional predicates *)
+		    edb_facts:Predicate.FactSet.t Predicate.PredMap.t;
+		    (* a map from predicate ids to facts for this
+		       predicate*)
 		    idb:ASPred.pred_id list;
-		  (* the list of the ids of the intensional predicates *)
+		    (* the list of the ids of the intensional predicates *)
 		    pred_table: ASPred.PredIdTable.table;
 		 (* the table to record the translation from ids to
 		    sym of the predicate *)
@@ -388,15 +402,29 @@ struct
 	Predicate.PredMap.add k (v::lst) map_list
       with
       | Not_found -> Predicate.PredMap.add k [v] map_list
+
+    let extend_map_to_set k v map_to_set =
+      let current_set = 
+	try
+	  Predicate.PredMap.find k map_to_set
+	with
+	| Not_found -> Predicate.FactSet.empty in
+      Predicate.PredMap.add k (Predicate.FactSet.add v current_set) map_to_set
+
 	
     let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.i_preds=i_preds} =
-      let rules = ASRule.Rules.fold
-	(fun ({ASRule.lhs=lhs} as r) acc ->
+      let rules,e_facts = ASRule.Rules.fold
+	(fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
 	  let () = Printf.printf "Dealing with rule:\t%s\n%!" (ASRule.rule_to_string r pred_table) in
 	  let new_rule = Rule.make_rule r in
-	  extend lhs.ASPred.p_id new_rule acc)
+	  let updated_e_facts = 
+	    if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
+	      extend_map_to_set lhs.ASPred.p_id lhs e_facts 
+	    else
+	      e_facts in
+	  extend lhs.ASPred.p_id new_rule acc,updated_e_facts)
 	r
-	Predicate.PredMap.empty in
+	(Predicate.PredMap.empty,Predicate.PredMap.empty) in
       let () = Printf.printf "All rules done.\nNow separate the e and i predicates.\n%!" in
       let edb,idb=
 	ASPred.PredIdTable.fold
@@ -408,7 +436,7 @@ struct
 	  pred_table
 	  ([],[]) in
       let () = Printf.printf "Done.\n%!" in
-      {rules=rules;edb=edb;idb=idb;pred_table=pred_table}
+      {rules=rules;edb=edb;edb_facts=e_facts;idb=idb;pred_table=pred_table}
 	
 	
     let to_abstract {rules=r;idb=idb;pred_table=pred_table} =
@@ -547,7 +575,10 @@ struct
 	(Predicate.PredMap.find s_id rules)
 	
     let seminaive prog =
-      let e_facts=Predicate.PredMap.empty in
+      let buff=Buffer.create 100 in
+      let e_facts=  prog.edb_facts in
+      let () = Predicate.add_map_to_facts_to_buffer buff prog.pred_table e_facts in 
+      let () = Printf.printf "We have the following facts:\n%s\n\n%!" (Buffer.contents buff) in
       (** [seminaive_aux facts delta_facts] returns [(S]{^
 	  [i]}[,][Delta]{^ [i+1]}{_ [S]}[)] for all [S] when [facts]
 	  corresponds to [S]{^ [i-1]} for all [S] and [delta_facts] to
@@ -572,8 +603,11 @@ struct
 		pred
 		(p_semantics_for_predicate pred prog e_facts previous_facts facts delta_facts)
 		acc) 
-	    Predicate.PredMap.empty 
-	    new_facts in
+	    Predicate.PredMap.empty
+	    new_facts  in 
+	let () = Buffer.reset buff in
+	let () = Predicate.add_map_to_facts_to_buffer buff prog.pred_table new_delta_facts in 
+	let () = Printf.printf "New facts:\n%s\n\n%!" (Buffer.contents buff) in
 	(new_facts,new_delta_facts) in
       (** [seminaive_rec (facts,delta_facts)] returns the result when
 	  the fixpoint is reached, ie when [seminaive_aux facts
@@ -584,7 +618,7 @@ struct
 	  facts
 	else
 	  seminaive_rec (seminaive_aux facts delta_facts) in
-      ()
+      seminaive_rec (e_facts,e_facts)
 	
 	
   end
