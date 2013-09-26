@@ -20,6 +20,7 @@ module Make :
           module FactSet :Set.S with type elt = ASPred.predicate
           val conditionnal_add :
             FactSet.elt -> FactSet.t -> FactSet.t -> FactSet.t -> FactSet.t
+	  val facts_to_string : FactSet.t PredMap.t -> ASPred.PredIdTable.table -> string
           module Indexed_Facts : Map.S with type key = int
         end
 
@@ -88,7 +89,7 @@ module Make :
           Rule.FactArray.row Predicate.PredMap.t ->
           Rule.FactArray.row Predicate.PredMap.t ->
           Rule.FactArray.row Predicate.PredMap.t ->
-          (ASPred.predicate -> 'a -> 'a) -> 'a -> 'a
+          (ASPred.predicate -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> 'a
 	val p_semantics_for_predicate :
           Predicate.PredMap.key ->
           program ->

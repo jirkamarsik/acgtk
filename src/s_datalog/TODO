@@ -1,0 +1,5 @@
+* datalog.ml
+** Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract et aussi de Datalog_AbstractSyntax.Rule.to_string
+** Vérifier pourquoi content est passé en paramètre dans les to_abstract alors que c'est un champ du record rule
+** Idem pour Rule.extract_consequence
+** Réfléchir à la possibilité de faire de l'unification directement entre contents

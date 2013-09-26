@@ -45,8 +45,8 @@ let parse_file filename =
     let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract program)) in 
     let () = Printf.printf "Done.\n" in
     let () = Printf.printf "%s\n" sep in
-    let _ = Datalog.Program.seminaive program in
-    ()
+    let derived_facts = Datalog.Program.seminaive program in
+    Printf.printf "I could derive the following facts:\n%s\n" (Datalog.Predicate.facts_to_string derived_facts program.Datalog.Program.pred_table)
       
 
 let usage_msg="Usage: db_test file"

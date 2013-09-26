@@ -110,6 +110,7 @@ struct
     (** A map whose key is of type of the predicates identifers *)
     module PredMap=ASPred.PredIdMap
 
+
       
       
     (* TODO : This should be a map recording the way each of this
@@ -131,6 +132,12 @@ struct
 	(fun _ v -> add_facts_to_buffer b pred_table v)
 	map
 
+
+    let facts_to_string facts pred_table =
+      let buff=Buffer.create 100 in
+      let () = Buffer.add_string buff "We have the following facts:\n" in
+      let () = add_map_to_facts_to_buffer buff pred_table facts in 
+      Buffer.contents buff
       
     (** [conditionnal_add e s1 s2 s3] adds [e] to the set [s1] only if
 	[e] doesn't belong to [s2] nor to [s3]*)
@@ -163,10 +170,11 @@ struct
 	       lhs:Predicate.predicate;
 	       e_rhs:Predicate.predicate list;
 	       i_rhs:Predicate.predicate list;
-	       content:ConstGen.id UF.t
-	      (* TODO: Maybe put the label of the predicate in the
-		 content in order to enforce checking of the current
-		 instantiation *)
+	       content:ConstGen.id UF.t;
+		 (* TODO: Maybe put the label of the predicate in the
+		    content in order to enforce checking of the current
+		    instantiation *)
+(*	       abs_rule:ASRule.rule;*)
 	      }
       
       
@@ -487,28 +495,34 @@ struct
 	
   (* TODO: if a set of facts for a predicate of the rhs is empty, we
      can stop the computation *)
-    let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start =
-    (* We firs collect all the contents compatible with the facts of
-       the intensional database. They depend on the intensional
-       predicate [delta_position] and the ones that are before it
-       ([rev_pred_lst]) and the ones that are after it
-       ([pred_lst]). This triple correspond to a {!Focused_list.t}
-       type. *)
+    let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table =
+      let () = Printf.printf "Scanning the rule:\n%s\n" (ASRule.rule_to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table) in
+      (* We first collect all the contents compatible with the facts of
+	 the intensional database. They depend on the intensional
+	 predicate [delta_position] and the ones that are before it
+	 ([rev_pred_lst]) and the ones that are after it
+	 ([pred_lst]). This triple correspond to a {!Focused_list.t}
+	 type. *)
       let make_search_array_i_pred (rev_pred_lst,delta_position,pred_lst) =
-	let delta_facts=
-	  Predicate.PredMap.find delta_position.Predicate.p_id delta_facts in
+	let facts_at_delta_position=
+	  try
+	    Predicate.PredMap.find delta_position.Predicate.p_id delta_facts
+	  with
+	  | Not_found -> Predicate.FactSet.empty in
 	let end_pred_facts =
 	  List.map
-	    (fun pred -> Predicate.PredMap.find pred.Predicate.p_id previous_step_facts)
+	    (fun pred -> 
+	      try
+		Predicate.PredMap.find pred.Predicate.p_id previous_step_facts
+	      with
+	      | Not_found -> Predicate.FactSet.empty)
 	    pred_lst in
 	List.fold_left
 	  (fun acc pred ->
 	    (Predicate.PredMap.find pred.Predicate.p_id facts)::acc)
-	  (delta_facts::end_pred_facts)
+	  (*	  (delta_facts::end_pred_facts) *)
+	  (facts_at_delta_position::end_pred_facts)
 	  rev_pred_lst in
-      (* We now init the focused list corresponding to the intensional
-       predicates of the rule [r] *)
-      let zip=Focused_list.init r.Rule.i_rhs in
       (* We define the function to be run on each reached end state of
 	 the instantiation with the extensional predicates. This
 	 function will run a result collection (with
@@ -516,18 +530,24 @@ struct
 	 [delta_facts], that is for each of the possible [Focused_list]
 	 that can be reach from [zip] (including [zip] itself). *)
       let resume_on_i_pred acc state =
-	Focused_list.fold
-	  (fun l_acc focus ->
-	  (* For a given focus in the intensional list of predicates
-	     of [r], we extract all the possible facts from the rule
-	     [r] *)
-	    Rule.FactArray.collect_results
-	      (fun ll_acc (_,content) -> agg_function (Rule.extract_consequence r content) ll_acc)
-	      l_acc
-	      state
-	      (make_search_array_i_pred focus))
-	  acc
-	  zip in
+	match r.Rule.i_rhs with
+	| [] -> agg_function (Rule.extract_consequence r (snd state)) acc
+	| _ -> 
+	(* We now init the focused list corresponding to the intensional
+	   predicates of the rule [r] *)
+	  let zip=Focused_list.init r.Rule.i_rhs in
+	  Focused_list.fold
+	    (fun l_acc focus ->
+	    (* For a given focus in the intensional list of predicates
+	       of [r], we extract all the possible facts from the rule
+	       [r] *)
+	      Rule.FactArray.collect_results
+		(fun ll_acc (_,content) -> agg_function (Rule.extract_consequence r content) ll_acc)
+		l_acc
+		state
+		(make_search_array_i_pred focus))
+	    acc
+	    zip in
       (* We now collect all the contents compatible with the
 	 facts of the extensional database *)
       let make_search_array_e_pred =
@@ -542,6 +562,13 @@ struct
 	(r.Rule.lhs.Predicate.arity+1,r.Rule.content)
 	make_search_array_e_pred
 	
+    let custom_find k map =
+      try
+	Predicate.PredMap.find k map
+      with
+      | Not_found -> Predicate.FactSet.empty
+
+
   (** [p_semantics_for_predicate s prog e_facts previous_step_facts
       facts delta_facts] returns a set of all the facts that can
       deduced by all the rules in [prog] at a given step and whose lhs
@@ -556,7 +583,7 @@ struct
       [time]}{_ [T]{_ [l]}}) in {{:
       http://webdam.inria.fr/Alice/pdfs/Chapter-13.pdf} Chap. 13 of
       "Foundations of Databases", Abiteboul, Hull, and Vianu} *)
-    let p_semantics_for_predicate s_id {rules=rules} e_facts previous_step_facts facts delta_facts =
+    let p_semantics_for_predicate s_id prog e_facts previous_step_facts facts delta_facts =
       List.fold_left
 	(fun acc r ->
 	  temp_facts
@@ -565,20 +592,26 @@ struct
 	    previous_step_facts
 	    facts
 	    delta_facts
-	    (fun hd tl -> Predicate.conditionnal_add
-	      hd
-	      tl
-	      (Predicate.PredMap.find r.Rule.lhs.Predicate.p_id previous_step_facts)
-	      (Predicate.PredMap.find r.Rule.lhs.Predicate.p_id delta_facts))
-	    acc)
+	    (fun hd tl -> 
+	      Predicate.conditionnal_add
+		hd
+		tl
+(*		(Predicate.PredMap.find r.Rule.lhs.Predicate.p_id previous_step_facts)
+		(Predicate.PredMap.find r.Rule.lhs.Predicate.p_id delta_facts)) *)
+		(custom_find r.Rule.lhs.Predicate.p_id previous_step_facts)
+		(custom_find r.Rule.lhs.Predicate.p_id delta_facts)) 
+
+	    acc
+	    prog.pred_table)
 	Predicate.FactSet.empty
-	(Predicate.PredMap.find s_id rules)
+	(Predicate.PredMap.find s_id prog.rules)
 	
     let seminaive prog =
-      let buff=Buffer.create 100 in
-      let e_facts=  prog.edb_facts in
-      let () = Predicate.add_map_to_facts_to_buffer buff prog.pred_table e_facts in 
-      let () = Printf.printf "We have the following facts:\n%s\n\n%!" (Buffer.contents buff) in
+      let () = Printf.printf "%s\n%!" (Predicate.facts_to_string prog.edb_facts prog.pred_table) in
+      (*      let buff=Buffer.create 100 in
+	      let e_facts=  prog.edb_facts in
+	      let () = Predicate.add_map_to_facts_to_buffer buff prog.pred_table e_facts in 
+	      let () = Printf.printf "We have the following facts:\n%s\n\n%!" (Buffer.contents buff) in *)
       (** [seminaive_aux facts delta_facts] returns [(S]{^
 	  [i]}[,][Delta]{^ [i+1]}{_ [S]}[)] for all [S] when [facts]
 	  corresponds to [S]{^ [i-1]} for all [S] and [delta_facts] to
@@ -596,18 +629,37 @@ struct
 	      | None,None -> None)
 	    facts
 	    delta_facts in
-	let new_delta_facts = 
-	  Predicate.PredMap.fold
-	    (fun pred previous_facts acc ->
-	      Predicate.PredMap.add
+	(*	let new_delta_facts = 
+		Predicate.PredMap.fold
+		(fun pred previous_facts acc ->
+		Predicate.PredMap.add
 		pred
 		(p_semantics_for_predicate pred prog e_facts previous_facts facts delta_facts)
 		acc) 
+		Predicate.PredMap.empty
+		new_facts  in *)
+	let new_delta_facts = 
+	  List.fold_left
+	    (fun acc pred ->
+	      let () = Printf.printf "Trying to derive facts for: %s\n" (ASPred.to_string {ASPred.p_id=pred;ASPred.arity=0;ASPred.arguments=[]} prog.pred_table) in
+	      let new_facts_for_pred=
+		p_semantics_for_predicate
+		  pred
+		  prog
+		  prog.edb_facts
+		  facts
+		  new_facts
+		  delta_facts in
+	      if Predicate.FactSet.is_empty new_facts_for_pred then
+		acc
+	      else
+		Predicate.PredMap.add
+		  pred
+		  new_facts_for_pred
+		  acc) 
 	    Predicate.PredMap.empty
-	    new_facts  in 
-	let () = Buffer.reset buff in
-	let () = Predicate.add_map_to_facts_to_buffer buff prog.pred_table new_delta_facts in 
-	let () = Printf.printf "New facts:\n%s\n\n%!" (Buffer.contents buff) in
+	    prog.idb  in 
+	let () = Printf.printf "% d new facts:\n%s\n\n%!" (Predicate.PredMap.cardinal new_delta_facts) (Predicate.facts_to_string new_delta_facts prog.pred_table) in
 	(new_facts,new_delta_facts) in
       (** [seminaive_rec (facts,delta_facts)] returns the result when
 	  the fixpoint is reached, ie when [seminaive_aux facts
@@ -618,7 +670,8 @@ struct
 	  facts
 	else
 	  seminaive_rec (seminaive_aux facts delta_facts) in
-      seminaive_rec (e_facts,e_facts)
+      let first_step_results = seminaive_aux prog.edb_facts Predicate.PredMap.empty in
+      seminaive_rec first_step_results
 	
 	
   end
