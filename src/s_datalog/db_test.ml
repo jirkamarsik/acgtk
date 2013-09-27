@@ -1,3 +1,16 @@
+let () =
+  Bolt.Logger.register
+    ""
+    Bolt.Level.TRACE
+    "all"
+    "default"
+    (Bolt.Mode.direct ())
+    "file"
+    ("db_test.log",
+     {Bolt.Output.seconds_elapsed= Some 1.0;
+      Bolt.Output.signal_caught=None})
+
+
 open IdGenerator
 open Datalog_AbstractSyntax
 
@@ -28,11 +41,14 @@ let parse_file filename =
       let fullname = Utils.find_file filename [""]  in
       open_in fullname in
     let lexbuf = Lexing.from_channel in_ch in
-    let () = Printf.printf "Parsing \"%s\"...\n%!" filename in
+    LOG "Parsing \"%s\"..." filename LEVEL INFO;
     let proto_rules,pred_id_table,i_preds,_=Db_parser.program Db_lexer.lexer lexbuf [] (AbstractSyntax.Predicate.PredIdTable.empty,IntIdGen.init(),ConstGen.Table.empty) AbstractSyntax.Predicate.PredIds.empty in 
-    let () = Printf.printf "Done.\n%!" in
-    let () = Printf.printf "Current symbol tables:\n%!" in
-    let () = AbstractSyntax.Predicate.PredIdTable.print_table pred_id_table in
+    LOG "Done." LEVEL INFO;
+    LOG "Current symbol tables:\n%!" LEVEL DEBUG ;
+    let () = 
+      List.iter
+	(fun s -> LOG s LEVEL INFO)
+	(Bolt.Utils.split "\n" (AbstractSyntax.Predicate.PredIdTable.to_string pred_id_table)) in
     let sep=String.make 15 '*' in
     let () = Printf.printf "%s\n%!" sep in
     let () = Printf.printf "Create the abstract program and print it...\n" in

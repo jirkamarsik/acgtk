@@ -590,6 +590,9 @@ SET_MAKE
 OCAMLP4_LOC
 OCAML09WARNINGS
 TYPES
+BOLT_PP
+BOLT_LIB
+BOLT_INCLUDE
 KAPUTT_PP
 KAPUTT_LIB
 KAPUTT_INCLUDE
@@ -2316,6 +2319,46 @@ else
 $as_echo "Could not find kaputt_pp.byte preprocessor in $KAPUTT_PLACE." >&6; }
 fi
 
+# Look for BOLT_LIB with ocamlfind
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking (optional) bolt library" >&5
+$as_echo_n "checking (optional) bolt library... " >&6; }
+if test "$OCAMLFIND" != no ; then
+   if $OCAMLFIND query bolt > /dev/null 2>&1 ; then
+      BOLT_INCLUDE_DIR=`$OCAMLFIND query bolt`
+      BOLT_PLACE=$BOLT_INCLUDE_DIR
+      BOLT_INCLUDE="-I $BOLT_INCLUDE_DIR"
+   else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt library was not installed by ocamlfind" >&5
+$as_echo "bolt library was not installed by ocamlfind" >&6; }
+   fi
+else
+   OCAML_LIB=`$OCAMLC -where`
+   if test -d $OCAML_LIB/bolt ; then
+	      BOLT_PLACE=$OCAML_LIB/bolt
+	      BOLT_INCLUDE="-I +bolt"
+   else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find a suitable place for bolt library in $OCAML_LIB. No link to the bolt library will be allowed in compilation" >&5
+$as_echo "Could not find a suitable place for bolt library in $OCAML_LIB. No link to the bolt library will be allowed in compilation" >&6; }
+   fi
+fi
+if test -f $BOLT_PLACE/bolt.cma ; then
+   BOLT_LIB=bolt.cma
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt library is $BOLT_PLACE/bolt.cma" >&5
+$as_echo "bolt library is $BOLT_PLACE/bolt.cma" >&6; }
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find bolt library \"bolt.cma\" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation" >&5
+$as_echo "Could not find bolt library \"bolt.cma\" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation" >&6; }
+fi
+
+if test -f $BOLT_PLACE/bolt_pp.cmo ; then
+   BOLT_PP=$BOLT_PLACE/bolt_pp.cmo
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt_pp.byte preprocessor is $BOLT_PP" >&5
+$as_echo "bolt_pp.byte preprocessor is $BOLT_PP" >&6; }
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find bolt_pp.byte preprocessor in $BOLT_PLACE." >&5
+$as_echo "Could not find bolt_pp.byte preprocessor in $BOLT_PLACE." >&6; }
+fi
+
 
 
 
@@ -2399,6 +2442,12 @@ $as_echo "$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
 
 ############################
 # substitutions to perform
+
+
+
+
+
+
 
 
 

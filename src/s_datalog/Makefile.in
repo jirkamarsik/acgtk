@@ -52,9 +52,6 @@ CAMLLEX = db_lexer.mll
 
 include ../Makefile.common
 
-unify.cmo : PP=$(KAPUTT_OCAMLPP)
-unify.cmo : unify.mlt
-
 db_lexer.ml : db_parser.mli
 
 db_parser.mli : db_parser.mly

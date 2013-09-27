@@ -34,8 +34,8 @@ sig
       the new association is stored in [t'].*)
   val add_sym : string -> table -> identifier*table
 
-  (** [print_table t] outputs the table [t] on [stdout].*)
-  val print_table : table -> unit
+  (** [to_string t] outputs the table [t] in a string.*)
+  val to_string : table -> string
 
   (** [fold f table a] returns [f id1 sym1 (f id2 sym2 ( ... ( f idN
       symN a) ... ))] where the [(id,sym)] pairs are the ones that are

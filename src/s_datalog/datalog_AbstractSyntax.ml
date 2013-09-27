@@ -150,7 +150,7 @@ struct
 	    ":- %s , %s."
 	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) e_rhs)
 	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) i_rhs) in
-      Printf.sprintf "%s%s\n" head tail
+      Printf.sprintf "%s%s" head tail
 
     module Rules=Set.Make(struct
       type t=rule

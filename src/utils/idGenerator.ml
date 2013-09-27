@@ -34,8 +34,8 @@ sig
       the new association is stored in [t'].*)
   val add_sym : string -> table -> identifier*table
 
-  (** [print_table t] outputs the table [t] on [stdout].*)
-  val print_table : table -> unit
+  (** [to_string t] outputs the table [t] in a string.*)
+  val to_string : table -> string
 
   (** [fold f table a] returns [f id1 sym1 (f id2 sym2 ( ... ( f idN
       symN a) ... ))] where the [(id,sym)] pairs are the ones that are
@@ -137,16 +137,19 @@ struct
 		   ids=IdMap.add new_var sym ids;
 		   gen=new_vargen}
 	    
-      let print_table {symbols=syms;ids=ids} =
-	let () = Printf.printf "Table from symbols to ids\n%!" in
+      let to_string {symbols=syms;ids=ids} =
+	let buff=Buffer.create 20 in
+	let () = Buffer.add_string buff "Table from symbols to ids\n" in
 	let () = Tries.Tries.fold
-	  (fun key value () -> Printf.printf "\t%s\t<->\t%s\n%!" key (ID.to_string value))
+	  (fun key value () -> Buffer.add_string buff (Printf.sprintf "\t%s\t<->\t%s\n" key (ID.to_string value)))
 	  ()
 	  syms in
-	let () = Printf.printf "Table from symbols to ids\n%!" in
-	IdMap.iter
-	  (fun key value -> Printf.printf "\t%s\t<->\t%s\n%!" (ID.to_string key) value)
-	  ids
+	let () = Buffer.add_string buff "Table from symbols to ids\n" in
+	let () =
+	  IdMap.iter
+	    (fun key value -> Buffer.add_string buff (Printf.sprintf "\t%s\t<->\t%s\n%!" (ID.to_string key) value))
+	    ids in
+	Buffer.contents buff
 
       let fold f table start =
 	IdMap.fold f table.ids start

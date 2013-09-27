@@ -135,10 +135,10 @@ struct
     let res,_=
       List.fold_left
 	(fun ({rank=r;parents=p},k) content -> 
-	  let () = Printf.printf "Setting some content at address %d\n" k in
+	  LOG "Setting some content at address %d" k LEVEL DEBUG;
 	  match content with
 	| Link_to i as c ->
-	  let () = Printf.printf "Link to %d\n" i in
+	  LOG "Link to %d" i LEVEL DEBUG;
 	  (* rank is unset for contents that are initially a link *)
 	  ({rank=
 	      (try
@@ -148,7 +148,7 @@ struct
 	      | S.Store_Not_found -> S.set i 1 r);
 	    parents=S.set k c p},k+1)
 	| Value v as c ->
-	  let () = Printf.printf "Some value\n" in
+	  LOG "Some value" LEVEL DEBUG;
 	  ({rank=
 	      (try
 		 let _ = S.get k r in
@@ -160,11 +160,7 @@ struct
 	contents in
     let () = 
       for i = 1 to ln do
-	Printf.printf "%d/%d\t<--->\t%s\t\t(%d)\n%!" 
-	  i
-	  ln 
-	  (content_to_string (S.get i res.parents))
-	  (S.get i res.rank)
+	LOG "%d/%d\t<--->\t%s\t\t(%d)" i ln (content_to_string (S.get i res.parents)) (S.get i res.rank) LEVEL DEBUG;
       done in
     res
 
@@ -208,7 +204,7 @@ struct
       values of representatives (i.e it follows the [Link_to] links
       until the value of the representative before returning it). *)
   let extract ?(start=1) i {parents=p} =
-    let () = Printf.printf "Going to extract %d elements starting at %d...\n" i start in
+    LOG "Going to extract %d elements starting at %d..." i start LEVEL DEBUG;
     let rec extract_aux k res =
       match k-start with
       | j when j>0 -> 

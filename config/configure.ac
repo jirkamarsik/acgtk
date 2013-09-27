@@ -180,6 +180,39 @@ else
    AC_MSG_RESULT(Could not find kaputt_pp.byte preprocessor in $KAPUTT_PLACE.)
 fi
 
+# Look for BOLT_LIB with ocamlfind
+AC_MSG_CHECKING([(optional) bolt library])
+if test "$OCAMLFIND" != no ; then
+   if $OCAMLFIND query bolt > /dev/null 2>&1 ; then
+      BOLT_INCLUDE_DIR=`$OCAMLFIND query bolt`
+      BOLT_PLACE=$BOLT_INCLUDE_DIR
+      BOLT_INCLUDE="-I $BOLT_INCLUDE_DIR"
+   else
+      AC_MSG_RESULT(bolt library was not installed by ocamlfind)
+   fi
+else
+   OCAML_LIB=`$OCAMLC -where`
+   if test -d $OCAML_LIB/bolt ; then
+	      BOLT_PLACE=$OCAML_LIB/bolt
+	      BOLT_INCLUDE="-I +bolt"
+   else
+   AC_MSG_RESULT(Could not find a suitable place for bolt library in $OCAML_LIB. No link to the bolt library will be allowed in compilation)
+   fi
+fi  
+if test -f $BOLT_PLACE/bolt.cma ; then
+   BOLT_LIB=bolt.cma
+   AC_MSG_RESULT(bolt library is $BOLT_PLACE/bolt.cma)
+else
+   AC_MSG_RESULT(Could not find bolt library "bolt.cma" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation)
+fi
+
+if test -f $BOLT_PLACE/bolt_pp.cmo ; then
+   BOLT_PP=$BOLT_PLACE/bolt_pp.cmo
+   AC_MSG_RESULT(bolt_pp.byte preprocessor is $BOLT_PP)
+else
+   AC_MSG_RESULT(Could not find bolt_pp.byte preprocessor in $BOLT_PLACE.)
+fi
+
 
 
 
@@ -247,6 +280,12 @@ AC_SUBST(DYPGEN_INCLUDE)
 AC_SUBST(KAPUTT_INCLUDE)
 AC_SUBST(KAPUTT_LIB)
 AC_SUBST(KAPUTT_PP)
+
+
+AC_SUBST(BOLT_INCLUDE)
+AC_SUBST(BOLT_LIB)
+AC_SUBST(BOLT_PP)
+
 
 AC_SUBST(TYPES)
 AC_SUBST(OCAML09WARNINGS)
