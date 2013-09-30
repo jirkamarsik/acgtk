@@ -39,7 +39,8 @@ sig
   (** [find i h] returns not only the index of the representative and
       the values it indexes, but also the storage data structure, so
       that the [find] algorithm can modify it, in particular with path
-      compression. *)
+      compression. If the returned content is a [Link_to j] then
+      [j=i].*)
   val find : int -> 'a t -> ((int * 'a content) * 'a t)
   (* the content returned by [find] should not be a link. Can we
      enforce this using polymorphic variants and/or GADT? *)

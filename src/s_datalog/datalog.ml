@@ -96,14 +96,23 @@ struct
     let instantiate_with
 	{ASPred.p_id=_;ASPred.arity=_;ASPred.arguments=args}
 	(idx,content) =
-      List.fold_left
-	(fun  (i,cont) value ->
-	  (i+1,
-	   match value with
-	   | ASPred.Const v -> UF.instantiate i v cont
-	   | ASPred.Var _ -> failwith "Bug: Trying to instantiate with a non-closed predicate"))
-	(idx,content)
-	args
+      let last_i,(new_c,_) =
+	List.fold_left
+	  (fun  (i,(cont,vars)) value ->
+	    (i+1,
+	     match value with
+	     | ASPred.Const v -> UF.instantiate i v cont,vars
+	     | ASPred.Var var -> 
+	       try
+		 UF.union i (VarGen.IdMap.find var vars) cont,vars
+	       with
+	       | Not_found -> cont,VarGen.IdMap.add var i vars)
+		 
+	    (*		 failwith "Bug: Trying to instantiate with a non-closed predicate" *)
+	  )
+	  (idx,(content,VarGen.IdMap.empty))
+	  args in
+      last_i,new_c
 	
 	
 	
@@ -272,15 +281,27 @@ struct
 	all are of the form [Const c] (that is something of type {!
 	Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate}) given . *)
     let extract_consequence r content =
+      let args,_,_= 
+	List.fold_left 
+	  (fun (args,varmap,vargen) elt ->
+	      match elt with 
+	      | UF.Value v -> (ASPred.Const v )::args,varmap,vargen
+	      | UF.Link_to i -> 
+		let new_var,new_varmap,new_vargen = 
+		  try
+		    Utils.IntMap.find i varmap,varmap,vargen
+		  with
+		  | Not_found -> let n_v,n_vg=VarGen.get_fresh_id vargen in
+				 n_v,Utils.IntMap.add i n_v varmap,n_vg in
+		(ASPred.Var new_var)::args,new_varmap,new_vargen )
+	  ([],Utils.IntMap.empty,VarGen.init ())
+	  (UF.extract (r.lhs.Predicate.arity) content) in
       {ASPred.p_id=r.lhs.Predicate.p_id;
        ASPred.arity=r.lhs.Predicate.arity;
-       ASPred.arguments=
-	  List.map 
-	    (function
-	    | UF.Value v -> ASPred.Const v
-	    | _ -> failwith "Bug: you're trying to extract non completely instantiated predicates")
-	    (UF.extract (r.lhs.Predicate.arity) content)}
-	
+       ASPred.arguments=List.rev args }
+    (* TODO: Directly extract from content, then the list would be
+       crossed only once *)
+	    
     (** [to_abstract r content] returns a datalog abstract syntax rule
 	where the arguments of all (datalog abstract syntax)
 	predicates have been computed using [content]. *)

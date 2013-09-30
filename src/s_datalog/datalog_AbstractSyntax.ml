@@ -36,27 +36,48 @@ struct
     type term = 
     | Var of VarGen.id
     | Const of ConstGen.id
+
+    module VarMap = Map.Make (Var)
 	
-    let rec term_compare l1 l2 =
-      match l1,l2 with
-      | [],[] -> 0
-      | [],_ -> -1
-      | _,[] -> 1
-      | (Const _)::_,(Var _)::_ -> 1
-      | (Var _)::_,(Const _)::_ -> -1
-      | (Const a1)::tl1,(Const a2)::tl2 ->
-	let res = ConstGen.compare a1 a2 in
-	if ConstGen.compare a1 a2 <> 0 then
-	  res
-	else
-	  term_compare tl1 tl2
-      | (Var a1)::tl1,(Var a2)::tl2 ->
-	let res = VarGen.compare a1 a2 in
-	if VarGen.compare a1 a2 <> 0 then
-	  res
-	else
-	  term_compare tl1 tl2
-	    
+    let map_content_compare (k1,map1) (k2,map2) =
+      try
+	let val1 = VarMap.find k1 map1 in
+	(try
+	  val1-(VarMap.find k2 map2)
+	with
+	| Not_found -> 1)
+      with
+      | Not_found -> 
+	(try
+	  let _ = VarMap.find k2 map2 in
+	  -1	    
+	with
+	| Not_found -> 0)
+	
+
+
+    let term_compare l1 l2 =
+      let rec term_compare_aux l1 l2 (l1_vars,l2_vars) pos =
+	match l1,l2 with
+	| [],[] -> 0
+	| [],_ -> -1
+	| _,[] -> 1
+	| (Const _)::_,(Var _)::_ -> 1
+	| (Var _)::_,(Const _)::_ -> -1
+	| (Const a1)::tl1,(Const a2)::tl2 ->
+	  let res = ConstGen.compare a1 a2 in
+	  if ConstGen.compare a1 a2 <> 0 then
+	    res
+	  else
+	    term_compare_aux tl1 tl2 (l1_vars,l2_vars) (pos+1)
+	| (Var a1)::tl1,(Var a2)::tl2 ->
+	  let res = map_content_compare (a1,l1_vars) (a2,l2_vars) in
+	  if VarGen.compare a1 a2 <> 0 then
+	    res
+	  else
+	    term_compare_aux tl1 tl2 (VarMap.add a1 pos l1_vars,VarMap.add a2 pos l2_vars) (pos+1) in
+      term_compare_aux l1 l2 (VarMap.empty,VarMap.empty) 0
+	      
 	    
     let term_to_string = function
       | Var v -> Var.to_string v
@@ -161,9 +182,12 @@ struct
       let buff=Buffer.create 4 in
       let () =
 	Rules.iter
-	  (fun r -> Buffer.add_string
-	    buff
-	    (rule_to_string r pred_id_table))
+	  (fun r -> 
+	    let () =
+	      Buffer.add_string
+		buff
+		(rule_to_string r pred_id_table) in
+	    Buffer.add_string buff "\n")
 	  rules in
       buff
 

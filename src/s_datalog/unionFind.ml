@@ -185,6 +185,9 @@ struct
       (* Then we update the storage data structure linking the context
 	 indexed by [i] directly to the representative index *)
       let updated_f = S.set i (Link_to representative_index) new_f in
+      LOG "the \"UnionFinf.find\" function indeed returns a Link_to itself: %b" (let ()=match representative_value with
+      | Link_to variable -> assert (representative_index=variable)
+      | _ -> () in true) LEVEL TRACE;
       (representative_index,representative_value),updated_f
 	
   (** [find i h] returns a pair [(i',v),f'] where [i'] is the index of
