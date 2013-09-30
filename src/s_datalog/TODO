@@ -2,13 +2,17 @@
 ** Utiliser Bolt (http://bolt.x9c.fr/)
 + [ ] Intégrer dans le configure.ac la dépendance à Bolt
 + [ ] Laisser la possibilité que la librairie ne soit pas installée
-+ [ ] Gérer la présence d'un fichier bolt_config (log.config
++ [X] Gérer la présence d'un fichier bolt_config (bolt.config) (DONE: bug fix in BOLT
 ** Configuration
 + [ ] Utiliser les outils de Paul
+** Permettre l'utilisation des PersistentArray
 
 * datalog.ml
 + [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract et aussi de Datalog_AbstractSyntax.Rule.to_string
 + [ ] Vérifier pourquoi content est passé en paramètre dans les to_abstract alors que c'est un champ du record rule
 + [ ] Idem pour Rule.extract_consequence
-+ [ ] Réfléchir à la possibilité de faire de l'unification directement entre contents
-+ [ ] Autoriser l'instanciation avec des variables encore présentes
++ [ ] Réfléchir à la possibilité de faire de l'unification directement
+  entre contents. Ça réduirait par exemple les itérations dans
+  "extract_consequence"
++ [X] Autoriser l'instanciation avec des variables encore présentes
++ [ ] Implanter la réponse à une requête.

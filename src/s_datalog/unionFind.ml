@@ -135,7 +135,7 @@ struct
     let res,_=
       List.fold_left
 	(fun ({rank=r;parents=p},k) content -> 
-	  LOG "Setting some content at address %d" k LEVEL DEBUG;
+	  LOG "Setting the following content at address %d:" k LEVEL DEBUG;
 	  match content with
 	| Link_to i as c ->
 	  LOG "Link to %d" i LEVEL DEBUG;
@@ -160,7 +160,7 @@ struct
 	contents in
     let () = 
       for i = 1 to ln do
-	LOG "%d/%d\t<--->\t%s\t\t(%d)" i ln (content_to_string (S.get i res.parents)) (S.get i res.rank) LEVEL DEBUG;
+	LOG "%d/%d\t<--->\t%s\t\t(%d)" i ln (content_to_string (S.get i res.parents)) (S.get i res.rank) LEVEL TRACE;
       done in
     res
 
@@ -187,7 +187,7 @@ struct
       let updated_f = S.set i (Link_to representative_index) new_f in
       LOG "the \"UnionFinf.find\" function indeed returns a Link_to itself: %b" (let ()=match representative_value with
       | Link_to variable -> assert (representative_index=variable)
-      | _ -> () in true) LEVEL TRACE;
+      | _ -> () in true) LEVEL FATAL;
       (representative_index,representative_value),updated_f
 	
   (** [find i h] returns a pair [(i',v),f'] where [i'] is the index of

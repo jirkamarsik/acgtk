@@ -1,4 +1,4 @@
-let () =
+(*let () =
   Bolt.Logger.register
     ""
     Bolt.Level.TRACE
@@ -9,7 +9,7 @@ let () =
     ("db_test.log",
      {Bolt.Output.seconds_elapsed= Some 1.0;
       Bolt.Output.signal_caught=None})
-
+*)
 
 open IdGenerator
 open Datalog_AbstractSyntax
@@ -44,10 +44,10 @@ let parse_file filename =
     LOG "Parsing \"%s\"..." filename LEVEL INFO;
     let proto_rules,pred_id_table,i_preds,_=Db_parser.program Db_lexer.lexer lexbuf [] (AbstractSyntax.Predicate.PredIdTable.empty,IntIdGen.init(),ConstGen.Table.empty) AbstractSyntax.Predicate.PredIds.empty in 
     LOG "Done." LEVEL INFO;
-    LOG "Current symbol tables:\n%!" LEVEL DEBUG ;
+    LOG "Current symbol tables:" LEVEL DEBUG ;
     let () = 
       List.iter
-	(fun s -> LOG s LEVEL INFO)
+	(fun s -> LOG s LEVEL DEBUG)
 	(Bolt.Utils.split "\n" (AbstractSyntax.Predicate.PredIdTable.to_string pred_id_table)) in
     let sep=String.make 15 '*' in
     let () = Printf.printf "%s\n%!" sep in

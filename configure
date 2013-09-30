@@ -2351,7 +2351,7 @@ $as_echo "Could not find bolt library \"bolt.cma\" in $BOLT_PLACE. No link to th
 fi
 
 if test -f $BOLT_PLACE/bolt_pp.cmo ; then
-   BOLT_PP=$BOLT_PLACE/bolt_pp.cmo
+   BOLT_PP="$BOLT_PLACE/bolt_pp.cmo -level \$(BOLT_LEVEL)"
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt_pp.byte preprocessor is $BOLT_PP" >&5
 $as_echo "bolt_pp.byte preprocessor is $BOLT_PP" >&6; }
 else

@@ -207,7 +207,7 @@ else
 fi
 
 if test -f $BOLT_PLACE/bolt_pp.cmo ; then
-   BOLT_PP=$BOLT_PLACE/bolt_pp.cmo
+   BOLT_PP="$BOLT_PLACE/bolt_pp.cmo -level \$(BOLT_LEVEL)"
    AC_MSG_RESULT(bolt_pp.byte preprocessor is $BOLT_PP)
 else
    AC_MSG_RESULT(Could not find bolt_pp.byte preprocessor in $BOLT_PLACE.)

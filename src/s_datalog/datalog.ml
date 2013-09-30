@@ -216,7 +216,6 @@ struct
 	  match arg with
 	  | ASPred.Var v -> 
 	    begin
-(*	      try ((UF.Link_to(VarGen.IdMap.find v vars)) :: cont,idx+1,vars) with *)
 	      try 
 		let var_index = VarGen.IdMap.find v vars in
 		((UF.Link_to var_index) :: cont,i+1,vars) with
@@ -260,7 +259,6 @@ struct
       LOG "It is represented by:" LEVEL TRACE;
       let () =
 	List.iter (fun c -> LOG c LEVEL TRACE) (Bolt.Utils.split "\n" (UF.to_string internal_content)) in
-(*      LOG "It is represented by:\n%s" (UF.to_string internal_content) LEVEL TRACE; *)
       {id=id;
        lhs=Predicate.make_predicate lhs;
        e_rhs=List.rev e_rhs;
@@ -306,10 +304,10 @@ struct
 	where the arguments of all (datalog abstract syntax)
 	predicates have been computed using [content]. *)
     let to_abstract {id=id;lhs=lhs;e_rhs=e_rhs;i_rhs=i_rhs} content pred_table =
-      LOG "Going to work with the following content:" LEVEL DEBUG;
+      LOG "Going to work with the following content:" LEVEL TRACE;
       let () =
 	List.iter
-	  (fun s -> LOG s LEVEL DEBUG)
+	  (fun s -> LOG s LEVEL TRACE)
 	  (Bolt.Utils.split "\n" (UF.to_string content)) in
       let abs_lhs,vars,vargen=Predicate.to_abstract lhs (1,content) (Utils.IntMap.empty,VarGen.init ()) pred_table in
       let abs_e_rhs,start',vars',vargen'=Predicate.lst_to_abstract e_rhs (1+lhs.Predicate.arity,content) (vars,vargen) pred_table in
