@@ -5,12 +5,13 @@
 
 %token <string> IDENT
 %token <int> INT
-%token LPAR RPAR COMMA DOT FROM EOI ARITY
+%token LPAR RPAR COMMA DOT FROM EOI SLASH QUESTION_MARK
 
 
 %start rule program
 %type <  (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule*(Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table))> rule
 %type < Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table)> program
+%type < Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table -> (Datalog_AbstractSyntax.VarGen.Table.table * Datalog_AbstractSyntax.ConstGen.Table.table) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * (Datalog_AbstractSyntax.VarGen.Table.table * Datalog_AbstractSyntax.ConstGen.Table.table)> query
    
 %%
   
@@ -53,7 +54,7 @@
    predicate::remaining_pred,new_pred_id_table',new_tables' }
 
      predicate_with_arity :
- | IDENT ARITY INT LPAR parameters RPAR {fun pred_id_table tables ->
+ | IDENT SLASH INT LPAR parameters RPAR {fun pred_id_table tables ->
    let parameters,new_tables=$5 tables in
    let length=List.length parameters in
    if $3<>length then
@@ -93,5 +94,8 @@
  | IDENT {fun (var_table,const_table) -> 
    let var,new_var_table=VarGen.Table.add_sym $1 var_table in
    AbstractSyntax.Predicate.Var var,(new_var_table,const_table)}
+
+     query:
+ | predicate QUESTION_MARK {$1}
      
 %%
