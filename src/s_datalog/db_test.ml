@@ -42,7 +42,7 @@ let parse_file filename =
       open_in fullname in
     let lexbuf = Lexing.from_channel in_ch in
     LOG "Parsing \"%s\"..." filename LEVEL INFO;
-    let proto_rules,pred_id_table,i_preds,_=Db_parser.program Db_lexer.lexer lexbuf [] (AbstractSyntax.Predicate.PredIdTable.empty,IntIdGen.init(),ConstGen.Table.empty) AbstractSyntax.Predicate.PredIds.empty in 
+    let proto_rules,pred_id_table,i_preds,cst_id_table=Db_parser.program Db_lexer.lexer lexbuf [] (AbstractSyntax.Predicate.PredIdTable.empty,IntIdGen.init(),ConstGen.Table.empty) AbstractSyntax.Predicate.PredIds.empty in 
     LOG "Done." LEVEL INFO;
     LOG "Current symbol tables:" LEVEL DEBUG ;
     let () = 
@@ -52,7 +52,7 @@ let parse_file filename =
     let sep=String.make 15 '*' in
     let () = Printf.printf "%s\n%!" sep in
     let () = Printf.printf "Create the abstract program and print it...\n" in
-    let abs_program = AbstractSyntax.Program.make_program proto_rules pred_id_table i_preds in
+    let abs_program = AbstractSyntax.Program.make_program proto_rules pred_id_table cst_id_table i_preds in
     let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer abs_program) in
     let () = Printf.printf "Done.\n" in
     let () = Printf.printf "%s\n" sep in
@@ -62,7 +62,7 @@ let parse_file filename =
     let () = Printf.printf "Done.\n" in
     let () = Printf.printf "%s\n" sep in
     let derived_facts = Datalog.Program.seminaive program in
-    Printf.printf "I could derive the following facts:\n%s\n" (Datalog.Predicate.facts_to_string derived_facts program.Datalog.Program.pred_table)
+    Printf.printf "I could derive the following facts:\n%s\n" (Datalog.Predicate.facts_to_string derived_facts program.Datalog.Program.pred_table program.Datalog.Program.const_table)
       
 
 let usage_msg="Usage: db_test file"

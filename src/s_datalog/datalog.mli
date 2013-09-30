@@ -20,7 +20,7 @@ module Make :
           module FactSet :Set.S with type elt = ASPred.predicate
           val conditionnal_add :
             FactSet.elt -> FactSet.t -> FactSet.t -> FactSet.t -> FactSet.t
-	  val facts_to_string : FactSet.t PredMap.t -> ASPred.PredIdTable.table -> string
+	  val facts_to_string : FactSet.t PredMap.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
           module Indexed_Facts : Map.S with type key = int
         end
 
@@ -73,6 +73,7 @@ module Make :
 	  edb_facts:Predicate.FactSet.t Predicate.PredMap.t;
           idb : ASPred.pred_id list;
 	  pred_table: ASPred.PredIdTable.table;
+	  const_table: Datalog_AbstractSyntax.ConstGen.Table.table;
 	}
         val make_program : ASProg.program -> program
 	val all_temp_results_for_predicate :
@@ -89,7 +90,7 @@ module Make :
           Rule.FactArray.row Predicate.PredMap.t ->
           Rule.FactArray.row Predicate.PredMap.t ->
           Rule.FactArray.row Predicate.PredMap.t ->
-          (ASPred.predicate -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> 'a
+          (ASPred.predicate -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> 'a
 	val p_semantics_for_predicate :
           Predicate.PredMap.key ->
           program ->

@@ -43,7 +43,7 @@ struct
 	variable index, and [vargen'] is the result of generating this
 	new variable from [vargen].*)
     let to_abstract {p_id=id;arity=arity} (start,content) (vars,vargen) pred_table =
-      LOG "Starting the extraction of predicate %s/%d" (ASPred.to_string {ASPred.p_id=id;ASPred.arity=arity;ASPred.arguments=[]} pred_table) arity LEVEL TRACE;
+      LOG "Starting the extraction of predicate %s/%d" (ASPred.to_string {ASPred.p_id=id;ASPred.arity=arity;ASPred.arguments=[]} pred_table ConstGen.Table.empty) arity LEVEL TRACE;
       let get_var i (vars,vargen) = 
 	try
 	  Utils.IntMap.find i vars,(vars,vargen)
@@ -133,18 +133,18 @@ struct
 	let compare = ASPred.compare 
        end)
 
-    let add_facts_to_buffer b pred_table f =
-      FactSet.iter (fun elt -> Buffer.add_string b (Printf.sprintf "%s.\n" (ASPred.to_string elt pred_table))) f 
+    let add_facts_to_buffer b pred_table cst_table f =
+      FactSet.iter (fun elt -> Buffer.add_string b (Printf.sprintf "%s.\n" (ASPred.to_string elt pred_table cst_table))) f 
 
-    let add_map_to_facts_to_buffer b pred_table map =
+    let add_map_to_facts_to_buffer b pred_table cst_table map =
       PredMap.iter
-	(fun _ v -> add_facts_to_buffer b pred_table v)
+	(fun _ v -> add_facts_to_buffer b pred_table cst_table v)
 	map
 
 
-    let facts_to_string facts pred_table =
+    let facts_to_string facts pred_table cst_table =
       let buff=Buffer.create 100 in
-      let () = add_map_to_facts_to_buffer buff pred_table facts in 
+      let () = add_map_to_facts_to_buffer buff pred_table cst_table facts in 
       Buffer.contents buff
       
     (** [conditionnal_add e s1 s2 s3] adds [e] to the set [s1] only if
@@ -429,6 +429,9 @@ struct
 		    pred_table: ASPred.PredIdTable.table;
 		 (* the table to record the translation from ids to
 		    sym of the predicate *)
+		    const_table: ConstGen.Table.table;
+		 (* the table to record the translation from ids to
+		    sym of the constants *)
 		   }
       
     let extend k v map_list =
@@ -447,10 +450,10 @@ struct
       Predicate.PredMap.add k (Predicate.FactSet.add v current_set) map_to_set
 
 	
-    let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.i_preds=i_preds} =
+    let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds} =
       let rules,e_facts = ASRule.Rules.fold
 	(fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
-	  LOG "Dealing with rule:\t%s" (ASRule.rule_to_string r pred_table) LEVEL TRACE;
+	  LOG "Dealing with rule:\t%s" (ASRule.rule_to_string r pred_table cst_table) LEVEL TRACE;
 	  let new_rule = Rule.make_rule r in
 	  let updated_e_facts = 
 	    if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
@@ -472,10 +475,10 @@ struct
 	  pred_table
 	  ([],[]) in
       LOG "Done." LEVEL TRACE;
-      {rules=rules;edb=edb;edb_facts=e_facts;idb=idb;pred_table=pred_table}
+      {rules=rules;edb=edb;edb_facts=e_facts;idb=idb;pred_table=pred_table;const_table=cst_table}
 	
 	
-    let to_abstract {rules=r;idb=idb;pred_table=pred_table} =
+    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table} =
       LOG "Transforming internat rules into abastract ones..." LEVEL TRACE;
       let rules = 
 	Predicate.PredMap.fold
@@ -493,7 +496,7 @@ struct
 	  (fun acc id -> ASPred.PredIds.add id acc)
 	  ASPred.PredIds.empty
 	  idb in
-      {ASProg.rules=rules;ASProg.pred_table=pred_table;ASProg.i_preds=i_preds}
+      {ASProg.rules=rules;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds}
 	
 	
 	
@@ -523,8 +526,8 @@ struct
 	
   (* TODO: if a set of facts for a predicate of the rhs is empty, we
      can stop the computation *)
-    let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table =
-      LOG "Scanning the rule:\n%s" (ASRule.rule_to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table) LEVEL TRACE;
+    let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table cst_table =
+      LOG "Scanning the rule:\n%s" (ASRule.rule_to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
       (* We first collect all the contents compatible with the facts of
 	 the intensional database. They depend on the intensional
 	 predicate [delta_position] and the ones that are before it
@@ -548,7 +551,6 @@ struct
 	List.fold_left
 	  (fun acc pred ->
 	    (Predicate.PredMap.find pred.Predicate.p_id facts)::acc)
-	  (*	  (delta_facts::end_pred_facts) *)
 	  (facts_at_delta_position::end_pred_facts)
 	  rev_pred_lst in
       (* We define the function to be run on each reached end state of
@@ -624,13 +626,12 @@ struct
 	      Predicate.conditionnal_add
 		hd
 		tl
-(*		(Predicate.PredMap.find r.Rule.lhs.Predicate.p_id previous_step_facts)
-		(Predicate.PredMap.find r.Rule.lhs.Predicate.p_id delta_facts)) *)
 		(custom_find r.Rule.lhs.Predicate.p_id previous_step_facts)
 		(custom_find r.Rule.lhs.Predicate.p_id delta_facts)) 
 
 	    acc
-	    prog.pred_table)
+	    prog.pred_table
+	    prog.const_table)
 	Predicate.FactSet.empty
 	(Predicate.PredMap.find s_id prog.rules)
 	
@@ -652,19 +653,10 @@ struct
 	      | None,None -> None)
 	    facts
 	    delta_facts in
-	(*	let new_delta_facts = 
-		Predicate.PredMap.fold
-		(fun pred previous_facts acc ->
-		Predicate.PredMap.add
-		pred
-		(p_semantics_for_predicate pred prog e_facts previous_facts facts delta_facts)
-		acc) 
-		Predicate.PredMap.empty
-		new_facts  in *)
 	let new_delta_facts = 
 	  List.fold_left
 	    (fun acc pred ->
-	      LOG "Trying to derive facts for: %s" (ASPred.to_string {ASPred.p_id=pred;ASPred.arity=0;ASPred.arguments=[]} prog.pred_table) LEVEL DEBUG;
+	      LOG "Trying to derive facts for: %s" (ASPred.to_string {ASPred.p_id=pred;ASPred.arity=0;ASPred.arguments=[]} prog.pred_table prog.const_table) LEVEL DEBUG;
 	      let new_facts_for_pred=
 		p_semantics_for_predicate
 		  pred
@@ -686,7 +678,7 @@ struct
 	let () = 
 	  List.iter
 	    (fun s -> LOG s LEVEL DEBUG)
-	    (Bolt.Utils.split "\n" (Predicate.facts_to_string new_delta_facts prog.pred_table)) in
+	    (Bolt.Utils.split "\n" (Predicate.facts_to_string new_delta_facts prog.pred_table prog.const_table)) in
 	(new_facts,new_delta_facts) in
       (** [seminaive_rec (facts,delta_facts)] returns the result when
 	  the fixpoint is reached, ie when [seminaive_aux facts

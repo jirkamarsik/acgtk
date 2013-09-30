@@ -79,9 +79,11 @@ struct
       term_compare_aux l1 l2 (VarMap.empty,VarMap.empty) 0
 	      
 	    
-    let term_to_string = function
+    let term_to_string t cst_id_table = 
+      match t with
       | Var v -> Var.to_string v
-      | Const c -> Const.to_string c
+      | Const c -> (* Const.to_string c *)
+	ConstGen.Table.find_sym_from_id c cst_id_table
 	
     type pred_id=int
       
@@ -95,10 +97,10 @@ struct
 		     arity *)
 		   }      
       
-    let to_string {p_id=p_id;arguments=parameters} pred_id_table=
+    let to_string predicate (*{p_id=p_id;arguments=parameters}*) pred_id_table cst_id_table=
       Printf.sprintf "%s(%s)"
-	(PredIdTable.find_sym_from_id p_id pred_id_table)
-	(Utils.string_of_list "," term_to_string parameters)
+	(PredIdTable.find_sym_from_id predicate.p_id pred_id_table)
+	(Utils.string_of_list "," (fun p -> term_to_string p cst_id_table) predicate.arguments)
 
     let compare ({p_id=id1;arity=a1;arguments=l1}:predicate) ({p_id=id2;arity=a2;arguments=l2}:predicate) =
       let res = compare id1 id2 in
@@ -124,25 +126,25 @@ struct
 		    (** represents the predicates of the rule *)
 		    }
       
-    let proto_rule_to_string {proto_lhs=lhs;proto_rhs=rhs} pred_id_table =
-      let head=Predicate.to_string lhs pred_id_table in
+    let proto_rule_to_string r (*{proto_lhs=lhs;proto_rhs=rhs}*) pred_id_table cst_id_table=
+      let head=Predicate.to_string r.proto_lhs pred_id_table cst_id_table in
       let tail=
-	match rhs with
+	match r.proto_rhs with
 	| [] -> "."
 	| _ -> 
 	  Printf.sprintf
 	    ":- %s."
-	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) rhs) in
+	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table cst_id_table) r.proto_rhs) in
       Printf.sprintf "%s%s\n" head tail
 	
 	
-    let proto_rules_to_buffer rules  pred_id_table = 
+    let proto_rules_to_buffer rules  pred_id_table cst_id_table = 
       let buff=Buffer.create 4 in
       let () =
 	List.iter
 	  (fun r -> Buffer.add_string
 	    buff
-	    (Printf.sprintf "%s\n" (proto_rule_to_string r pred_id_table)))
+	    (Printf.sprintf "%s\n" (proto_rule_to_string r pred_id_table cst_id_table)))
 	  rules in
       buff
 	    
@@ -153,24 +155,24 @@ struct
 	       i_rhs:Predicate.predicate list;
 	      }
       
-    let rule_to_string {lhs=lhs;e_rhs=e_rhs;i_rhs=i_rhs} pred_id_table =
-      let head=Predicate.to_string lhs pred_id_table in
+    let rule_to_string r (*{lhs=lhs;e_rhs=e_rhs;i_rhs=i_rhs}*) pred_id_table cst_id_table =
+      let head=Predicate.to_string r.lhs pred_id_table cst_id_table in
       let tail=
-	match e_rhs,i_rhs with
+	match r.e_rhs,r.i_rhs with
 	| [],[] -> "."
 	| [],_ -> 
 	  Printf.sprintf
 	    ":-  %s."
-	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) i_rhs)
+	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table cst_id_table) r.i_rhs)
 	| _,[] -> 
 	  Printf.sprintf
 	    ":- %s ."
-	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) e_rhs)
+	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table cst_id_table) r.e_rhs)
 	| _,_ ->
 	  Printf.sprintf
 	    ":- %s , %s."
-	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) e_rhs)
-	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table) i_rhs) in
+	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table cst_id_table) r.e_rhs)
+	    (Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table cst_id_table) r.i_rhs) in
       Printf.sprintf "%s%s" head tail
 
     module Rules=Set.Make(struct
@@ -178,7 +180,7 @@ struct
       let compare {id=i} {id=j} = i-j
     end)
 
-    let rules_to_buffer rules pred_id_table = 
+    let rules_to_buffer rules pred_id_table cst_id_table = 
       let buff=Buffer.create 4 in
       let () =
 	Rules.iter
@@ -186,7 +188,7 @@ struct
 	    let () =
 	      Buffer.add_string
 		buff
-		(rule_to_string r pred_id_table) in
+		(rule_to_string r pred_id_table cst_id_table) in
 	    Buffer.add_string buff "\n")
 	  rules in
       buff
@@ -198,6 +200,7 @@ struct
   struct
     type program =  {rules:Rule.Rules.t;
 		     pred_table: Predicate.PredIdTable.table;
+		     const_table: ConstGen.Table.table;
 		     i_preds:Predicate.PredIds.t}
       
     let split_rhs proto_preds intensional_pred =
@@ -211,7 +214,7 @@ struct
 	([],[])
       proto_preds
 	
-    let make_program proto_rules pred_id_table intensional_pred =
+    let make_program proto_rules pred_id_table cst_id_table intensional_pred =
       let rules =
 	List.fold_left
 	  (fun acc p_rule ->
@@ -227,15 +230,16 @@ struct
 	  proto_rules in
       {rules=rules;
        pred_table=pred_id_table;
+       const_table=cst_id_table;
        i_preds=intensional_pred}
 	
-    let to_buffer {rules=rules;pred_table=pred_table;i_preds=i_preds} =
-      let buff = Rule.rules_to_buffer rules pred_table in
+    let to_buffer prog (*{rules=rules;pred_table=pred_table;i_preds=i_preds}*) =
+      let buff = Rule.rules_to_buffer prog.rules prog.pred_table prog.const_table in
       let () = Buffer.add_string buff "Intentional predicates are:\n" in
       let () =
 	Predicate.PredIds.iter
-	  (fun elt -> Buffer.add_string buff (Printf.sprintf "\t%s\n%!" (Predicate.PredIdTable.find_sym_from_id elt pred_table)))
-	  i_preds in
+	  (fun elt -> Buffer.add_string buff (Printf.sprintf "\t%s\n%!" (Predicate.PredIdTable.find_sym_from_id elt prog.pred_table)))
+	  prog.i_preds in
       buff
   end
     

@@ -19,6 +19,7 @@ let string = (letter|digit|'_')*'\''*
   | "(" {LPAR}
   | ")" {RPAR}
   | ":-" {FROM}
+  | "/" {ARITY}
   | letter string {IDENT (Lexing.lexeme lexbuf)}
   | digit+ {let s = Lexing.lexeme lexbuf in
 	    INT (int_of_string s)}

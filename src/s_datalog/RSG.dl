@@ -2,6 +2,8 @@ rsg(x,y):- flat(x,y).
 rsg(x,y):-up(x,x1),rsg(y1,x1),down(y1,y).
 (*rsg(x,x).*)
 
+rsg(x,y):-flat(y,x).
+
 (*up(x,x). *)
 up(1,5).
 up(1,6).
@@ -11,7 +13,8 @@ up(8,14).
 up(9,15).
 up(10,15).
 
-flat(7,6).
+(*flat(x,x).*)
+flat/2(7,6).
 flat(13,14).
 flat(13,15).
 flat(16,13).

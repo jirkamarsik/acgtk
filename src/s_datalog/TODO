@@ -16,3 +16,7 @@
   "extract_consequence"
 + [X] Autoriser l'instanciation avec des variables encore présentes
 + [ ] Implanter la réponse à une requête.
++ [ ] Ajouter dans le programme l'enregistrement de toutes les
+  constantes et les parcourir pour ajouter aux faits ceux qui ont
+  encore des variables.
++ [ ] Ajouter la possibilité d'étendre un programme datalog

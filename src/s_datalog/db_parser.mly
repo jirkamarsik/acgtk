@@ -5,7 +5,7 @@
 
 %token <string> IDENT
 %token <int> INT
-%token LPAR RPAR COMMA DOT FROM EOI
+%token LPAR RPAR COMMA DOT FROM EOI ARITY
 
 
 %start rule program
@@ -25,7 +25,7 @@
      
      
      rule :
- | predicate DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
+ | predicate_with_arity DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
    let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
    let lhs,new_pred_id_table,(_,new_const_table)= $1 pred_id_table (VarGen.Table.empty,const_table) in
    {AbstractSyntax.Rule.proto_id=rule_id;
@@ -33,7 +33,7 @@
     AbstractSyntax.Rule.proto_rhs=[]},
    (new_pred_id_table,new_rule_id_gen,i_preds,new_const_table)}
      
- | predicate FROM predicate_list DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
+ | predicate_with_arity FROM predicate_list DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
    let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
    let lhs,new_pred_id_table,new_tables=$1 pred_id_table (VarGen.Table.empty,const_table) in
    let rhs,new_pred_id_table',(_,new_const_table)=$3 new_pred_id_table new_tables in
@@ -44,13 +44,29 @@
      
      
      predicate_list :
- | predicate {fun pred_id_table tables -> 
+ | predicate_with_arity {fun pred_id_table tables -> 
    let predicate,new_pred_id_table,new_tables= $1 pred_id_table tables in
    [predicate],new_pred_id_table,new_tables }
- | predicate COMMA predicate_list {fun pred_id_table tables ->
+ | predicate_with_arity COMMA predicate_list {fun pred_id_table tables ->
    let predicate,new_pred_id_table,new_tables= $1 pred_id_table tables in
    let remaining_pred,new_pred_id_table',new_tables'=$3 new_pred_id_table new_tables in
    predicate::remaining_pred,new_pred_id_table',new_tables' }
+
+     predicate_with_arity :
+ | IDENT ARITY INT LPAR parameters RPAR {fun pred_id_table tables ->
+   let parameters,new_tables=$5 tables in
+   let length=List.length parameters in
+   if $3<>length then
+     let () = Printf.fprintf stderr "The specified arity of predicate '%s/%d' does not match the actual number of arguments (%d)\n%!" $1 $3 length in
+     raise Parsing.Parse_error
+   else
+     let new_sym = Printf.sprintf "%s/%d" $1 length in
+     let pred_id,new_pred_id_table = AbstractSyntax.Predicate.PredIdTable.add_sym new_sym pred_id_table in
+     {AbstractSyntax.Predicate.p_id=pred_id;
+      AbstractSyntax.Predicate.arity=List.length parameters;
+      AbstractSyntax.Predicate.arguments=parameters},new_pred_id_table,new_tables }
+ | predicate {$1}
+
      
      predicate :
  | IDENT LPAR parameters RPAR {fun pred_id_table tables ->
