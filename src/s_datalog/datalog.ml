@@ -133,6 +133,7 @@ struct
 	let compare = ASPred.compare 
        end)
 
+
     let add_facts_to_buffer b pred_table cst_table f =
       FactSet.iter (fun elt -> Buffer.add_string b (Printf.sprintf "%s.\n" (ASPred.to_string elt pred_table cst_table))) f 
 
@@ -162,6 +163,62 @@ struct
 	in the seminaive algorithm. These facts are also indexed by
 	[predicate_id_type]. *)
     module Indexed_Facts=Utils.IntMap 
+
+
+    module Premise =
+    struct
+      type t = ASPred.predicate list
+      let rec compare pred_lst_1 pred_lst_2 =
+	match pred_lst_1,pred_lst_2 with
+	| [],[] -> 0
+	| _,[] -> 1
+	| [],_ -> -1
+	| p1::tl1,p2::tl2 ->
+	  let diff =ASPred.compare p1 p2 in
+	  if diff <> 0 then
+	    diff
+	  else
+	    compare tl1 tl2
+
+      let to_string premises pred_table const_table = Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) premises
+
+    end
+
+    module PremiseSet=Set.Make(Premise)
+
+    module PredicateMap=Map.Make(
+      struct 
+	type t = ASPred.predicate
+	let compare = ASPred.compare
+      end)
+
+
+    let add_map_to_premises_to_buffer b pred_table cst_table map =
+      PredicateMap.iter
+	(fun k v ->  
+	  Buffer.add_string
+	    b
+	    (Printf.sprintf
+	       "%s <- %s\n"
+	       (ASPred.to_string k pred_table cst_table)
+	       (Premise.to_string v pred_table cst_table)))
+	map
+
+
+    let facts_to_string facts pred_table cst_table =
+      let buff=Buffer.create 100 in
+      let () = add_map_to_facts_to_buffer buff pred_table cst_table facts in 
+      Buffer.contents buff
+
+
+    let add_to_map_to_set k v m =
+      let current_set =
+	try
+	  PredicateMap.find k m
+	with
+	| Not_found -> PremiseSet.empty in 
+      PredicateMap.add k (PremiseSet.add v current_set) m
+
   end
     
   module Rule =
@@ -274,24 +331,29 @@ struct
       | _, h' -> 
 	(try UF.union i j h with
 	| UF.Union_Failure -> raise Fails)
+
 	  
-    (** [extract_consequence r content] returns a fact whose components
-	all are of the form [Const c] (that is something of type {!
-	Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate}) given . *)
+    (** [extract_consequence r content] returns a fact from
+	content. The arguments are of the form [Const c] or [Var v]
+	(that is something of type {!
+	Datalog_AbstractSyntax.AbstractSyntax.Predicate.term}). When
+	it is a [Var v], it means that when this variable range over
+	the constants of the program, it still are facts (=
+	provable). *)
     let extract_consequence r content =
       let args,_,_= 
 	List.fold_left 
 	  (fun (args,varmap,vargen) elt ->
-	      match elt with 
-	      | UF.Value v -> (ASPred.Const v )::args,varmap,vargen
-	      | UF.Link_to i -> 
-		let new_var,new_varmap,new_vargen = 
-		  try
-		    Utils.IntMap.find i varmap,varmap,vargen
-		  with
-		  | Not_found -> let n_v,n_vg=VarGen.get_fresh_id vargen in
-				 n_v,Utils.IntMap.add i n_v varmap,n_vg in
-		(ASPred.Var new_var)::args,new_varmap,new_vargen )
+	    match elt with 
+	    | UF.Value v -> (ASPred.Const v )::args,varmap,vargen
+	    | UF.Link_to i -> 
+	      let new_var,new_varmap,new_vargen = 
+		try
+		  Utils.IntMap.find i varmap,varmap,vargen
+		with
+		| Not_found -> let n_v,n_vg=VarGen.get_fresh_id vargen in
+			       n_v,Utils.IntMap.add i n_v varmap,n_vg in
+	      (ASPred.Var new_var)::args,new_varmap,new_vargen )
 	  ([],Utils.IntMap.empty,VarGen.init ())
 	  (UF.extract (r.lhs.Predicate.arity) content) in
       {ASPred.p_id=r.lhs.Predicate.p_id;
@@ -326,12 +388,13 @@ struct
 	raised).*)
     module FactArray=ArrayTraversal.Make2(
       struct
-	type state = int*(ConstGen.id UF.t)
 	type cell = Predicate.FactSet.elt (*P.fact *)
+  	type state = (int*(ConstGen.id UF.t))*(cell list)
+
 	module CellSet=Predicate.FactSet
-	let update s c =
+	let update (s,cells) c =
 	  try 
-	    Some (Predicate.instantiate_with c s)
+	    Some (Predicate.instantiate_with c s,c::cells)
 	  with
 	  | UF.Union_Failure -> None
       end
@@ -354,7 +417,7 @@ struct
        the instantiation with the extensional predicates *)
       let resume_on_i_pred acc state =
 	FactArray.collect_results
-	  (fun l_acc (_,content) -> (extract_consequence r content)::l_acc)
+	  (fun l_acc ((_,content),_) -> (extract_consequence r content)::l_acc)
 	  acc
 	state
 	make_search_array_i_pred in
@@ -366,7 +429,7 @@ struct
     FactArray.collect_results
       (fun acc s -> resume_on_i_pred acc s)
       []
-      (r.lhs.Predicate.arity+1,r.content)
+      ((r.lhs.Predicate.arity+1,r.content),[])
       make_search_array_e_pred
       
   (** [temp r time (rev_pred_lst,delta_position,pred_lst) e_facts
@@ -399,7 +462,7 @@ struct
        the instantiation with the extensional predicates *)
     let resume_on_i_pred acc state =
       FactArray.collect_results
-	(fun l_acc (_,content) -> agg_function (extract_consequence r content) l_acc)
+	(fun l_acc ((_,content),premises) -> agg_function ((extract_consequence r content),premises) l_acc)
 	acc
 	state
 	make_search_array_i_pred in
@@ -410,7 +473,7 @@ struct
     FactArray.collect_results
       (fun acc s -> resume_on_i_pred acc s)
       start
-      (r.lhs.Predicate.arity+1,r.content)
+      ((r.lhs.Predicate.arity+1,r.content),[])
       make_search_array_e_pred
   end
 
@@ -559,9 +622,9 @@ struct
 	 [FactArray.collect_results]) for each of the possible
 	 [delta_facts], that is for each of the possible [Focused_list]
 	 that can be reach from [zip] (including [zip] itself). *)
-      let resume_on_i_pred acc state =
+      let resume_on_i_pred acc (((i,content),premises) as state) =
 	match r.Rule.i_rhs with
-	| [] -> agg_function (Rule.extract_consequence r (snd state)) acc
+	| [] -> agg_function ((Rule.extract_consequence r content),premises) acc
 	| _ -> 
 	(* We now init the focused list corresponding to the intensional
 	   predicates of the rule [r] *)
@@ -572,7 +635,7 @@ struct
 	       of [r], we extract all the possible facts from the rule
 	       [r] *)
 	      Rule.FactArray.collect_results
-		(fun ll_acc (_,content) -> agg_function (Rule.extract_consequence r content) ll_acc)
+		(fun ll_acc ((_,content),premises) -> agg_function ((Rule.extract_consequence r content),premises) ll_acc)
 		l_acc
 		state
 		(make_search_array_i_pred focus))
@@ -589,7 +652,7 @@ struct
 	     intensional predicates. *)
 	  resume_on_i_pred acc s)
 	start
-	(r.Rule.lhs.Predicate.arity+1,r.Rule.content)
+	((r.Rule.lhs.Predicate.arity+1,r.Rule.content),[])
 	make_search_array_e_pred
 	
     let custom_find k map =
@@ -613,7 +676,7 @@ struct
       [time]}{_ [T]{_ [l]}}) in {{:
       http://webdam.inria.fr/Alice/pdfs/Chapter-13.pdf} Chap. 13 of
       "Foundations of Databases", Abiteboul, Hull, and Vianu} *)
-    let p_semantics_for_predicate s_id prog e_facts previous_step_facts facts delta_facts =
+    let p_semantics_for_predicate s_id prog e_facts previous_step_facts facts delta_facts derivations =
       List.fold_left
 	(fun acc r ->
 	  temp_facts
@@ -622,17 +685,17 @@ struct
 	    previous_step_facts
 	    facts
 	    delta_facts
-	    (fun hd tl -> 
-	      Predicate.conditionnal_add
-		hd
-		tl
+	    (fun (new_fact,from_premises) (new_fact_set,new_fact_derivations) -> 
+	      (Predicate.conditionnal_add
+		new_fact
+		new_fact_set
 		(custom_find r.Rule.lhs.Predicate.p_id previous_step_facts)
-		(custom_find r.Rule.lhs.Predicate.p_id delta_facts)) 
-
+		(custom_find r.Rule.lhs.Predicate.p_id delta_facts),
+	       Predicate.add_to_map_to_set new_fact from_premises new_fact_derivations))
 	    acc
 	    prog.pred_table
 	    prog.const_table)
-	Predicate.FactSet.empty
+	(Predicate.FactSet.empty,derivations)
 	(Predicate.PredMap.find s_id prog.rules)
 	
     let seminaive prog =
@@ -640,7 +703,7 @@ struct
 	  [i]}[,][Delta]{^ [i+1]}{_ [S]}[)] for all [S] when [facts]
 	  corresponds to [S]{^ [i-1]} for all [S] and [delta_facts] to
 	  [Delta]{^ [i]}{_ [S]} for all [S] *)
-      let rec seminaive_aux facts delta_facts =
+      let rec seminaive_aux facts delta_facts derivations =
 	(* TODO: Check that PredMap has all intensional predicates of
 	   prog *)
 	let new_facts = 
@@ -653,43 +716,44 @@ struct
 	      | None,None -> None)
 	    facts
 	    delta_facts in
-	let new_delta_facts = 
+	let new_delta_facts,new_derivations_for_all_i_pred = 
 	  List.fold_left
-	    (fun acc pred ->
+	    (fun (acc,derivations) pred ->
 	      LOG "Trying to derive facts for: %s" (ASPred.to_string {ASPred.p_id=pred;ASPred.arity=0;ASPred.arguments=[]} prog.pred_table prog.const_table) LEVEL DEBUG;
-	      let new_facts_for_pred=
+	      let new_facts_for_pred,new_derivations=
 		p_semantics_for_predicate
 		  pred
 		  prog
 		  prog.edb_facts
 		  facts
 		  new_facts
-		  delta_facts in
+		  delta_facts
+		  derivations in
 	      if Predicate.FactSet.is_empty new_facts_for_pred then
-		acc
+		acc,new_derivations
 	      else
 		Predicate.PredMap.add
 		  pred
 		  new_facts_for_pred
-		  acc) 
-	    Predicate.PredMap.empty
+		  acc,new_derivations) 
+	    (Predicate.PredMap.empty,derivations)
 	    prog.idb  in 
 	LOG "% d new facts:" (Predicate.PredMap.fold (fun _ v acc -> acc+(Predicate.FactSet.cardinal v)) new_delta_facts 0) LEVEL DEBUG;
 	let () = 
 	  List.iter
 	    (fun s -> LOG s LEVEL DEBUG)
 	    (Bolt.Utils.split "\n" (Predicate.facts_to_string new_delta_facts prog.pred_table prog.const_table)) in
-	(new_facts,new_delta_facts) in
+	(new_facts,new_delta_facts,new_derivations_for_all_i_pred) in
       (** [seminaive_rec (facts,delta_facts)] returns the result when
 	  the fixpoint is reached, ie when [seminaive_aux facts
 	  delta_facts] does not produce any new fact. This is the
 	  iteration at step 5 in the seminaive algo. *)
-      let rec seminaive_rec (facts,delta_facts) = 
+      let rec seminaive_rec (facts,delta_facts,derivations)= 
 	if Predicate.PredMap.is_empty delta_facts then
-	  facts
+	  facts,derivations
 	else
-	  seminaive_rec (seminaive_aux facts delta_facts) in
-      let first_step_results = seminaive_aux prog.edb_facts Predicate.PredMap.empty in
+	  seminaive_rec (seminaive_aux facts delta_facts derivations) in
+      let first_step_results = seminaive_aux prog.edb_facts Predicate.PredMap.empty Predicate.PredicateMap.empty in
       seminaive_rec first_step_results
 	
 	
