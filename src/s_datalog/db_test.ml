@@ -63,8 +63,13 @@ let parse_file filename =
     let () = Printf.printf "%s\n" sep in
     let derived_facts,derivations = Datalog.Program.seminaive program in
     let () = Printf.printf "I could derive the following facts:\n%s\n" (Datalog.Predicate.facts_to_string derived_facts program.Datalog.Program.pred_table program.Datalog.Program.const_table) in
-    let () = Printf.printf "With the following derivations:\n%s\n" "" in
-      ()
+    let buff = Buffer.create 80 in
+    let () = Datalog.Predicate.add_map_to_premises_to_buffer buff program.Datalog.Program.pred_table program.Datalog.Program.const_table derivations in
+    let () = Printf.printf "With the following derivations:\n%s\n" (Buffer.contents buff) in
+    let () = Datalog.Predicate.format_derivations2 program.Datalog.Program.pred_table program.Datalog.Program.const_table derivations in
+    let () = Printf.printf "%s\n" (Buffer.contents (Format.stdbuf)) in
+    
+    ()
       
 
 let usage_msg="Usage: db_test file"

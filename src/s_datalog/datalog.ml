@@ -180,7 +180,9 @@ struct
 	  else
 	    compare tl1 tl2
 
-      let to_string premises pred_table const_table = Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) premises
+      let to_string premises pred_table const_table =
+	Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) premises
+
 
     end
 
@@ -193,16 +195,70 @@ struct
       end)
 
 
+
+
+    let rec format_derivations2 pred_table cst_table map =
+      PredicateMap.iter
+	(fun k v -> let () = format_derivation "" k v pred_table cst_table map in 
+		    Printf.fprintf stdout "\n")
+	map
+    and format_derivation prefix k v pred_table cst_table map =
+      let _ = PremiseSet.fold
+	(fun premises (first,length)  -> 
+	  let new_length,new_prefix= 
+	    match first with
+	    | true ->
+	      let s=ASPred.to_string k pred_table cst_table in
+	      let () = Printf.fprintf stdout "%s" s in
+	      let n_l=String.length s in
+	      n_l,Printf.sprintf "%s%s" prefix (String.make n_l ' ')
+	    | false ->  
+	      let () = Printf.fprintf stdout "\n%s  %s" prefix (String.make (length -2) '>') in
+	      length,Printf.sprintf "%s  %s" prefix (String.make (length-2) ' ') in
+	  let () = format_premises2 new_prefix premises first pred_table cst_table map in
+(*	  let () = Printf.fprintf stdout "\n" in*)
+	  false,new_length)
+	v
+	(true,0) in
+      ()
+    and format_premises2 prefix premises first pred_table cst_table map =
+      let () = match first with
+	| true -> Printf.fprintf stdout ":--" 
+	| false -> Printf.fprintf stdout "\n%s|--" prefix in
+      match premises with
+      | [] -> ()
+      | [p] -> 
+	let () = 
+	  try
+	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map
+	  with
+	  | Not_found -> Printf.fprintf stdout "%s" (ASPred.to_string p pred_table cst_table)   in
+	Printf.fprintf stdout ""
+      | p::tl ->
+	let () = 
+	  try
+	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map
+	  with
+	  | Not_found -> Printf.fprintf stdout "%s" (ASPred.to_string p pred_table cst_table)   in
+	let () = format_premises2 prefix tl false  pred_table cst_table map in
+	Printf.fprintf stdout ""
+	  
+
     let add_map_to_premises_to_buffer b pred_table cst_table map =
       PredicateMap.iter
 	(fun k v ->  
-	  Buffer.add_string
-	    b
-	    (Printf.sprintf
-	       "%s <- %s\n"
-	       (ASPred.to_string k pred_table cst_table)
-	       (Premise.to_string v pred_table cst_table)))
+	  PremiseSet.iter
+	    (fun premise ->
+	      Buffer.add_string
+		b
+		(Printf.sprintf
+		   "%s <- %s\n"
+		   (ASPred.to_string k pred_table cst_table)
+		   (Premise.to_string premise pred_table cst_table)))
+	    v)
 	map
+
+
 
 
     let facts_to_string facts pred_table cst_table =
@@ -590,7 +646,7 @@ struct
   (* TODO: if a set of facts for a predicate of the rhs is empty, we
      can stop the computation *)
     let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table cst_table =
-      LOG "Scanning the rule:\n%s" (ASRule.rule_to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
+      LOG "Scanning the rule: %s" (ASRule.rule_to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
       (* We first collect all the contents compatible with the facts of
 	 the intensional database. They depend on the intensional
 	 predicate [delta_position] and the ones that are before it
@@ -613,7 +669,10 @@ struct
 	    pred_lst in
 	List.fold_left
 	  (fun acc pred ->
-	    (Predicate.PredMap.find pred.Predicate.p_id facts)::acc)
+	    try
+	      (Predicate.PredMap.find pred.Predicate.p_id facts)::acc
+	    with
+	    | Not_found -> acc)
 	  (facts_at_delta_position::end_pred_facts)
 	  rev_pred_lst in
       (* We define the function to be run on each reached end state of
