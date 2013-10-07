@@ -199,30 +199,34 @@ struct
 
     let rec format_derivations2 pred_table cst_table map =
       PredicateMap.iter
-	(fun k v -> let () = format_derivation "" k v pred_table cst_table map in 
+	(fun k v -> let () = format_derivation "" k v pred_table cst_table map FactSet.empty in 
 		    Printf.fprintf stdout "\n")
 	map
-    and format_derivation prefix k v pred_table cst_table map =
-      let _ = 
-	PremiseSet.fold
-	  (fun premises (first,length)  -> 
-	    let new_length,new_prefix= 
-	      match first with
-	      | true ->
-		let s=ASPred.to_string k pred_table cst_table in
-		let () = Printf.fprintf stdout "%s" s in
-		let n_l=String.length s in
-		n_l,Printf.sprintf "%s%s" prefix (String.make n_l ' ')
-	      | false ->  
-		let () = Printf.fprintf stdout "\n%s  %s" prefix (String.make (length -2) '>') in
-		length,Printf.sprintf "%s  %s" prefix (String.make (length-2) ' ') in
-	    let () = format_premises2 new_prefix (List.rev premises) true pred_table cst_table map in
-	  (*	  let () = Printf.fprintf stdout "\n" in*)
-	    false,new_length)
-	  v
-	  (true,0) in
-      ()
-    and format_premises2 prefix premises first pred_table cst_table map =
+    and format_derivation prefix k v pred_table cst_table map set=
+      if FactSet.mem k set then
+	Printf.printf "... (infinite loop on %s)" (ASPred.to_string k pred_table cst_table) 
+      else
+	let new_set=FactSet.add k set in
+	let _ = 
+	  PremiseSet.fold
+	    (fun premises (first,length)  -> 
+	      let new_length,new_prefix= 
+		match first with
+		| true ->
+		  let s=ASPred.to_string k pred_table cst_table in
+		  let () = Printf.fprintf stdout "%s" s in
+		  let n_l=String.length s in
+		  n_l,Printf.sprintf "%s%s" prefix (String.make n_l ' ')
+		| false ->  
+		  let () = Printf.fprintf stdout "\n%s  %s" prefix (String.make (length -2) '>') in
+		  length,Printf.sprintf "%s  %s" prefix (String.make (length-2) ' ') in
+	      let () = format_premises2 new_prefix (List.rev premises) true pred_table cst_table map new_set in
+	      (*	  let () = Printf.fprintf stdout "\n" in*)
+	      false,new_length)
+	    v
+	    (true,0) in
+	()
+    and format_premises2 prefix premises first pred_table cst_table map set =
       let () = match first with
 	| true -> Printf.fprintf stdout ":--" 
 	| false -> Printf.fprintf stdout "\n%s|--" prefix in
@@ -231,17 +235,17 @@ struct
       | [p] -> 
 	let () = 
 	  try
-	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map
+	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map set
 	  with
 	  | Not_found -> Printf.fprintf stdout "%s" (ASPred.to_string p pred_table cst_table)   in
 	Printf.fprintf stdout ""
       | p::tl ->
 	let () = 
 	  try
-	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map
+	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map set
 	  with
 	  | Not_found -> Printf.fprintf stdout "%s" (ASPred.to_string p pred_table cst_table)   in
-	let () = format_premises2 prefix tl false  pred_table cst_table map in
+	let () = format_premises2 prefix tl false  pred_table cst_table map set in
 	Printf.fprintf stdout ""
 	  
 
