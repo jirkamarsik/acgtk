@@ -242,7 +242,7 @@ struct
 		List.fold_left
 		  (fun (acc,b,name) (n,l) -> 
 		     try 
-		       (E.get n e)::acc,b or n=foc_name,name
+		       (E.get n e)::acc,b || n=foc_name,name
 		     with
 		       | E.Entry_not_found s -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment s,l)))
 		  ([],false,foc_name)

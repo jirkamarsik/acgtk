@@ -179,7 +179,7 @@ module Lambda =
 	       false
 	   | App((Const s|DConst s),Abs(x,u)) when is_binder s id_to_sym ->
 	       let x' = generate_var_name x env in
-	       let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] env u in
+	       let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] ((level,x')::env) u in
 	       let new_env=
 		 List.fold_right
 		   (fun  (l,(x,abs)) (l_acc,acc) ->
@@ -196,7 +196,7 @@ module Lambda =
 	       false
 	   | App((Const s|DConst s),LAbs(x,u)) when is_binder s id_to_sym ->
 	       let x' = generate_var_name x l_env in
-	       let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] l_env u in
+	       let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env) u in
 	       let new_env=
 		 List.fold_right
 		   (fun  (l,(x,abs)) (l_acc,acc) ->
@@ -271,7 +271,7 @@ module Lambda =
         | Unknown _    -> true
         | Abs (_, t)   -> lclosed n t
         | LAbs (_, t)  -> lclosed (n+1) t
-        | App (t1, t2) -> (lclosed n t1) & (lclosed n t2)
+        | App (t1, t2) -> (lclosed n t1) && (lclosed n t2)
         | _            -> raise Not_yet_implemented
       in
       lclosed 0 tm
@@ -384,16 +384,16 @@ module Lambda =
          | Unknown _    -> true
          | Abs (_, t)   -> vacuous_tm (n+1) t
          | LAbs (_, t)  -> vacuous_tm n t
-         | App (t1, t2) -> (vacuous_tm n t1) & (vacuous_tm n t2)
+         | App (t1, t2) -> (vacuous_tm n t1) && (vacuous_tm n t2)
          | _            -> raise Not_yet_implemented
        in
        let rec vacuous_ty n ty =
          match ty with
            Atom _              -> true
-         | LFun (ty1, ty2)     -> (vacuous_ty n ty1) & (vacuous_ty n ty2)
-         | Fun (ty1, ty2)     -> (vacuous_ty n ty1) & (vacuous_ty n ty2)
-         | Dprod (_, ty1, ty2) -> (vacuous_ty n ty1) & (vacuous_ty (n+1) ty2)
-         | TApp (ty1, tm)      -> (vacuous_ty n ty1) & (vacuous_tm n tm)
+         | LFun (ty1, ty2)     -> (vacuous_ty n ty1) && (vacuous_ty n ty2)
+         | Fun (ty1, ty2)     -> (vacuous_ty n ty1) && (vacuous_ty n ty2)
+         | Dprod (_, ty1, ty2) -> (vacuous_ty n ty1) && (vacuous_ty (n+1) ty2)
+         | TApp (ty1, tm)      -> (vacuous_ty n ty1) && (vacuous_tm n tm)
          | _                   -> raise Not_yet_implemented
        in
        vacuous_ty 0 ty
@@ -449,7 +449,7 @@ module Lambda =
          | (Unknown i, Unknown j)               -> i = j
          | (Abs (_, tm11), Abs (_, tm12))       -> convert tm11 tm12
          | (LAbs (_, tm11), LAbs (_, tm12))    -> convert tm11 tm12
-         | (App (tm11, tm12), App (tm21, tm22)) -> (convert tm11 tm21) &
+         | (App (tm11, tm12), App (tm21, tm22)) -> (convert tm11 tm21) &&
                         (convert (head_normalize tm12) (head_normalize tm22))
          | _                                    -> false
        in
@@ -478,15 +478,15 @@ module Lambda =
          (Atom i, Atom j) 
            -> i = j
        | (LFun (ty11, ty12), LFun (ty21, ty22)) 
-           -> (convert ty11 ty21) & (convert ty12 ty22)
+           -> (convert ty11 ty21) && (convert ty12 ty22)
        | (Fun (ty11, ty12), Fun (ty21, ty22)) 
-           -> (convert ty11 ty21) & (convert ty12 ty22)
+           -> (convert ty11 ty21) && (convert ty12 ty22)
        | (Dprod (_, ty11, ty12), Dprod (_, ty21, ty22)) 
-           -> (convert ty11 ty21) & (convert ty12 ty22)
+           -> (convert ty11 ty21) && (convert ty12 ty22)
        | (TAbs (_, ty11), TAbs (_, ty21))
            -> convert ty11 ty21
        | (TApp (ty11, tm1), TApp (ty21, tm2))
-           -> (convert ty11 ty21) & (beta_convert tm1 tm2)
+           -> (convert ty11 ty21) && (beta_convert tm1 tm2)
        | (_, _)
            -> false
        in

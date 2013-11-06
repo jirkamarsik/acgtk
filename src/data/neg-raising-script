@@ -1,15 +1,17 @@
 load d neg-raising.acg;  
 
-
+# - (penser (croire (aller_a_Dax P) J) M) : prop
 read interpretation_3 analyse
 	c_ira_a_Dax (c_croit_1 (c_pense_1 I_p NEG c_Marie) I_v c_Jane) I_v c_Paul:P;
-
+# penser (- (croire (aller_a_Dax P) J)) M : prop
 read interpretation_3 analyse
 	c_ira_a_Dax (c_croit_1 (c_pense_2 I_p NEG c_Marie) I_v c_Jane) I_v c_Paul:P;
 
+# - (penser (croire (aller_a_Dax P) J) M) : prop
 read interpretation_3 analyse
 	c_ira_a_Dax (c_croit_2 (c_pense_1 I_p NEG c_Marie) I_v c_Jane) I_v c_Paul:P;
 
+# penser (croire (- (aller_a_Dax P)) J) M : prop
 read interpretation_3 analyse
 	c_ira_a_Dax (c_croit_2 (c_pense_2 I_p NEG c_Marie) I_v c_Jane) I_v c_Paul:P;
 

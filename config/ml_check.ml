@@ -52,7 +52,7 @@ let () =
 	     | Not_found -> s in
 	 let (major,minor,add) = version v in
        let (major_r, minor_r, add_r) = version !ref_version in
-	 if major > major_r or (major = major_r && (minor > minor_r or (minor = minor_r && add >= add_r)))
+	 if major > major_r || (major = major_r && (minor > minor_r || (minor = minor_r && add >= add_r)))
 	 then
 	   let () = Printf.printf "OK\n" in exit 0
 	 else

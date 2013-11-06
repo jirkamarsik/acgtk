@@ -14,8 +14,9 @@ signature derived =
     P2:tree -> tree -> tree;
     P3:tree ->  tree -> tree -> tree;
     V2:tree -> tree -> tree;
+    V3:tree -> tree -> tree -> tree;
     N,V:tree -> tree;
-    croit,pense,que,Paul,Marie,Jane,ira,a_Dax,pas:tree;
+    croit,pense,que,Paul,Marie,Jane,ira,a_Dax,ne,pas:tree;
 end
 
 lexicon read (derivations) : derived =
@@ -30,7 +31,7 @@ lexicon read (derivations) : derived =
     c_Paul:= N Paul;
     c_Jane:= N Jane;
 
-    NEG := lambda x. V2 x pas;
+    NEG := lambda x. V3 ne x pas;
     
     
 
@@ -50,6 +51,7 @@ signature logic =
 	-> (prop -> prop) -> (prop -> prop) -> ind -> (prop -> prop) ;
     prefix - : prop -> prop;
     ID = lambda x.x : prop -> prop;
+    ID' = lambda p x.p x : (ind -> prop) -> (ind -> prop);
 end
 
 lexicon interpretation (derivations):logic =
@@ -129,5 +131,6 @@ lexicon interpretation_3 (derivations):logic =
     NEG := lambda p. - p;
 
 end
+
 
 
