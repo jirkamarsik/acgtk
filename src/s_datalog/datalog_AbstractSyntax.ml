@@ -245,21 +245,25 @@ struct
     type program =  {rules:Rule.Rules.t;
 		     pred_table: Predicate.PredIdTable.table;
 		     const_table: ConstGen.Table.table;
-		     i_preds:Predicate.PredIds.t}
+		     i_preds:Predicate.PredIds.t;
+		     rule_id_gen:IntIdGen.t;
+		     e_pred_to_rules: Rule.Rules.t Predicate.PredIdMap.t}
       
-    let make_program proto_rules pred_id_table cst_id_table intensional_pred =
-      let rules = 
+    let make_program {Proto_Program.rules;Proto_Program.pred_table;Proto_Program.const_table;Proto_Program.i_preds;Proto_Program.rule_id_gen}=
+      let actual_rules = 
 	List.fold_left 
 	  (fun acc p_rule -> 
 	    Rule.Rules.add
-	      (Rule.proto_rule_to_rule p_rule intensional_pred)
+	      (Rule.proto_rule_to_rule p_rule i_preds)
 	      acc)
 	  Rule.Rules.empty
-	  proto_rules in
-      {rules=rules;
-       pred_table=pred_id_table;
-       const_table=cst_id_table;
-       i_preds=intensional_pred}
+	  rules in
+      {rules=actual_rules;
+       pred_table=pred_table;
+       const_table=const_table;
+       i_preds=i_preds;
+       rule_id_gen=rule_id_gen;
+       e_pred_to_rules=Predicate.PredIdMap.empty}
 	
     let to_buffer prog (*{rules=rules;pred_table=pred_table;i_preds=i_preds}*) =
       let buff = Rule.to_buffer prog.rules prog.pred_table prog.const_table in

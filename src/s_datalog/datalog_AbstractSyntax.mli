@@ -86,9 +86,11 @@ sig
     type program =  {rules:Rule.Rules.t;
 		     pred_table: Predicate.PredIdTable.table;
 		     const_table: ConstGen.Table.table;
-		     i_preds:Predicate.PredIds.t}
+		     i_preds:Predicate.PredIds.t;
+		     rule_id_gen:IntIdGen.t;
+		     e_pred_to_rules: Rule.Rules.t Predicate.PredIdMap.t}
       
-    val make_program : Proto_Rule.t list -> Predicate.PredIdTable.table -> ConstGen.Table.table -> Predicate.PredIds.t -> program
+    val make_program : Proto_Program.t -> program
     val to_buffer : program -> Buffer.t
   end
 end

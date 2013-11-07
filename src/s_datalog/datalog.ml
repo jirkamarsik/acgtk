@@ -303,6 +303,10 @@ struct
 (*	       abs_rule:ASRule.rule;*)
 	      }
       
+    module Rules=Set.Make(struct
+      type t=rule
+      let compare {id=i} {id=j} = i-j
+    end)
       
   (** [add_pred_arg_to_content arguments (content,idx,mapped_vars)]
       returns a triple (content',idx',mapped_vars') where [content']
@@ -498,37 +502,38 @@ struct
       ((r.lhs.Predicate.arity+1,r.content),[])
       make_search_array_e_pred
       
-  (** [temp r time (rev_pred_lst,delta_position,pred_lst) e_facts
-      time_indexed_intensional_facts
-      time_indexed_delta_intensional_facts] returns a list ot new
-      facts that are deduced from [temp]{^ [time+1]}{_ [S]} where [S] is
-      the head predicate of the rule [r], [delta_position] the index
-      of the intensional predicate that is under focus as described in
-      {{: http://webdam.inria.fr/Alice/pdfs/Chapter-13.pdf} Chap. 13
-      of "Foundations of Databases", Abiteboul, Hull, and Vianu}
-      (p.315), [rev_pred_list] (resp.  [pred_lst]) the lists of
-      predicates in the rule that precede [delta_position]
-      (resp. [follow]) *)
   end
 
   module Program =
   struct
     type program = {rules:Rule.rule list Predicate.PredMap.t;
-		  (* the list of the rules of the program indexed by
-		     the id of this predicate *)
+		    (* the list of the rules of the program indexed by
+		       the id of this predicate *)
 		    edb:ASPred.pred_id list;
-		  (* the list of the ids of the extensional predicates *)
+		    (* the list of the ids of the extensional
+		       predicates *)
 		    edb_facts:Predicate.FactSet.t Predicate.PredMap.t;
 		    (* a map from predicate ids to facts for this
 		       predicate*)
 		    idb:ASPred.pred_id list;
-		    (* the list of the ids of the intensional predicates *)
+		    (* the list of the ids of the intensional
+		       predicates *)
 		    pred_table: ASPred.PredIdTable.table;
-		 (* the table to record the translation from ids to
-		    sym of the predicate *)
+		    (* the table to record the translation from ids to
+		       sym of the predicate *)
 		    const_table: ConstGen.Table.table;
-		 (* the table to record the translation from ids to
-		    sym of the constants *)
+		    (* the table to record the translation from ids to
+		       sym of the constants *)
+		    rule_id_gen:IdGenerator.IntIdGen.t;
+		    (* the id generator for the rules in case rules
+		       are to be added after the first built of the
+		       program*)
+		    e_pred_to_rules: Rule.Rules.t AbstractSyntax.Predicate.PredIdMap.t;
+		   (* a map keeping track of the rules where
+		      extensional predicates occur so that when a rule
+		      is dynamically added, if it turns an extensional
+		      predicate into an intensional one, we can modify
+		      the rules accordingly *)
 		   }
       
     let extend k v map_list =
@@ -547,7 +552,7 @@ struct
       Predicate.PredMap.add k (Predicate.FactSet.add v current_set) map_to_set
 
 	
-    let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds} =
+    let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds;ASProg.rule_id_gen;ASProg.e_pred_to_rules} =
       let rules,e_facts = 
 	ASRule.Rules.fold
 	  (fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
@@ -573,18 +578,32 @@ struct
 	  pred_table
 	  ([],[]) in
       LOG "Done." LEVEL TRACE;
-      {rules=rules;edb=edb;edb_facts=e_facts;idb=idb;pred_table=pred_table;const_table=cst_table}
+      {rules=rules;
+       edb=edb;
+       edb_facts=e_facts;
+       idb=idb;
+       pred_table=pred_table;
+       const_table=cst_table;
+       rule_id_gen;
+       e_pred_to_rules=
+	  AbstractSyntax.Predicate.PredIdMap.map
+	    (fun rules -> 
+	      AbstractSyntax.Rule.Rules.fold
+		(fun r acc -> Rule.Rules.add (Rule.make_rule r) acc)
+		rules
+		Rule.Rules.empty)
+	    e_pred_to_rules}
 	
 
-(*    let add_rule ast_r prog =
-      let new_rule = Rule.make_rule ast_r in
-      let updated_e_facts = 
-	if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
+    (*    let add_rule ast_r prog =
+	  let new_rule = Rule.make_rule ast_r in
+	  let updated_e_facts = 
+	  if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
 	  extend_map_to_set lhs.ASPred.p_id lhs e_facts 
-	else
+	  else
 	  e_facts in
-      match ast_r.e_rhs,i_rhs with
-      | [],[] -> 
+	  match ast_r.e_rhs,i_rhs with
+	  | [],[] -> 
 	(* The new rule is a fact *)
 	let updated_e_facts = 
 	  (* TODO: Would be more efficient with a set for the idb field *)
@@ -601,8 +620,8 @@ struct
 *)
 
 	
-    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table} =
-      LOG "Transforming internat rules into abastract ones..." LEVEL TRACE;
+    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table;rule_id_gen;e_pred_to_rules} =
+      LOG "Transforming internal rules into abastract ones..." LEVEL TRACE;
       let rules = 
 	Predicate.PredMap.fold
 	  (fun _ rules acc -> 
@@ -619,7 +638,22 @@ struct
 	  (fun acc id -> ASPred.PredIds.add id acc)
 	  ASPred.PredIds.empty
 	  idb in
-      {ASProg.rules=rules;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds}
+      ASProg.({rules=rules;
+	       pred_table=pred_table;
+	       const_table=cst_table;
+	       i_preds=i_preds;
+	       rule_id_gen;
+	       e_pred_to_rules=
+	  AbstractSyntax.Predicate.PredIdMap.map
+	    (fun rules -> 
+	      Rule.Rules.fold
+		(fun r acc -> 
+		  AbstractSyntax.Rule.Rules.add
+		    (Rule.to_abstract r r.Rule.content pred_table) 
+		    acc)
+		rules
+		AbstractSyntax.Rule.Rules.empty)
+	    e_pred_to_rules})
 	
 	
 	
@@ -696,7 +730,13 @@ struct
       (* We now collect all the contents compatible with the
 	 facts of the extensional database *)
       let make_search_array_e_pred =
-	List.map (fun pred -> Predicate.PredMap.find pred.Predicate.p_id e_facts) r.Rule.e_rhs in
+	List.map
+	  (fun pred -> 
+	    try
+	      Predicate.PredMap.find pred.Predicate.p_id e_facts
+	    with
+	    | Not_found -> Predicate.FactSet.empty) 
+	  r.Rule.e_rhs in
       Rule.FactArray.collect_results
 	(fun acc s -> 
 	  (* For each partial completion of the rule on the extensional

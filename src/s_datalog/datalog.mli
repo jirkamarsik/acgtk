@@ -63,16 +63,9 @@ module Make :
         end
         val immediate_consequence_of_rule :
           rule -> FactArray.row Predicate.PredMap.t -> ASPred.predicate list
-(*        val temp :
-          rule ->
-          Predicate.Indexed_Facts.key ->
-          Predicate.predicate list * Predicate.predicate *
-            Predicate.predicate list ->
-            FactArray.row Predicate.PredMap.t ->
-            FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-            FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-            (ASPred.predicate  * Predicate.FactSet.elt list -> 'a -> 'a) -> 'a -> 'a *)
-        end
+
+	module Rules:Set.S with type elt=rule
+      end
 
       module Program :
       sig
@@ -83,16 +76,10 @@ module Make :
           idb : ASPred.pred_id list;
 	  pred_table: ASPred.PredIdTable.table;
 	  const_table: Datalog_AbstractSyntax.ConstGen.Table.table;
+	  rule_id_gen:IdGenerator.IntIdGen.t;
+	  e_pred_to_rules: Rule.Rules.t Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdMap.t
 	}
         val make_program : ASProg.program -> program
-(*	val all_temp_results_for_predicate :
-          Predicate.predicate ->
-          Predicate.Indexed_Facts.key ->
-          program ->
-          Rule.FactArray.row Predicate.PredMap.t ->
-          Rule.FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-          Rule.FactArray.row Predicate.PredMap.t Predicate.Indexed_Facts.t ->
-          (ASPred.predicate  * Predicate.FactSet.elt list) list *)
 	val temp_facts :
           Rule.rule ->
           Rule.FactArray.row Predicate.PredMap.t ->
