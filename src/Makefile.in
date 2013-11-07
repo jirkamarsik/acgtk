@@ -20,7 +20,7 @@
 .PHONY: byte opt clean superclean
 
 #SUBDIRS= utils logic grammars acg-data scripting lambda datalog
-SUBDIRS= utils logic grammars acg-data scripting datalog reduction
+SUBDIRS= utils logic grammars acg-data scripting datalog reduction s_datalog
 
 byte:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -r -S -C $(dir) byte;)

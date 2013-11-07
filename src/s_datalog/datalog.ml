@@ -551,7 +551,7 @@ struct
       let rules,e_facts = 
 	ASRule.Rules.fold
 	  (fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
-	    LOG "Dealing with rule:\t%s" (ASRule.rule_to_string r pred_table cst_table) LEVEL TRACE;
+	    LOG "Dealing with rule:\t%s" (ASRule.to_string r pred_table cst_table) LEVEL TRACE;
 	    let new_rule = Rule.make_rule r in
 	    let updated_e_facts = 
 	      if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
@@ -639,7 +639,7 @@ struct
   (* TODO: if a set of facts for a predicate of the rhs is empty, we
      can stop the computation *)
     let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table cst_table =
-      LOG "Scanning the rule: %s" (ASRule.rule_to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
+      LOG "Scanning the rule: %s" (ASRule.to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
       (* We first collect all the contents compatible with the facts of
 	 the intensional database. They depend on the intensional
 	 predicate [delta_position] and the ones that are before it

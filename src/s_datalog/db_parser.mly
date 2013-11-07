@@ -9,8 +9,8 @@
 
 
 %start rule program
-%type <  (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule*(Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table))> rule
-%type < Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.proto_rule list * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table)> program
+%type <  (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> (Datalog_AbstractSyntax.AbstractSyntax.Proto_Rule.t*(Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table))> rule
+%type < Datalog_AbstractSyntax.AbstractSyntax.Proto_Rule.t list -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * IdGenerator.IntIdGen.t*Datalog_AbstractSyntax.ConstGen.Table.table) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t -> (Datalog_AbstractSyntax.AbstractSyntax.Proto_Rule.t list * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIds.t*Datalog_AbstractSyntax.ConstGen.Table.table)> program
 %type < Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table -> (Datalog_AbstractSyntax.VarGen.Table.table * Datalog_AbstractSyntax.ConstGen.Table.table) -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * (Datalog_AbstractSyntax.VarGen.Table.table * Datalog_AbstractSyntax.ConstGen.Table.table)> query
    
 %%
@@ -29,18 +29,18 @@
  | predicate_with_arity DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
    let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
    let lhs,new_pred_id_table,(_,new_const_table)= $1 pred_id_table (VarGen.Table.empty,const_table) in
-   {AbstractSyntax.Rule.proto_id=rule_id;
-    AbstractSyntax.Rule.proto_lhs=lhs;
-    AbstractSyntax.Rule.proto_rhs=[]},
+   {AbstractSyntax.Proto_Rule.proto_id=rule_id;
+    AbstractSyntax.Proto_Rule.proto_lhs=lhs;
+    AbstractSyntax.Proto_Rule.proto_rhs=[]},
    (new_pred_id_table,new_rule_id_gen,i_preds,new_const_table)}
      
  | predicate_with_arity FROM predicate_list DOT { fun (pred_id_table,rule_id_gen,i_preds,const_table) -> 
    let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
    let lhs,new_pred_id_table,new_tables=$1 pred_id_table (VarGen.Table.empty,const_table) in
    let rhs,new_pred_id_table',(_,new_const_table)=$3 new_pred_id_table new_tables in
-   {AbstractSyntax.Rule.proto_id=rule_id;
-    AbstractSyntax.Rule.proto_lhs=lhs;
-    AbstractSyntax.Rule.proto_rhs=rhs},
+   {AbstractSyntax.Proto_Rule.proto_id=rule_id;
+    AbstractSyntax.Proto_Rule.proto_lhs=lhs;
+    AbstractSyntax.Proto_Rule.proto_rhs=rhs},
    (new_pred_id_table',new_rule_id_gen,AbstractSyntax.Predicate.PredIds.add lhs.AbstractSyntax.Predicate.p_id i_preds,new_const_table)}
      
      

@@ -141,7 +141,7 @@ struct
 	List.iter
 	  (fun r -> Buffer.add_string
 	    buff
-	    (Printf.sprintf "%s\n" (proto_rule_to_string r pred_id_table cst_id_table)))
+	    (Printf.sprintf "%s\n" (to_string r pred_id_table cst_id_table)))
 	  rules in
       buff
   end
@@ -157,7 +157,7 @@ struct
     let to_string r  pred_id_table cst_id_table =
       let head=Predicate.to_string r.lhs pred_id_table cst_id_table in
       let string_of_predicate_list lst = Utils.string_of_list "," (fun p -> Predicate.to_string p pred_id_table cst_id_table) lst in
-      let vdash,e_i_sep==
+      let vdash,e_i_sep =
 	match r.e_rhs,r.i_rhs with
 	| [],[] -> "",""
 	| [],_ -> ":- "," "
@@ -178,7 +178,7 @@ struct
 	    let () =
 	      Buffer.add_string
 		buff
-		(rule_to_string r pred_id_table cst_id_table) in
+		(to_string r pred_id_table cst_id_table) in
 	    Buffer.add_string buff "\n")
 	  rules in
       buff
@@ -196,7 +196,7 @@ struct
 	
     let proto_rule_to_rule proto_rule intensional_pred =
       let i_preds,e_preds = 
-	split_rhs proto_rule.proto_rhs intensional_pred in
+	split_rhs proto_rule.Proto_Rule.proto_rhs intensional_pred in
       {id=proto_rule.Proto_Rule.proto_id;
        lhs=proto_rule.Proto_Rule.proto_lhs;
        e_rhs=List.rev e_preds;
@@ -210,6 +210,8 @@ struct
 		const_table: ConstGen.Table.table;
 		i_preds:Predicate.PredIds.t;
 		rule_id_gen:IntIdGen.t}
+
+    type tables = Predicate.PredIdTable.table*(VarGen.Table.table*ConstGen.Table.table)
       
     let empty = {rules=[];
 		 pred_table=Predicate.PredIdTable.empty;
@@ -219,15 +221,15 @@ struct
 
     let add_proto_rule (f_lhs,f_rhs) prog =
       let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id prog.rule_id_gen in
-      let lhs,new_pred_id_table,new_tables=f_lhs prog.pred_table (VarGen.Table.empty,prog.const_table) in
-      let rhs,new_pred_id_table',(_,new_const_table)=f_rhs new_pred_id_table new_tables in
+      let lhs,(new_pred_id_table,new_tables)=f_lhs (prog.pred_table,(VarGen.Table.empty,prog.const_table)) in
+      let rhs,(new_pred_id_table',(_,new_const_table))=f_rhs (new_pred_id_table,new_tables) in
       let new_i_preds=
 	match rhs with
 	| [] -> prog.i_preds
-	| _ -> AbstractSyntax.Predicate.PredIds.add lhs.Predicate.p_id prog.i_preds in
-      let new_rule =  {AbstractSyntax.Rule.proto_id=rule_id;
-		       AbstractSyntax.Rule.proto_lhs=lhs;
-		       AbstractSyntax.Rule.proto_rhs=rhs} in
+	| _ -> Predicate.PredIds.add lhs.Predicate.p_id prog.i_preds in
+      let new_rule =  {Proto_Rule.proto_id=rule_id;
+		       Proto_Rule.proto_lhs=lhs;
+		       Proto_Rule.proto_rhs=rhs} in
       {rules=new_rule::prog.rules;
        pred_table=new_pred_id_table';
        const_table=new_const_table;
@@ -260,7 +262,7 @@ struct
        i_preds=intensional_pred}
 	
     let to_buffer prog (*{rules=rules;pred_table=pred_table;i_preds=i_preds}*) =
-      let buff = Rule.rules_to_buffer prog.rules prog.pred_table prog.const_table in
+      let buff = Rule.to_buffer prog.rules prog.pred_table prog.const_table in
       let () = Buffer.add_string buff "Intentional predicates are:\n" in
       let () =
 	Predicate.PredIds.iter
