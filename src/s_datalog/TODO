@@ -20,3 +20,4 @@
   constantes et les parcourir pour ajouter aux faits ceux qui ont
   encore des variables.
 + [ ] Ajouter la possibilité d'étendre un programme datalog
++ [ ] changer le champ idb de prog en Set plutôt que list

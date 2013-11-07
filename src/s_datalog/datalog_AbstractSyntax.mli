@@ -34,6 +34,21 @@ sig
 
   end
 
+
+
+  module Proto_Rule:
+  sig
+    type t={proto_id:int;
+	    proto_lhs:Predicate.predicate;
+	    proto_rhs:Predicate.predicate list;
+	   (** represents the predicates of the rule *)
+	   }
+    val to_string : proto_rule -> Predicate.PredIdTable.table -> ConstGen.Table.table -> string
+
+
+  end
+
+
   module Rule:
   sig
     type proto_rule={proto_id:int;
@@ -51,8 +66,26 @@ sig
 	    (** represents the intensionnal predicates of the rule *)
 	      }
     val rule_to_string : rule -> Predicate.PredIdTable.table -> ConstGen.Table.table -> string
+
+    val proto_rule_to_rule : proto_rule -> Predicate.PredIds.t -> rule
       
     module Rules : Set.S with type elt=rule
+  end
+
+  module Proto_Program :
+  sig
+    type t=   {rules:Proto_Rule.t list;
+		pred_table: Predicate.PredIdTable.table;
+		const_table: ConstGen.Table.table;
+		i_preds:Predicate.PredIds.t;
+		rule_id_gen:IntIdGen.t}
+
+    type table = Predicate.PredIdTable.table*(VarGen.Table.table*ConstGen.Table.table)
+
+    val empty : t
+
+    val add_proto_rule (table -> Predicate.predicate*table)*(table -> (Predicate.predicate list)*table) -> t -> t
+
   end
     
   module Program : 

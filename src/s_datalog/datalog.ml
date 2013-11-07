@@ -119,12 +119,6 @@ struct
     (** A map whose key is of type of the predicates identifers *)
     module PredMap=ASPred.PredIdMap
 
-
-      
-      
-    (* TODO : This should be a map recording the way each of this
-       predicate was derived *)
-      
     (** A map whose key is of type [predicate] *)
     (* TODO: Could it be replaced by predicate id only? *)
     module FactSet=Set.Make
@@ -132,8 +126,8 @@ struct
 	type t=ASPred.predicate
 	let compare = ASPred.compare 
        end)
-
-
+      
+      
     let add_facts_to_buffer b pred_table cst_table f =
       FactSet.iter (fun elt -> Buffer.add_string b (Printf.sprintf "%s.\n" (ASPred.to_string elt pred_table cst_table))) f 
 
@@ -162,7 +156,7 @@ struct
     (** A map indexed by integers to store facts at step (or time) [i]
 	in the seminaive algorithm. These facts are also indexed by
 	[predicate_id_type]. *)
-    module Indexed_Facts=Utils.IntMap 
+    (*    module Indexed_Facts=Utils.IntMap  *)
 
 
     module Premise =
@@ -282,6 +276,12 @@ struct
 
   end
     
+  module Derivation =
+  struct
+
+  end
+
+
   module Rule =
   struct
     
@@ -509,38 +509,6 @@ struct
       (p.315), [rev_pred_list] (resp.  [pred_lst]) the lists of
       predicates in the rule that precede [delta_position]
       (resp. [follow]) *)
-  let temp r time (rev_pred_lst,delta_position,pred_lst) e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts agg_function start =
-    (* We collect all the contents compatible with the facts of the
-       intensional database *)
-    let make_search_array_i_pred =
-      let delta_facts=
-	Predicate.PredMap.find delta_position.Predicate.p_id (Predicate.Indexed_Facts.find time time_indexed_delta_intensional_facts) in
-      let end_pred_facts =
-	List.map
-	  (fun pred -> Predicate.PredMap.find pred.Predicate.p_id (Predicate.Indexed_Facts.find (time-1) time_indexed_intensional_facts))
-	  pred_lst in
-      List.fold_left
-	(fun acc pred ->
-	  (Predicate.PredMap.find pred.Predicate.p_id (Predicate.Indexed_Facts.find time time_indexed_intensional_facts))::acc)
-	(delta_facts::end_pred_facts)
-	rev_pred_lst in
-    (* We define the function to be run on each reached end state of
-       the instantiation with the extensional predicates *)
-    let resume_on_i_pred acc state =
-      FactArray.collect_results
-	(fun l_acc ((_,content),premises) -> agg_function ((extract_consequence r content),premises) l_acc)
-	acc
-	state
-	make_search_array_i_pred in
-    (* We now collect all the contents compatible with the
-       facts of the extensional database *)
-    let make_search_array_e_pred =
-      List.map (fun pred -> Predicate.PredMap.find pred.Predicate.p_id e_facts) r.e_rhs in
-    FactArray.collect_results
-      (fun acc s -> resume_on_i_pred acc s)
-      start
-      ((r.lhs.Predicate.arity+1,r.content),[])
-      make_search_array_e_pred
   end
 
   module Program =
@@ -580,18 +548,19 @@ struct
 
 	
     let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds} =
-      let rules,e_facts = ASRule.Rules.fold
-	(fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
-	  LOG "Dealing with rule:\t%s" (ASRule.rule_to_string r pred_table cst_table) LEVEL TRACE;
-	  let new_rule = Rule.make_rule r in
-	  let updated_e_facts = 
-	    if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
-	      extend_map_to_set lhs.ASPred.p_id lhs e_facts 
-	    else
-	      e_facts in
-	  extend lhs.ASPred.p_id new_rule acc,updated_e_facts)
-	r
-	(Predicate.PredMap.empty,Predicate.PredMap.empty) in
+      let rules,e_facts = 
+	ASRule.Rules.fold
+	  (fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
+	    LOG "Dealing with rule:\t%s" (ASRule.rule_to_string r pred_table cst_table) LEVEL TRACE;
+	    let new_rule = Rule.make_rule r in
+	    let updated_e_facts = 
+	      if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
+		extend_map_to_set lhs.ASPred.p_id lhs e_facts 
+	      else
+		e_facts in
+	    extend lhs.ASPred.p_id new_rule acc,updated_e_facts)
+	  r
+	  (Predicate.PredMap.empty,Predicate.PredMap.empty) in
       LOG "All rules done." LEVEL TRACE;
       LOG "Now separate the e and i predicates." LEVEL TRACE;
       let edb,idb=
@@ -606,6 +575,31 @@ struct
       LOG "Done." LEVEL TRACE;
       {rules=rules;edb=edb;edb_facts=e_facts;idb=idb;pred_table=pred_table;const_table=cst_table}
 	
+
+(*    let add_rule ast_r prog =
+      let new_rule = Rule.make_rule ast_r in
+      let updated_e_facts = 
+	if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
+	  extend_map_to_set lhs.ASPred.p_id lhs e_facts 
+	else
+	  e_facts in
+      match ast_r.e_rhs,i_rhs with
+      | [],[] -> 
+	(* The new rule is a fact *)
+	let updated_e_facts = 
+	  (* TODO: Would be more efficient with a set for the idb field *)
+	  if not (List.mem ast_r.ASRule.lhs.ASPred.p_id idb) then
+	    extend_map_to_set lhs.ASPred.p_id lhs prog.edb_facts 
+	else
+	    edb_facts in
+	{prog with
+	  rules=extend ast_r.ASPRule.lhs.ASPred.p_id new_rule prog.rules
+	 and
+	    edb_facts=updated_e_facts}
+      | _,_ -> 
+	(* The new rule is not a fact, hence the lhs is an idb predicate  *)
+*)
+
 	
     let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table} =
       LOG "Transforming internat rules into abastract ones..." LEVEL TRACE;
@@ -628,17 +622,6 @@ struct
       {ASProg.rules=rules;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds}
 	
 	
-	
-    let all_temp_results_for_predicate s time {rules=rules} e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts =
-      List.fold_left
-	(fun acc r ->
-	  let zip=Focused_list.init r.Rule.i_rhs in
-	  Focused_list.fold
-	    (fun l_acc focus -> Rule.temp r time focus e_facts time_indexed_intensional_facts time_indexed_delta_intensional_facts  (fun hd tl -> hd::tl) l_acc)
-	    acc
-	    zip)
-	[]
-	(Predicate.PredMap.find s.Predicate.p_id rules)
 	
   (** [temp_facts r e_facts previous_step_facts facts delta_facts
       agg_f start] returns the result of applying [agg_f] to [start]
