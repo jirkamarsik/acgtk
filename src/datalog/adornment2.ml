@@ -132,12 +132,12 @@ struct
   let is_lower adp1 adp2 =
     (match (adp1,adp2) with
         (AdP(k,ad1),AdP(l,ad2))->
-          (l=k) &
+          (l=k) &&
             (List.fold_left2
                 (function b_res ->
                   function b1 ->
                     function b2 ->
-                      b_res & ((not b1) || b2) 
+                      b_res && ((not b1) || b2) 
                 )
                 true 
                 ad1

@@ -54,7 +54,7 @@ module Oriented_pmcfg =
 	    in
               check_order_id arg_ord 0
 	  in
-	    if (arity=rank) & (is_order_id arg_ord)
+	    if (arity=rank) && (is_order_id arg_ord)
 	    then (rank,name)
 	    else 
 	     (arity,name^"_"^(String.concat "" (List.map string_of_int arg_ord)))

@@ -17,7 +17,7 @@
 #                                                                        #
 ##########################################################################
 
-load d ../data/montague-drt.acg;
+load d montague-drt.acg;
 list ;
 abstract print;
 #abstract analyse beats (every farmer) a donkey) : s;

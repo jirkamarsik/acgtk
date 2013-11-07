@@ -179,7 +179,7 @@ module Lambda =
 	       false
 	   | App((Const s|DConst s),Abs(x,u)) when is_binder s id_to_sym ->
 	       let x' = generate_var_name x env in
-	       let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] env u in
+	       let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] ((level,x')::env) u in
 	       let new_env=
 		 List.fold_right
 		   (fun  (l,(x,abs)) (l_acc,acc) ->
@@ -196,7 +196,7 @@ module Lambda =
 	       false
 	   | App((Const s|DConst s),LAbs(x,u)) when is_binder s id_to_sym ->
 	       let x' = generate_var_name x l_env in
-	       let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] l_env u in
+	       let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env) u in
 	       let new_env=
 		 List.fold_right
 		   (fun  (l,(x,abs)) (l_acc,acc) ->

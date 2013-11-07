@@ -1,0 +1,136 @@
+signature derivations =
+    P_a, V_a, V, P, N:type;
+    c_croit_1, c_pense_1, c_croit_2, c_pense_2 : P_a -> V_a -> N -> P_a;
+    c_ira_a_Dax: P_a -> V_a -> N -> P;
+    I_p:P_a;
+    I_v:V_a;
+    c_Marie,c_Paul,c_Jane:N;
+
+    NEG : V_a;
+end
+
+signature derived =
+    tree:type;
+    P2:tree -> tree -> tree;
+    P3:tree ->  tree -> tree -> tree;
+    V2:tree -> tree -> tree;
+    V3:tree -> tree -> tree -> tree;
+    N,V:tree -> tree;
+    croit,pense,que,Paul,Marie,Jane,ira,a_Dax,ne,pas:tree;
+end
+
+lexicon read (derivations) : derived =
+    P_a, V_a:=tree -> tree;
+    V,P,N:=tree;
+    c_croit_1,c_croit_2 := lambda p v s x.p(P3 s (v (V croit)) (P2 que x));
+    c_pense_1,c_pense_2 := lambda p v s x.p(P3 s (v (V pense)) (P2 que x));
+
+    c_ira_a_Dax := lambda p v s .p(P3 (N s) (v (V ira)) (a_Dax));
+    I_p,I_v:=lambda x.x;
+    c_Marie:= N Marie;
+    c_Paul:= N Paul;
+    c_Jane:= N Jane;
+
+    NEG := lambda x. V3 ne x pas;
+    
+    
+
+
+end
+
+
+
+signature logic =
+    ind,prop: type;
+    croire,penser: prop -> ind -> prop;
+    aller_a_Dax: ind -> prop;
+    M,P,J:ind;
+    report_1=lambda V. lambda p v s c. p ( v (V c s)): (prop -> ind -> prop)
+	-> (prop -> prop) -> (prop -> prop) -> ind -> (prop -> prop) ;
+    report_2=lambda V. lambda p v s c. p ( V (v c) s): (prop -> ind -> prop)
+	-> (prop -> prop) -> (prop -> prop) -> ind -> (prop -> prop) ;
+    prefix - : prop -> prop;
+    ID = lambda x.x : prop -> prop;
+    ID' = lambda p x.p x : (ind -> prop) -> (ind -> prop);
+end
+
+lexicon interpretation (derivations):logic =
+    P_a := prop -> prop;
+    V_a := prop -> prop;
+    V := ind -> prop;
+    P := prop;
+    N := ind;
+    
+    I_p:=lambda x.x;
+    I_v:= lambda x.x;
+    c_ira_a_Dax := lambda p v s. p (v (aller_a_Dax s));
+
+    c_Marie:=M;
+    c_Paul:=P;
+    c_Jane:=J;
+
+    c_croit_1 := report_1 croire;
+    c_pense_1 := report_1 penser;
+
+    c_croit_2 := report_2 croire;
+    c_pense_2 := report_2 penser;
+
+    NEG := lambda p. - p;
+
+
+end
+	
+
+lexicon interpretation_2 (derivations):logic =
+    P_a := ((prop -> prop) -> prop) -> (prop -> prop) -> prop;
+    V_a := prop -> prop;
+    V := ind -> prop;
+    P := (prop -> prop) -> prop;
+    N := ind;
+    
+    I_p:=lambda x.x;
+    I_v:= lambda x.x;
+    c_ira_a_Dax := lambda p v s. p (lambda f . f (v (aller_a_Dax s)));
+
+    c_Marie:=M;
+    c_Paul:=P;
+    c_Jane:=J;
+
+    c_croit_1 := lambda p v s c. p (lambda f. f (v (croire ( c (lambda x.x)) s)));
+    c_pense_1 := lambda p v s c. p (lambda f. f (v (penser ( c (lambda x.x)) s)));
+
+    c_croit_2 := lambda p v s c. p (lambda f. (croire ( f(c v)) s));
+    c_pense_2 := lambda p v s c. p (lambda f. (penser ( f(c v)) s));
+
+    NEG := lambda p. - p;
+
+end
+
+
+lexicon interpretation_3 (derivations):logic =
+    P_a := ((prop -> prop) -> prop) -> (prop -> prop) -> prop;
+    V_a := prop -> prop;
+    V := ind -> prop;
+    P := prop;
+    N := ind;
+    
+    I_p:=lambda x.x;
+    I_v:= lambda x.x;
+    c_ira_a_Dax := lambda p v s. p (lambda f . f (v (aller_a_Dax s))) (lambda x.x);
+
+    c_Marie:=M;
+    c_Paul:=P;
+    c_Jane:=J;
+
+    c_croit_1 := lambda p v s c. p (lambda f. f (v (croire ( c ID ) s)));
+    c_pense_1 := lambda p v s c. p (lambda f. f (v (penser ( c ID) s)));
+
+    c_croit_2 := lambda p v s c. p (lambda f. (croire ( f(c v )) s));
+    c_pense_2 := lambda p v s c. p (lambda f. (penser ( f(c v)) s));
+
+    NEG := lambda p. - p;
+
+end
+
+
+
