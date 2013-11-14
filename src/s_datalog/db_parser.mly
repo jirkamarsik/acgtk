@@ -44,6 +44,7 @@
    let parameters,new_tables=$5 tables in
    let length=List.length parameters in
    if $3<>length then
+     let () = flush stdout in
      let () = Printf.fprintf stderr "The specified arity of predicate '%s/%d' does not match the actual number of arguments (%d)\n%!" $1 $3 length in
      raise Parsing.Parse_error
    else
@@ -95,26 +96,38 @@
    let r,new_cst_tble',new_gen' = $1 (pred_id_table,new_cst_tble,new_gen) in
    r::r_lst,new_cst_tble',new_gen'}
      
+     pred_id :
+ | IDENT SLASH INT {$1,Some $3}
+ | IDENT {$1,None}
+     
      extensional_fact :
- |  IDENT LPAR parameters RPAR DOT { fun (pred_id_table,const_table,rule_id_gen) -> 
+ |  pred_id LPAR parameters RPAR DOT { fun (pred_id_table,const_table,rule_id_gen) -> 
+   let pred_sym,arity = $1 in
    let parameters,(_,new_const_table)=$3 (VarGen.Table.empty,const_table) in
-   let new_sym = Printf.sprintf "%s/%d" $1 (List.length parameters) in
-   try
-     let pred_id = AbstractSyntax.Predicate.PredIdTable.find_id_of_sym new_sym pred_id_table in
-     let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
-     let lhs = {AbstractSyntax.Predicate.p_id=pred_id;
-		AbstractSyntax.Predicate.arity=List.length parameters;
-		AbstractSyntax.Predicate.arguments=parameters} in
-     AbstractSyntax.Rule.({id=rule_id;
-			   lhs=lhs;
-			   e_rhs=[];
-			   i_rhs=[]}),
-     new_const_table,new_rule_id_gen
-   with
-   |  AbstractSyntax.Predicate.PredIdTable.Not_found -> 
+   let length=List.length parameters in
+   match arity with
+   | Some a when a<> length ->
      let () = flush stdout in
-     let () = Printf.fprintf stderr "You try to add a fact about a predicate \"%s\" that is not a predicate of the program yet\n%!" new_sym in
-     raise Parsing.Parse_error}
+     let () = Printf.fprintf stderr "The specified arity of predicate '%s/%d' does not match the actual number of arguments (%d)\n%!" pred_sym a length in
+     raise Parsing.Parse_error
+   | _ ->
+     let new_sym = Printf.sprintf "%s/%d" pred_sym length in
+     try
+       let pred_id = AbstractSyntax.Predicate.PredIdTable.find_id_of_sym new_sym pred_id_table in
+       let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
+       let lhs = {AbstractSyntax.Predicate.p_id=pred_id;
+		  AbstractSyntax.Predicate.arity=List.length parameters;
+		  AbstractSyntax.Predicate.arguments=parameters} in
+       AbstractSyntax.Rule.({id=rule_id;
+			     lhs=lhs;
+			     e_rhs=[];
+			     i_rhs=[]}),
+       new_const_table,new_rule_id_gen
+     with
+     |  AbstractSyntax.Predicate.PredIdTable.Not_found -> 
+       let () = flush stdout in
+       let () = Printf.fprintf stderr "You try to add a fact about a predicate \"%s\" that is not a predicate of the program yet\n%!" new_sym in
+       raise Parsing.Parse_error}
 
 
 
