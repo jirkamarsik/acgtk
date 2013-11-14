@@ -31,6 +31,15 @@ module Make :
 	  module PremiseSet : Set.S with type elt = Premise.t
 	  val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
 	  val format_derivations2 : ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
+
+
+        val add_pred_arguments_to_content :
+          ASPred.term list ->
+          Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
+            int Datalog_AbstractSyntax.VarGen.IdMap.t ->
+          Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
+            int Datalog_AbstractSyntax.VarGen.IdMap.t
+
         end
 
       module Rule :
@@ -42,12 +51,6 @@ module Make :
           i_rhs : (Predicate.predicate*int) list;
           content : Datalog_AbstractSyntax.ConstGen.id UF.t;
         }
-        val add_pred_arguments_to_content :
-          ASPred.term list ->
-          Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
-            int Datalog_AbstractSyntax.VarGen.IdMap.t ->
-          Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
-            int Datalog_AbstractSyntax.VarGen.IdMap.t
         val make_rule : ASRule.rule -> rule
         val cyclic_unify : int -> int -> 'a UF.t -> 'a UF.t
         val extract_consequence :
@@ -100,5 +103,8 @@ module Make :
 	val extend : program -> ASProg.modifier -> program
 
 	val add_e_facts : program -> (ASRule.rule list*Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) -> program
+
+
+(*	val query : program -> ASPred.predicate -> Rule.FactArray.row Predicate.PredMap.t * Predicate.PremiseSet.t Predicate.PredicateMap.t *)
       end
     end

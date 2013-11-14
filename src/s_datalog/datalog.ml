@@ -106,15 +106,73 @@ struct
 	       try
 		 UF.union i (VarGen.IdMap.find var vars) cont,vars
 	       with
-	       | Not_found -> cont,VarGen.IdMap.add var i vars)
-		 
-	    (*		 failwith "Bug: Trying to instantiate with a non-closed predicate" *)
-	  )
+	       | Not_found -> cont,VarGen.IdMap.add var i vars))
 	  (idx,(content,VarGen.IdMap.empty))
 	  args in
       last_i,new_c
 	
-	
+
+    type unifiable_predicate={u_p_id:ASPred.pred_id;
+			      u_arity:int;
+			      content:ConstGen.id UF.t;
+			     }
+
+  (** [add_pred_arguments_to_content arguments (content,idx,mapped_vars)]
+      returns a triple (content',idx',mapped_vars') where [content']
+      is the list [content] to which has been added {e *in the reverse
+      order*} the information from [arguments]. The update is such
+      that if the argument of [arguments] is a [Var i] then it is
+      replaced by a [Link_to j] such that [j] is the index at which
+      the variable [Var i] was met for the first time (it is stored in
+      [mapped_vars]. If the argument is a [Const c], then a [Value c]
+      is added at the current position. [idx'] is the value of the
+      next position if another list of arguments has to be added. And
+      [mapped_vars'] is a map from variables [Var i] to positions
+      (i.e. [int]) in which these variables first occur in [content']
+      - [arguments] is the list of the arguments of some predicate
+      - [content] is a list meant to become the content of a rule,
+      i.e. an indexed storage data structure that is meant to be
+      extended with [arguments]. *BE CAREFUL: IT COMES IN INVERSE
+      ORDER*
+      - [idx] is the index to be given for the next element of
+      [content]
+      - [mapped_vars] is a mapping from [P.Var i] variables to the
+      index at which they've been stored in [content]. When such a
+      variable is met for the first time, as expected in the
+      UnionFind data structure, the content at [idx] is [Link_to]'ed
+      itself. *)
+    let add_pred_arguments_to_content arguments (content,idx,mapped_vars) =
+      List.fold_left
+	(fun (cont,i,vars) (arg : ASPred.term) -> 
+	  match arg with
+	  | ASPred.Var v -> 
+	    begin
+	      try 
+		let var_index = VarGen.IdMap.find v vars in
+		((UF.Link_to var_index) :: cont,i+1,vars) with
+	      | Not_found -> 
+		LOG "I met a new variable and put it at index %d" i LEVEL TRACE;
+		((UF.Link_to i) :: cont,i+1,VarGen.IdMap.add v i vars)
+	    end
+	  | ASPred.Const c -> ((UF.Value c) :: cont,i+1,vars))
+	(content,idx,mapped_vars)
+	arguments
+
+    let make_unifiable_predicate {ASPred.p_id;ASPred.arity;ASPred.arguments} =
+      let content_as_lst,_,_ =
+	add_pred_arguments_to_content arguments ([],1,VarGen.IdMap.empty) in
+      {u_p_id=p_id;u_arity=arity;content=UF.create (List.rev content_as_lst)}
+
+    let unifiable p u_p =
+      try
+	if p.ASPred.p_id=u_p.u_p_id then
+	  let _ = instantiate_with p (1,u_p.content) in
+	  true
+	else
+	  false
+      with
+      | UF.Union_Failure -> false
+
 	
     (** A map whose key is of type of the predicates identifers *)
     module PredMap=ASPred.PredIdMap
@@ -308,46 +366,6 @@ struct
       let compare {id=i} {id=j} = i-j
     end)
       
-  (** [add_pred_arg_to_content arguments (content,idx,mapped_vars)]
-      returns a triple (content',idx',mapped_vars') where [content']
-      is the list [content] to which has been added {e *in the reverse
-      order*} the information from [arguments]. The update is such
-      that if the argument of [arguments] is a [Var i] then it is
-      replaced by a [Link_to j] such that [j] is the index at which
-      the variable [Var i] was met for the first time (it is stored in
-      [mapped_vars]. If the argument is a [Const c], then a [Value c]
-      is added at the current position. [idx'] is the value of the
-      next position if another list of arguments has to be added. And
-      [mapped_vars'] is a map from variables [Var i] to positions
-      (i.e. [int]) in which these variables first occur in [content']
-      - [arguments] is the list of the arguments of some predicate
-      - [content] is a list meant to become the content of a rule,
-      i.e. an indexed storage data structure that is meant to be
-      extended with [arguments]. *BE CAREFUL: IT COMES IN INVERSE
-      ORDER*
-      - [idx] is the index to be given for the next element of
-      [content]
-      - [mapped_vars] is a mapping from [P.Var i] variables to the
-      index at which they've been stored in [content]. When such a
-      variable is met for the first time, as expected in the
-      UnionFind data structure, the content at [idx] is [Link_to]'ed
-      itself. *)
-    let add_pred_arguments_to_content arguments (content,idx,mapped_vars) =
-      List.fold_left
-	(fun (cont,i,vars) (arg : ASPred.term) -> 
-	  match arg with
-	  | ASPred.Var v -> 
-	    begin
-	      try 
-		let var_index = VarGen.IdMap.find v vars in
-		((UF.Link_to var_index) :: cont,i+1,vars) with
-	      | Not_found -> 
-		LOG "I met a new variable and put it at index %d" i LEVEL TRACE;
-		((UF.Link_to i) :: cont,i+1,VarGen.IdMap.add v i vars)
-	    end
-	  | ASPred.Const c -> ((UF.Value c) :: cont,i+1,vars))
-	(content,idx,mapped_vars)
-	arguments
 	
   (** [make_rule r] returns an internal rule, that is one whose
       content is now a {! UnionFind.UnionFind} indexed data
@@ -357,14 +375,14 @@ struct
     (* Be careful, the list of the rhs is reversed *)
       LOG "Preparing the lhs content..." LEVEL TRACE;
       let lhs_content=
-	add_pred_arguments_to_content lhs.ASPred.arguments ([],1,VarGen.IdMap.empty) in
+	Predicate.add_pred_arguments_to_content lhs.ASPred.arguments ([],1,VarGen.IdMap.empty) in
       LOG "Done." LEVEL TRACE;
       LOG "Preparing the e_rhs..." LEVEL TRACE;
       let e_rhs,e_rhs_content =
 	List.fold_left
 	  (fun (rhs,content) ({ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args},pos) ->
 	    (({Predicate.p_id=n;Predicate.arity=k},pos) :: rhs,
-	     add_pred_arguments_to_content pred_args content))
+	     Predicate.add_pred_arguments_to_content pred_args content))
 	  ([],lhs_content)
 	  e_rhs in
       LOG "Done." LEVEL TRACE;
@@ -373,7 +391,7 @@ struct
 	List.fold_left
 	  (fun (rhs,content) ({ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args},pos) ->
 	    (({Predicate.p_id=n;Predicate.arity=k},pos) :: rhs,
-	     add_pred_arguments_to_content pred_args content))
+	     Predicate.add_pred_arguments_to_content pred_args content))
 	  ([],e_rhs_content)
 	  i_rhs in
       LOG "Done. Content is of size %d" (List.length content) LEVEL TRACE;
@@ -833,11 +851,11 @@ struct
       seminaive_rec first_step_results
 
 
-(*    let rec filter_with_list filter lst =
-      match filter with
-      | [] -> lst
-      | a::tl -> a::(filter_with_list tl (List.filter (fun r -> Rule.(r.id=a.id))))
-*)	
+
+(*    let query prog query =
+      let facts,derivations=seminaive prog in
+*)    
+
 
 
     let extend prog {ASProg.modified_rules;ASProg.new_pred_table;ASProg.new_const_table;ASProg.new_i_preds;ASProg.new_e_preds;ASProg.new_rule_id_gen;}=
