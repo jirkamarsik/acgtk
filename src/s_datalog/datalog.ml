@@ -76,9 +76,9 @@ struct
     let lst_to_abstract lst (start,content) (vars,vargen) pred_table =
       let next_idx,vars',vargen',abs_preds =
 	List.fold_left
-	  (fun (s,l_vars,l_vargen,acc) p ->
+	  (fun (s,l_vars,l_vargen,acc) (p,pos) ->
 	    let abs_p,new_vars,new_vargen = to_abstract p (s,content) (l_vars,l_vargen) pred_table in
-	    s+p.arity,new_vars,new_vargen,abs_p::acc)
+	    s+p.arity,new_vars,new_vargen,(abs_p,pos)::acc)
 	  (start,vars,vargen,[])
 	  lst in
       (List.rev abs_preds),next_idx,vars',vargen'
@@ -294,13 +294,13 @@ struct
 	structure is correct (no cycle, links within the range, etc.) *)
     type rule={id:int;
 	       lhs:Predicate.predicate;
-	       e_rhs:Predicate.predicate list;
-	       i_rhs:Predicate.predicate list;
+	       e_rhs:(Predicate.predicate*int) list;
+	       i_rhs:(Predicate.predicate*int) list;
 	       content:ConstGen.id UF.t;
-		 (* TODO: Maybe put the label of the predicate in the
-		    content in order to enforce checking of the current
-		    instantiation *)
-(*	       abs_rule:ASRule.rule;*)
+	      (* TODO: Maybe put the label of the predicate in the
+		 content in order to enforce checking of the current
+		 instantiation *)
+	      (*	       abs_rule:ASRule.rule;*)
 	      }
       
     module Rules=Set.Make(struct
@@ -362,8 +362,8 @@ struct
       LOG "Preparing the e_rhs..." LEVEL TRACE;
       let e_rhs,e_rhs_content =
 	List.fold_left
-	  (fun (rhs,content) {ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args} ->
-	    ({Predicate.p_id=n;Predicate.arity=k} :: rhs,
+	  (fun (rhs,content) ({ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args},pos) ->
+	    (({Predicate.p_id=n;Predicate.arity=k},pos) :: rhs,
 	     add_pred_arguments_to_content pred_args content))
 	  ([],lhs_content)
 	  e_rhs in
@@ -371,8 +371,8 @@ struct
       LOG "Preparing the i_rhs..." LEVEL TRACE;
       let i_rhs,(content,_,_) =
 	List.fold_left
-	  (fun (rhs,content) {ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args} ->
-	    ({Predicate.p_id=n;Predicate.arity=k} :: rhs,
+	  (fun (rhs,content) ({ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args},pos) ->
+	    (({Predicate.p_id=n;Predicate.arity=k},pos) :: rhs,
 	     add_pred_arguments_to_content pred_args content))
 	  ([],e_rhs_content)
 	  i_rhs in
@@ -482,7 +482,7 @@ struct
     (* We collect all the contents compatible with the facts of the
        database corresponding to intensional predicates *)
       let make_search_array_i_pred =
-	List.map (fun pred -> Predicate.PredMap.find pred.Predicate.p_id db) r.i_rhs in
+	List.map (fun (pred,_) -> Predicate.PredMap.find pred.Predicate.p_id db) r.i_rhs in
     (* We define the function to be run on each reached end state of
        the instantiation with the extensional predicates *)
       let resume_on_i_pred acc state =
@@ -495,7 +495,7 @@ struct
        the extensional database (facts of the database corresponding
        to extensional predicates). *)
     let make_search_array_e_pred =
-      List.map (fun pred -> Predicate.PredMap.find pred.Predicate.p_id db) r.e_rhs in
+      List.map (fun (pred,_) -> Predicate.PredMap.find pred.Predicate.p_id db) r.e_rhs in
     FactArray.collect_results
       (fun acc s -> resume_on_i_pred acc s)
       []
@@ -528,15 +528,20 @@ struct
 		    (* the id generator for the rules in case rules
 		       are to be added after the first built of the
 		       program*)
-		    e_pred_to_rules: Rule.Rules.t AbstractSyntax.Predicate.PredIdMap.t;
+(*		    e_pred_to_rules: Rule.Rules.t AbstractSyntax.Predicate.PredIdMap.t; *)
 		   (* a map keeping track of the rules where
 		      extensional predicates occur so that when a rule
 		      is dynamically added, if it turns an extensional
 		      predicate into an intensional one, we can modify
 		      the rules accordingly *)
+		   (* This feature is an overkill for the kind of
+		      extensions we're interested in for ACG parsing,
+		      where only facts with edb predicates are added
+		      when extending the program. To it is suppressed
+		      for the moment *)
 		   }
       
-    let extend k v map_list =
+    let extend_map_to_list k v map_list =
       try
 	let lst=Predicate.PredMap.find k map_list in
 	Predicate.PredMap.add k (v::lst) map_list
@@ -553,9 +558,9 @@ struct
 
 	
     let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds;ASProg.rule_id_gen;ASProg.e_pred_to_rules} =
-      let rules,e_facts = 
+      let rules,e_facts,rule_to_rule_map = 
 	ASRule.Rules.fold
-	  (fun ({ASRule.lhs=lhs} as r) (acc,e_facts) ->
+	  (fun ({ASRule.lhs=lhs} as r) (acc,e_facts,r_to_r) ->
 	    LOG "Dealing with rule:\t%s" (ASRule.to_string r pred_table cst_table) LEVEL TRACE;
 	    let new_rule = Rule.make_rule r in
 	    let updated_e_facts = 
@@ -563,9 +568,9 @@ struct
 		extend_map_to_set lhs.ASPred.p_id lhs e_facts 
 	      else
 		e_facts in
-	    extend lhs.ASPred.p_id new_rule acc,updated_e_facts)
+	    extend_map_to_list lhs.ASPred.p_id new_rule acc,updated_e_facts,ASRule.RuleMap.add r new_rule r_to_r)
 	  r
-	  (Predicate.PredMap.empty,Predicate.PredMap.empty) in
+	  (Predicate.PredMap.empty,Predicate.PredMap.empty,ASRule.RuleMap.empty) in
       LOG "All rules done." LEVEL TRACE;
       LOG "Now separate the e and i predicates." LEVEL TRACE;
       let edb,idb=
@@ -585,42 +590,20 @@ struct
        pred_table=pred_table;
        const_table=cst_table;
        rule_id_gen;
-       e_pred_to_rules=
+       (*e_pred_to_rules=
 	  AbstractSyntax.Predicate.PredIdMap.map
 	    (fun rules -> 
 	      AbstractSyntax.Rule.Rules.fold
-		(fun r acc -> Rule.Rules.add (Rule.make_rule r) acc)
+		(fun r acc -> Rule.Rules.add (ASRule.RuleMap.find r rule_to_rule_map) acc)
 		rules
 		Rule.Rules.empty)
-	    e_pred_to_rules}
+	    e_pred_to_rules*)
+      }
 	
 
-    (*    let add_rule ast_r prog =
-	  let new_rule = Rule.make_rule ast_r in
-	  let updated_e_facts = 
-	  if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
-	  extend_map_to_set lhs.ASPred.p_id lhs e_facts 
-	  else
-	  e_facts in
-	  match ast_r.e_rhs,i_rhs with
-	  | [],[] -> 
-	(* The new rule is a fact *)
-	let updated_e_facts = 
-	  (* TODO: Would be more efficient with a set for the idb field *)
-	  if not (List.mem ast_r.ASRule.lhs.ASPred.p_id idb) then
-	    extend_map_to_set lhs.ASPred.p_id lhs prog.edb_facts 
-	else
-	    edb_facts in
-	{prog with
-	  rules=extend ast_r.ASPRule.lhs.ASPred.p_id new_rule prog.rules
-	 and
-	    edb_facts=updated_e_facts}
-      | _,_ -> 
-	(* The new rule is not a fact, hence the lhs is an idb predicate  *)
-*)
 
 	
-    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table;rule_id_gen;e_pred_to_rules} =
+    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table;rule_id_gen;(*e_pred_to_rules*)} =
       LOG "Transforming internal rules into abastract ones..." LEVEL TRACE;
       let rules = 
 	Predicate.PredMap.fold
@@ -643,8 +626,8 @@ struct
 	       const_table=cst_table;
 	       i_preds=i_preds;
 	       rule_id_gen;
-	       e_pred_to_rules=
-	  AbstractSyntax.Predicate.PredIdMap.map
+	       e_pred_to_rules=AbstractSyntax.Predicate.PredIdMap.empty
+(*	  AbstractSyntax.Predicate.PredIdMap.map
 	    (fun rules -> 
 	      Rule.Rules.fold
 		(fun r acc -> 
@@ -653,7 +636,8 @@ struct
 		    acc)
 		rules
 		AbstractSyntax.Rule.Rules.empty)
-	    e_pred_to_rules})
+	    e_pred_to_rules*)
+	      })
 	
 	
 	
@@ -714,7 +698,7 @@ struct
 	| _ -> 
 	(* We now init the focused list corresponding to the intensional
 	   predicates of the rule [r] *)
-	  let zip=Focused_list.init r.Rule.i_rhs in
+	  let zip=Focused_list.init (fst (List.split r.Rule.i_rhs)) in
 	  Focused_list.fold
 	    (fun l_acc focus ->
 	    (* For a given focus in the intensional list of predicates
@@ -731,7 +715,7 @@ struct
 	 facts of the extensional database *)
       let make_search_array_e_pred =
 	List.map
-	  (fun pred -> 
+	  (fun (pred,_) -> 
 	    try
 	      Predicate.PredMap.find pred.Predicate.p_id e_facts
 	    with
@@ -847,7 +831,95 @@ struct
 	  seminaive_rec (seminaive_aux facts delta_facts derivations) in
       let first_step_results = seminaive_aux prog.edb_facts Predicate.PredMap.empty Predicate.PredicateMap.empty in
       seminaive_rec first_step_results
+
+
+(*    let rec filter_with_list filter lst =
+      match filter with
+      | [] -> lst
+      | a::tl -> a::(filter_with_list tl (List.filter (fun r -> Rule.(r.id=a.id))))
+*)	
+
+
+    let extend prog {ASProg.modified_rules;ASProg.new_pred_table;ASProg.new_const_table;ASProg.new_i_preds;ASProg.new_e_preds;ASProg.new_rule_id_gen;}=
+      let i_preds = 
+	ASPred.PredIds.fold
+	  (fun e acc ->
+	    if List.mem e prog.idb then
+	      acc
+	    else
+	      e::acc)
+	  new_i_preds
+	  prog.idb in
+      let internal_modified_rules,updated_e_facts = 
+	ASRule.Rules.fold 
+	  (fun r (acc,e_facts) -> 
+	    let new_rule = Rule.make_rule r in
+	    let updated_e_facts =
+	      if 
+		not (ASPred.PredIds.mem r.ASRule.lhs.ASPred.p_id new_i_preds)
+		&& not (List.mem r.ASRule.lhs.ASPred.p_id prog.idb)
+	      then
+		extend_map_to_set r.ASRule.lhs.ASPred.p_id r.ASRule.lhs e_facts 
+	      else
+		e_facts in
+	    Rule.Rules.add new_rule acc,updated_e_facts)
+	  modified_rules
+	  (Rule.Rules.empty,prog.edb_facts)
+      in
+      let updated_rules =
+	Rule.Rules.fold
+	  (fun ({Rule.lhs=lhs} as rule) acc -> 
+	    try
+	      Predicate.PredMap.add
+		lhs.Predicate.p_id
+		(rule::(List.filter Rule.(fun r -> r.id=rule.id) (Predicate.PredMap.find lhs.Predicate.p_id acc)))
+		acc
+	    with
+	    | Not_found -> Predicate.PredMap.add lhs.Predicate.p_id [rule] acc)
+	  internal_modified_rules
+	  prog.rules in
+      {rules=updated_rules;
+       edb=
+	  ASPred.PredIds.fold
+	    (fun e acc -> 
+	      if List.mem e prog.idb then
+		acc
+	      else
+		e::acc)
+	    new_e_preds
+	    prog.edb;
+       edb_facts=updated_e_facts;
+       idb=i_preds;
+       pred_table=new_pred_table;
+       const_table=new_const_table;
+       rule_id_gen=new_rule_id_gen;
+      }
+
+    let add_e_fact prog (r,const_table,rule_id_gen) =
+      if List.mem r.ASRule.lhs.ASPred.p_id prog.idb then
+	failwith (Printf.sprintf "BUG: You're not supposed to extend a program with an intensional predicate \"%s\"" (ASPred.to_string {ASPred.p_id=r.ASRule.lhs.ASPred.p_id;ASPred.arity=r.ASRule.lhs.ASPred.arity;ASPred.arguments=[]} prog.pred_table  ConstGen.Table.empty))
+      else
+	{prog with 
+	  edb_facts=
+	    extend_map_to_set r.ASRule.lhs.ASPred.p_id r.ASRule.lhs prog.edb_facts;
+	  const_table;
+	  rule_id_gen}
+
+    let add_e_facts prog (r_lst,const_table,rule_id_gen) =
+      {prog with 
+	edb_facts=
+	  List.fold_left
+	    (fun acc r ->
+	      if List.mem r.ASRule.lhs.ASPred.p_id prog.idb then
+		failwith (Printf.sprintf "BUG: You're not supposed to extend a program with an intensional predicate \"%s\"" (ASPred.to_string {ASPred.p_id=r.ASRule.lhs.ASPred.p_id;ASPred.arity=r.ASRule.lhs.ASPred.arity;ASPred.arguments=[]} prog.pred_table  ConstGen.Table.empty))
+	      else
+		extend_map_to_set r.ASRule.lhs.ASPred.p_id r.ASRule.lhs acc)
+	    prog.edb_facts
+	    r_lst;
+	const_table;
+	rule_id_gen}
 	
+
 	
   end
     

@@ -1,4 +1,5 @@
 open IdGenerator
+open Utils
 
 module Var=
 struct
@@ -150,8 +151,8 @@ struct
   struct
     type rule={id:int;
 	       lhs:Predicate.predicate;
-	       e_rhs:Predicate.predicate list;
-	       i_rhs:Predicate.predicate list;
+	       e_rhs:(Predicate.predicate*int) list;
+	       i_rhs:(Predicate.predicate*int) list;
 	      }
       
     let to_string r  pred_id_table cst_id_table =
@@ -163,12 +164,24 @@ struct
 	| [],_ -> ":- "," "
 	| _,[] -> ":- "," "
 	| _,_ -> ":- "," , " in
-      Printf.sprintf "%s%s%s%s." head vdash (string_of_predicate_list r.e_rhs) (string_of_predicate_list r.i_rhs)
+      Printf.sprintf "%s%s%s%s." head vdash ((string_of_predicate_list >> fst >> List.split)  r.e_rhs) ((string_of_predicate_list >> fst >> List.split) r.i_rhs)
 	
     module Rules=Set.Make(struct
       type t=rule
       let compare {id=i} {id=j} = i-j
     end)
+
+    module RuleMap=Map.Make(struct
+      type t=rule
+      let compare {id=i} {id=j} = i-j
+    end)
+
+
+    let ids_to_rules ids id_to_rule_map =
+      IntSet.fold
+	(fun e acc -> Rules.add (IntMap.find e id_to_rule_map) acc)
+	ids
+	Rules.empty
 
     let to_buffer rules pred_id_table cst_id_table = 
       let buff=Buffer.create 4 in
@@ -183,24 +196,52 @@ struct
 	  rules in
       buff
 
-    let split_rhs proto_preds intensional_pred =
+    let init_split_rhs proto_preds intensional_pred =
+      let i_p,e_p,_=
+	List.fold_left
+	  (fun (i_preds,e_preds,i) ({Predicate.p_id=p_id} as pred) ->
+	    if Predicate.PredIds.mem p_id intensional_pred 
+	    then
+	      ((pred,i)::i_preds,e_preds,i+1)
+	    else
+	      (i_preds,(pred,i)::e_preds,i+1))
+	  ([],[],1)
+	  proto_preds in
+      i_p,e_p
+
+    let update_split_rhs init proto_preds intensional_pred =
       List.fold_left
-	(fun (i_preds,e_preds) ({Predicate.p_id=p_id} as pred) ->
+	(fun (i_preds,e_preds) (({Predicate.p_id=p_id},_) as pred) ->
 	  if Predicate.PredIds.mem p_id intensional_pred 
 	  then
 	    (pred::i_preds,e_preds)
-	  else
-	    (i_preds,pred::e_preds))
-	([],[])
+	    else
+	      (i_preds,pred::e_preds))
+	init
 	proto_preds
+
+    let extend_map_to_set k v map_to_set =
+      let current_set = 
+	try
+	  Predicate.PredIdMap.find k map_to_set
+	with
+	| Not_found -> IntSet.empty in
+      Predicate.PredIdMap.add k (IntSet.add v current_set) map_to_set
+
+
 	
     let proto_rule_to_rule proto_rule intensional_pred =
       let i_preds,e_preds = 
-	split_rhs proto_rule.Proto_Rule.proto_rhs intensional_pred in
+	init_split_rhs proto_rule.Proto_Rule.proto_rhs intensional_pred in
       {id=proto_rule.Proto_Rule.proto_id;
        lhs=proto_rule.Proto_Rule.proto_lhs;
        e_rhs=List.rev e_preds;
        i_rhs=List.rev i_preds}	
+
+    let update rule intensional_pred =
+      let i_preds,e_preds = 
+	update_split_rhs (rule.i_rhs,[]) rule.e_rhs intensional_pred in
+      {rule with e_rhs=e_preds;i_rhs=i_preds}
   end
 
   module Proto_Program =
@@ -209,7 +250,8 @@ struct
 		pred_table: Predicate.PredIdTable.table;
 		const_table: ConstGen.Table.table;
 		i_preds:Predicate.PredIds.t;
-		rule_id_gen:IntIdGen.t}
+		rule_id_gen:IntIdGen.t;
+		pred_to_rules:IntSet.t Predicate.PredIdMap.t}
 
     type tables = Predicate.PredIdTable.table*(VarGen.Table.table*ConstGen.Table.table)
       
@@ -217,7 +259,16 @@ struct
 		 pred_table=Predicate.PredIdTable.empty;
 		 const_table=ConstGen.Table.empty;
 		 i_preds=Predicate.PredIds.empty;
-		 rule_id_gen=IntIdGen.init ()}
+		 rule_id_gen=IntIdGen.init ();
+		 pred_to_rules=Predicate.PredIdMap.empty}
+
+    let extension pred_table const_table rule_id_gen=
+      {rules=[];
+       pred_table;
+       const_table;
+       i_preds=Predicate.PredIds.empty;
+       rule_id_gen;
+       pred_to_rules=Predicate.PredIdMap.empty}
 
     let add_proto_rule (f_lhs,f_rhs) prog =
       let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id prog.rule_id_gen in
@@ -235,6 +286,11 @@ struct
        const_table=new_const_table;
        i_preds=new_i_preds;
        rule_id_gen=new_rule_id_gen;
+       pred_to_rules=
+	  List.fold_left
+	    (fun acc p -> Rule.extend_map_to_set p.Predicate.p_id rule_id acc)
+	    prog.pred_to_rules
+	    rhs
       }
       
 
@@ -248,26 +304,99 @@ struct
 		     i_preds:Predicate.PredIds.t;
 		     rule_id_gen:IntIdGen.t;
 		     e_pred_to_rules: Rule.Rules.t Predicate.PredIdMap.t}
+
+    type modifier = {modified_rules:Rule.Rules.t;
+		     new_pred_table: Predicate.PredIdTable.table;
+		     new_const_table: ConstGen.Table.table;
+		     new_i_preds:Predicate.PredIds.t;
+		     new_e_preds:Predicate.PredIds.t;
+		     new_rule_id_gen:IntIdGen.t;}
+
       
-    let make_program {Proto_Program.rules;Proto_Program.pred_table;Proto_Program.const_table;Proto_Program.i_preds;Proto_Program.rule_id_gen}=
-      let actual_rules = 
+    let make_program {Proto_Program.rules;Proto_Program.pred_table;Proto_Program.const_table;Proto_Program.i_preds;Proto_Program.rule_id_gen;Proto_Program.pred_to_rules}=
+      let actual_rules,ids_to_rule_map = 
 	List.fold_left 
-	  (fun acc p_rule -> 
-	    Rule.Rules.add
-	      (Rule.proto_rule_to_rule p_rule i_preds)
-	      acc)
-	  Rule.Rules.empty
+	  (fun (acc,ids_to_rule_map) p_rule -> 
+	    let rule = Rule.proto_rule_to_rule p_rule i_preds in
+	    Rule.Rules.add rule acc,
+	    IntMap.add p_rule.Proto_Rule.proto_id rule ids_to_rule_map)
+	  (Rule.Rules.empty,IntMap.empty)
 	  rules in
       {rules=actual_rules;
        pred_table=pred_table;
        const_table=const_table;
        i_preds=i_preds;
        rule_id_gen=rule_id_gen;
-       e_pred_to_rules=Predicate.PredIdMap.empty}
+       e_pred_to_rules=
+	  Predicate.PredIdMap.fold
+	    (fun p rule_ids acc -> 
+	      if Predicate.PredIds.mem p i_preds then
+		Predicate.PredIdMap.remove p acc
+	      else
+		Predicate.PredIdMap.add p (Rule.ids_to_rules rule_ids ids_to_rule_map) acc)
+	    pred_to_rules
+      Predicate.PredIdMap.empty}
 	
-    let to_buffer prog (*{rules=rules;pred_table=pred_table;i_preds=i_preds}*) =
+	
+    let extend prog {Proto_Program.rules;Proto_Program.pred_table;Proto_Program.const_table;Proto_Program.i_preds;Proto_Program.rule_id_gen;Proto_Program.pred_to_rules}=
+      let new_i_preds = Predicate.PredIds.union prog.i_preds i_preds in
+      let updated_e_pred_map_to_r,updated_rules =
+	(* all the rules that were pointed to by an extensional
+	   predicate that has be turned into an intensional predicate
+	   because of the program extension have to be updated *)
+	(* We check if some the new intensional predicates also are
+	   keys of the e_pred_to_rules map of the previous program *)
+	Predicate.PredIds.fold
+	  (fun p_id ((e_p_to_r,rules_acc) as acc) -> 
+	    try
+	      (* First we check wether this predicate was considered
+		 as an extensional one *)
+	      let to_be_modified_rules =
+		Predicate.PredIdMap.find p_id prog.e_pred_to_rules in
+	      (* If yes, we nee to remove it from the map *)
+	      Predicate.PredIdMap.remove p_id e_p_to_r,
+	      (* And to modify the rules it pointed to *)
+	      Rule.Rules.fold
+		(fun r acc -> 
+		  Rule.Rules.add (Rule.update r new_i_preds) (Rule.Rules.remove r acc))
+		to_be_modified_rules
+		rules_acc
+	    with
+	    (* If no, don't do anything *)
+	    | Not_found -> acc)
+	  i_preds
+	  (prog.e_pred_to_rules,prog.rules) in
+      let new_rules,id_to_rule_map = 
+	List.fold_left 
+	  (fun (acc,id_to_rule_map) p_rule -> 
+	    let rule=Rule.proto_rule_to_rule p_rule new_i_preds in
+	    Rule.Rules.add rule acc,
+	    IntMap.add p_rule.Proto_Rule.proto_id rule id_to_rule_map)
+	  (updated_rules,IntMap.empty)
+	  rules in
+      {rules=new_rules;
+       pred_table=pred_table;
+       const_table=const_table;
+       i_preds=new_i_preds;
+       rule_id_gen=rule_id_gen;
+       e_pred_to_rules=
+	  Predicate.PredIdMap.merge
+	    (fun p opt_rule_ids opt_rules ->
+	      match opt_rule_ids, opt_rules with
+	      | None,None -> None
+	      | None,_ -> opt_rules
+	      | Some ids,None -> Some (Rule.ids_to_rules ids id_to_rule_map)
+	      | Some ids,Some rules ->
+		Some (Rule.Rules.union rules (Rule.ids_to_rules ids id_to_rule_map)))
+	    pred_to_rules
+	    updated_e_pred_map_to_r
+      }
+
+	
+	
+    let to_buffer prog =
       let buff = Rule.to_buffer prog.rules prog.pred_table prog.const_table in
-      let () = Buffer.add_string buff "Intentional predicates are:\n" in
+      let () = Buffer.add_string buff "Intensional predicates are:\n" in
       let () =
 	Predicate.PredIds.iter
 	  (fun elt -> Buffer.add_string buff (Printf.sprintf "\t%s\n%!" (Predicate.PredIdTable.find_sym_from_id elt prog.pred_table)))

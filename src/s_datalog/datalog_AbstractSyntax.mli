@@ -41,7 +41,7 @@ sig
     type t={proto_id:int;
 	    proto_lhs:Predicate.predicate;
 	    proto_rhs:Predicate.predicate list;
-	   (** represents the predicates of the rule *)
+	   (** represents the predicates of the rule.*)
 	   }
     val to_string : t -> Predicate.PredIdTable.table -> ConstGen.Table.table -> string
 
@@ -53,28 +53,37 @@ sig
 
     type rule={id:int;
 	       lhs:Predicate.predicate;
-	       e_rhs:Predicate.predicate list;
-	     (** represents the extensionnal predicates of the rule *)
-	       i_rhs:Predicate.predicate list; 
-	    (** represents the intensionnal predicates of the rule *)
+	       e_rhs:(Predicate.predicate*int) list;
+	       (** represents the extensionnal predicates of the
+		   rule. The [int] represents the position in the rule *)
+	       i_rhs:(Predicate.predicate*int) list; 
+	      (** represents the intensionnal predicates of the rule.
+		  The [int] represents the position in the rule *)
 	      }
     val to_string : rule -> Predicate.PredIdTable.table -> ConstGen.Table.table -> string
     val proto_rule_to_rule : Proto_Rule.t -> Predicate.PredIds.t -> rule
       
     module Rules : Set.S with type elt=rule
+    module RuleMap : Map.S with type key=rule
   end
 
   module Proto_Program :
   sig
     type t=   {rules:Proto_Rule.t list;
-		pred_table: Predicate.PredIdTable.table;
-		const_table: ConstGen.Table.table;
-		i_preds:Predicate.PredIds.t;
-		rule_id_gen:IntIdGen.t}
+	       pred_table: Predicate.PredIdTable.table;
+	       const_table: ConstGen.Table.table;
+	       i_preds:Predicate.PredIds.t;
+	       rule_id_gen:IntIdGen.t;
+	       pred_to_rules:Utils.IntSet.t Predicate.PredIdMap.t}
 
     type tables = Predicate.PredIdTable.table*(VarGen.Table.table*ConstGen.Table.table)
 
     val empty : t
+      
+    (** [extension pred_table const_table id_gen] returns an almost
+	empty proto program. This almost empty proto program is mean to
+	serve as extension of an actual program *)
+    val extension : Predicate.PredIdTable.table -> ConstGen.Table.table -> IntIdGen.t -> t
 
     val add_proto_rule : ((tables -> (Predicate.predicate*tables))*(tables -> ((Predicate.predicate list)*tables))) -> t -> t
 
@@ -89,8 +98,17 @@ sig
 		     i_preds:Predicate.PredIds.t;
 		     rule_id_gen:IntIdGen.t;
 		     e_pred_to_rules: Rule.Rules.t Predicate.PredIdMap.t}
+
+    type modifier = {modified_rules:Rule.Rules.t;
+		     new_pred_table: Predicate.PredIdTable.table;
+		     new_const_table: ConstGen.Table.table;
+		     new_i_preds:Predicate.PredIds.t;
+		     new_e_preds:Predicate.PredIds.t;
+		     new_rule_id_gen:IntIdGen.t;}
+		     
       
     val make_program : Proto_Program.t -> program
+    val extend : program -> Proto_Program.t -> program
     val to_buffer : program -> Buffer.t
   end
 end

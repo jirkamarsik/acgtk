@@ -1,16 +1,3 @@
-(*let () =
-  Bolt.Logger.register
-    ""
-    Bolt.Level.TRACE
-    "all"
-    "default"
-    (Bolt.Mode.direct ())
-    "file"
-    ("db_test.log",
-     {Bolt.Output.seconds_elapsed= Some 1.0;
-      Bolt.Output.signal_caught=None})
-*)
-
 open IdGenerator
 open Datalog_AbstractSyntax
 
@@ -36,7 +23,7 @@ end
 
 module Datalog=Datalog.Make(Store)
 
-let parse_file filename =
+let parse_file edb filename =
     let in_ch = 
       let fullname = Utils.find_file filename [""]  in
       open_in fullname in
@@ -61,6 +48,21 @@ let parse_file filename =
     let () = Buffer.output_buffer stdout (AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract program)) in 
     let () = Printf.printf "Done.\n" in
     let () = Printf.printf "%s\n" sep in
+    let program =
+     match edb with
+     | None -> 
+       LOG "I didn't find an edb file to parse." LEVEL DEBUG ;
+       program
+     | Some edb_filename ->
+       LOG "I found an edb file to parse." LEVEL DEBUG ;
+       let edb_in_ch = 
+	 let edb_fullname = Utils.find_file edb_filename [""]  in
+	 open_in edb_fullname in
+       let edb_lexbuf = Lexing.from_channel edb_in_ch in
+       LOG "Parsing \"%s\"..." edb_filename LEVEL INFO;
+       let to_be_added=Db_parser.extensional_facts Db_lexer.lexer edb_lexbuf Datalog.Program.(program.pred_table,program.const_table,program.rule_id_gen) in 
+       LOG "Done." LEVEL INFO;
+       Datalog.Program.add_e_facts program to_be_added in
     let derived_facts,derivations = Datalog.Program.seminaive program in
     let () = Printf.printf "I could derive the following facts:\n%s\n" (Datalog.Predicate.facts_to_string derived_facts program.Datalog.Program.pred_table program.Datalog.Program.const_table) in
     let buff = Buffer.create 80 in
@@ -72,7 +74,13 @@ let parse_file filename =
     ()
       
 
-let usage_msg="Usage: db_test file"
+let usage_msg="Usage: db_test [-edb edb_file] file"
+let edb_file=ref None
+
+let options =
+  [
+    ("-edb",Arg.String (fun s -> edb_file:=Some s),"Add the specified file as an edb (it should include only extensional facts).")
+  ]
 
 let () =
-  Arg.parse [] parse_file usage_msg
+  Arg.parse options (fun s -> parse_file !edb_file s) usage_msg 

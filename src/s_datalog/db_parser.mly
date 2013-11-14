@@ -8,10 +8,11 @@
 %token LPAR RPAR COMMA DOT FROM EOI SLASH QUESTION_MARK
 
 
-%start rule program
-%type <  Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > rule
-%type <  Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > program
-%type <  Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate * Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > query
+%start rule program extensional_facts
+%type < Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > rule
+%type < Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > program
+%type < Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate * Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > query
+%type < (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) -> (Datalog_AbstractSyntax.AbstractSyntax.Rule.rule list*Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) > extensional_facts
    
 %%
   
@@ -20,7 +21,6 @@
  | rule program { fun prog ->
    let new_prog = $1 prog in
    $2 new_prog}
-     
      
      rule :
  | predicate_with_arity DOT { fun prog -> 
@@ -37,6 +37,7 @@
    let predicate,(new_pred_id_table,new_tables)= $1 (pred_id_table,tables) in
    let remaining_pred,(new_pred_id_table',new_tables')=$3 (new_pred_id_table,new_tables) in
    predicate::remaining_pred,(new_pred_id_table',new_tables') }
+
 
      predicate_with_arity :
  | IDENT SLASH INT LPAR parameters RPAR {fun (pred_id_table,tables) ->
@@ -84,5 +85,41 @@
  | predicate QUESTION_MARK {fun prog ->
    let pred,(new_pred_table,(_,new_cst_table))=$1 AbstractSyntax.Proto_Program.(prog.pred_table,(VarGen.Table.empty,prog.const_table)) in
    pred,AbstractSyntax.Proto_Program.({prog with pred_table=new_pred_table ; const_table=new_cst_table})}
+
+     extensional_facts :
+ | extensional_fact EOI {fun param ->
+   let r,new_cst_tble,new_gen = $1 param in
+   [r],new_cst_tble,new_gen}
+ | extensional_fact extensional_facts {fun (pred_id_table,cst_table,gen) ->
+   let r_lst,new_cst_tble,new_gen = $2 (pred_id_table,cst_table,gen) in
+   let r,new_cst_tble',new_gen' = $1 (pred_id_table,new_cst_tble,new_gen) in
+   r::r_lst,new_cst_tble',new_gen'}
+     
+     extensional_fact :
+ |  IDENT LPAR parameters RPAR DOT { fun (pred_id_table,const_table,rule_id_gen) -> 
+   let parameters,(_,new_const_table)=$3 (VarGen.Table.empty,const_table) in
+   let new_sym = Printf.sprintf "%s/%d" $1 (List.length parameters) in
+   try
+     let pred_id = AbstractSyntax.Predicate.PredIdTable.find_id_of_sym new_sym pred_id_table in
+     let rule_id,new_rule_id_gen=IntIdGen.get_fresh_id rule_id_gen in
+     let lhs = {AbstractSyntax.Predicate.p_id=pred_id;
+		AbstractSyntax.Predicate.arity=List.length parameters;
+		AbstractSyntax.Predicate.arguments=parameters} in
+     AbstractSyntax.Rule.({id=rule_id;
+			   lhs=lhs;
+			   e_rhs=[];
+			   i_rhs=[]}),
+     new_const_table,new_rule_id_gen
+   with
+   |  AbstractSyntax.Predicate.PredIdTable.Not_found -> 
+     let () = flush stdout in
+     let () = Printf.fprintf stderr "You try to add a fact about a predicate \"%s\" that is not a predicate of the program yet\n%!" new_sym in
+     raise Parsing.Parse_error}
+
+
+
+
+
+
      
 %%

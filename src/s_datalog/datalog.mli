@@ -1,5 +1,5 @@
-module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate
-module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule
+module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate with type pred_id=Datalog_AbstractSyntax.AbstractSyntax.Predicate.pred_id and type PredIdTable.table = Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table
+module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule with type rule=Datalog_AbstractSyntax.AbstractSyntax.Rule.rule
 module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program with type program = Datalog_AbstractSyntax.AbstractSyntax.Program.program
 
 module Make :
@@ -38,8 +38,8 @@ module Make :
         type rule = {
           id : int;
           lhs : Predicate.predicate;
-          e_rhs : Predicate.predicate list;
-          i_rhs : Predicate.predicate list;
+          e_rhs : (Predicate.predicate*int) list;
+          i_rhs : (Predicate.predicate*int) list;
           content : Datalog_AbstractSyntax.ConstGen.id UF.t;
         }
         val add_pred_arguments_to_content :
@@ -77,7 +77,7 @@ module Make :
 	  pred_table: ASPred.PredIdTable.table;
 	  const_table: Datalog_AbstractSyntax.ConstGen.Table.table;
 	  rule_id_gen:IdGenerator.IntIdGen.t;
-	  e_pred_to_rules: Rule.Rules.t Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdMap.t
+	  (* e_pred_to_rules: Rule.Rules.t Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdMap.t *)
 	}
         val make_program : ASProg.program -> program
 	val temp_facts :
@@ -96,5 +96,9 @@ module Make :
           Rule.FactArray.row Predicate.PredMap.t -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> Predicate.FactSet.t * Predicate.PremiseSet.t Predicate.PredicateMap.t 
 	val seminaive : program -> Rule.FactArray.row Predicate.PredMap.t * Predicate.PremiseSet.t Predicate.PredicateMap.t
 	val to_abstract : program -> ASProg.program
+
+	val extend : program -> ASProg.modifier -> program
+
+	val add_e_facts : program -> (ASRule.rule list*Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) -> program
       end
     end
