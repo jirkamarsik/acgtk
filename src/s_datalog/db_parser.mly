@@ -15,7 +15,7 @@
 %token LPAR RPAR COMMA DOT FROM EOI SLASH QUESTION_MARK
 
 
-%start rule program extensional_facts
+%start rule program extensional_facts query
 %type < Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > rule
 %type < Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t -> Datalog_AbstractSyntax.AbstractSyntax.Proto_Program.t > program
 %type < (Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.ConstGen.Table.table) -> (Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate * Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table * Datalog_AbstractSyntax.ConstGen.Table.table) > query

@@ -1,6 +1,12 @@
-module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate with type pred_id=Datalog_AbstractSyntax.AbstractSyntax.Predicate.pred_id and type PredIdTable.table = Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table
-module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule with type rule=Datalog_AbstractSyntax.AbstractSyntax.Rule.rule
-module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program with type program = Datalog_AbstractSyntax.AbstractSyntax.Program.program
+module ASPred:module type of Datalog_AbstractSyntax.AbstractSyntax.Predicate 
+  with type pred_id=Datalog_AbstractSyntax.AbstractSyntax.Predicate.pred_id 
+  and type PredIdTable.table = Datalog_AbstractSyntax.AbstractSyntax.Predicate.PredIdTable.table
+
+module ASRule:module type of Datalog_AbstractSyntax.AbstractSyntax.Rule
+  with type rule=Datalog_AbstractSyntax.AbstractSyntax.Rule.rule
+
+module ASProg:module type of Datalog_AbstractSyntax.AbstractSyntax.Program
+  with type program = Datalog_AbstractSyntax.AbstractSyntax.Program.program
 
 module Make :
   functor (S : UnionFind.Store) ->
@@ -11,7 +17,7 @@ module Make :
       module Predicate :
         sig
           type predicate = { p_id : ASPred.pred_id; arity : int; }
-          val make_predicate : ASPred.predicate -> predicate
+          val make_predicate : Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> predicate
 	  (*          val instantiate_with :
 		      ASPred.predicate ->
 		      int * Datalog_AbstractSyntax.ConstGen.id UF.t ->
@@ -30,7 +36,7 @@ module Make :
 	    end
 	  module PremiseSet : Set.S with type elt = Premise.t
 	  val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
-	  val format_derivations2 : ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
+	  val format_derivations2 : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
 
 
         val add_pred_arguments_to_content :

@@ -3,7 +3,7 @@ open Focused_list
 open Datalog_AbstractSyntax
 
 
-module ASPred=AbstractSyntax.Predicate
+module ASPred=AbstractSyntax.Predicate 
 module ASRule=AbstractSyntax.Rule
 module ASProg=AbstractSyntax.Program
   
@@ -249,10 +249,18 @@ struct
 
 
 
-    let rec format_derivations2 pred_table cst_table map =
+    let rec format_derivations2 ?query pred_table cst_table map =
+      let u_query = 
+	match query with
+	| Some q -> Some (make_unifiable_predicate  q)
+	| None -> None in      
       PredicateMap.iter
-	(fun k v -> let () = format_derivation "" k v pred_table cst_table map FactSet.empty in 
-		    Printf.fprintf stdout "\n")
+	(fun k v -> 
+	  match u_query with
+	  | Some q when not (unifiable k q) -> ()
+	  | _ ->
+	    let () = format_derivation "" k v pred_table cst_table map FactSet.empty in 
+	    Printf.fprintf stdout "\n")
 	map
     and format_derivation prefix k v pred_table cst_table map set=
       if FactSet.mem k set then
