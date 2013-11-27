@@ -114,10 +114,10 @@ module Lambda =
      let rec unfold_binder binder l_level level id_to_sym acc env = function
        | App (Const i,(LAbs(x,u) as t)) when (is_binder i id_to_sym)&&(i=binder) ->
 	   let x' = generate_var_name x env in
-	     unfold_binder binder (l_level+1) level id_to_sym ((l_level,(x',Abstract_syntax.Linear))::acc) env u
+	     unfold_binder binder (l_level+1) level id_to_sym ((l_level,(x',Abstract_syntax.Linear))::acc) ((l_level,x')::env) u
        | App (Const i,(Abs(x,u) as t)) when (is_binder i id_to_sym)&&(i=binder) -> 
 	   let x' = generate_var_name x env in
-	     unfold_binder binder l_level (level+1) id_to_sym ((level,(x',Abstract_syntax.Non_linear))::acc) env u
+	     unfold_binder binder l_level (level+1) id_to_sym ((level,(x',Abstract_syntax.Non_linear))::acc) ((level,x')::env) u
        | t -> acc,l_level,level,t
 	   
      let parenthesize (s,b) = match b with
