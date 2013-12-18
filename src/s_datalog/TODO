@@ -2,14 +2,17 @@
 ** Utiliser Bolt (http://bolt.x9c.fr/)
 + [ ] Intégrer dans le configure.ac la dépendance à Bolt
 + [ ] Laisser la possibilité que la librairie ne soit pas installée
-+ [X] Gérer la présence d'un fichier bolt_config (bolt.config) (DONE: bug fix in BOLT
++ [X] Gérer la présence d'un fichier bolt_config (bolt.config) (DONE:
+  bug fix in BOLT
 ** Configuration
 + [ ] Utiliser les outils de Paul
 ** Permettre l'utilisation des PersistentArray
 
 * datalog.ml
-+ [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract et aussi de Datalog_AbstractSyntax.Rule.to_string
-+ [ ] Vérifier pourquoi content est passé en paramètre dans les to_abstract alors que c'est un champ du record rule
++ [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract
+  et aussi de Datalog_AbstractSyntax.Rule.to_string
++ [ ] Vérifier pourquoi content est passé en paramètre dans les
+  to_abstract alors que c'est un champ du record rule
 + [ ] Idem pour Rule.extract_consequence
 + [ ] Réfléchir à la possibilité de faire de l'unification directement
   entre contents. Ça réduirait par exemple les itérations dans
@@ -21,3 +24,15 @@
   encore des variables.
 + [ ] Ajouter la possibilité d'étendre un programme datalog
 + [ ] changer le champ idb de prog en Set plutôt que list
+
+* unionFind.ml
++ [ ] Changer le rank dans "union" lorsque match de Value contre
+  Link_to
+
+* lambda.ml
++ [ ] Vérifier les passages de paramètres dans les
+  unfold_{labs|abs|binder} pour l'affichage, et simplifier
+
+* typeInference.ml
++ [ ] change or add inference (possibly with a signature) to principal
+  typing

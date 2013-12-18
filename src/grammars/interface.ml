@@ -57,6 +57,8 @@ sig
   val is_declared : entry -> t -> string option
   val eta_long_form : term -> stype -> t -> term
   val unfold : term -> t -> term
+  val is_2nd_order : t -> bool
+
 end
 
 module type Lexicon_sig =

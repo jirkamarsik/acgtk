@@ -534,7 +534,7 @@ struct
   struct
     type program = {rules:Rule.rule list Predicate.PredMap.t;
 		    (* the list of the rules of the program indexed by
-		       the id of this predicate *)
+		       the id of the lhs predicate *)
 		    edb:ASPred.pred_id list;
 		    (* the list of the ids of the extensional
 		       predicates *)

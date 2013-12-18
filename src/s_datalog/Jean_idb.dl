@@ -13,6 +13,6 @@ N(i,j):-homme(i,j).
 N(i,j):-telescope(i,j).
 Prep(i,j):-avec(i,j).
 
-(*S(x,y):-T(x,y). 
-T(x,y):-S(x,y).*)
+S(x,y):-T(x,y). 
+T(x,y):-S(x,y).
 

@@ -290,11 +290,12 @@ struct
   let rec cyclic_aux i f acc =
     match S.get i f with
     | Value v -> false,i,f
-    | Link_to next ->
+    | Link_to next when next=i -> false,i,f
+    | Link_to next  ->
       if IntSet.mem next acc then
 	true,i,f
       else
-	let cyclic,representative_index,new_f = cyclic_aux next f (IntSet.add next acc) in
+	let cyclic,representative_index,new_f = cyclic_aux next f (IntSet.add next (IntSet.add i acc)) in
 	let updated_f = S.set i (Link_to representative_index) new_f in
 	cyclic,representative_index,updated_f
 	  

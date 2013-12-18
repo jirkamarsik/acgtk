@@ -58,3 +58,5 @@ exception No_file of  (string * string)
     where [msg] contains a string describing where the file [f] was
     looked for.*)
 val find_file : string -> string list -> string
+
+val (>>) : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)

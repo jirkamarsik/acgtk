@@ -598,6 +598,21 @@ module Lambda =
 	 normalize t'
 
 
+     (* We assume here that types in [ty] have been unfolded*)
+     let rec order stype f_unfold_defined_type = 
+       match stype with
+       | Atom _ -> 1
+       | DAtom i -> order (f_unfold_defined_type i) f_unfold_defined_type
+       | LFun (alpha,beta) -> max ((order alpha f_unfold_defined_type)+1) (order beta f_unfold_defined_type)
+       | Fun (alpha,beta) -> max ((order alpha f_unfold_defined_type)+1) (order beta f_unfold_defined_type)
+       | _ -> failwith "Bug: order of type not defined for this type constructor"
+
+
+     let is_2nd_order stype f_unfold_defined_type = 
+       (order stype f_unfold_defined_type)<=2
+
 
 
   end
+
+

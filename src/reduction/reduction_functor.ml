@@ -84,7 +84,8 @@ struct
   exception NotImplemented
   exception NotSecondOrder
 
-  (* renvoie la liste des constantes d'un lambda-terme lu de gauche à droite *)
+  (* renvoie la liste des constantes d'un lambda-terme lu de gauche à
+     droite *)
   let rec lambda_get_constants = function
     | LVar _ -> []
     | Const x -> [x]
@@ -93,44 +94,47 @@ struct
     | (Var _ | Abs(_,_)) -> raise NonLinear
     | _ -> raise NotImplemented
 
-  (* renvoie la liste des types atomiques (et d'un identifiant) présent dans une signature *)
+  (* renvoie la liste des types atomiques (et d'un identifiant)
+     présent dans une signature *)
   let sg_get_atomic_types s =
     Signature.fold
       (fun e l -> match Signature.is_declared e s with
-	| None -> l
-	| Some name -> if Signature.is_type name s
-	  then (match l with
-	    | [] -> [(name,0)]
-	    | (t,n)::q -> (name,n+1)::(t,n)::q)
-	  else l)
+      | None -> l
+      | Some name -> if Signature.is_type name s
+	then (match l with
+	| [] -> [(name,0)]
+	| (t,n)::q -> (name,n+1)::(t,n)::q)
+	else l)
       []
       s
 
-  (* renvoie la liste des constantes (et d'un dientifiant) présentes dans une signature *)
+  (* renvoie la liste des constantes (et d'un identifiant) présentes
+     dans une signature *)
   let sg_get_constants s =
     Signature.fold
       (fun e l -> match Signature.is_declared e s with
-	| None -> l
-	| Some name -> if fst (Signature.is_constant name s)
-	  then (match l with
-	    | [] -> [(name,0)]
-	    | (t,n)::q -> (name,n+1)::(t,n)::q)
-	  else l)
+      | None -> l
+      | Some name -> if fst (Signature.is_constant name s)
+	then (match l with
+	| [] -> [(name,0)]
+	| (t,n)::q -> (name,n+1)::(t,n)::q)
+	else l)
       []
       s
 
-  (* renvoie la liste des constantes présentes dans [s] et leur type *)
+  (* renvoie la liste des constantes présentes dans [s] et leur
+     type *)
   let sg_get_constants_and_constant_types s =
     Signature.fold
       (fun e l -> match Signature.is_declared e s with
-	| None -> l
-	| Some name -> if fst (Signature.is_constant name s)
-	  then (Signature.find_term name s)::l else l)
+      | None -> l
+      | Some name -> if fst (Signature.is_constant name s)
+	then (Signature.find_term name s)::l else l)
       []
       s
 
-  (* renvoie le terme où les définitions des constantes définies ont été dépliées suivant
-     leur définition dans la signature *)
+  (* renvoie le terme où les définitions des constantes définies ont
+     été dépliées suivant leur définition dans la signature *)
   let rec sg_unfold_term s = function
     | LVar x -> LVar x
     | Const x -> Const x
@@ -168,7 +172,8 @@ struct
       | _ -> raise NotImplemented in
     aux i l x 
 
-  (* "casse" un type en la liste de ses [n] sous-types 'grossiers', eux-mêmes "cassés" avec
+  (* "casse" un type en la liste de ses [n] sous-types 'grossiers',
+     eux-mêmes "cassés" avec
      break_aux :
      entrée :
      i : identifiant 'fresh' pour représenter un type atomique

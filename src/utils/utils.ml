@@ -93,3 +93,5 @@ let find_file name dirs =
       | Sys_error("Is a directory") -> 
 	  failwith (Printf.sprintf "Failed while trying to trace file '%s'" name )
 	  
+
+let (>>) f g = fun x -> f (g x)

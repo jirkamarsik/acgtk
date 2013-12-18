@@ -157,6 +157,10 @@ sig
 
   val unfold : term -> t -> term
 
+  (** [is_2nd_order s] returns [true] if the signature [s] is 2nd
+      order and [false] otherwise. *)
+  val is_2nd_order : t -> bool
+
 end
 
 (** This module signature describes the interface for modules implementing lexicons *)
