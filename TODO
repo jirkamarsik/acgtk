@@ -1,3 +1,5 @@
+; -*-org-*-
+
 * Général
 ** Utiliser Bolt (http://bolt.x9c.fr/)
 + [ ] Intégrer dans le configure.ac la dépendance à Bolt
@@ -7,6 +9,7 @@
 ** Configuration
 + [ ] Utiliser les outils de Paul
 ** Permettre l'utilisation des PersistentArray
+** Vérifier (et supprimer ou mettre en IFDEBUG) les assert
 
 * datalog.ml
 + [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract
@@ -24,6 +27,7 @@
   encore des variables.
 + [ ] Ajouter la possibilité d'étendre un programme datalog
 + [ ] changer le champ idb de prog en Set plutôt que list
++ [ ] changer edb et idb en Set plutôt que list
 
 * unionFind.ml
 + [ ] Changer le rank dans "union" lorsque match de Value contre
@@ -36,3 +40,9 @@
 * typeInference.ml
 + [ ] change or add inference (possibly with a signature) to principal
   typing
+
+
+* acg_lexicon.ml
++ [ ] rebuild the datalog program after composition
++ [ ] add the int id (as in Lambda.Const i) in the map from the
+  constant name for abstract constants

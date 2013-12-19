@@ -67,7 +67,7 @@ tar: superclean
 	if test -d ../$(TAR_RELEASE) ; then rm ../$(TAR_RELEASE) ; fi
 	cd .. && ln -s trunk $(TAR_RELEASE) && cd trunk
 	echo $(TAR_RELEASE).tar.gz
-	tar cvfz ../$(TAR_RELEASE).tar.gz -C ..  -h $(TAR_RELEASE) --exclude="*/.svn*" --exclude "$(TAR_RELEASE)/data" --exclude "$(TAR_RELEASE)/src/data" --exclude "$(TAR_RELEASE)/src/*.old" --exclude "$(TAR_RELEASE)/*.tar.*" && mv ../$(TAR_RELEASE).tar.gz .
+	tar cvfz ../$(TAR_RELEASE).tar.gz -C ..  -h $(TAR_RELEASE) --exclude="*/.svn*" --exclude "$(TAR_RELEASE)/data" --exclude "$(TAR_RELEASE)/src/data" --exclude "$(TAR_RELEASE)/src/*.old" --exclude "$(TAR_RELEASE)/*.tar.*" --exclude "$(TAR_RELEASE)/TODO" --exclude "$(TAR_RELEASE)/*~" && mv ../$(TAR_RELEASE).tar.gz .
 	if test -d ../$(TAR_RELEASE) ; then rm ../$(TAR_RELEASE) ; fi
 	./configure
 

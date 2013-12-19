@@ -29,7 +29,10 @@ struct
 		   nl_level:int; 
 		   lvar_typing:int IntMap.t;
 		   nlvar_typing:int IntMap.t;
-		   const_typing:(int*int) IntMap.t; (* maps the occurrence position, which is unique, to a pair consisting of the type variable and the constant identifier *)
+		   const_typing:(int*int) IntMap.t;
+		   (* maps the occurrence position, which is unique,
+		      to a pair consisting of the type variable and the
+		      constant identifier *)
 		   cst_nbr:int;
 		   type_equations:UF.t;}
     
@@ -47,7 +50,7 @@ struct
       (fun s -> LOG "%s" s LEVEL TRACE)
       (Bolt.Utils.split "\n" (UF.to_string eq)) 
 
-    
+      
   let rec inference_aux t ty_var env =
     LOG "Type inference of %s (currently %d). Equations are:" (Lambda.raw_to_string t) ty_var LEVEL TRACE ;
     let () = type_equation_log env.type_equations in
@@ -70,8 +73,8 @@ struct
 	   let new_var,new_eq=UF.generate_new_var env.type_equations in
 	   new_var,{env with lvar_typing=IntMap.add i new_var env.lvar_typing; type_equations=new_eq})
       | Lambda.Const i ->
-      (* Each occurence of a constants is considered as a new free
-	 variables *) 
+	(* Each occurence of a constants is considered as a new free
+	   variables *) 
 	let new_var,new_eq=UF.generate_new_var env.type_equations in
 	let new_eq=UF.union ty_var new_var new_eq in
 	new_var,{env with type_equations=new_eq;const_typing=IntMap.add (env.cst_nbr+1) (new_var,i) env.const_typing;cst_nbr=env.cst_nbr+1}

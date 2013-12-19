@@ -45,17 +45,22 @@ struct
 	let eta_long = Sg.eta_long_form c (fun_type_from_id abstract_type_or_cst_id) sg  in
 	  Printf.sprintf "\t%s [eta-long form: %s {%s}]" (Sg.term_to_string c sg) (Sg.term_to_string eta_long sg ) (Lambda.raw_to_string eta_long)
 
+  module Datalog=Datalog.Datalog
+
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
 	    abstract_sig:Sg.t;
-	    object_sig:Sg.t;}
+	    object_sig:Sg.t;
+	    datalog_prog:Datalog.Program.program option}
 
 
   let name {name=n}=n
 
   let get_sig {abstract_sig=abs;object_sig=obj} = abs,obj
 
-  let empty name ~abs ~obj = {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj}
+  let empty name ~abs ~obj = 
+    let prog = if Sg.is_2nd_order abs then Some (Datalog.Program.empty) else None in
+    {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj;datalog_prog=prog}
 
   let emit_missing_inter lex lst =
     let lex_name,loc = name lex in
@@ -100,26 +105,65 @@ struct
 (*    let () = Printf.printf "Going_to_normalize:\t%s\n%!" (Lambda.term_to_string  t_interpretation (Sg.id_to_string lex.object_sig)) in*)
       Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig) t_interpretation,interpret_type ty lex
 
+  module Reduction=Reduction.Make(Sg)
 
   let insert e ({dico=d} as lex) = match e with
     | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
-    | Abstract_syntax.Constant (id,loc,t) -> {lex with dico=Dico.add id (Constant (loc,Sg.typecheck t (interpret_type (Sg.type_of_constant id lex.abstract_sig) lex) lex.object_sig)) d}
+    | Abstract_syntax.Constant (id,loc,t) ->
+      let abs_type=Sg.type_of_constant id lex.abstract_sig in
+      let interpreted_type = (interpret_type abs_type lex) in
+      let interpreted_term = 
+	Lambda.normalize
+	  ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
+	  (Sg.typecheck t interpreted_type lex.object_sig) in
+      let eta_long_term = 
+	Sg.eta_long_form 
+	  interpreted_term
+	  interpreted_type
+	  lex.object_sig in
+      LOG "term: %s:%s" (Sg.term_to_string interpreted_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
+      LOG "eta-long form: %s" (Sg.term_to_string eta_long_term lex.object_sig) LEVEL TRACE;
+      LOG "eta-long form (as caml term): %s" (Lambda.raw_to_caml eta_long_term) LEVEL TRACE;
+      let prog = match lex.datalog_prog with
+	| None -> None
+	| Some p -> 
+	  LOG "Datalog rule addition: lexicon \"%s\", constant \"%s:%s\" mapped to \"%s:%s\"" (fst lex.name) id (Sg.type_to_string abs_type lex.abstract_sig) (Sg.term_to_string eta_long_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
+	  let obj_princ_type,obj_typing_env = TypeInference.Type.inference eta_long_term in
+	  let _,new_prog=Reduction.generate_and_add_rule
+	    ~abs_cst:(id,abs_type)
+	    ~obj_princ_type
+	    ~obj_typing_env
+	    p
+	    ~abs_sig:lex.abstract_sig
+	    ~obj_sig:lex.object_sig in
+	  Some new_prog in
+      {lex with
+	dico=Dico.add id (Constant (loc,interpreted_term)) d;
+	datalog_prog =prog}
 
   let to_string ({name=n,_;dico=d;abstract_sig=abs_sg;object_sig=obj_sg} as lex) =
-    Printf.sprintf
+    let buff=Buffer.create 80 in
+    let () = Printf.bprintf
+      buff
       "lexicon %s(%s): %s =\n%send"
       n
       (fst (Sg.name abs_sg))
       (fst (Sg.name obj_sg))
       (match 
-	 Dico.fold
-	   (fun k i -> function
-	      | None -> Some (Printf.sprintf "\t%s := %s;" k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg))
-	      | Some a -> Some (Printf.sprintf "%s\n\t%s := %s;" a k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg)))
-	   d
-	   None with
-	     | None -> ""
-	     | Some s -> Printf.sprintf "%s\n" s)
+	  Dico.fold
+	    (fun k i -> function
+	    | None -> Some (Printf.sprintf "\t%s := %s;" k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg))
+	    | Some a -> Some (Printf.sprintf "%s\n\t%s := %s;" a k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg)))
+	    d
+	    None with
+	    | None -> ""
+	    | Some s -> Printf.sprintf "%s\n" s) in
+    let () = Printf.bprintf buff "\n************************\n" in
+    let () = match lex.datalog_prog with
+      | None -> Printf.bprintf buff "This lexicon was not recognized as having a 2nd order abstract signature\n" 
+      | Some p -> let () = Printf.bprintf buff "This lexicon recognized as having a 2nd order abstract signature. The associated datalog program is:\n" in
+		  Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract p)) in
+    Buffer.contents buff
 
   let check ({dico=d;abstract_sig=abs} as lex) =
     let missing_interpretations =
@@ -152,7 +196,8 @@ struct
 	  lex2.dico
 	  Dico.empty;
      abstract_sig = lex2.abstract_sig;
-     object_sig=lex1.object_sig}
+     object_sig=lex1.object_sig;
+     datalog_prog=None}
 	
 
 end

@@ -33,6 +33,8 @@ let term_list=[
 (LAbs ("P",(LAbs ("Q",(App ((Const 9),(Abs ("x",(App ((App ((Const 8),(App ((LVar 1),(Var 0))))),(App ((LVar 0),(Var 0))))))))))))) ;
 (LAbs ("P",(LAbs ("Q",(App ((Const 10),(Abs ("x",(App ((App ((Const 7),(App ((LVar 1),(Var 0))))),(App ((LVar 0),(Var 0))))))))))))) ;
 (LAbs ("x",(LAbs ("y",(App ((LVar 0),(LVar 1))))))) ;
+(LAbs ("s",(LAbs ("a",(LAbs ("S",(App ((LVar 2),(App ((LVar 0),(App ((LVar 1),(LAbs ("x",(App ((Const 4),(LVar 0)))))))))))))))));
+(LAbs ("s",(LAbs ("a",(LAbs ("S",(App ((LVar 2),(App ((LVar 0),(LAbs ("x",(App ((App ((LVar 2),(LAbs ("x",(App ((Const 4),(LVar 0))))))),(LVar 0)))))))))))))));
 ]
 
 (*let () = test (LAbs ("o",(LAbs ("s",(App ((App ((Const 1),(LVar 0))),(App ((App ((Const 1),(Const 5))),(LVar 1))))))))) *)

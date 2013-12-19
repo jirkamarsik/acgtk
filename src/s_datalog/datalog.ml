@@ -6,6 +6,118 @@ open Datalog_AbstractSyntax
 module ASPred=AbstractSyntax.Predicate 
 module ASRule=AbstractSyntax.Rule
 module ASProg=AbstractSyntax.Program
+
+module type Datalog_Sig=
+sig
+  exception Fails
+  module UF:UnionFind.S
+    
+  module Predicate :
+  sig
+    type predicate = { p_id : ASPred.pred_id; arity : int; }
+    val make_predicate : Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> predicate
+    module PredMap : Map.S with type key = ASPred.pred_id
+    module FactSet :Set.S with type elt = ASPred.predicate
+    val conditionnal_add :
+      FactSet.elt -> FactSet.t -> FactSet.t -> FactSet.t -> FactSet.t
+    val facts_to_string : FactSet.t PredMap.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
+    module PredicateMap : Map.S with type key = ASPred.predicate
+    module Premise :
+    sig
+      type t = ASPred.predicate list
+      val to_string : t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
+    end
+    module PremiseSet : Set.S with type elt = Premise.t
+    val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
+    val format_derivations2 : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
+      
+
+    val add_pred_arguments_to_content :
+      ASPred.term list ->
+      Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
+        int Datalog_AbstractSyntax.VarGen.IdMap.t ->
+      Datalog_AbstractSyntax.ConstGen.id UF.content list * int *
+        int Datalog_AbstractSyntax.VarGen.IdMap.t
+	
+  end
+    
+  module Rule :
+  sig
+    type rule = {
+      id : int;
+      lhs : Predicate.predicate;
+      e_rhs : (Predicate.predicate*int) list;
+      i_rhs : (Predicate.predicate*int) list;
+      content : Datalog_AbstractSyntax.ConstGen.id UF.t;
+    }
+    val make_rule : ASRule.rule -> rule
+    val cyclic_unify : int -> int -> 'a UF.t -> 'a UF.t
+    val extract_consequence :
+      rule -> Datalog_AbstractSyntax.ConstGen.id UF.t -> ASPred.predicate
+    module FactArray :
+    sig
+      type row = Predicate.FactSet.t
+      type array = row list
+      val collect_results :
+        ('a -> (int * Datalog_AbstractSyntax.ConstGen.id UF.t) * Predicate.FactSet.elt list -> 'a) ->
+        'a ->
+        (int * Datalog_AbstractSyntax.ConstGen.id UF.t) * Predicate.FactSet.elt list -> array -> 'a
+    end
+    val immediate_consequence_of_rule :
+      rule -> FactArray.row Predicate.PredMap.t -> ASPred.predicate list
+      
+    module Rules:Set.S with type elt=rule
+  end
+    
+  module Program :
+  sig
+    type program = {
+      rules : Rule.rule list Predicate.PredMap.t;
+      edb : ASPred.pred_id list;
+      edb_facts:Predicate.FactSet.t Predicate.PredMap.t;
+      idb : ASPred.pred_id list;
+      pred_table: ASPred.PredIdTable.table;
+      const_table: Datalog_AbstractSyntax.ConstGen.Table.table;
+      rule_id_gen:IdGenerator.IntIdGen.t;
+    }
+    val empty : program
+    val make_program : ASProg.program -> program
+    val temp_facts :
+      Rule.rule ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      (ASPred.predicate * Predicate.FactSet.elt list -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> 'a
+    val p_semantics_for_predicate :
+      Predicate.PredMap.key ->
+      program ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      Rule.FactArray.row Predicate.PredMap.t ->
+      Rule.FactArray.row Predicate.PredMap.t -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> Predicate.FactSet.t * Predicate.PremiseSet.t Predicate.PredicateMap.t 
+    val seminaive : program -> Rule.FactArray.row Predicate.PredMap.t * Predicate.PremiseSet.t Predicate.PredicateMap.t
+    val to_abstract : program -> ASProg.program
+      
+    val extend : program -> ASProg.modifier -> program
+      
+    val add_e_facts : program -> (ASRule.rule list*Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) -> program
+      
+    (** [add_rule r p] adds a [ASRule.rule] to a [Datalog.Program]
+	with the assumption that it will not change the {em nature} of
+	a predicate (that is making it change from extensional to
+	intensional). *)
+      
+    val add_rule : ASRule.rule -> program -> program
+      
+      
+    val get_fresh_rule_id : program -> (int * program)
+    val add_pred_sym : string -> program -> (ASPred.pred_id*program)
+  end
+end
+
+
+
   
 module Make (S:UnionFind.Store) =
 struct
@@ -566,7 +678,17 @@ struct
 		      when extending the program. To it is suppressed
 		      for the moment *)
 		   }
-      
+
+
+    let empty = {
+      rules=Predicate.PredMap.empty;
+      edb=[];
+      idb=[];
+      edb_facts=Predicate.PredMap.empty;
+      pred_table=ASPred.PredIdTable.empty;
+      const_table=ConstGen.Table.empty;
+      rule_id_gen=IdGenerator.IntIdGen.init ()}
+
     let extend_map_to_list k v map_list =
       try
 	let lst=Predicate.PredMap.find k map_list in
@@ -581,6 +703,7 @@ struct
 	with
 	| Not_found -> Predicate.FactSet.empty in
       Predicate.PredMap.add k (Predicate.FactSet.add v current_set) map_to_set
+
 
 	
     let make_program {ASProg.rules=r;ASProg.pred_table=pred_table;ASProg.const_table=cst_table;ASProg.i_preds=i_preds;ASProg.rule_id_gen;ASProg.e_pred_to_rules} =
@@ -858,14 +981,6 @@ struct
       let first_step_results = seminaive_aux prog.edb_facts Predicate.PredMap.empty Predicate.PredicateMap.empty in
       seminaive_rec first_step_results
 
-
-
-(*    let query prog query =
-      let facts,derivations=seminaive prog in
-*)    
-
-
-
     let extend prog {ASProg.modified_rules;ASProg.new_pred_table;ASProg.new_const_table;ASProg.new_i_preds;ASProg.new_e_preds;ASProg.new_rule_id_gen;}=
       let i_preds = 
 	ASPred.PredIds.fold
@@ -946,10 +1061,53 @@ struct
 	rule_id_gen}
 	
 
+    (** TODO: only useful until we change the type of idb and idb
+	to sets *)
+
+    let rec list_extension_aux a lst scanned_lst =
+      match lst with
+      | [] -> List.rev (a::scanned_lst)
+      | b::tl when a=b -> List.rev_append scanned_lst lst
+      | b::tl -> list_extension_aux a tl (b::scanned_lst)
+
+    let list_extension a lst = list_extension_aux a lst []
+
+    (** [add_rule r p] adds a [ASRule.rule] to a [Datalog.Program]
+	with the assumption that it will not change the {em
+	nature} of a predicate (that is making it change from
+	extensional to intensional). *)
+      
+    let add_rule r prog =
+      let new_rule = Rule.make_rule r in
+      let lhs_pred=r.ASRule.lhs.ASPred.p_id in
+      let new_e_facts,new_edb,new_idb =
+	match r.ASRule.e_rhs,r.ASRule.i_rhs with
+	| [],[] -> 
+	  extend_map_to_set lhs_pred r.ASRule.lhs prog.edb_facts,
+	  list_extension lhs_pred prog.edb,
+	  prog.idb
+	| _,_ -> prog.edb_facts,prog.edb,list_extension lhs_pred prog.idb in
+      {prog with
+	rules=extend_map_to_list lhs_pred new_rule prog.rules;
+	edb_facts=new_e_facts;
+	edb=new_edb;
+	idb=new_idb}
+	 
+	
+
+    let get_fresh_rule_id ({rule_id_gen} as prog) =
+      let new_id,rule_id_gen=IdGenerator.IntIdGen.get_fresh_id rule_id_gen in
+      new_id,{prog with rule_id_gen}
+
+    let add_pred_sym name ({pred_table} as prog) =
+      let p_id,pred_table=ASPred.PredIdTable.add_sym name pred_table in
+      p_id,{prog with pred_table}
+    
 	
   end
     
     
 end
-    
-    
+  
+  
+module Datalog=Make(UnionFind.StoreAsMap)

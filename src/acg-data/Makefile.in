@@ -34,11 +34,11 @@ LIBS += dyp.cma str.cma
 LIBDIR += @DYPGEN_INCLUDE@
 
 # Directories to which the current source files depend on
-PREVIOUS_DIRS = ../utils ../logic ../grammars
+PREVIOUS_DIRS = ../utils ../logic ../grammars ../s_datalog
 
 # Source files in the right order of dependance
 
-ML = type_system.ml signature.ml acg_lexicon.ml
+ML = type_system.ml signature.ml reduction.ml acg_lexicon.ml
 
 EXE_SOURCES = acgc.ml
 
