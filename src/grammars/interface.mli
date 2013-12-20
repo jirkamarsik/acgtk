@@ -85,18 +85,27 @@ sig
     val term_to_string : term -> t -> string 
 
   (** [unfold_type_definition id t] returns the actual type for the
-      type defined by [Lambda.DAtom id]. Fails with "Bug" if [id] does
-      not correspond to a type definition *)
-
-  val unfold_type_definition : int -> t -> Lambda.stype 
+      type defined by [id] as the identifier of a type definition in
+      the signature [t]. Fails with "Bug" if [id] does not correspond
+      to a type definition *)
+    val unfold_type_definition : int -> t -> Lambda.stype 
 
   (** [unfold_term_definition id t] returns the actual term for the
-      term defined by [Lambda.DConst id]. Fails with "Bug" if [id]
-      does not correspond to a term definition *)
+      term defined by [id] as the identifier of a term definition in
+      the signature [t]. Fails with "Bug" if [id] does not correspond
+      to a term definition *)
+    val unfold_term_definition : int -> t -> Lambda.term 
 
-  val unfold_term_definition : int -> t -> Lambda.term 
-    
-  (** [add_warnings w s ] resturns a signature where the warning [w] have been added *)
+    (** [expand_type t sg] returns a type where all the type
+	definitions have been expanded *)
+    val expand_type : Lambda.stype -> t -> Lambda.stype
+
+    (** [expand_term t sg] returns a term where all the term
+	definitions have been expanded *)
+    val expand_term : Lambda.term -> t -> Lambda.term
+      
+  (** [add_warnings w s ] resturns a signature where the warning [w]
+      have been added *)
   val add_warnings : Error.warning list -> t -> t
 
   (** [get_warnings sg] returns the warnigs emitted while parsing [sg]. *)
@@ -108,22 +117,22 @@ sig
 
   (** [term_to_string t sg] returns a string describing the term [t]
       wrt the signature [sg]. *)
-(*  val term_to_string : term -> t -> string *)
-(*  val raw_to_string : term -> string*)
-
+  (*  val term_to_string : term -> t -> string *)
+  (*  val raw_to_string : term -> string*)
+    
   (** [type_to_string t sg] returns a string describing the term [t]
       wrt the signature [sg]. *)
-(*  val type_to_string : stype -> t -> string *)
+  (*  val type_to_string : stype -> t -> string *)
     
   (** [convert_term t ty sg] returns a the term corresponding to the
       parsed term [t] with parsed type [ty] wrt to the signature [sg]
   *)
   val convert_term : Abstract_syntax.term -> Abstract_syntax.type_def -> t -> term * stype
-
+    
   (** [convert_type ty sg] returns a type to the parsed type [ty] wrt
       to the signature [sg] *)
   val convert_type : Abstract_syntax.type_def -> t -> stype
-
+    
   (** [type_of_constant n sg] returns the type of the constant of name
       [n] as defined in the signature [sg] *)
   val type_of_constant : string -> t -> stype

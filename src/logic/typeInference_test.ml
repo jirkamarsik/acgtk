@@ -17,7 +17,7 @@ let test t =
 
 (* grep Atom acg.log | grep -o "(.*" | sed -e 's/\(.*\):.*/\1;/' > ~/tmp/terms *)
 
-let term_list=[
+(*let term_list=[
   (Const 3) ;
 (Const 4) ;
 (LAbs ("o",(LAbs ("s",(App ((App ((Const 1),(LVar 0))),(App ((App ((Const 1),(Const 5))),(LVar 1))))))))) ;
@@ -36,6 +36,13 @@ let term_list=[
 (LAbs ("s",(LAbs ("a",(LAbs ("S",(App ((LVar 2),(App ((LVar 0),(App ((LVar 1),(LAbs ("x",(App ((Const 4),(LVar 0)))))))))))))))));
 (LAbs ("s",(LAbs ("a",(LAbs ("S",(App ((LVar 2),(App ((LVar 0),(LAbs ("x",(App ((App ((LVar 2),(LAbs ("x",(App ((Const 4),(LVar 0))))))),(LVar 0)))))))))))))));
 ]
+*)
+
+let term_list =
+  [
+    (LAbs ("s",(LAbs ("a",(App ((LVar 1),App (LVar 0,(LAbs ("x",(App ((Const 4),(LVar 0))))))))))));
+    (LAbs ("a",(App ((LVar 0),(LAbs ("x",(App ((Const 4),(LVar 0)))))))));
+  ]
 
 (*let () = test (LAbs ("o",(LAbs ("s",(App ((App ((Const 1),(LVar 0))),(App ((App ((Const 1),(Const 5))),(LVar 1))))))))) *)
 

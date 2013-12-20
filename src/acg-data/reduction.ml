@@ -29,7 +29,7 @@ struct
     LOG "On (aux):          %s" (Lambda.raw_type_to_string obj_type) LEVEL TRACE;
       match abs_type,obj_type with
       | Lambda.Atom i,_ -> (i,Sg.type_to_string abs_type sg,obj_type)::lst
-      | Lambda.DAtom _,_ -> failwith "Bug: type definition should be unfolded"
+      | Lambda.DAtom _,_ -> failwith (Printf.sprintf "Bug: type definition in \"%s\" as \"%s\" should be unfolded" (Sg.type_to_string abs_type sg) (Lambda.raw_type_to_string abs_type))
       | Lambda.LFun (Lambda.Atom i as alpha,beta),Lambda.Fun (alpha',beta')
       | Lambda.Fun (Lambda.Atom i as alpha,beta),Lambda.Fun (alpha',beta') -> 
 	map_types_aux beta beta' ((i,Sg.type_to_string alpha sg,alpha')::lst)

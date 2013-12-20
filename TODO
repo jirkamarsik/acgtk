@@ -46,3 +46,4 @@
 + [ ] rebuild the datalog program after composition
 + [ ] add the int id (as in Lambda.Const i) in the map from the
   constant name for abstract constants
++ [ ] Définir le parsing de la composition de lexique

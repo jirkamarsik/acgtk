@@ -110,7 +110,7 @@ struct
   let insert e ({dico=d} as lex) = match e with
     | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
     | Abstract_syntax.Constant (id,loc,t) ->
-      let abs_type=Sg.type_of_constant id lex.abstract_sig in
+      let abs_type=Sg.expand_type (Sg.type_of_constant id lex.abstract_sig) lex.abstract_sig in
       let interpreted_type = (interpret_type abs_type lex) in
       let interpreted_term = 
 	Lambda.normalize

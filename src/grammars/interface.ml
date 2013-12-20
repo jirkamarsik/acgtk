@@ -43,6 +43,9 @@ sig
 (*  val type_to_string : stype -> t -> string*)
   val unfold_type_definition : int -> t -> Lambda.stype 
   val unfold_term_definition : int -> t -> Lambda.term 
+  val expand_type : Lambda.stype -> t -> Lambda.stype
+  val expand_term : Lambda.term -> t -> Lambda.term
+
   val add_warnings : Error.warning list -> t -> t
   val get_warnings : t -> Error.warning list
   val to_string : t -> string
