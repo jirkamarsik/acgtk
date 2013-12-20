@@ -43,10 +43,11 @@ struct
 
   let build_predicate (name,obj_type) (prog,var_gen,type_to_var_map) =
     let atom_sequence = sequentialize obj_type in
+    LOG "Build predicate from %s:%s   ([%s])" name (Lambda.raw_type_to_string obj_type) (Utils.string_of_list ";" string_of_int atom_sequence) LEVEL TRACE;
     let var_sequence,var_gen,type_to_var_map =
       List.fold_left
 	(fun (l_var_seq,l_var_gen,l_type_to_var_map) i ->
-	  let var,l_var_gen,l_type_t=
+	  let var,l_var_gen,l_type_to_var_map=
 	    try
 	      IntMap.find i l_type_to_var_map,l_var_gen,l_type_to_var_map
 	    with

@@ -164,7 +164,7 @@ struct
 	| [],_ -> ":- "," "
 	| _,[] -> ":- "," "
 	| _,_ -> ":- "," , " in
-      Printf.sprintf "%s%s%s%s." head vdash ((string_of_predicate_list >> fst >> List.split)  r.e_rhs) ((string_of_predicate_list >> fst >> List.split) r.i_rhs)
+      Printf.sprintf "%s%s%s%s%s." head vdash ((string_of_predicate_list >> fst >> List.split)  r.e_rhs) e_i_sep ((string_of_predicate_list >> fst >> List.split) r.i_rhs)
 	
     module Rules=Set.Make(struct
       type t=rule
