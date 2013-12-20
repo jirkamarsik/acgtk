@@ -141,6 +141,32 @@ struct
 	dico=Dico.add id (Constant (loc,interpreted_term)) d;
 	datalog_prog =prog}
 
+  let parse term dist_type lex =
+    match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
+    | None,_ -> Printf.printf "Parsing is not implemented for non 2nd order ACG\n!"
+    | Some prog, (Lambda.Atom _ as dist_type) ->
+      let dist_type_image = interpret_type dist_type lex in
+      let obj_term= 
+	Sg.eta_long_form
+	  (Lambda.normalize
+ 	     ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
+	     (Sg.typecheck term dist_type_image lex.object_sig))
+	  dist_type_image
+	  lex.object_sig in
+      let obj_type,obj_typing_env = TypeInference.Type.inference obj_term in
+(*      let query,prog =Reduction.edb_and_query
+	~obj_term
+	~obj_type
+	~obj_typing_env
+	~dist_type
+	prog
+	~obj_sig:lex.object_sig in *)
+      ()
+    | Some _ , _ -> Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!"
+      
+    
+	
+
   let to_string ({name=n,_;dico=d;abstract_sig=abs_sg;object_sig=obj_sg} as lex) =
     let buff=Buffer.create 80 in
     let () = Printf.bprintf

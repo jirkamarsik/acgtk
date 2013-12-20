@@ -97,6 +97,20 @@ struct
       let new_rule = AbstractSyntax.Rule.({id=rule_id;lhs;e_rhs;i_rhs}) in
       new_rule,Datalog.Program.add_rule new_rule prog
 
+(*
+  let edb_and_query ~obj_term ~obj_type ~obj_typing_env ~dist_type prog ~obj_sig =
+    let e_facts,prog=
+      IntMap.fold
+	(fun _ (cst,cst_type) ->
+	  let const_name=Sg.term_to_string cst obj_sig in
+	  let () = assert (fst (Sg.is_constant const_name obj_sig)) in
+	  let new_pred,new_tables = build_predicate (const_name,cst_type) l_tables in
+	    let l_length=l_length+1 in
+	    (new_pred,l_length)::rhs,l_length,new_tables)
+	  env
+	  ([],0,(prog,var_gen,type_to_var_map) ) in
+      let new_rule = AbstractSyntax.Rule.({id=rule_id;lhs;e_rhs;i_rhs}) in
+*)  
 		
     
 end
