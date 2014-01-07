@@ -101,6 +101,7 @@ struct
     | Interpretation of type_or_term_in_def
 
   type term = type_or_term_in_def
+  type stype = type_or_term_in_def
 
 
   let valuation_to_string = function
@@ -128,6 +129,8 @@ struct
   let start_data () = No_dec
 
   let start_term () = No_type_or_term_in_def
+
+  let start_type () = Type_or_term_in_def (Type,Colon)
 
   let start_sig_entry () = Sig (Sig_dec_id (Sig_dec_equal (No_entry)))
 
@@ -193,6 +196,8 @@ let build_expectation lst =
     | Type_or_term_in_def (Nothing,_) -> failwith "Bug: Mothing should not appear in term"
 
   let term_transition q v = q
+
+  let type_transition q v = q
 (*    let _,result = term_expectation q in
       result v *)
 

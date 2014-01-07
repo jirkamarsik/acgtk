@@ -57,6 +57,7 @@
   HELP
 <Abstract_syntax.Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ANALYSE
+<(string*Abstract_syntax.Abstract_syntax.location*string)>PARSE
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ADD
   COMPOSE
 <string>SEMICOLONN
@@ -127,6 +128,12 @@
 					     match names with
 					       | [] -> let () = F.analyse e t l in e
 					       | _ -> let () = F.analyse  ~names e t l in e}
+| optional_ident<name> PARSE<t,l,line>   {
+  let () = echo dyp.global_data line in fun e -> 
+    let loc = match name with
+      | None -> l
+      | Some (name,lex_loc) -> lex_loc in
+    let () = F.parse ~name e t loc in e}
 | optional_idents<names> ADD<t,l,line>   { let () = echo dyp.global_data line in fun e -> 
 					     match names with
 					       | [] -> F.add e t l

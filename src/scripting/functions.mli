@@ -43,6 +43,7 @@ sig
     | Help of action option
     | Create
     | Save
+    | Parse
 
 
 
@@ -63,6 +64,8 @@ sig
   val print : ?name:string -> env -> (Lexing.position * Lexing.position) -> unit
 
   val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val parse : ?name:(string * (Lexing.position * Lexing.position)) -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
   val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
 

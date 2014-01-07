@@ -43,6 +43,7 @@ sig
     | Help of action option
     | Create
     | Save
+    | Parse
 
 
   type file_type = | Data | Script of (string -> string list -> env -> env)
@@ -61,6 +62,8 @@ sig
   val print : ?name:string -> env -> (Lexing.position * Lexing.position) -> unit
 
   val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val parse : ?name:(string * (Lexing.position * Lexing.position)) -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
   val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
 
@@ -219,6 +222,35 @@ struct
       | E.Entry_not_found n -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment n,l))
 
 
+  let parse ?name e ?offset data l =
+    try
+      let additional_offset = "\t" in
+      let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
+      let entry =
+	match name,E.focus e with
+	| None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
+	| None,Some en -> en
+	| Some (n,l),_ ->
+	  (try 
+	     E.get n e
+	   with
+	   | E.Entry_not_found s -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment s,l))) in
+      match entry with
+      | E.Signature sg -> raise (Scripting_errors.Error (Scripting_errors.Parse_only_for_lexicons (fst (E.Signature1.name sg)),l))
+      | E.Lexicon lex -> 
+	let abs,obj=E.Lexicon.get_sig lex in
+	match Data_parser.parse_heterogenous_term ~output:true ~offset:actual_offset data lex with
+	| None -> ()
+	| Some (obj_t,abs_ty) -> 
+	  E.Lexicon.parse obj_t abs_ty lex
+    with
+    | E.Signature_not_found n
+    | E.Lexicon_not_found n
+    | E.Entry_not_found n -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment n,l))
+
+
+
+
   let entry_name = function
     | E.Signature sg -> fst (E.Signature1.name sg)
     | E.Lexicon lex -> fst (E.Lexicon.name lex)
@@ -338,6 +370,7 @@ struct
     | Help of action option
     | Create
     | Save
+    | Parse
 
 
   let actions = [Load;List;Select;Unselect;Trace;Dont_trace;Print;Analyse;Add;Compose;Dont_wait;Wait;Help None;Create;Save]
@@ -362,6 +395,7 @@ struct
     | Help (Some a) -> Format.sprintf "%s help" (action_to_string a)
     | Save -> "save"
     | Create -> "create"
+    | Parse -> "parse"
 
 
 
@@ -377,6 +411,7 @@ struct
     | Dont_wait as command -> Format.sprintf "\t%s;\n\t\tstops waiting a keyboard return event before going on in executing a script" (action_to_string command)
     | Print as command -> Format.sprintf "\t[name] %s;\n\t\toutputs the content of the \"name\" signature or lexicon of the current environment. If no \"name\" is specified, check whether there is a selected data in the environment" (action_to_string command)
     | Analyse as command -> Format.sprintf "\t[name1 name2 ...] %s term:type;\n\tanalyses the given \"term:type\" with respect to the given \"name1\" ... signatures or lexicons, or if no such name is given, with respect to the selected data in the environment. In the context of a signature, this command just typechecks the given entry. In the context of a lexicon, it typechecks it and interprets it with respect to this lexicon" (action_to_string command)
+    | Parse as command -> Format.sprintf "\t[name] %s term:type;\n\t\tparse the object term \"term\" as the image of some abstract term of type \"type\" according to the lexicon \"name\". If no \"name\" is specified, check whether there is a selected data in the environment" (action_to_string command)
     | Add as command -> Format.sprintf "\t[name1 name2 ...] %s expression;\n\tadds the given \"expression\" with respect to the given \"name1\" ... signatures or lexicons to those signature or lexicons. \"expression\" must respect the syntax of signatures or lexicons" (action_to_string command)
     | Compose as command -> Format.sprintf "\t%s name1 name2 as name3;\n\t\tcreates a new lexicon with name \"name3\" by composing the \"name1\" and \"name2\" lexicons" (action_to_string command)
     | Help _ as command -> Format.sprintf "\t%s ;\n\t\tprints the help message" (action_to_string command)

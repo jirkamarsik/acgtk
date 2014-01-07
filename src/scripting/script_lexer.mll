@@ -37,6 +37,7 @@ type token =
   | TRACE
   | PRINT   of Abstract_syntax.location
   | ANALYSE  of (string*Abstract_syntax.location*string)
+  | PARSE  of (string*Abstract_syntax.location*string)
   | ADD of (string*Abstract_syntax.location*string)
   | COMPOSE
   | SEMICOLONN of string
@@ -105,6 +106,8 @@ let string = (letter|digit|'_')*
     | "print"  as c {let () = echo_str c in PRINT (loc lexbuf)}
     | "analyse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string (fun x l -> ANALYSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "parse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
+		string (fun x l -> PARSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "add"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string_wo_space (fun x l -> ADD (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "compose"  as c {let () = echo_str c in COMPOSE}

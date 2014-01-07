@@ -114,6 +114,7 @@ sig
       
       
     val get_fresh_rule_id : program -> (int * program)
+    val get_fresh_cst_id : string -> program -> (Datalog_AbstractSyntax.ConstGen.id * program)
     val add_pred_sym : string -> program -> (ASPred.pred_id*program)
   end
 end

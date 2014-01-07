@@ -189,6 +189,9 @@ EOI
 %start sig_entry  
 %start lex_entry
 %start term_alone
+%start heterogenous_term_and_type
+%start term
+%start type_expression
 
   
 %relation atom<app<sym_app<binder atom_type<arrow_type
@@ -363,6 +366,13 @@ sig_entries :
 | term<t> COLON type_expression<ty> EOI {let sg = (get_sig_value dyp.last_local_data) in
 					   E.Signature1.convert_term (fst (t Env.empty [])) (fst (ty sg)) sg (*(E.Signature1.empty ("fake signature",(Lexing.dummy_pos,Lexing.dummy_pos)))*)}	  
 
+
+	      heterogenous_term_and_type :
+| term<t> COLON type_expression<ty> EOI {
+  let abs_sig=get_sig_value dyp.last_local_data in
+  (fst (t Env.empty [])),(fst (ty abs_sig))}	  
+
+
 	  term :
 | LAMBDA0  idents DOT term {
     let sg = get_sig_value dyp.last_local_data in
@@ -454,31 +464,28 @@ sig_entries :
       kind}<kind>
 	  term<t>  {
 	    try
-(*	      let () = Printf.printf "(%s) Current id: %s\n%!" (cpt_to_string ()) (Utils.string_of_list " " (fun (x,_) -> x) ids ) in
-	      let () = Printf.printf "(%s) Current kind: %s\n%!"  (cpt_to_string()) (type_or_cst_to_string kind) in *)
-		fun lex ->
-		  let term = fst (t Env.empty []) in
-(*		  let () = Printf.printf "Ok for the term\n%!" in *)
-		  List.fold_left
-		    (fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Constant (id,loc,term)) acc)
-		    lex
-		    ids
+	      fun lex ->
+		let term = fst (t Env.empty []) in
+		List.fold_left
+		  (fun acc (id,loc) -> E.Lexicon.insert (Abstract_syntax.Constant (id,loc,term)) acc)
+		  lex
+		  ids
 	    with
-	      | Error.Error (Error.Parse_error (Error.Unknown_constant _,_)) when kind = Both ->  raise Dyp.Giveup 
-	      | exc -> raise exc }
+	    | Error.Error (Error.Parse_error (Error.Unknown_constant _,_)) when kind = Both ->  raise Dyp.Giveup 
+	    | exc -> raise exc }
 | comma_ids<ids> COLON_EQUAL ...{
-    let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
-    let kind =
-      List.fold_left
-	(fun k (id,loc) ->
-	   match k,fst (E.Signature1.is_constant id abs),E.Signature1.is_type id abs with
-	     | (Nothing|Type|Both),false,true -> Type
-	     | (Nothing|Both),true,true -> Both
-	     | Type,_,true -> Type
-	     | (Nothing|Both),true,false -> raise Dyp.Giveup 
-	     | (Nothing|Both),false,false -> emit_parse_error (Error.Unknown_type id) loc
-	     | Type,_,false -> emit_parse_error (Error.Unknown_type id) loc
-	     | Cst,_,_ -> failwith "Bug: should not occur"
+  let abs,obj = get_abs_and_obj_sig_value dyp.last_local_data in    
+  let kind =
+    List.fold_left
+      (fun k (id,loc) ->
+	match k,fst (E.Signature1.is_constant id abs),E.Signature1.is_type id abs with
+	| (Nothing|Type|Both),false,true -> Type
+	| (Nothing|Both),true,true -> Both
+	| Type,_,true -> Type
+	| (Nothing|Both),true,false -> raise Dyp.Giveup 
+	| (Nothing|Both),false,false -> emit_parse_error (Error.Unknown_type id) loc
+	| Type,_,false -> emit_parse_error (Error.Unknown_type id) loc
+	| Cst,_,_ -> failwith "Bug: should not occur"
 (*	   match k,E.Signature1.is_type id abs with
 	     | (None|Some Type),true -> Some Type
 	     | None,false ->
@@ -542,36 +549,73 @@ sig_entries :
 	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in env
       | Error.Error e -> 
 	  let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
-	    env 
+	  env 
 	      
-  let parse_term ?(offset="") ?(output=false) t sg = 
-    let lexbuf = Lexing.from_string t in
-      try 
-	let () = Data_lexer.set_to_term () in
-	let abs_term,abs_type = 
-	  try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Data_lexer.lexer lexbuf)) with
-	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
-	let () = match output with
-	  | true -> let () = Printf.printf "%s : %s\n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) in
-	      Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string (E.Signature1.unfold abs_term sg) sg) (E.Signature1.type_to_string abs_type sg) 
-	  | false -> () in
-	  Some (abs_term,abs_type)
-      with
-	| Error.Error er -> 
-	    let s,e = Error.get_loc_error er in
-	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
-	    let () = Printf.fprintf 
-	      stderr
-	      "%s\n%s%s%s\nError: %s\n%!"
-	      t
-	      offset
-	      (String.make s' ' ') 
-	      (String.make (e'-s') '^')
-	      (Error.error_msg er "stdin") in
-	      None
-	| End_of_file -> None
+let parse_term ?(offset="") ?(output=false) t sg = 
+  let lexbuf = Lexing.from_string t in
+  try 
+    let () = Data_lexer.set_to_term () in
+    let abs_term,abs_type = 
+      try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Data_lexer.lexer lexbuf)) with
+      | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
+    let () = match output with
+      | true -> let () = Printf.printf "%s : %s\n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) in
+		Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string (E.Signature1.unfold abs_term sg) sg) (E.Signature1.type_to_string abs_type sg) 
+      | false -> () in
+    Some (abs_term,abs_type)
+  with
+  | Error.Error er -> 
+    let s,e = Error.get_loc_error er in
+    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
+    let () = Printf.fprintf 
+      stderr
+      "%s\n%s%s%s\nError: %s\n%!"
+      t
+      offset
+      (String.make s' ' ') 
+      (String.make (e'-s') '^')
+      (Error.error_msg er "stdin") in
+    None
+  | End_of_file -> None
 
 
+
+let parse_heterogenous_term ?(offset="") ?(output=false) t lex = 
+  let lexbuf = Lexing.from_string t in
+  let abs,obj=E.Lexicon.get_sig lex in
+  try 
+    let () = Data_lexer.set_to_term () in
+    let obj_term,abs_type = 
+      try fst (List.hd(heterogenous_term_and_type ~global_data:false ~local_data:(Some (Signature abs)) Data_lexer.lexer lexbuf)) with
+      | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
+    let abs_type=E.Signature1.convert_type abs_type abs in
+    let obj_type=E.Lexicon.interpret_type abs_type lex in
+    let obj_term=E.Signature1.typecheck obj_term obj_type obj in
+    let () = match output with
+      | true -> let () = Printf.printf "%s : %s (as image of %s)\n%!" (E.Signature1.term_to_string obj_term obj) (E.Signature1.type_to_string obj_type obj) (E.Signature1.type_to_string abs_type abs) in
+		Printf.printf "%s : %s (as image of %s)\n%!" (E.Signature1.term_to_string (E.Signature1.unfold obj_term obj) obj) (E.Signature1.type_to_string obj_type obj) (E.Signature1.type_to_string abs_type abs)
+      | false -> () in
+    Some (obj_term,abs_type)
+  with
+  | Error.Error er -> 
+    let s,e = Error.get_loc_error er in
+    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
+    let () = Printf.fprintf 
+      stderr
+      "%s\n%s%s%s\nError: %s\n%!"
+      t
+      offset
+      (String.make s' ' ') 
+      (String.make (e'-s') '^')
+      (Error.error_msg er "stdin") in
+    None
+  | End_of_file -> None
+
+
+
+
+    
+    
 	    
   let parse_sig_entry ?(offset="") t sg = 
     let lexbuf = Lexing.from_string t in
@@ -623,7 +667,7 @@ end}
 
 %mlitop {
 (*  type token = Token.Token.t*)
-(*  module Env : Set.S with type elt = String.t*)
+	module Env : Set.S with type elt = String.t
     
   (** This module implements the functor that provides parsing
       functions when provided with an implementation of an environment
@@ -646,6 +690,9 @@ end}
 	{!Abstract_syntax.Abstract_syntax..Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
 	and [None] otherwise *)
     val parse_term : ?offset:string -> ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
+
+    val parse_heterogenous_term : ?offset:string -> ?output:bool -> string -> E.Lexicon.t -> (E.Signature1.term*E.Signature1.stype) option
+
       
     val parse_sig_entry : ?offset:string -> string -> E.Signature1.t -> E.Signature1.t option
 

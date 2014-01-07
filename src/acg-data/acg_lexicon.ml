@@ -150,18 +150,25 @@ struct
 	Sg.eta_long_form
 	  (Lambda.normalize
  	     ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
-	     (Sg.typecheck term dist_type_image lex.object_sig))
+	     term)
 	  dist_type_image
 	  lex.object_sig in
       let obj_type,obj_typing_env = TypeInference.Type.inference obj_term in
-(*      let query,prog =Reduction.edb_and_query
-	~obj_term
-	~obj_type
-	~obj_typing_env
-	~dist_type
-	prog
-	~obj_sig:lex.object_sig in *)
-      ()
+      let query,temp_prog =
+	Reduction.edb_and_query
+	  ~obj_term
+	  ~obj_type
+	  ~obj_typing_env
+	  ~dist_type
+	  prog
+	  ~abs_sig:lex.abstract_sig
+	  ~obj_sig:lex.object_sig in
+      let derived_facts,derivations = Datalog.Program.seminaive temp_prog in
+      Datalog.Predicate.format_derivations2 
+	~query:query
+	temp_prog.Datalog.Program.pred_table
+	temp_prog.Datalog.Program.const_table
+	derivations
     | Some _ , _ -> Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!"
       
     

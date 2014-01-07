@@ -76,10 +76,12 @@ sig
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t
   val to_string : t -> string
-  val interpret_type : Lambda.stype -> t -> Lambda.stype
+  val interpret_type : Signature.stype -> t -> Signature.stype
+(*  val interpret_type : Lambda.stype -> t -> Lambda.stype *)
   val interpret_term : Lambda.term -> t -> Lambda.term
   val interpret : Signature.term -> Signature.stype -> t -> (Signature.term*Signature.stype)
   val get_sig : t -> (signature*signature)
   val check : t -> unit
+  val parse : Signature.term -> Signature.stype -> t -> unit
   val compose: t -> t -> (string*Abstract_syntax.location) -> t
 end

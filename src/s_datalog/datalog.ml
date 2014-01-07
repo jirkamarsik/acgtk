@@ -112,6 +112,7 @@ sig
       
       
     val get_fresh_rule_id : program -> (int * program)
+    val get_fresh_cst_id : string -> program -> (Datalog_AbstractSyntax.ConstGen.id * program)
     val add_pred_sym : string -> program -> (ASPred.pred_id*program)
   end
 end
@@ -1098,6 +1099,10 @@ struct
     let get_fresh_rule_id ({rule_id_gen} as prog) =
       let new_id,rule_id_gen=IdGenerator.IntIdGen.get_fresh_id rule_id_gen in
       new_id,{prog with rule_id_gen}
+
+    let get_fresh_cst_id name ({const_table} as prog) =
+      let id,const_table=ConstGen.Table.add_sym name const_table in
+      id,{prog with const_table}
 
     let add_pred_sym name ({pred_table} as prog) =
       let p_id,pred_table=ASPred.PredIdTable.add_sym name pred_table in
