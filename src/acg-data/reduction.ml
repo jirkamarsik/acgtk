@@ -58,7 +58,7 @@ struct
 	([],var_gen,type_to_var_map)
 	atom_sequence in
     let p_id,prog=Datalog.Program.add_pred_sym name prog in
-    AbstractSyntax.Predicate.({p_id=p_id;arity=List.length var_sequence;arguments=var_sequence}),
+    AbstractSyntax.Predicate.({p_id=p_id;arity=List.length var_sequence;arguments=List.rev var_sequence}),
     (prog,var_gen,type_to_var_map)
 
 
@@ -73,7 +73,7 @@ struct
 	([],prog)
 	atom_sequence in
     let p_id,prog=Datalog.Program.add_pred_sym name prog in
-    AbstractSyntax.Predicate.({p_id=p_id;arity=List.length const_sequence;arguments=const_sequence}),prog
+    AbstractSyntax.Predicate.({p_id=p_id;arity=List.length const_sequence;arguments=List.rev const_sequence}),prog
 
     
 

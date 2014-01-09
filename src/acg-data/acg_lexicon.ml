@@ -120,16 +120,22 @@ struct
     LOG "eta-long form (as caml term): %s" (Lambda.raw_to_caml eta_long_term) LEVEL TRACE;
     LOG "Datalog rule addition: lexicon \"%s\", constant \"%s:%s\" mapped to \"%s:%s\"" (fst lex.name) name (Sg.type_to_string abs_type lex.abstract_sig) (Sg.term_to_string eta_long_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
     let obj_princ_type,obj_typing_env = TypeInference.Type.inference eta_long_term in
-    let _,new_prog=Reduction.generate_and_add_rule
-      ~abs_cst:(name,abs_type)
-      ~obj_princ_type
-      ~obj_typing_env
-      prog
-      ~abs_sig:lex.abstract_sig
-      ~obj_sig:lex.object_sig in
-    new_prog
+    LOG "Interpreting \"%s\" as \"%s=%s\" with principle type: \"%s\"" name (Sg.term_to_string eta_long_term lex.object_sig) (Lambda.raw_to_caml eta_long_term) (Lambda.raw_type_to_string obj_princ_type) LEVEL DEBUG;
+  LOG "In the context of:" LEVEL DEBUG ;
+  let () = 
+    Utils.IntMap.iter
+      (fun k (t,ty) -> LOG "%d --> %s : %s" k (Lambda.raw_to_string t) (Lambda.raw_type_to_string ty) LEVEL DEBUG)
+      obj_typing_env in
+  let _,new_prog=Reduction.generate_and_add_rule
+    ~abs_cst:(name,abs_type)
+    ~obj_princ_type
+    ~obj_typing_env
+    prog
+    ~abs_sig:lex.abstract_sig
+    ~obj_sig:lex.object_sig in
+  new_prog
     
-
+    
   let insert e ({dico=d} as lex) = match e with
     | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
     | Abstract_syntax.Constant (id,loc,t) ->
@@ -139,30 +145,35 @@ struct
 	Lambda.normalize
 	  ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
 	  (Sg.typecheck t interpreted_type lex.object_sig) in
-      let eta_long_term = 
-	Sg.eta_long_form 
-	  interpreted_term
-	  interpreted_type
-	  lex.object_sig in
-      LOG "term: %s:%s" (Sg.term_to_string interpreted_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
-      LOG "eta-long form: %s" (Sg.term_to_string eta_long_term lex.object_sig) LEVEL TRACE;
-      LOG "eta-long form (as caml term): %s" (Lambda.raw_to_caml eta_long_term) LEVEL TRACE;
       let prog = match lex.datalog_prog with
 	| None -> None
 	| Some p -> 
-	  LOG "Datalog rule addition: lexicon \"%s\", constant \"%s:%s\" mapped to \"%s:%s\"" (fst lex.name) id (Sg.type_to_string abs_type lex.abstract_sig) (Sg.term_to_string eta_long_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
-	  let obj_princ_type,obj_typing_env = TypeInference.Type.inference eta_long_term in
-	  let _,new_prog=Reduction.generate_and_add_rule
-	    ~abs_cst:(id,abs_type)
-	    ~obj_princ_type
-	    ~obj_typing_env
-	    p
-	    ~abs_sig:lex.abstract_sig
-	    ~obj_sig:lex.object_sig in
+	  let new_prog= add_rule_for_cst_in_prog id abs_type interpreted_term lex p in
 	  Some new_prog in
       {lex with
 	dico=Dico.add id (Constant (loc,interpreted_term)) d;
 	datalog_prog =prog}
+	
+  let rebuild_prog lex =
+    match lex.datalog_prog with
+    | None -> lex
+    | Some _ ->
+      let new_prog=
+	Dico.fold
+	  (fun key inter acc ->
+	    match inter with
+	    | Type (l,stype) -> acc
+	    | Constant (l,t) -> 
+	      add_rule_for_cst_in_prog
+		key
+		(Sg.expand_type (Sg.type_of_constant key lex.abstract_sig) lex.abstract_sig) 
+		t
+		lex
+		acc)
+	  lex.dico
+	  Datalog.Program.empty in
+      {lex with datalog_prog=Some new_prog}
+      
 
   let parse term dist_type lex =
     match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
@@ -186,6 +197,10 @@ struct
 	  prog
 	  ~abs_sig:lex.abstract_sig
 	  ~obj_sig:lex.object_sig in
+      let buff=Buffer.create 80 in
+      let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract temp_prog)) in
+      LOG "Going to solve the query: \"%s\" with the program" (Datalog_AbstractSyntax.AbstractSyntax.Predicate.to_string query temp_prog.Datalog.Program.pred_table temp_prog.Datalog.Program.const_table) LEVEL TRACE;
+      let () = List.iter (fun s -> LOG s LEVEL TRACE) (Bolt.Utils.split "\n" (Buffer.contents buff)) in
       let derived_facts,derivations = Datalog.Program.seminaive temp_prog in
       Datalog.Predicate.format_derivations2 
 	~query:query
@@ -242,18 +257,21 @@ struct
 	    
 
   let compose lex1 lex2 n =
-    {name=n;
-     dico = 
-	Dico.fold
-	  (fun key inter acc ->
-	     match inter with
-	       | Type (l,stype) -> Dico.add key (Type (l,interpret_type stype lex1)) acc
-	       | Constant (l,t) -> Dico.add key (Constant (l,Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex1.object_sig) (interpret_term t lex1))) acc)
-	  lex2.dico
-	  Dico.empty;
-     abstract_sig = lex2.abstract_sig;
-     object_sig=lex1.object_sig;
-     datalog_prog=None}
+    LOG "Compose %s(%s) as %s" (fst(name lex1)) (fst(name lex2)) (fst n) LEVEL TRACE;
+    let temp_lex=
+      {name=n;
+       dico = 
+	  Dico.fold
+	    (fun key inter acc ->
+	      match inter with
+	      | Type (l,stype) -> Dico.add key (Type (l,interpret_type stype lex1)) acc
+	      | Constant (l,t) -> Dico.add key (Constant (l,Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex1.object_sig) (interpret_term t lex1))) acc)
+	    lex2.dico
+	    Dico.empty;
+       abstract_sig = lex2.abstract_sig;
+       object_sig=lex1.object_sig;
+       datalog_prog=lex2.datalog_prog} in
+    rebuild_prog temp_lex
 	
 
 end

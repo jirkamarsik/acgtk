@@ -753,7 +753,7 @@ struct
 
 
 	
-    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table;rule_id_gen;(*e_pred_to_rules*)} =
+    let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table;rule_id_gen;edb_facts(*e_pred_to_rules*)} =
       LOG "Transforming internal rules into abastract ones..." LEVEL TRACE;
       let rules = 
 	Predicate.PredMap.fold
@@ -765,6 +765,19 @@ struct
 	      rules)
 	  r
 	  ASRule.Rules.empty in
+      LOG "Done." LEVEL TRACE;
+      LOG "Transforming facts into rules" LEVEL TRACE;
+      let rules,rule_id_gen = 
+	Predicate.PredMap.fold
+	  (fun pred fact_set (acc,gen) -> 
+	    Predicate.FactSet.fold 
+	      (fun fact (l_acc,id_rule_gen) -> 
+		let id_rule,id_rule_gen=IdGenerator.IntIdGen.get_fresh_id id_rule_gen in
+		ASRule.(Rules.add {id=id_rule;lhs=fact;e_rhs=[];i_rhs=[]} l_acc),id_rule_gen)
+	      fact_set
+	      (acc,gen))
+	  edb_facts
+	  (rules,rule_id_gen) in
       LOG "Done." LEVEL TRACE;
       let i_preds=
 	List.fold_left
