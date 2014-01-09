@@ -368,7 +368,7 @@ sig_entries :
 
 
 	      heterogenous_term_and_type :
-| term<t> COLON type_expression<ty> EOI {
+| term<t> ...@{t,let abs_sig,_=get_abs_and_obj_sig_value dyp.last_local_data in [Local_data (Some (Signature abs_sig))]} COLON type_expression<ty> EOI {
   let abs_sig=get_sig_value dyp.last_local_data in
   (fst (t Env.empty [])),(fst (ty abs_sig))}	  
 
@@ -586,7 +586,7 @@ let parse_heterogenous_term ?(offset="") ?(output=false) t lex =
   try 
     let () = Data_lexer.set_to_term () in
     let obj_term,abs_type = 
-      try fst (List.hd(heterogenous_term_and_type ~global_data:false ~local_data:(Some (Signature abs)) Data_lexer.lexer lexbuf)) with
+      try fst (List.hd(heterogenous_term_and_type ~global_data:false ~local_data:(Some (Abs_and_obj (abs,obj))) Data_lexer.lexer lexbuf)) with
       | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
     let abs_type=E.Signature1.convert_type abs_type abs in
     let obj_type=E.Lexicon.interpret_type abs_type lex in

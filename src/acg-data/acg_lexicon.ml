@@ -107,6 +107,29 @@ struct
 
   module Reduction=Reduction.Make(Sg)
 
+
+  let add_rule_for_cst_in_prog name abs_type interpreted_term lex prog =
+    let interpreted_type = (interpret_type abs_type lex) in
+    let eta_long_term = 
+      Sg.eta_long_form 
+	interpreted_term
+	interpreted_type
+	lex.object_sig in
+    LOG "term: %s:%s" (Sg.term_to_string interpreted_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
+    LOG "eta-long form: %s" (Sg.term_to_string eta_long_term lex.object_sig) LEVEL TRACE;
+    LOG "eta-long form (as caml term): %s" (Lambda.raw_to_caml eta_long_term) LEVEL TRACE;
+    LOG "Datalog rule addition: lexicon \"%s\", constant \"%s:%s\" mapped to \"%s:%s\"" (fst lex.name) name (Sg.type_to_string abs_type lex.abstract_sig) (Sg.term_to_string eta_long_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
+    let obj_princ_type,obj_typing_env = TypeInference.Type.inference eta_long_term in
+    let _,new_prog=Reduction.generate_and_add_rule
+      ~abs_cst:(name,abs_type)
+      ~obj_princ_type
+      ~obj_typing_env
+      prog
+      ~abs_sig:lex.abstract_sig
+      ~obj_sig:lex.object_sig in
+    new_prog
+    
+
   let insert e ({dico=d} as lex) = match e with
     | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
     | Abstract_syntax.Constant (id,loc,t) ->
@@ -153,11 +176,11 @@ struct
 	     term)
 	  dist_type_image
 	  lex.object_sig in
-      let obj_type,obj_typing_env = TypeInference.Type.inference obj_term in
+      let obj_princ_type,obj_typing_env = TypeInference.Type.inference obj_term in
       let query,temp_prog =
 	Reduction.edb_and_query
 	  ~obj_term
-	  ~obj_type
+	  ~obj_type:obj_princ_type
 	  ~obj_typing_env
 	  ~dist_type
 	  prog

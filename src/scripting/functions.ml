@@ -63,7 +63,7 @@ sig
 
   val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val parse : ?name:(string * (Lexing.position * Lexing.position)) -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val parse : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
   val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
 
@@ -230,7 +230,7 @@ struct
 	match name,E.focus e with
 	| None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
 	| None,Some en -> en
-	| Some (n,l),_ ->
+	| Some n,_ ->
 	  (try 
 	     E.get n e
 	   with

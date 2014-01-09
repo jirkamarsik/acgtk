@@ -130,10 +130,9 @@
 					       | _ -> let () = F.analyse  ~names e t l in e}
 | optional_ident<name> PARSE<t,l,line>   {
   let () = echo dyp.global_data line in fun e -> 
-    let loc = match name with
-      | None -> l
-      | Some (name,lex_loc) -> lex_loc in
-    let () = F.parse ~name e t loc in e}
+    match name with
+    | None ->  let () = F.parse  e t l in e
+    | Some (n,lex_loc) ->  let () = F.parse ~name:n e t lex_loc in e}
 | optional_idents<names> ADD<t,l,line>   { let () = echo dyp.global_data line in fun e -> 
 					     match names with
 					       | [] -> F.add e t l

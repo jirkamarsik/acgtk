@@ -1,14 +1,19 @@
-open Focused_list
-
 module AlternTrees =
 struct
   type address=int list
   type relative_path=int*addresse
-  type 'a tree = Node of 'a*'a children list
-  and 'a children = 'a alternative list
-  and 'a alternative = Tree of 'a tree | Link_to address
+  type 'a alternatives = 'a alt_tree list
+  and 'a alt_tree = Tree of 'a tree | Link_to address
+  and 'a tree = Node of 'a * 'a children list
+  and 'a children = 'a alternatives
 
-  type 'a tree_zipper = Top | Zip of 'a children * 'a zipper Focused_list.t * 'a children
+  type 'a stack='a list
+
+  type 'a list_context ='a stack
+
+  type 'a focused_list = 'a list_context * 'a list
+
+  type 'a tree_zipper = Top | Zip of 'a focused_list * 'a zipper
 
   type 'a focused_alt_tree = 'a tree_zipper*'a tree
 
