@@ -6,15 +6,15 @@ open Datalog
 module Make(Sg:Interface.Signature_sig with type  term = Lambda.term and type stype = Lambda.stype) =
 struct
 
-  let rec sequentialize_aux stype sequence =
+  let rec sequentialize_rev stype sequence =
     match stype with
     | Lambda.Atom i -> i::sequence
     | Lambda.DAtom _ -> failwith "Bug: type definition should be unfolded"
     | Lambda.LFun (alpha,beta)
-    | Lambda.Fun (alpha,beta) -> sequentialize_aux beta (sequentialize_aux alpha sequence)
+    | Lambda.Fun (alpha,beta) -> sequentialize_rev beta (sequentialize_rev alpha sequence)
     | _ -> failwith "Bug: Not a 2nd order type"
 
-  let sequentialize stype = List.rev (sequentialize_aux stype [])
+  let sequentialize stype = List.rev (sequentialize_rev stype [])
 
   (** [map_types abs_type obj_type sg] returns a list of triple
       [(id_n,name_n,image_n);...;(id_2,name_2,image_2);(id_1,name_1,image_1)]
@@ -42,7 +42,7 @@ struct
 
 
   let build_predicate_w_var_args (name,obj_type) (prog,var_gen,type_to_var_map) =
-    let atom_sequence = sequentialize obj_type in
+    let atom_sequence = sequentialize_rev obj_type in
     LOG "Build predicate from %s:%s   ([%s])" name (Lambda.raw_type_to_string obj_type) (Utils.string_of_list ";" string_of_int atom_sequence) LEVEL TRACE;
     let var_sequence,var_gen,type_to_var_map =
       List.fold_left
@@ -58,7 +58,7 @@ struct
 	([],var_gen,type_to_var_map)
 	atom_sequence in
     let p_id,prog=Datalog.Program.add_pred_sym name prog in
-    AbstractSyntax.Predicate.({p_id=p_id;arity=List.length var_sequence;arguments=List.rev var_sequence}),
+    AbstractSyntax.Predicate.({p_id=p_id;arity=List.length var_sequence;arguments=var_sequence}),
     (prog,var_gen,type_to_var_map)
 
 
@@ -110,7 +110,7 @@ struct
 	  env
 	  ([],0,(prog,var_gen,type_to_var_map) ) in
       let new_rule = AbstractSyntax.Rule.({id=rule_id;lhs;e_rhs;i_rhs}) in
-      new_rule,Datalog.Program.add_rule new_rule prog
+      new_rule,Datalog.Program.add_rule ~intensional:true new_rule prog
 
 
   (* It makes the assumption that no constant has been

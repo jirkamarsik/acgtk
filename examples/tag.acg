@@ -84,18 +84,31 @@ signature derived_trees =
 end
 
 (* Then a signature for the strings *)
-signature strings =
-    
-    string: type;
+signature complex_strings =
+    o:type;
+    string=o->o: type;
     
     (* we can define infix and prefix symbols. 
        Note that as for now, the length of symbols can only be 1 *)
+    
+    infix +=lambda a b.lambda z.a(b z) : string -> string -> string;
+    
+    every,dog,chases,a,cat,sleeps,slowly,new,big,black,seems,john,mary,bill,paul,
+	claims,loves,to,love,who,said,liked,does,think:string;
+end
+
+signature strings =
+    string: type;
+    
+    (* we can define infix and prefix symbols.  *)
+    (* Note that as for now, the length of symbols can only be 1 *)
     
     infix + : string -> string -> string;
     
     every,dog,chases,a,cat,sleeps,slowly,new,big,black,seems,john,mary,bill,paul,
 	claims,loves,to,love,who,said,liked,does,think:string;
 end
+
 
 (* Ok. Now is our first lexicon. It translates derived trees into strings *)
 

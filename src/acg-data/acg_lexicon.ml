@@ -179,6 +179,10 @@ struct
     match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
     | None,_ -> Printf.printf "Parsing is not implemented for non 2nd order ACG\n!"
     | Some prog, (Lambda.Atom _ as dist_type) ->
+      let buff=Buffer.create 80 in
+      let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract prog)) in
+      LOG "Before parsing. Program is currently:" LEVEL DEBUG;
+      let () = List.iter (fun s -> LOG s LEVEL DEBUG) (Bolt.Utils.split "\n" (Buffer.contents buff)) in
       let dist_type_image = interpret_type dist_type lex in
       let obj_term= 
 	Sg.eta_long_form
@@ -188,6 +192,9 @@ struct
 	  dist_type_image
 	  lex.object_sig in
       let obj_princ_type,obj_typing_env = TypeInference.Type.inference obj_term in
+      LOG "Going to set a query for the distinguised type \"%s(%s)\"" (Signature.type_to_string dist_type lex.abstract_sig) (Lambda.raw_type_to_string dist_type) LEVEL DEBUG;
+      LOG "whose image is \"%s(%s)\"" (Signature.type_to_string dist_type_image lex.object_sig) (Lambda.raw_type_to_string dist_type_image) LEVEL DEBUG;
+      LOG "resulting int the principle type \"%s\"" (Lambda.raw_type_to_string obj_princ_type) LEVEL DEBUG;
       let query,temp_prog =
 	Reduction.edb_and_query
 	  ~obj_term
@@ -197,10 +204,10 @@ struct
 	  prog
 	  ~abs_sig:lex.abstract_sig
 	  ~obj_sig:lex.object_sig in
-      let buff=Buffer.create 80 in
-      let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract temp_prog)) in
+      let buff'=Buffer.create 80 in
+      let () = Buffer.add_buffer buff' (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract temp_prog)) in
       LOG "Going to solve the query: \"%s\" with the program" (Datalog_AbstractSyntax.AbstractSyntax.Predicate.to_string query temp_prog.Datalog.Program.pred_table temp_prog.Datalog.Program.const_table) LEVEL TRACE;
-      let () = List.iter (fun s -> LOG s LEVEL TRACE) (Bolt.Utils.split "\n" (Buffer.contents buff)) in
+      let () = List.iter (fun s -> LOG s LEVEL TRACE) (Bolt.Utils.split "\n" (Buffer.contents buff')) in
       let derived_facts,derivations = Datalog.Program.seminaive temp_prog in
       Datalog.Predicate.format_derivations2 
 	~query:query

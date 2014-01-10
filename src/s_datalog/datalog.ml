@@ -103,12 +103,15 @@ sig
       
     val add_e_facts : program -> (ASRule.rule list*Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) -> program
       
-    (** [add_rule r p] adds a [ASRule.rule] to a [Datalog.Program]
+    (** [add_rule i r p] adds a [ASRule.rule] to a [Datalog.Program]
 	with the assumption that it will not change the {em nature} of
-	a predicate (that is making it change from extensional to
-	intensional). *)
+	any predicate (that is making it change from extensional to
+	intensional). If [i] is set to true, then the rule concerns an
+	intensional predicate. If it is set to [false] then it
+	concerns an extensional predicate and the rhs of the rule
+	should be empty.*)
       
-    val add_rule : ASRule.rule -> program -> program
+    val add_rule : intensional:bool -> ASRule.rule -> program -> program
       
       
     val get_fresh_rule_id : program -> (int * program)
@@ -773,7 +776,9 @@ struct
 	    Predicate.FactSet.fold 
 	      (fun fact (l_acc,id_rule_gen) -> 
 		let id_rule,id_rule_gen=IdGenerator.IntIdGen.get_fresh_id id_rule_gen in
-		ASRule.(Rules.add {id=id_rule;lhs=fact;e_rhs=[];i_rhs=[]} l_acc),id_rule_gen)
+		let r=ASRule.({id=id_rule;lhs=fact;e_rhs=[];i_rhs=[]}) in
+		LOG "Adding fact: %s" (ASRule.to_string r pred_table cst_table) LEVEL DEBUG;
+		ASRule.Rules.add r l_acc,id_rule_gen)
 	      fact_set
 	      (acc,gen))
 	  edb_facts
@@ -977,7 +982,7 @@ struct
 		  acc,new_derivations) 
 	    (Predicate.PredMap.empty,derivations)
 	    prog.idb  in 
-	LOG "% d new facts:" (Predicate.PredMap.fold (fun _ v acc -> acc+(Predicate.FactSet.cardinal v)) new_delta_facts 0) LEVEL DEBUG;
+	LOG "%d new facts:" (Predicate.PredMap.fold (fun _ v acc -> acc+(Predicate.FactSet.cardinal v)) new_delta_facts 0) LEVEL DEBUG;
 	let () = 
 	  List.iter
 	    (fun s -> LOG s LEVEL DEBUG)
@@ -1091,16 +1096,17 @@ struct
 	nature} of a predicate (that is making it change from
 	extensional to intensional). *)
       
-    let add_rule r prog =
+    let add_rule ~intensional r prog =
       let new_rule = Rule.make_rule r in
       let lhs_pred=r.ASRule.lhs.ASPred.p_id in
       let new_e_facts,new_edb,new_idb =
-	match r.ASRule.e_rhs,r.ASRule.i_rhs with
-	| [],[] -> 
+	match intensional,r.ASRule.e_rhs,r.ASRule.i_rhs with
+	| false,[],[] -> 
 	  extend_map_to_set lhs_pred r.ASRule.lhs prog.edb_facts,
 	  list_extension lhs_pred prog.edb,
 	  prog.idb
-	| _,_ -> prog.edb_facts,prog.edb,list_extension lhs_pred prog.idb in
+	| false,_,_ -> failwith "Bug: addition of a rule for an extensional predicate with non empty rhs"
+	| true,_,_ -> prog.edb_facts,prog.edb,list_extension lhs_pred prog.idb in
       {prog with
 	rules=extend_map_to_list lhs_pred new_rule prog.rules;
 	edb_facts=new_e_facts;

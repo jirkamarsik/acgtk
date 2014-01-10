@@ -105,12 +105,15 @@ sig
       
     val add_e_facts : program -> (ASRule.rule list*Datalog_AbstractSyntax.ConstGen.Table.table*IdGenerator.IntIdGen.t) -> program
       
-    (** [add_rule r p] adds a [ASRule.rule] to a [Datalog.Program]
+    (** [add_rule i r p] adds a [ASRule.rule] to a [Datalog.Program]
 	with the assumption that it will not change the {em nature} of
-	a predicate (that is making it change from extensional to
-	intensional). *)
+	any predicate (that is making it change from extensional to
+	intensional). If [i] is set to true, then the rule concerns an
+	intensional predicate. If it is set to [false] then it
+	concerns an extensional predicate and the rhs of the rule
+	should be empty.*)
       
-    val add_rule : ASRule.rule -> program -> program
+    val add_rule : intensional:bool -> ASRule.rule -> program -> program
       
       
     val get_fresh_rule_id : program -> (int * program)

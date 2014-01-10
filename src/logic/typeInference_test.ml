@@ -41,7 +41,9 @@ let test t =
 let term_list =
   [
     (LAbs ("s",(LAbs ("a",(App ((LVar 1),App (LVar 0,(LAbs ("x",(App ((Const 4),(LVar 0))))))))))));
-    (LAbs ("a",(App ((LVar 0),(LAbs ("x",(App ((Const 4),(LVar 0)))))))));
+    (LAbs ("a",(App ((LVar 0),(LAbs ("x",(App ((Const 4),(LVar 0)))))))));(App ((App ((Const 1),(App ((App ((Const 1),(Const 5))),(App ((App ((Const 1),(Const 9))),(App ((App ((Const 1),(Const 10))),(App ((App ((Const 1),(Const 11))),(Const 3))))))))))),(Const 7)));
+    App ((Const 1),(Const 11));
+
   ]
 
 (*let () = test (LAbs ("o",(LAbs ("s",(App ((App ((Const 1),(LVar 0))),(App ((App ((Const 1),(Const 5))),(LVar 1))))))))) *)

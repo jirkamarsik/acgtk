@@ -21,7 +21,7 @@
   entre contents. Ça réduirait par exemple les itérations dans
   "extract_consequence"
 + [X] Autoriser l'instanciation avec des variables encore présentes
-+ [ ] Implanter la réponse à une requête.
++ [X] Implanter la réponse à une requête.
 + [ ] Ajouter dans le programme l'enregistrement de toutes les
   constantes et les parcourir pour ajouter aux faits ceux qui ont
   encore des variables.
@@ -43,7 +43,9 @@
 
 
 * acg_lexicon.ml
-+ [ ] rebuild the datalog program after composition
++ [X] rebuild the datalog program after composition
 + [ ] add the int id (as in Lambda.Const i) in the map from the
   constant name for abstract constants
-+ [ ] Définir le parsing de la composition de lexique
++ [X] Définir le parsing de la composition de lexique
++ [ ] Définir le parsing pour les types non atomiques
++ [ ] Définir le parsing pour les almost linear terms

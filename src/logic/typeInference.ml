@@ -111,7 +111,7 @@ struct
 	let beta,new_eq=UF.generate_new_var new_eq in
 	let new_const,new_eq=UF.generate_new_constr new_eq (1,[alpha;beta]) in
 	let new_eq=UF.union ty_var new_const new_eq in
-	let _,new_env=inference_aux (level+1)t beta {env with l_level=env.l_level+1;lvar_typing=IntMap.add env.l_level alpha env.lvar_typing;type_equations=new_eq} in
+	let _,new_env=inference_aux (level+1) t beta {env with l_level=env.l_level+1;lvar_typing=IntMap.add env.l_level alpha env.lvar_typing;type_equations=new_eq} in
 	let is_cyclic,new_eq=UF.cyclic ty_var new_env.type_equations in
 	ty_var,{env with type_equations=new_eq;const_typing=new_env.const_typing;cst_nbr=new_env.cst_nbr}
 (*	ty_var,{new_env with type_equations=new_eq;lvar_typing=env.lvar_typing} *)
@@ -123,7 +123,8 @@ struct
 	let u_type,new_env=inference_aux (level+1) u u_type {env with type_equations=new_eq} in 
 	LOG "%sType inference of the functor in an application:" prefix LEVEL TRACE;
 	let t_type,new_env=inference_aux (level+1) t t_type new_env in 
-	t_type,new_env
+	ty_var,new_env
+(*	t_type,new_env *)
       | _ -> failwith "Bug: No principal typing algorithm for these types" in
     let is_cyclic,new_eq=UF.cyclic ty new_env.type_equations in
     if is_cyclic then
