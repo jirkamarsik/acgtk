@@ -37,7 +37,7 @@ LIBDIR +=
 PREVIOUS_DIRS =
 
 # Source files in the right order of dependance
-ML = utils.ml table.ml tries.ml version.ml focused_list.ml idGenerator.ml
+ML = utils.ml table.ml tries.ml version.ml focused_list.ml alterTrees.ml idGenerator.ml
 
 # Uncomment the next line and put the name of the exe of this directory, if relevant
 # EXE_SOURCES =
