@@ -26,7 +26,7 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += gramlib.cma str.cma
+LIBS += str.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
@@ -40,7 +40,8 @@ PREVIOUS_DIRS =
 ML = utils.ml table.ml tries.ml version.ml focused_list.ml alterTrees.ml idGenerator.ml
 
 # Uncomment the next line and put the name of the exe of this directory, if relevant
-# EXE_SOURCES =
+
+EXE_SOURCES =test_alterTrees.ml
 
 ####################################
 #                                  #
