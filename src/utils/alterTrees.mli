@@ -23,7 +23,7 @@ module AlternTrees :
     type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  alt_tree
       
     type 'a zipper = 
-    | ZTop | Zipper of ('a simple_tree focused_list * 'a zipper)
+    | ZTop | Zipper of ('a * 'a simple_tree focused_list * 'a zipper)
 	
     type 'a focused_tree = 'a zipper * 'a simple_tree
       
@@ -40,5 +40,14 @@ module AlternTrees :
     exception No_next_alt
 
     val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree
+
+    val init : 'a alt_tree list -> 'a focused_alt_tree * 'a focused_tree
+
+    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
+    val down : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
+    val right : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
+    val up : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
+
+    val zip_up : 'a focused_tree -> 'a simple_tree
 
   end
