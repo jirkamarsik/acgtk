@@ -61,23 +61,26 @@ let tree =
   ))
     
 
-let f_forest= init_f_list [tree]
-let f_forest_init,f_tree_init = init [tree];;
+let rec print_tree prefix buffer tree =
+  match tree with
+  | SimpleTree (v,[]) ->
+    Printf.bprintf buffer "%s -- %s\n" prefix v
+  | SimpleTree (v,a::children) ->
+    let () = print_tree (Printf.sprintf "%s -- %s" prefix v) buffer a in
+    List.iter
+      (fun child -> print_tree (String.make (4+String.length prefix + String.length v) ' ') buffer child)
+      children
 
-let f_f_0,f_t_0= init [tree0]
 
-let f_f_1,f_t_1=down f_f_0 f_t_0;;
+let trees= build_trees [tree] in
+let buff=Buffer.create 80 in
+let () = Printf.bprintf buff "Founf %d trees:\n" (List.length trees) in
+let () = 
+  List.iter
+    (fun t ->
+      let () = print_tree "" buff t in
+      Printf.bprintf buff "\n\n")
+    trees in
+Printf.printf "%s" (Buffer.contents buff)
 
-let f_f_2,f_t_2=down f_f_1 f_t_1;;
-let f_f_2,f_t_2=right f_f_1 f_t_1;;
 
-let f_f_3,f_t_3=down f_f_2 f_t_2;;
-let f_f_3,f_t_3=right f_f_2 f_t_2;;
-let f_f_3,f_t_3=up f_f_2 f_t_2;;
-
-let f_f_4,f_t_4=right f_f_3 f_t_3;;
-let f_f_4,f_t_4=up f_f_3 f_t_3;;
-
-build_tree f_f_0 f_t_0;;
-
-build_tree f_forest_init f_tree_init;;

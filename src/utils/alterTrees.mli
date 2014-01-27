@@ -43,11 +43,13 @@ module AlternTrees :
 
     val init : 'a alt_tree list -> 'a focused_alt_tree * 'a focused_tree
 
-    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
-    val down : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
-    val right : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
+    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
+    val down : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
+    val right : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
     val up : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
 
     val zip_up : 'a focused_tree -> 'a simple_tree
+
+    val build_trees : 'a alt_tree list -> 'a simple_tree list
 
   end

@@ -39,6 +39,7 @@ struct
   exception Move_failure of move
   exception Not_well_defined
   exception No_next_alt
+  exception Bad_argument
 
   let rec unstack = function
     | [],l ->l
@@ -48,6 +49,7 @@ struct
   let rec unstack_rev = function
     | [],l ->l
     | a::tl,l -> unstack_rev (tl,((List.rev a)::l))
+
 
 
   let f_list_forward = function
@@ -67,9 +69,29 @@ struct
     | s,a::tl -> f_list_down (a::s,tl)
 
 
+  let rec f_list_fold (p,n) f acc =
+    match n with
+    | [] -> (p,[]),acc
+    | a::tl -> f_list_fold (a::p,tl) f (f (p,tl) a acc)
+
+  let f_list_fold_and_hd (p,n) f acc =
+    match n with
+    | [] -> raise Bad_argument
+    | [a] -> f (p,[]) a,(p,[]),acc
+    | a::tl ->
+      let head = f (p,tl) a in
+      let ctxt,res = f_list_fold (a::p,tl) (fun ctxt elt l_acc -> (f ctxt elt)::l_acc) acc in
+      head,ctxt,res
+      
+
+
+
   let f_tree_up = function
     | ZTop,t -> raise (Move_failure Up)
     | Zipper (v,(l,r),z'),t -> z',SimpleTree (v,unstack (l,t::r))
+
+
+
 
   let rec zip_up_aux f_tree = 
     try
@@ -165,24 +187,52 @@ struct
     | Tree (Node (v,_)) -> SimpleTree (v,[])
     | Link_to _ -> failwith "Not yet impemented"
       
-  let down (z,t) (zipper,b_t) =
+
+  let dispatch f acc = function
+    | [] -> raise Bad_argument
+    | a::tl -> f a,List.fold_left f acc tl
+      
+      
+  let down (z,t) (zipper,b_t) resume =
     match t with
     |  Tree (Node (_,[])) -> raise (Move_failure Down)
     |  Tree (Node (v,a::tl)) ->
       (match a with
       | [],[] -> raise Not_well_defined
       | _,[] -> raise No_next_alt
-      | p,t'::n -> (Zip (v,([],tl),(p,n),z),t'),(Zipper(v,([],[]),zipper),simple_tree t'))
+      | _ -> 
+	let (f_forest,f_tree),_,resume =
+	  f_list_fold_and_hd
+	    a
+	    (fun (p,n) t' ->
+	      (Zip (v,([],tl),(p,n),z),t'),
+	      (Zipper(v,([],[]),zipper),
+	       simple_tree t'))
+	    resume in
+	f_forest,f_tree,resume)
+    (*	let (f_forest,f_tree),resume =
+	dispatch
+	(fun t' -> 
+	(Zip (v,([],tl),(p,n),z),t'),(Zipper(v,([],[]),zipper),simple_tree t')) *)
     | Link_to _ -> failwith "Not yet implemented"
 	
-  let right (z,t) (zipper,b_t) =
+  let right (z,t) (zipper,b_t) resume =
     match z,zipper with
     | _ ,ZTop -> raise (Move_failure Right)
     | Top _,_ -> raise (Move_failure Right)
     | Zip (v,(_,[]),_,_), Zipper(v',_,_) when v=v'-> raise (Move_failure Right)
     | Zip (v,(_,(_,[])::_),_,_), Zipper(v',_,_) when v=v'-> raise No_next_alt
-    | Zip (v,(l,(p',t'::n')::r),(p,n),z'), Zipper(v',(l',r'),z'') when v=v'->
-      (Zip (v,((p,t::n)::l,r),(p',n'),z'),t'), (Zipper(v',(b_t::l',r'),z''),simple_tree t')
+(*    | Zip (v,(l,(p',t'::n')::r),(p,n),z'), Zipper(v',(l',r'),z'') when v=v'-> *)
+    | Zip (v,(l,a::r),(p,n),z'), Zipper(v',(l',r'),z'') when v=v'->
+	let (f_forest,f_tree),_,resume =
+	  f_list_fold_and_hd
+	    a
+	    (fun (p',n') t' ->
+	      (Zip (v,((p,t::n)::l,r),(p',n'),z'),t'),
+	      (Zipper(v',(b_t::l',r'),z''),simple_tree t'))
+	    resume in
+	f_forest,f_tree,resume
+(*      (Zip (v,((p,t::n)::l,r),(p',n'),z'),t'), (Zipper(v',(b_t::l',r'),z''),simple_tree t') *)
     | _ -> failwith "Bug: alt_tree and Simpletree are not representing the same trees"
       
 
@@ -198,40 +248,52 @@ struct
 
 
 
-  let rec close_forest_context_up f_forest f_tree =
+  let rec close_forest_context_up f_forest f_tree resume =
     let f_forest,f_tree = up f_forest f_tree in
     try
-      right f_forest f_tree
+      right f_forest f_tree resume
     with 
     | Move_failure Right -> 
       (try
-	 close_forest_context_up f_forest f_tree
+	 close_forest_context_up f_forest f_tree resume
        with
-       | Move_failure Up -> f_forest,f_tree)
-      
-      
-  let rec build_tree_aux f_forest f_tree =
+       | Move_failure Up -> f_forest,f_tree,resume)
+	
+	
+  let rec build_tree_aux f_forest f_tree resume =
     try
-      let f_forest,f_tree = down f_forest f_tree in
-      build_tree_aux f_forest f_tree
+      let f_forest,f_tree,resume = down f_forest f_tree resume in
+      build_tree_aux f_forest f_tree resume
     with
     | Move_failure Down ->
       (try
-	 let f_forest,f_tree = right f_forest f_tree in
-	 build_tree_aux f_forest f_tree
+	 let f_forest,f_tree,resume = right f_forest f_tree resume in
+	 build_tree_aux f_forest f_tree resume
        with
        | Move_failure Right ->
-	 (match close_forest_context_up f_forest f_tree with
-	 | ((Top _ ,_),(ZTop,_)) as res -> res
-	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree) -> build_tree_aux l_f_forest l_f_tree
+	 (match close_forest_context_up f_forest f_tree resume with
+	 | ((Top _ ,_),(ZTop,_),_) as res -> res
+	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree),resume' -> build_tree_aux l_f_forest l_f_tree resume'
 	 | _ -> failwith "Bug: not representing the same tree"))
+	
+  let build_tree f_forest f_tree resume = build_tree_aux f_forest f_tree resume
 
-  let build_tree f_forest f_tree = build_tree_aux f_forest f_tree
+  let rec build_trees_aux f_forest f_tree resume acc =
+    let _,(_,tree),resume = build_tree f_forest f_tree resume in
+    match resume with
+    | [] -> tree::acc
+    | (f_forest,f_tree)::tl -> build_trees_aux f_forest f_tree tl (tree::acc)
+
 	
 
   let init = function
     | [] -> raise Not_well_defined
     | a::tl -> (Top ([],tl),a),(ZTop,simple_tree a)
+
+  let build_trees forest =
+    let f_forest,f_tree = init forest in
+    build_trees_aux f_forest f_tree [] []
+
 
 end
 
