@@ -5,6 +5,22 @@ struct
   (* the 2nd argument is to move in the alternative trees at the top
      of the forest *)
 
+  let rec add_diff add1 add2 back =
+    match add1,add2 with
+    | [],[] -> back,add2
+    | _,[] -> back+List.length add1,add2
+    | [],_ -> back,add2
+    | (i,j)::tl1,(i',j')::tl2 when i=i' && j=j' -> add_diff tl1 tl2 back
+    | _::_,_::_ -> back+List.length add1,add2
+
+  let diff (alt,address) (alt',address') =
+    if alt=alt' then
+      let back,add=add_diff address address' 0 in
+      back,None,add
+    else
+      List.length address,Some alt',address'
+
+
   type 'a stack='a list
   type 'a list_context ='a stack
 

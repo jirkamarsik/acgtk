@@ -1,6 +1,7 @@
 open PersistentArray
 open Focused_list
 open Datalog_AbstractSyntax
+open AlterTrees
 
 
 module ASPred=AbstractSyntax.Predicate 
@@ -24,13 +25,14 @@ sig
     module PredicateMap : Map.S with type key = ASPred.predicate
     module Premise :
     sig
-      type t = ASPred.predicate list
+      type t = ASPred.predicate list * int (* the int parameter is meant to be the rule id *)
       val to_string : t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
     end
     module PremiseSet : Set.S with type elt = Premise.t
     val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
     val format_derivations2 : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
-      
+
+    val build_forest_aux : ASPred.predicate -> PremiseSet.t -> PremiseSet.t PredicateMap.t -> (int*int*AlternTrees.address) -> (int*AlternTrees.address) PredicateMap.t -> (int AlterTrees.AlternTrees.alt_tree list * int * (int*AlternTrees.address) PredicateMap.t)
 
     val add_pred_arguments_to_content :
       ASPred.term list ->
@@ -88,7 +90,7 @@ sig
       Rule.FactArray.row Predicate.PredMap.t ->
       Rule.FactArray.row Predicate.PredMap.t ->
       Rule.FactArray.row Predicate.PredMap.t ->
-      (ASPred.predicate * Predicate.FactSet.elt list -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> 'a
+      (ASPred.predicate * Predicate.FactSet.elt list -> Rule.rule -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> 'a
     val p_semantics_for_predicate :
       Predicate.PredMap.key ->
       program ->
@@ -335,8 +337,9 @@ struct
 
     module Premise =
     struct
-      type t = ASPred.predicate list
-      let rec compare pred_lst_1 pred_lst_2 =
+      type t = ASPred.predicate list * int
+
+      let rec lst_compare pred_lst_1 pred_lst_2 =
 	match pred_lst_1,pred_lst_2 with
 	| [],[] -> 0
 	| _,[] -> 1
@@ -346,10 +349,17 @@ struct
 	  if diff <> 0 then
 	    diff
 	  else
-	    compare tl1 tl2
+	    lst_compare tl1 tl2
+
+      let compare (pred_lst_1,r_id_1) (pred_lst_2,r_id_2) =
+	let cmp=r_id_1 - r_id_2 in
+	if cmp<>0 then 
+	  cmp
+	else
+	  lst_compare pred_lst_1 pred_lst_2
 
       let to_string premises pred_table const_table =
-	Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) premises
+	Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) (fst premises)
 
 
     end
@@ -362,6 +372,90 @@ struct
 	let compare = ASPred.compare
       end)
 
+
+    let rec build_children (root_alt_num,parent_address) facts derivations visited_facts=
+      List.fold_left
+	(fun (l_acc,child_num,l_visit) fact ->
+	  let premises =
+	    try 
+	      PredicateMap.find fact derivations
+	    with
+	    | Not_found -> PremiseSet.empty in
+	  let l_forest,_,l_visit = build_forest_aux fact premises derivations (root_alt_num,child_num,parent_address) l_visit in
+	  ([],l_forest)::l_acc,child_num+1,l_visit)
+	([],1,visited_facts)
+	facts
+    and
+	build_forest_aux fact premises derivations (root_alt_num,child_num,add) visited_facts_addresses =
+	PremiseSet.fold
+	  (fun (facts,rule_id) (acc,alt_num,l_visited_facts) ->
+	    let new_add = (child_num,alt_num)::add in
+	    try
+	      let existing_add = PredicateMap.find fact visited_facts_addresses in
+	      (AlternTrees.Link_to (AlternTrees.diff (root_alt_num,List.rev new_add) existing_add))::acc,
+	      alt_num+1,
+	      l_visited_facts
+	    with
+	    | Not_found -> 
+	      let l_visited_facts = PredicateMap.add fact (root_alt_num,new_add) l_visited_facts in
+	      let children_rev,_,l_visited_facts = build_children (root_alt_num,new_add) facts derivations l_visited_facts in
+	  (*	    List.fold_left
+		    (fun (l_acc,num,l_visit) fact ->
+		    let premises =
+		    try 
+		    PredicateMap.find fact derivations
+		    with
+		    | Not_found -> PremiseSet.empty in
+		    let l_forest,l_visit = build_forest_aux fact premise derivations (num,new_add) l_visit in
+		    ([],l_forest)::l_acc,l_visit)
+		    ([],1,l_visited_facts)
+		    facts in *)
+	      (AlternTrees.Tree
+		 (AlternTrees.Node
+		    (rule_id,
+		     List.rev children_rev)))::acc,
+	      alt_num+1,
+	      l_visited_facts)
+	  premises
+	  ([],1,visited_facts_addresses)
+	  
+	  
+    let build_forest_from_root fact premises derivations start_alt_num acc visited_facts_addresses =
+      try
+	let add = PredicateMap.find fact visited_facts_addresses in
+	(AlternTrees.Link_to (AlternTrees.diff (start_alt_num,[]) add))::acc,start_alt_num+1,visited_facts_addresses
+      with
+      | Not_found -> 
+	PremiseSet.fold
+	  (fun (facts,rule_id) (acc,alt_num,visited_facts_addresses) ->
+	    let cur_add=[] in
+	    let visited_facts_addresses = PredicateMap.add fact (alt_num,cur_add) visited_facts_addresses in
+	    let children_rev,_,visited_facts_addresses = build_children (alt_num,cur_add) facts derivations visited_facts_addresses in
+	    (AlternTrees.Tree
+	       (AlternTrees.Node
+		  (rule_id,
+		   List.rev children_rev
+		  )))::acc,
+	    alt_num+1,
+	    visited_facts_addresses)
+	  premises
+	  (acc,start_alt_num,visited_facts_addresses)
+      
+	
+    let build_forest ?query pred_table cst_table map =
+      let u_query = 
+	match query with
+	| Some q -> Some (make_unifiable_predicate  q)
+	| None -> None in
+      PredicateMap.fold
+	(fun fact premises (acc,alt_num,visited_facts_addresses) ->
+	  match u_query with
+	  | Some q when not (unifiable fact q) -> acc,alt_num,visited_facts_addresses
+	  | _ ->
+	    build_forest_from_root fact premises map alt_num acc visited_facts_addresses)
+	map
+	([],1,PredicateMap.empty)
+	       
 
 
 
@@ -396,7 +490,7 @@ struct
 		| false ->  
 		  let () = Printf.fprintf stdout "\n%s  %s" prefix (String.make (length -2) '>') in
 		  length,Printf.sprintf "%s  %s" prefix (String.make (length-2) ' ') in
-	      let () = format_premises2 new_prefix (List.rev premises) true pred_table cst_table map new_set in
+	      let () = format_premises2 new_prefix (List.rev (fst premises)) true pred_table cst_table map new_set in
 	      (*	  let () = Printf.fprintf stdout "\n" in*)
 	      false,new_length)
 	    v
@@ -598,8 +692,8 @@ struct
 	type cell = Predicate.FactSet.elt (*P.fact *)
   	type state = (int*(ConstGen.id UF.t))*(cell list)
 	(* The state [(i,c),lst] stores the next index [i] of the
-	   content [c] where the update should start start, and [lst]
-	   keep track of the facts against which the content has been
+	   content [c] where the update should start, and [lst] keep
+	   track of the facts against which the content has been
 	   unified. {e Be careful:} it stores them in the reverse
 	   order.*)
 
@@ -862,7 +956,7 @@ struct
 	 that can be reach from [zip] (including [zip] itself). *)
       let resume_on_i_pred acc (((i,content),premises) as state) =
 	match r.Rule.i_rhs with
-	| [] -> agg_function ((Rule.extract_consequence r content),premises) acc
+	| [] -> agg_function ((Rule.extract_consequence r content),premises) r acc
 	| _ -> 
 	(* We now init the focused list corresponding to the intensional
 	   predicates of the rule [r] *)
@@ -873,7 +967,7 @@ struct
 	       of [r], we extract all the possible facts from the rule
 	       [r] *)
 	      Rule.FactArray.collect_results
-		(fun ll_acc ((_,content),premises) -> agg_function ((Rule.extract_consequence r content),premises) ll_acc)
+		(fun ll_acc ((_,content),premises) -> agg_function ((Rule.extract_consequence r content),premises) r ll_acc)
 		l_acc
 		state
 		(make_search_array_i_pred focus))
@@ -929,13 +1023,13 @@ struct
 	    previous_step_facts
 	    facts
 	    delta_facts
-	    (fun (new_fact,from_premises) (new_fact_set,new_fact_derivations) -> 
+	    (fun (new_fact,from_premises) r (new_fact_set,new_fact_derivations) -> 
 	      (Predicate.conditionnal_add
 		new_fact
 		new_fact_set
 		(custom_find r.Rule.lhs.Predicate.p_id previous_step_facts)
 		(custom_find r.Rule.lhs.Predicate.p_id delta_facts),
-	       Predicate.add_to_map_to_set new_fact from_premises new_fact_derivations))
+	       Predicate.add_to_map_to_set new_fact (from_premises,r.Rule.id) new_fact_derivations))
 	    acc
 	    prog.pred_table
 	    prog.const_table)

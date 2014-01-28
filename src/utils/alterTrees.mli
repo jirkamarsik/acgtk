@@ -4,6 +4,13 @@ module AlternTrees :
     type relative_path=int*int option*address
     (* the 2nd argument is to move in the alternative trees at the top
        of the forest *)
+
+    (** [diff (alt,add) (alt',add')] returns the relative path to go
+	from the subtree wich occurs at address [add] in the [alt]-th
+	alternative of some forest to the subtree wich occurs at
+	address [add'] in the [alt']-th alternative the same
+	forest. *)
+    val diff : int*address -> int*address -> relative_path
       
     type 'a stack='a list
     type 'a list_context ='a stack

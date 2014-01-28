@@ -26,13 +26,14 @@ sig
     module PredicateMap : Map.S with type key = ASPred.predicate
     module Premise :
     sig
-      type t = ASPred.predicate list
+      type t = ASPred.predicate list * int (* the int parameter is meant to be the rule id *)
       val to_string : t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
     end
     module PremiseSet : Set.S with type elt = Premise.t
     val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
     val format_derivations2 : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
-      
+
+   val build_forest_aux : ASPred.predicate -> PremiseSet.t -> PremiseSet.t PredicateMap.t -> (int*int*AlterTrees.AlternTrees.address) -> (int*AlterTrees.AlternTrees.address) PredicateMap.t -> (int AlterTrees.AlternTrees.alt_tree list * int * (int*AlterTrees.AlternTrees.address) PredicateMap.t)      
 
     val add_pred_arguments_to_content :
       ASPred.term list ->
@@ -90,7 +91,7 @@ sig
       Rule.FactArray.row Predicate.PredMap.t ->
       Rule.FactArray.row Predicate.PredMap.t ->
       Rule.FactArray.row Predicate.PredMap.t ->
-      (ASPred.predicate * Predicate.FactSet.elt list -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> 'a
+      (ASPred.predicate * Predicate.FactSet.elt list -> Rule.rule -> 'a -> 'a) -> 'a -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> 'a
     val p_semantics_for_predicate :
       Predicate.PredMap.key ->
       program ->
