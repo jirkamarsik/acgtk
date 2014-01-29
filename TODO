@@ -28,6 +28,13 @@
 + [ ] Ajouter la possibilité d'étendre un programme datalog
 + [ ] changer le champ idb de prog en Set plutôt que list
 + [ ] changer edb et idb en Set plutôt que list
++ [ ] build_forest sans query n'est pas correct (il faut faire
+  plusieurs forêts)
++ [ ] l'adresse dans les forêts n'est pas correcte : la dernière
+  indication de alt n'est pas pertinente. Modifier en conséquence dans
+  le fichier altertrees,ml. *Remarque :* considérer qu'il peut y avoir
+  des forêts où le sens des alternatives est différent  ? (ie pas la
+  production d'un même non-terminal ?)
 
 * unionFind.ml
 + [ ] Changer le rank dans "union" lorsque match de Value contre

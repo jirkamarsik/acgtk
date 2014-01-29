@@ -32,7 +32,6 @@ sig
     val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
     val format_derivations2 : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
 
-    val build_forest_aux : ASPred.predicate -> PremiseSet.t -> PremiseSet.t PredicateMap.t -> (int*int*AlternTrees.address) -> (int*AlternTrees.address) PredicateMap.t -> (int AlterTrees.AlternTrees.alt_tree list * int * (int*AlternTrees.address) PredicateMap.t)
 
     val add_pred_arguments_to_content :
       ASPred.term list ->
@@ -119,6 +118,10 @@ sig
     val get_fresh_rule_id : program -> (int * program)
     val get_fresh_cst_id : string -> program -> (Datalog_AbstractSyntax.ConstGen.id * program)
     val add_pred_sym : string -> program -> (ASPred.pred_id*program)
+
+    val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int AlterTrees.AlternTrees.alt_tree list
+
+
   end
 end
 
@@ -373,88 +376,6 @@ struct
       end)
 
 
-    let rec build_children (root_alt_num,parent_address) facts derivations visited_facts=
-      List.fold_left
-	(fun (l_acc,child_num,l_visit) fact ->
-	  let premises =
-	    try 
-	      PredicateMap.find fact derivations
-	    with
-	    | Not_found -> PremiseSet.empty in
-	  let l_forest,_,l_visit = build_forest_aux fact premises derivations (root_alt_num,child_num,parent_address) l_visit in
-	  ([],l_forest)::l_acc,child_num+1,l_visit)
-	([],1,visited_facts)
-	facts
-    and
-	build_forest_aux fact premises derivations (root_alt_num,child_num,add) visited_facts_addresses =
-	PremiseSet.fold
-	  (fun (facts,rule_id) (acc,alt_num,l_visited_facts) ->
-	    let new_add = (child_num,alt_num)::add in
-	    try
-	      let existing_add = PredicateMap.find fact visited_facts_addresses in
-	      (AlternTrees.Link_to (AlternTrees.diff (root_alt_num,List.rev new_add) existing_add))::acc,
-	      alt_num+1,
-	      l_visited_facts
-	    with
-	    | Not_found -> 
-	      let l_visited_facts = PredicateMap.add fact (root_alt_num,new_add) l_visited_facts in
-	      let children_rev,_,l_visited_facts = build_children (root_alt_num,new_add) facts derivations l_visited_facts in
-	  (*	    List.fold_left
-		    (fun (l_acc,num,l_visit) fact ->
-		    let premises =
-		    try 
-		    PredicateMap.find fact derivations
-		    with
-		    | Not_found -> PremiseSet.empty in
-		    let l_forest,l_visit = build_forest_aux fact premise derivations (num,new_add) l_visit in
-		    ([],l_forest)::l_acc,l_visit)
-		    ([],1,l_visited_facts)
-		    facts in *)
-	      (AlternTrees.Tree
-		 (AlternTrees.Node
-		    (rule_id,
-		     List.rev children_rev)))::acc,
-	      alt_num+1,
-	      l_visited_facts)
-	  premises
-	  ([],1,visited_facts_addresses)
-	  
-	  
-    let build_forest_from_root fact premises derivations start_alt_num acc visited_facts_addresses =
-      try
-	let add = PredicateMap.find fact visited_facts_addresses in
-	(AlternTrees.Link_to (AlternTrees.diff (start_alt_num,[]) add))::acc,start_alt_num+1,visited_facts_addresses
-      with
-      | Not_found -> 
-	PremiseSet.fold
-	  (fun (facts,rule_id) (acc,alt_num,visited_facts_addresses) ->
-	    let cur_add=[] in
-	    let visited_facts_addresses = PredicateMap.add fact (alt_num,cur_add) visited_facts_addresses in
-	    let children_rev,_,visited_facts_addresses = build_children (alt_num,cur_add) facts derivations visited_facts_addresses in
-	    (AlternTrees.Tree
-	       (AlternTrees.Node
-		  (rule_id,
-		   List.rev children_rev
-		  )))::acc,
-	    alt_num+1,
-	    visited_facts_addresses)
-	  premises
-	  (acc,start_alt_num,visited_facts_addresses)
-      
-	
-    let build_forest ?query pred_table cst_table map =
-      let u_query = 
-	match query with
-	| Some q -> Some (make_unifiable_predicate  q)
-	| None -> None in
-      PredicateMap.fold
-	(fun fact premises (acc,alt_num,visited_facts_addresses) ->
-	  match u_query with
-	  | Some q when not (unifiable fact q) -> acc,alt_num,visited_facts_addresses
-	  | _ ->
-	    build_forest_from_root fact premises map alt_num acc visited_facts_addresses)
-	map
-	([],1,PredicateMap.empty)
 	       
 
 
@@ -507,7 +428,7 @@ struct
 	  try
 	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map set
 	  with
-	  | Not_found -> Printf.fprintf stdout "%s" (ASPred.to_string p pred_table cst_table)   in
+	  | Not_found -> Printf.fprintf stdout "%s (not found)" (ASPred.to_string p pred_table cst_table)   in
 	Printf.fprintf stdout ""
       | p::tl ->
 	let () = 
@@ -1160,7 +1081,40 @@ struct
 	  rule_id_gen}
 
     let add_e_facts prog (r_lst,const_table,rule_id_gen) =
+      let edb,edb_facts =
+	List.fold_left
+	  (fun (edb,edb_facts) r ->
+	    let p_id=r.ASRule.lhs.ASPred.p_id in
+	    let edb=
+	      if List.mem p_id edb then 
+		edb
+	      else
+		p_id::edb in
+	    let edb_facts=
+	      if List.mem r.ASRule.lhs.ASPred.p_id prog.idb then
+		failwith (Printf.sprintf "BUG: You're not supposed to extend a program with an intensional predicate \"%s\"" (ASPred.to_string {ASPred.p_id=r.ASRule.lhs.ASPred.p_id;ASPred.arity=r.ASRule.lhs.ASPred.arity;ASPred.arguments=[]} prog.pred_table  ConstGen.Table.empty))
+	      else
+		extend_map_to_set r.ASRule.lhs.ASPred.p_id r.ASRule.lhs edb_facts in
+	    edb,edb_facts)
+	  (prog.edb,prog.edb_facts) 
+	  r_lst in
       {prog with 
+	edb;
+	edb_facts;
+	const_table;
+	rule_id_gen}
+(*	    
+      {prog with 
+	edb=
+	  List.fold_left
+	    (fun acc r -> 
+	      let p_id=r.ASRule.lhs.ASPred.p_id in
+	      if List.mem p_id acc then 
+		acc
+	      else
+		p_id::ac)
+	    prog.edb
+	    
 	edb_facts=
 	  List.fold_left
 	    (fun acc r ->
@@ -1172,6 +1126,7 @@ struct
 	    r_lst;
 	const_table;
 	rule_id_gen}
+*)
 	
 
     (** TODO: only useful until we change the type of idb and idb
@@ -1221,6 +1176,103 @@ struct
       let p_id,pred_table=ASPred.PredIdTable.add_sym name pred_table in
       p_id,{prog with pred_table}
     
+
+	
+    let rec build_children (root_alt_num,parent_address) facts derivations visited_facts prog =
+      List.fold_left
+	(fun (l_acc,child_num,l_visit) fact ->
+	  LOG "Analysing fact: %s" (ASPred.to_string fact prog.pred_table prog.const_table) LEVEL DEBUG;
+	  if List.mem fact.ASPred.p_id prog.edb then
+	    let () = LOG "Skipping it" LEVEL DEBUG in
+	    l_acc,child_num,l_visit
+	  else
+	    let () = LOG "Keeping it" LEVEL DEBUG in
+	    LOG "Building child %d of (%d,[%s])" child_num root_alt_num (Utils.string_of_list ";" (fun (i,j) -> Printf.sprintf "(%d,%d)" i j) parent_address) LEVEL DEBUG;
+	    let premises =
+	      try 
+		Predicate.PredicateMap.find fact derivations
+	      with
+	      | Not_found -> Predicate.PremiseSet.empty in
+	    let l_forest,_,l_visit = build_forest_aux fact premises derivations (root_alt_num,child_num,parent_address) l_visit prog in
+	    ([],l_forest)::l_acc,child_num+1,l_visit)
+	([],1,visited_facts)
+	facts
+    and
+	build_forest_aux fact premises derivations (root_alt_num,child_num,add) visited_facts_addresses prog =
+	Predicate.PremiseSet.fold
+	  (fun (facts,rule_id) (acc,alt_num,l_visited_facts) ->
+	    let new_add = (child_num,alt_num)::add in
+	    try
+	      let existing_add = Predicate.PredicateMap.find fact visited_facts_addresses in
+	      LOG "Will point to: (%d,%s) with patch %s" (fst existing_add) (AlternTrees.address_to_string (snd existing_add)) (AlternTrees.path_to_string (AlternTrees.diff (root_alt_num,List.rev new_add) existing_add)) LEVEL DEBUG;
+	      (AlternTrees.Link_to (AlternTrees.diff (root_alt_num,List.rev new_add) existing_add))::acc,
+	      alt_num+1,
+	      l_visited_facts
+	    with
+	    | Not_found -> 
+	      let l_visited_facts = Predicate.PredicateMap.add fact (root_alt_num,new_add) l_visited_facts in
+	      let children_rev,_,l_visited_facts = build_children (root_alt_num,new_add) facts derivations l_visited_facts prog in
+	  (*	    List.fold_left
+		    (fun (l_acc,num,l_visit) fact ->
+		    let premises =
+		    try 
+		    PredicateMap.find fact derivations
+		    with
+		    | Not_found -> PremiseSet.empty in
+		    let l_forest,l_visit = build_forest_aux fact premise derivations (num,new_add) l_visit in
+		    ([],l_forest)::l_acc,l_visit)
+		    ([],1,l_visited_facts)
+		    facts in *)
+	      (AlternTrees.Tree
+		 (AlternTrees.Node
+		    (rule_id,
+		     (*List.rev*) children_rev)))::acc,
+	      alt_num+1,
+	      l_visited_facts)
+	  premises
+	  ([],1,visited_facts_addresses)
+	  
+	  
+    let build_forest_from_root fact premises derivations start_alt_num acc visited_facts_addresses prog =
+      try
+	let add = Predicate.PredicateMap.find fact visited_facts_addresses in
+	(AlternTrees.Link_to (AlternTrees.diff (start_alt_num,[]) add))::acc,start_alt_num+1,visited_facts_addresses
+      with
+      | Not_found -> 
+	Predicate.PremiseSet.fold
+	  (fun (facts,rule_id) (acc,alt_num,visited_facts_addresses) ->
+	    let cur_add=[] in
+	    let visited_facts_addresses = Predicate.PredicateMap.add fact (alt_num,cur_add) visited_facts_addresses in
+	    let children_rev,_,visited_facts_addresses = build_children (alt_num,cur_add) facts derivations visited_facts_addresses prog in
+	    (AlternTrees.Tree
+	       (AlternTrees.Node
+		  (rule_id,
+		   (*List.rev*) children_rev
+		  )))::acc,
+	    alt_num+1,
+	    visited_facts_addresses)
+	  premises
+	  (acc,start_alt_num,visited_facts_addresses)
+      
+	
+    let build_forest ?query map prog =
+      let u_query = 
+	match query with
+	| Some q -> Some (Predicate.make_unifiable_predicate  q)
+	| None -> None in
+      let forest,_,_=
+	Predicate.PredicateMap.fold
+	  (fun fact premises (acc,alt_num,visited_facts_addresses) ->
+	    match u_query with
+	    | Some q when not (Predicate.unifiable fact q) -> acc,alt_num,visited_facts_addresses
+	    | _ ->
+	      build_forest_from_root fact premises map alt_num acc visited_facts_addresses prog )
+	  map
+	  ([],1,Predicate.PredicateMap.empty) in
+      LOG "The parse forest has %d alternatives" (List.length forest) LEVEL DEBUG;
+      forest
+
+
 	
   end
     

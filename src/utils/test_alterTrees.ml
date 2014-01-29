@@ -85,4 +85,54 @@ let () =
     trees in
 Printf.printf "%s" (Buffer.contents buff)
 
+let output_tree t = 
+  let buff=Buffer.create 80 in
+  let () = print_tree "" buff t in
+  let () = Printf.bprintf buff "\n\n" in
+  Printf.printf "%s" (Buffer.contents buff)
 
+
+type inputs =
+| Stop
+| Next
+    
+let return_input s =
+  match String.lowercase (String.trim s) with
+  | "y" | "yes"-> Some Next
+  | "n" | "no" -> Some Stop
+  | "" -> Some Next
+  | _ -> None
+    
+    
+let interact_aux get_input =
+  get_input (read_line ())
+    
+      
+let rec interact message get_input =
+  let () = Printf.printf "%s %!" message in
+  match interact_aux get_input with
+  | Some v -> v
+  | None -> interact message get_input
+    
+let rec ask_for_next_parse f param =
+  let msg = Printf.sprintf "Do you want to look for another solution?\n\ty/yes\n\tn/no\n(Default: yes):" in
+  match interact msg return_input with
+  | Next -> 
+    let () = Printf.printf "Going to get a term\n%!" in
+    (match f param with
+    | None -> Printf.printf "No other returned value\n"
+    | Some new_param -> ask_for_next_parse f new_param)
+  | Stop -> ()
+
+      
+
+
+
+    
+let resume= [init [tree]] in
+ask_for_next_parse
+  (fun res -> 
+    match resumption res with
+    | None,_ -> None
+    | Some t,resume -> let () = output_tree t in Some resume)
+  resume

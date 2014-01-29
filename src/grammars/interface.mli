@@ -179,9 +179,11 @@ sig
   exception Duplicate_constant_interpretation
 
   type t
-  module Signature:Signature_sig
+  module Signature:Signature_sig with type term=Lambda.term
   type signature = Signature.t
+  type resume
 
+  val resume_info : resume -> string
   val empty : (string*Abstract_syntax.location) -> abs:signature -> obj:signature -> t
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t
@@ -193,6 +195,7 @@ sig
   val check : t -> unit
   (** [parse t stype lex] tries to parse the (object) term [t] and
       find it an antecedent of type [stype] by [lex] *)
-  val parse : Signature.term -> Signature.stype -> t -> unit
+  val parse : Signature.term -> Signature.stype -> t -> resume
+  val get_analysis : resume -> t -> Lambda.term option * resume
   val compose: t -> t -> (string*Abstract_syntax.location) -> t
 end

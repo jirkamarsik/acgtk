@@ -29,7 +29,9 @@ sig
   exception Entry_not_found of string
 
 
-  module Signature1:Signature_sig
+(*  module Signature1:Signature_sig*)
+
+  module Signature1:Signature_sig with type term=Lambda.Lambda.term
   module Lexicon:Interface.Lexicon_sig with type Signature.t=Signature1.t and type Signature.term=Signature1.term and type Signature.stype=Signature1.stype
 
 

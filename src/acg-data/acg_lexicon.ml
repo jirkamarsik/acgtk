@@ -34,6 +34,10 @@ struct
 
   type signature = Sg.t
 
+  type resume = (int AlterTrees.AlternTrees.focused_alt_tree * int AlterTrees.AlternTrees.focused_tree) list
+
+  let resume_info resume = Printf.sprintf "%d entries." (List.length resume)
+
   type interpretation =
     | Type of (Abstract_syntax.location * Lambda.stype )
     | Constant of (Abstract_syntax.location * Lambda.term )
@@ -47,11 +51,13 @@ struct
 
   module Datalog=Datalog.Datalog
 
+  module RuleToCstMap=Utils.IntMap
+
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
 	    abstract_sig:Sg.t;
 	    object_sig:Sg.t;
-	    datalog_prog:Datalog.Program.program option}
+	    datalog_prog:(Datalog.Program.program * Lambda.term RuleToCstMap.t) option}
 
 
   let name {name=n}=n
@@ -59,7 +65,7 @@ struct
   let get_sig {abstract_sig=abs;object_sig=obj} = abs,obj
 
   let empty name ~abs ~obj = 
-    let prog = if Sg.is_2nd_order abs then Some (Datalog.Program.empty) else None in
+    let prog = if Sg.is_2nd_order abs then Some (Datalog.Program.empty,RuleToCstMap.empty) else None in
     {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj;datalog_prog=prog}
 
   let emit_missing_inter lex lst =
@@ -108,7 +114,7 @@ struct
   module Reduction=Reduction.Make(Sg)
 
 
-  let add_rule_for_cst_in_prog name abs_type interpreted_term lex prog =
+  let add_rule_for_cst_in_prog name abs_type interpreted_term lex (prog,rule_to_cst) =
     let interpreted_type = (interpret_type abs_type lex) in
     let eta_long_term = 
       Sg.eta_long_form 
@@ -121,21 +127,22 @@ struct
     LOG "Datalog rule addition: lexicon \"%s\", constant \"%s:%s\" mapped to \"%s:%s\"" (fst lex.name) name (Sg.type_to_string abs_type lex.abstract_sig) (Sg.term_to_string eta_long_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
     let obj_princ_type,obj_typing_env = TypeInference.Type.inference eta_long_term in
     LOG "Interpreting \"%s\" as \"%s=%s\" with principle type: \"%s\"" name (Sg.term_to_string eta_long_term lex.object_sig) (Lambda.raw_to_caml eta_long_term) (Lambda.raw_type_to_string obj_princ_type) LEVEL DEBUG;
-  LOG "In the context of:" LEVEL DEBUG ;
-  let () = 
-    Utils.IntMap.iter
-      (fun k (t,ty) -> LOG "%d --> %s : %s" k (Lambda.raw_to_string t) (Lambda.raw_type_to_string ty) LEVEL DEBUG)
-      obj_typing_env in
-  let _,new_prog=Reduction.generate_and_add_rule
-    ~abs_cst:(name,abs_type)
-    ~obj_princ_type
-    ~obj_typing_env
-    prog
-    ~abs_sig:lex.abstract_sig
-    ~obj_sig:lex.object_sig in
-  new_prog
-    
-    
+    LOG "In the context of:" LEVEL DEBUG ;
+    let () = 
+      Utils.IntMap.iter
+	(fun k (t,ty) -> LOG "%d --> %s : %s" k (Lambda.raw_to_string t) (Lambda.raw_type_to_string ty) LEVEL DEBUG)
+	obj_typing_env in
+    let rule,new_prog=Reduction.generate_and_add_rule
+      ~abs_cst:(name,abs_type)
+      ~obj_princ_type
+      ~obj_typing_env
+      prog
+      ~abs_sig:lex.abstract_sig
+      ~obj_sig:lex.object_sig in
+    let cst_id,_ = Sg.find_term name lex.abstract_sig in
+    new_prog,RuleToCstMap.add rule.Datalog_AbstractSyntax.AbstractSyntax.Rule.id cst_id rule_to_cst
+      
+      
   let insert e ({dico=d} as lex) = match e with
     | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
     | Abstract_syntax.Constant (id,loc,t) ->
@@ -171,14 +178,16 @@ struct
 		lex
 		acc)
 	  lex.dico
-	  Datalog.Program.empty in
+	  (Datalog.Program.empty,RuleToCstMap.empty) in
       {lex with datalog_prog=Some new_prog}
       
 
   let parse term dist_type lex =
     match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
-    | None,_ -> Printf.printf "Parsing is not implemented for non 2nd order ACG\n!"
-    | Some prog, (Lambda.Atom _ as dist_type) ->
+    | None,_ -> 
+      let () = Printf.printf "Parsing is not implemented for non 2nd order ACG\n!" in
+      []
+    | Some (prog,_), (Lambda.Atom _ as dist_type) ->
       let buff=Buffer.create 80 in
       let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract prog)) in
       LOG "Before parsing. Program is currently:" LEVEL DEBUG;
@@ -209,15 +218,38 @@ struct
       LOG "Going to solve the query: \"%s\" with the program" (Datalog_AbstractSyntax.AbstractSyntax.Predicate.to_string query temp_prog.Datalog.Program.pred_table temp_prog.Datalog.Program.const_table) LEVEL TRACE;
       let () = List.iter (fun s -> LOG s LEVEL TRACE) (Bolt.Utils.split "\n" (Buffer.contents buff')) in
       let derived_facts,derivations = Datalog.Program.seminaive temp_prog in
-      Datalog.Predicate.format_derivations2 
+      let parse_forest = Datalog.Program.build_forest ~query:query derivations temp_prog in
+      let resume = 
+	match parse_forest with
+	| [] -> []
+	| _ -> [AlterTrees.AlternTrees.init parse_forest] in
+      let () = Datalog.Predicate.format_derivations2 
 	~query:query
 	temp_prog.Datalog.Program.pred_table
 	temp_prog.Datalog.Program.const_table
-	derivations
-    | Some _ , _ -> Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!"
+	derivations in
+      List.rev resume
+    | Some _ , _ -> 
+      let () = 
+	Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in
+      []
       
     
-	
+  let get_analysis resume lex =
+    LOG "Trying to get some analysis" LEVEL DEBUG;
+    match lex.datalog_prog with
+    | None -> let () = Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in None,resume
+    | Some (_,rule_id_to_cst) ->
+      match AlterTrees.AlternTrees.resumption resume with
+      | None,[] -> None,[]
+      | None,_ -> failwith "Bug: if resume is not empty, a tree should be returned"
+      | Some t,resume ->
+	LOG "Got a result. Ready to map it" LEVEL DEBUG;
+	Some (AlterTrees.AlternTrees.fold_depth_first
+		((fun rule_id -> RuleToCstMap.find rule_id rule_id_to_cst),
+		 (fun x y -> Lambda.App(x,y)))
+		t),
+	resume
 
   let to_string ({name=n,_;dico=d;abstract_sig=abs_sg;object_sig=obj_sg} as lex) =
     let buff=Buffer.create 80 in
@@ -239,7 +271,7 @@ struct
     let () = Printf.bprintf buff "\n************************\n" in
     let () = match lex.datalog_prog with
       | None -> Printf.bprintf buff "This lexicon was not recognized as having a 2nd order abstract signature\n" 
-      | Some p -> let () = Printf.bprintf buff "This lexicon recognized as having a 2nd order abstract signature. The associated datalog program is:\n" in
+      | Some (p,_) -> let () = Printf.bprintf buff "This lexicon recognized as having a 2nd order abstract signature. The associated datalog program is:\n" in
 		  Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract p)) in
     Buffer.contents buff
 

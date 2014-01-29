@@ -221,7 +221,42 @@ struct
       | E.Lexicon_not_found n
       | E.Entry_not_found n -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment n,l))
 
+  type inputs =
+  | Stop
+  | Next
 
+  let return_input s =
+    match String.lowercase (String.trim s) with
+    | "y" | "yes"-> Some Next
+    | "n" | "no" -> Some Stop
+    | "" -> Some Next
+    | _ -> None
+
+
+  let rec interact message get_input =
+    let () = Printf.printf "%s%!" message in
+    match get_input (read_line ()) with
+    | Some v -> v
+    | None -> interact message get_input
+      
+  let rec ask_for_next_parse f param =
+    let msg = Printf.sprintf "Do you want to look for another solution?\n\ty/yes\n\tn/no\n(Default: yes):" in
+    match interact msg return_input with
+    | Next -> 
+      (match f param with
+      | None -> Printf.printf "No other possible value\n"
+      | Some new_param -> ask_for_next_parse f new_param)
+    | Stop -> ()
+      
+
+  let get_parse_tree resume abs_ty lex =
+    let abs_sig,_=E.Lexicon.get_sig lex in
+    match E.Lexicon.get_analysis resume lex with
+    | Some t,resume -> 
+      let () = Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string t abs_sig) (E.Signature1.type_to_string abs_ty abs_sig) in
+      Some resume
+    | None,_ -> None
+      
   let parse ?name e ?offset data l =
     try
       let additional_offset = "\t" in
@@ -242,15 +277,18 @@ struct
 	match Data_parser.parse_heterogenous_term ~output:true ~offset:actual_offset data lex with
 	| None -> ()
 	| Some (obj_t,abs_ty) -> 
-	  E.Lexicon.parse obj_t abs_ty lex
+	  let resume = get_parse_tree (E.Lexicon.parse obj_t abs_ty lex) abs_ty lex in
+	  match resume with
+	  | None -> ()
+	  | Some resume ->
+	    ask_for_next_parse (fun res -> get_parse_tree res abs_ty lex) resume
     with
     | E.Signature_not_found n
     | E.Lexicon_not_found n
     | E.Entry_not_found n -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment n,l))
-
-
-
-
+      
+      
+      
   let entry_name = function
     | E.Signature sg -> fst (E.Signature1.name sg)
     | E.Lexicon lex -> fst (E.Lexicon.name lex)

@@ -10,7 +10,12 @@ module AlternTrees :
 	alternative of some forest to the subtree wich occurs at
 	address [add'] in the [alt']-th alternative the same
 	forest. *)
+
     val diff : int*address -> int*address -> relative_path
+
+    val path_to_string : relative_path -> string
+
+    val address_to_string : address -> string
       
     type 'a stack='a list
     type 'a list_context ='a stack
@@ -49,6 +54,8 @@ module AlternTrees :
     exception Move_failure of move
     exception Not_well_defined
     exception No_next_alt
+
+    val fold_depth_first:  (('a -> 'b) * ('b -> 'b -> 'b)) -> 'a simple_tree -> 'b
 
     val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree
 

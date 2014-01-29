@@ -20,6 +20,15 @@ struct
     else
       List.length address,Some alt',address'
 
+  let address_to_string = Utils.string_of_list ";" (fun (i,j) -> Printf.sprintf "(%d,%d)" i j)
+
+  let path_to_string (i,alt,add) =
+    let alt=
+      match alt with
+      | None -> "same tree"
+      | Some i -> Printf.sprintf "tree %d" i in
+    Printf.sprintf "(-%d,%s,%s)" i alt (address_to_string add)
+
 
   type 'a stack='a list
   type 'a list_context ='a stack
@@ -41,6 +50,19 @@ struct
 
 
   type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
+
+
+
+  let rec fold_depth_first ((transform,apply) as f) t =
+    match t with
+    | SimpleTree (v,[]) -> transform v
+    | SimpleTree (v,children) -> 
+      List.fold_left
+	(fun acc child -> apply acc (fold_depth_first f child))
+	(transform v)
+	children
+
+
 
       
   type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  alt_tree

@@ -33,7 +33,8 @@ sig
     val add_map_to_premises_to_buffer : Buffer.t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
     val format_derivations2 : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> PremiseSet.t PredicateMap.t -> unit
 
-   val build_forest_aux : ASPred.predicate -> PremiseSet.t -> PremiseSet.t PredicateMap.t -> (int*int*AlterTrees.AlternTrees.address) -> (int*AlterTrees.AlternTrees.address) PredicateMap.t -> (int AlterTrees.AlternTrees.alt_tree list * int * (int*AlterTrees.AlternTrees.address) PredicateMap.t)      
+
+
 
     val add_pred_arguments_to_content :
       ASPred.term list ->
@@ -120,6 +121,10 @@ sig
     val get_fresh_rule_id : program -> (int * program)
     val get_fresh_cst_id : string -> program -> (Datalog_AbstractSyntax.ConstGen.id * program)
     val add_pred_sym : string -> program -> (ASPred.pred_id*program)
+
+    val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int AlterTrees.AlternTrees.alt_tree list
+
+
   end
 end
   

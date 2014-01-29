@@ -42,7 +42,7 @@ struct
 
 
   let build_predicate_w_var_args (name,obj_type) (prog,var_gen,type_to_var_map) =
-    let atom_sequence = sequentialize_rev obj_type in
+    let atom_sequence = sequentialize_rev obj_type [] in
     LOG "Build predicate from %s:%s   ([%s])" name (Lambda.raw_type_to_string obj_type) (Utils.string_of_list ";" string_of_int atom_sequence) LEVEL TRACE;
     let var_sequence,var_gen,type_to_var_map =
       List.fold_left
