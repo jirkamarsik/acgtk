@@ -1,6 +1,6 @@
 module AlternTrees :
   sig
-    type address=(int*int) list
+    type address=(int*int) list * (int option)
     type relative_path=int*int option*address
     (* the 2nd argument is to move in the alternative trees at the top
        of the forest *)

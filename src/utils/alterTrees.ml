@@ -1,24 +1,39 @@
 module AlternTrees =
 struct
-  type address=(int*int) list
-  type relative_path=int*int option*address
+  type address=(int*int) list * (int option)
+  (* (child position, position in the forest) list plus a last child
+     position *)
+  type relative_path=int*(int option)*address
   (* the 2nd argument is to move in the alternative trees at the top
      of the forest *)
 
-  let rec add_diff add1 add2 back =
+  let rec add_diff (add1,child1) (add2,child2) back =
     match add1,add2 with
-    | [],[] -> back,add2
-    | _,[] -> back+List.length add1,add2
-    | [],_ -> back,add2
-    | (i,j)::tl1,(i',j')::tl2 when i=i' && j=j' -> add_diff tl1 tl2 back
-    | _::_,_::_ -> back+List.length add1,add2
+    | [],[] ->
+      (match child1,child2 with
+      | None,None -> back,([],None)
+      | Some _,None ->back+1,([],None)
+      | None,Some _ ->back,([],child2)
+      | Some _,Some _ ->back+1,([],child2))
+    | _,[] -> back+List.length add1+1,([],child2)
+    | [],_ -> 
+      (match child1 with
+      | None -> back,(add2,child2)
+      | Some _ -> back+1,(add2,child2))
+    | (i,j)::tl1,(i',j')::tl2 when i=i' && j=j' -> add_diff (tl1,child1) (tl2,child2) back
+    | _::_,_::_ -> back+List.length add1+1,(add2,child2)
 
   let diff (alt,address) (alt',address') =
     if alt=alt' then
       let back,add=add_diff address address' 0 in
       back,None,add
     else
-      List.length address,Some alt',address'
+      let back =
+	match address with
+	| [],None -> 0
+	| lst,Some _ -> List.length lst +1
+	| _,None -> failwith "Bug: Only root can have ([],None) address" in
+      back,Some alt',address'
 
   let address_to_string = Utils.string_of_list ";" (fun (i,j) -> Printf.sprintf "(%d,%d)" i j)
 
@@ -36,15 +51,14 @@ struct
   type 'a focused_list = 'a list_context * 'a list
 
 
-  type 'a alternatives = 'a alt_tree focused_list
-  and 'a alt_tree = 
-  | Tree of 'a tree 
-  | Link_to of relative_path
+  type 'a alternatives = 'a tree focused_list
   and 'a tree = Node of 'a * 'a children list
-  and 'a children = 'a alternatives
+  and 'a children = 
+  | Forest of 'a alternatives
+  | Link_to of relative_path
   and 'a alt_tree_zipper = 
-  | Top of ('a alt_tree) focused_list
-  | Zip of 'a * ('a alt_tree focused_list) focused_list * ('a alt_tree) focused_list * 'a alt_tree_zipper * 'a alt_tree_zipper option
+  | Top of ('a tree) focused_list
+  | Zip of 'a * ('a tree focused_list) focused_list * ('a tree) focused_list * 'a alt_tree_zipper * 'a alt_tree_zipper option
   (* The last argument is a local context when the current tree
      was reached after a Link_to move *)
 
@@ -65,7 +79,7 @@ struct
 
 
       
-  type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  alt_tree
+  type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  tree
 
   type 'a zipper = 
   | ZTop
@@ -155,20 +169,25 @@ struct
     | i,a::tl when i>1 -> move_forward (i-1) (a::l,tl)
     | _ -> raise Bad_address
       
-  let rec enter addr (z,t) =
+  let rec enter addr (z,(Node (v,children) as t)) =
     match addr with
-    | [] -> 
-      (match t with
-      | Tree _ -> (z,t)
-      | Link_to path -> tree_at path (z,t))
-    | (i_child,j_alt)::tl ->
-      (match t with
-      | Link_to path -> enter addr (tree_at path (z,t))
-      | Tree (Node (v,children)) -> 
-	let (l,r),(p,n)=move_forward i_child ([],children) in	
-	let (p,n),t=move_forward j_alt ([],unstack (p,n)) in
-	enter tl (Zip (v,(l,r),(p,n),z,None),t))
-  and tree_at (back,alt,addr) = function
+    | [],None ->
+      (match z with
+      | Top (p,n) -> f_list_up (p,t::n)
+      | _ -> failwith "Bug: entering a non top forest with an empty address")
+    | _,None -> raise Not_well_defined
+    | [],Some i -> 
+      (match List.nth children (i-1) with
+      | Forest (p,n) -> (p,n)
+      | Link_to path -> forest_at path (z,t))
+    | (i_child,j_alt)::tl,Some c ->
+      let (l,r),forest=move_forward i_child ([],children) in
+      (match forest with
+      | Forest (p,n) -> 
+	let (p,n),t = move_forward j_alt (f_list_up (p,n)) in
+	enter (tl,Some c) (Zip(v,(l,r),(p,n),z,None),t)
+      | Link_to path -> enter (tl,Some c) (List.nth (f_list_up (forest_at path (z,t))) j_alt))
+  and forest_at (back,alt,addr) = function
     | Top _ ,_ when back>0 -> raise (Move_failure Up)
     | Top (p,n) as z,t when back=0 ->
       (match alt with
@@ -179,10 +198,10 @@ struct
     | z,t when back=0 -> enter addr (z,t)
     | Zip (v,(l,r),(p,n),z,None),t -> 
       let children=unstack (l,(p,t::n)::r) in
-      tree_at (back-1,alt,addr) (z,Tree (Node (v,children)))      
+      tree_at (back-1,alt,addr) (z,Node (v,children))      
     | Zip (v,(l,r),(p,n),z,Some local_context),t -> 
       let children=unstack (l,(p,t::n)::r) in
-      tree_at (back-1,alt,addr) (local_context,Tree (Node (v,children)))      
+      tree_at (back-1,alt,addr) (local_context,Node (v,children))
     | _,_ -> raise Bad_address
       
   let set_local_context l_ctxt = function
@@ -191,16 +210,16 @@ struct
 
   let rec down_in_tree (z,t) =
     match t with
-    | Tree (Node (_,[])) -> raise  (Move_failure Down)
-    | Tree (Node (v,a::tl)) -> 
+    | Node (_,[]) -> raise  (Move_failure Down)
+    | Node (v,a::tl) -> 
       (match a with
-      | ([],[]) -> raise Not_well_defined
-      | (_,[]) -> raise  (Move_failure Down)
-      | (p,f_t::n) -> Zip (v,([],tl),(p,n),z,None),f_t)
-    | Link_to path -> 
-      let z',t' = tree_at path (z,t) in
-      let z = set_local_context z' z in
-      down_in_tree (z,t')
+      | Forest ([],[]) -> raise Not_well_defined
+      | Forest (_,[]) -> raise  (Move_failure Down)
+      | Forest (p,f_t::n) -> Zip (v,([],tl),(p,n),z,None),f_t
+      | Link_to path -> 
+	let z',t' = tree_at path (z,t) in
+	let z = set_local_context z' z in
+	down_in_tree (z,t'))
       
   let up_in_tree (z,t) =
     match z with
