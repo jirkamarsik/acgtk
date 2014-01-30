@@ -109,7 +109,8 @@ struct
 	    (new_pred,l_length)::rhs,l_length,new_tables)
 	  env
 	  ([],0,(prog,var_gen,type_to_var_map) ) in
-      let new_rule = AbstractSyntax.Rule.({id=rule_id;lhs;e_rhs;i_rhs}) in
+      LOG "Correctly set the number of intensional predi in rhs: %d" (let () = assert (length=List.length i_rhs) in length) LEVEL DEBUG;
+      let new_rule = AbstractSyntax.Rule.({id=rule_id;lhs;e_rhs;i_rhs;i_rhs_num=length}) in
       new_rule,Datalog.Program.add_rule ~intensional:true new_rule prog
 
 
@@ -127,7 +128,7 @@ struct
 	    let () = assert (fst (Sg.is_constant const_name obj_sig)) in
 	    let new_pred,l_prog = build_predicate_w_cst_args (const_name,cst_type) l_prog in
 	    let rule_id,l_prog=Datalog.Program.get_fresh_rule_id l_prog in
-	    let new_fact = AbstractSyntax.Rule.({id=rule_id;lhs=new_pred;e_rhs=[];i_rhs=[]}) in
+	    let new_fact = AbstractSyntax.Rule.({id=rule_id;lhs=new_pred;e_rhs=[];i_rhs=[];i_rhs_num=0}) in
 	    (new_fact::l_facts),l_prog)
 	  obj_typing_env
 	  ([],prog) in

@@ -153,6 +153,7 @@ struct
 	       lhs:Predicate.predicate;
 	       e_rhs:(Predicate.predicate*int) list;
 	       i_rhs:(Predicate.predicate*int) list;
+	       i_rhs_num:int;
 	      }
       
     let to_string r  pred_id_table cst_id_table =
@@ -197,17 +198,17 @@ struct
       buff
 
     let init_split_rhs proto_preds intensional_pred =
-      let i_p,e_p,_=
+      let i_num,i_p,e_p,_=
 	List.fold_left
-	  (fun (i_preds,e_preds,i) ({Predicate.p_id=p_id} as pred) ->
+	  (fun (i_num,i_preds,e_preds,i) ({Predicate.p_id=p_id} as pred) ->
 	    if Predicate.PredIds.mem p_id intensional_pred 
 	    then
-	      ((pred,i)::i_preds,e_preds,i+1)
+	      (i_num+1,(pred,i)::i_preds,e_preds,i+1)
 	    else
-	      (i_preds,(pred,i)::e_preds,i+1))
-	  ([],[],1)
+	      (i_num,i_preds,(pred,i)::e_preds,i+1))
+	  (0,[],[],1)
 	  proto_preds in
-      i_p,e_p
+      i_num,i_p,e_p
 
     let update_split_rhs init proto_preds intensional_pred =
       List.fold_left
@@ -231,12 +232,13 @@ struct
 
 	
     let proto_rule_to_rule proto_rule intensional_pred =
-      let i_preds,e_preds = 
+      let i_num,i_preds,e_preds = 
 	init_split_rhs proto_rule.Proto_Rule.proto_rhs intensional_pred in
       {id=proto_rule.Proto_Rule.proto_id;
        lhs=proto_rule.Proto_Rule.proto_lhs;
        e_rhs=List.rev e_preds;
-       i_rhs=List.rev i_preds}	
+       i_rhs=List.rev i_preds;
+       i_rhs_num=i_num}	
 
     let update rule intensional_pred =
       let i_preds,e_preds = 

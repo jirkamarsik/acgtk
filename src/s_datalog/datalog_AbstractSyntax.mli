@@ -59,6 +59,9 @@ sig
 	       i_rhs:(Predicate.predicate*int) list; 
 	      (** represents the intensionnal predicates of the rule.
 		  The [int] represents the position in the rule *)
+	       i_rhs_num:int;
+	      (* stores the number of intensional predicates occurring in the
+		 rule *)
 	      }
     val to_string : rule -> Predicate.PredIdTable.table -> ConstGen.Table.table -> string
     val proto_rule_to_rule : Proto_Rule.t -> Predicate.PredIds.t -> rule

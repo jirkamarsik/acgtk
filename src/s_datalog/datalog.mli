@@ -26,7 +26,7 @@ sig
     module PredicateMap : Map.S with type key = ASPred.predicate
     module Premise :
     sig
-      type t = ASPred.predicate list * int (* the int parameter is meant to be the rule id *)
+      type t = ASPred.predicate list * int * int (* the first int parameter is meant to be the rule id and the second one to be the number of intensional predicates occurring in it*)
       val to_string : t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
     end
     module PremiseSet : Set.S with type elt = Premise.t
@@ -52,6 +52,7 @@ sig
       lhs : Predicate.predicate;
       e_rhs : (Predicate.predicate*int) list;
       i_rhs : (Predicate.predicate*int) list;
+      i_rhs_num:int;
       content : Datalog_AbstractSyntax.ConstGen.id UF.t;
     }
     val make_rule : ASRule.rule -> rule

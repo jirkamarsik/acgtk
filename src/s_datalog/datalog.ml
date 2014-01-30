@@ -25,7 +25,7 @@ sig
     module PredicateMap : Map.S with type key = ASPred.predicate
     module Premise :
     sig
-      type t = ASPred.predicate list * int (* the int parameter is meant to be the rule id *)
+      type t = ASPred.predicate list * int * int (* the first int parameter is meant to be the rule id and the second one to be the number of intensional predicates occurring in it*)
       val to_string : t -> ASPred.PredIdTable.table -> Datalog_AbstractSyntax.ConstGen.Table.table -> string
     end
     module PremiseSet : Set.S with type elt = Premise.t
@@ -49,6 +49,9 @@ sig
       lhs : Predicate.predicate;
       e_rhs : (Predicate.predicate*int) list;
       i_rhs : (Predicate.predicate*int) list;
+      i_rhs_num:int;
+      (* stores the number of intensional predicates occurring in the
+	 rule *)
       content : Datalog_AbstractSyntax.ConstGen.id UF.t;
     }
     val make_rule : ASRule.rule -> rule
@@ -340,7 +343,10 @@ struct
 
     module Premise =
     struct
-      type t = ASPred.predicate list * int
+      type t = ASPred.predicate list * int * int
+      (* the first int parameter is meant to be the rule id and the
+	 second one to be the number of intensional predicates occurring
+	 in it*)
 
       let rec lst_compare pred_lst_1 pred_lst_2 =
 	match pred_lst_1,pred_lst_2 with
@@ -354,15 +360,19 @@ struct
 	  else
 	    lst_compare tl1 tl2
 
-      let compare (pred_lst_1,r_id_1) (pred_lst_2,r_id_2) =
+      let compare (pred_lst_1,r_id_1,child_num_1) (pred_lst_2,r_id_2,child_num_2) =
 	let cmp=r_id_1 - r_id_2 in
 	if cmp<>0 then 
 	  cmp
 	else
-	  lst_compare pred_lst_1 pred_lst_2
-
-      let to_string premises pred_table const_table =
-	Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) (fst premises)
+	  let cmp = child_num_1 - child_num_2 in
+	  if cmp<>0 then
+	    cmp
+	  else
+	    lst_compare pred_lst_1 pred_lst_2
+	      
+      let to_string (premises,r_id,i_num) pred_table const_table =
+	Printf.sprintf "%s (rule id: %d, number of intensional predicates: %d" (Utils.string_of_list "," (fun p -> ASPred.to_string p pred_table const_table) premises) r_id i_num
 
 
     end
@@ -376,7 +386,7 @@ struct
       end)
 
 
-	       
+      
 
 
 
@@ -400,7 +410,7 @@ struct
 	let new_set=FactSet.add k set in
 	let _ = 
 	  PremiseSet.fold
-	    (fun premises (first,length)  -> 
+	    (fun (premises,rule_id,_) (first,length)  -> 
 	      let new_length,new_prefix= 
 		match first with
 		| true ->
@@ -411,32 +421,34 @@ struct
 		| false ->  
 		  let () = Printf.fprintf stdout "\n%s  %s" prefix (String.make (length -2) '>') in
 		  length,Printf.sprintf "%s  %s" prefix (String.make (length-2) ' ') in
-	      let () = format_premises2 new_prefix (List.rev (fst premises)) true pred_table cst_table map new_set in
+	      let () = format_premises2 new_prefix (List.rev premises) rule_id true pred_table cst_table map new_set in
 	      (*	  let () = Printf.fprintf stdout "\n" in*)
 	      false,new_length)
 	    v
 	    (true,0) in
 	()
-    and format_premises2 prefix premises first pred_table cst_table map set =
+    and format_premises2 prefix premises rule_id first pred_table cst_table map set =
+      let rule_info=Printf.sprintf " (rule %d) " rule_id in
+      let space_holder=String.make (String.length rule_info) ' ' in
       let () = match first with
-	| true -> Printf.fprintf stdout ":--" 
-	| false -> Printf.fprintf stdout "\n%s|--" prefix in
+	| true -> Printf.fprintf stdout "%s:--" rule_info
+	| false -> Printf.fprintf stdout "\n%s%s|--" prefix space_holder in
       match premises with
       | [] -> ()
       | [p] -> 
 	let () = 
 	  try
-	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map set
+	    format_derivation (Printf.sprintf "%s%s   " prefix space_holder) p (PredicateMap.find p map) pred_table cst_table map set
 	  with
 	  | Not_found -> Printf.fprintf stdout "%s (not found)" (ASPred.to_string p pred_table cst_table)   in
 	Printf.fprintf stdout ""
       | p::tl ->
 	let () = 
 	  try
-	    format_derivation (Printf.sprintf "%s   " prefix) p (PredicateMap.find p map) pred_table cst_table map set
+	    format_derivation (Printf.sprintf "%s%s   " prefix space_holder) p (PredicateMap.find p map) pred_table cst_table map set
 	  with
 	  | Not_found -> Printf.fprintf stdout "%s" (ASPred.to_string p pred_table cst_table)   in
-	let () = format_premises2 prefix tl false  pred_table cst_table map set in
+	let () = format_premises2 prefix tl rule_id false  pred_table cst_table map set in
 	Printf.fprintf stdout ""
 	  
 
@@ -493,6 +505,9 @@ struct
 	       lhs:Predicate.predicate;
 	       e_rhs:(Predicate.predicate*int) list;
 	       i_rhs:(Predicate.predicate*int) list;
+	       i_rhs_num:int;
+	       (* stores the number of intensional predicates
+		  occurring in the rule *)
 	       content:ConstGen.id UF.t;
 	      (* TODO: Maybe put the label of the predicate in the
 		 content in order to enforce checking of the current
@@ -510,7 +525,7 @@ struct
       content is now a {! UnionFind.UnionFind} indexed data
       structure *)
 	
-    let make_rule {ASRule.id=id;ASRule.lhs=lhs;ASRule.e_rhs=e_rhs;ASRule.i_rhs=i_rhs} =
+    let make_rule {ASRule.id=id;ASRule.lhs=lhs;ASRule.e_rhs=e_rhs;ASRule.i_rhs=i_rhs;ASRule.i_rhs_num} =
     (* Be careful, the list of the rhs is reversed *)
       LOG "Preparing the lhs content..." LEVEL TRACE;
       let lhs_content=
@@ -542,7 +557,8 @@ struct
        lhs=Predicate.make_predicate lhs;
        e_rhs=List.rev e_rhs;
        i_rhs=List.rev i_rhs;
-       content=internal_content
+       i_rhs_num=i_rhs_num;
+       content=internal_content;
       }
 	
   (* the [dag] parameter [h] is meant to be the components of some
@@ -587,7 +603,7 @@ struct
     (** [to_abstract r content] returns a datalog abstract syntax rule
 	where the arguments of all (datalog abstract syntax)
 	predicates have been computed using [content]. *)
-    let to_abstract {id=id;lhs=lhs;e_rhs=e_rhs;i_rhs=i_rhs} content pred_table =
+    let to_abstract {id=id;lhs=lhs;e_rhs=e_rhs;i_rhs=i_rhs;i_rhs_num} content pred_table =
       LOG "Going to work with the following content:" LEVEL TRACE;
       let () =
 	List.iter
@@ -599,7 +615,8 @@ struct
       {ASRule.id=id;
        ASRule.lhs=abs_lhs;
        ASRule.e_rhs=abs_e_rhs;
-       ASRule.i_rhs=abs_i_rhs
+       ASRule.i_rhs=abs_i_rhs;
+       ASRule.i_rhs_num=i_rhs_num
       }
 
 
@@ -791,7 +808,7 @@ struct
 	    Predicate.FactSet.fold 
 	      (fun fact (l_acc,id_rule_gen) -> 
 		let id_rule,id_rule_gen=IdGenerator.IntIdGen.get_fresh_id id_rule_gen in
-		let r=ASRule.({id=id_rule;lhs=fact;e_rhs=[];i_rhs=[]}) in
+		let r=ASRule.({id=id_rule;lhs=fact;e_rhs=[];i_rhs=[];i_rhs_num=0}) in
 		LOG "Adding fact: %s" (ASRule.to_string r pred_table cst_table) LEVEL DEBUG;
 		ASRule.Rules.add r l_acc,id_rule_gen)
 	      fact_set
@@ -950,7 +967,7 @@ struct
 		new_fact_set
 		(custom_find r.Rule.lhs.Predicate.p_id previous_step_facts)
 		(custom_find r.Rule.lhs.Predicate.p_id delta_facts),
-	       Predicate.add_to_map_to_set new_fact (from_premises,r.Rule.id) new_fact_derivations))
+	       Predicate.add_to_map_to_set new_fact (from_premises,r.Rule.id,r.Rule.i_rhs_num) new_fact_derivations))
 	    acc
 	    prog.pred_table
 	    prog.const_table)
@@ -1178,7 +1195,7 @@ struct
     
 
 	
-    let rec build_children (root_alt_num,parent_address) facts derivations visited_facts prog =
+    let rec build_children (root_alt_num,parent_address) children_num facts derivations visited_facts prog =
       List.fold_left
 	(fun (l_acc,child_num,l_visit) fact ->
 	  LOG "Analysing fact: %s" (ASPred.to_string fact prog.pred_table prog.const_table) LEVEL DEBUG;
@@ -1194,13 +1211,12 @@ struct
 	      with
 	      | Not_found -> Predicate.PremiseSet.empty in
 	    let l_forest,_,l_visit = build_forest_aux fact premises derivations (root_alt_num,child_num,parent_address) l_visit prog in
-	    ([],l_forest)::l_acc,child_num+1,l_visit)
-	([],1,visited_facts)
+	    ([],List.rev l_forest)::l_acc,child_num-1,l_visit)
+	([],children_num,visited_facts)
 	facts
     and
-	build_forest_aux fact premises derivations (root_alt_num,child_num,add) visited_facts_addresses prog =
-	Predicate.PremiseSet.fold
-	  (fun (facts,rule_id) (acc,alt_num,l_visited_facts) ->
+	build_forest_aux fact premises derivations (root_alt_num,child_num,add) visited_facts_addresses prog =	Predicate.PremiseSet.fold
+	  (fun (facts,rule_id,i_rhs_num) (acc,alt_num,l_visited_facts) ->
 	    let new_add = (child_num,alt_num)::add in
 	    try
 	      let existing_add = Predicate.PredicateMap.find fact visited_facts_addresses in
@@ -1210,8 +1226,8 @@ struct
 	      l_visited_facts
 	    with
 	    | Not_found -> 
-	      let l_visited_facts = Predicate.PredicateMap.add fact (root_alt_num,new_add) l_visited_facts in
-	      let children_rev,_,l_visited_facts = build_children (root_alt_num,new_add) facts derivations l_visited_facts prog in
+	      let l_visited_facts = Predicate.PredicateMap.add fact (root_alt_num,List.rev new_add) l_visited_facts in
+	      let children_rev,_,l_visited_facts = build_children (root_alt_num,new_add) i_rhs_num facts derivations l_visited_facts prog in
 	  (*	    List.fold_left
 		    (fun (l_acc,num,l_visit) fact ->
 		    let premises =
@@ -1240,10 +1256,11 @@ struct
       with
       | Not_found -> 
 	Predicate.PremiseSet.fold
-	  (fun (facts,rule_id) (acc,alt_num,visited_facts_addresses) ->
+	  (fun (facts,rule_id,i_rhs_num) (acc,alt_num,visited_facts_addresses) ->
+	    LOG "Building alt_tree for root: %d" rule_id LEVEL DEBUG;
 	    let cur_add=[] in
-	    let visited_facts_addresses = Predicate.PredicateMap.add fact (alt_num,cur_add) visited_facts_addresses in
-	    let children_rev,_,visited_facts_addresses = build_children (alt_num,cur_add) facts derivations visited_facts_addresses prog in
+	    let visited_facts_addresses = Predicate.PredicateMap.add fact (alt_num,List.rev cur_add) visited_facts_addresses in
+	    let children_rev,_,visited_facts_addresses = build_children (alt_num,cur_add) i_rhs_num facts derivations visited_facts_addresses prog in
 	    (AlternTrees.Tree
 	       (AlternTrees.Node
 		  (rule_id,
@@ -1270,7 +1287,7 @@ struct
 	  map
 	  ([],1,Predicate.PredicateMap.empty) in
       LOG "The parse forest has %d alternatives" (List.length forest) LEVEL DEBUG;
-      forest
+      List.rev forest
 
 
 	

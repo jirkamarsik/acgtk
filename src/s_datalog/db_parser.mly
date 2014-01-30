@@ -121,7 +121,8 @@
      AbstractSyntax.Rule.({id=rule_id;
 			   lhs=lhs;
 			   e_rhs=[];
-			   i_rhs=[]}),
+			   i_rhs=[];
+			  i_rhs_num=0}),
      new_const_table,new_rule_id_gen
    with
    |  AbstractSyntax.Predicate.PredIdTable.Not_found -> 

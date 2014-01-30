@@ -59,7 +59,7 @@ module AlternTrees :
 
     val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree
 
-    val init : 'a alt_tree list -> 'a focused_alt_tree * 'a focused_tree
+    val init : 'a alt_tree list -> ('a focused_alt_tree * 'a focused_tree) list
 
     val build_tree : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
     val down : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list

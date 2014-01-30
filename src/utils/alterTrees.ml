@@ -294,7 +294,7 @@ struct
   let right (z,t) (zipper,b_t) resume =
     match z,zipper with
     | _ ,ZTop -> raise (Move_failure Right)
-    | Top _,_ -> raise (Move_failure Right)
+    | Top _,_ ->  raise (Move_failure Right)
     | Zip (v,(_,[]),_,_,_), Zipper(v',_,_) when v=v'-> raise (Move_failure Right)
     | Zip (v,(_,(_,[])::_),_,_,_), Zipper(v',_,_) when v=v'-> raise No_next_alt
     | Zip (v,(l,a::r),(p,n),z',local_context), Zipper(v',(l',r'),z'') when v=v'->
@@ -302,7 +302,8 @@ struct
 	f_list_fold_and_hd
 	  a
 	  (fun (p',n') t' ->
-	    let z'=Zip (v,((p,t::n)::l,r),(p',n'),z',local_context) in
+(*	    let z'=Zip (v,((p,t::n)::l,r),(p',n'),z',local_context) in *)
+	    let z'=Zip (v,((p,t::n)::l,r),(p',n'),z',None) in
 	    let z',t'= actual_tree (z',t') in
 	    (z',t'),
 (*	    (Zip (v,((p,t::n)::l,r),(p',n'),z',local_context),t'), *)
@@ -337,18 +338,28 @@ struct
 	
   let rec build_tree_aux f_forest f_tree resume =
     try
+      LOG "Trying to go down" LEVEL DEBUG;
       let f_forest,f_tree,resume = down f_forest f_tree resume in
+      LOG "Succeeded" LEVEL DEBUG;
       build_tree_aux f_forest f_tree resume
     with
     | Move_failure Down ->
       (try
+	 LOG "Trying to go right" LEVEL DEBUG;
 	 let f_forest,f_tree,resume = right f_forest f_tree resume in
+	 LOG "Succeeded" LEVEL DEBUG;
 	 build_tree_aux f_forest f_tree resume
        with
        | Move_failure Right ->
+	 LOG "Trying to close up" LEVEL DEBUG;
 	 (match close_forest_context_up f_forest f_tree resume with
-	 | ((Top _ ,_),(ZTop,_),_) as res -> res
-	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree),resume' -> build_tree_aux l_f_forest l_f_tree resume'
+	 | ((Top _ ,_),(ZTop,_),_) as res -> 
+	   LOG "Succeeded" LEVEL DEBUG;
+	   res
+	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree),resume' -> 
+	   LOG "Succeeded" LEVEL DEBUG;
+	   LOG "Trying to restart a building" LEVEL DEBUG;
+	   build_tree_aux l_f_forest l_f_tree resume'
 	 | _ -> failwith "Bug: not representing the same tree"))
 	
   let build_tree f_forest f_tree resume = build_tree_aux f_forest f_tree resume
@@ -363,15 +374,22 @@ struct
 
   let init = function
     | [] -> raise Not_well_defined
-    | a::tl -> (Top ([],tl),a),(ZTop,simple_tree a)
+    | alt_trees ->
+      snd (f_list_fold
+	     ([],alt_trees) 
+	     (fun (p,n) t acc -> ((Top (p,n),t),(ZTop,simple_tree t))::acc)
+	     [])
 
   let build_trees forest =
-    let f_forest,f_tree = init forest in
-    build_trees_aux f_forest f_tree [] []
+    match init forest with
+    | [] -> failwith "Bug"
+    | (f_forest,f_tree)::resume -> build_trees_aux f_forest f_tree resume []
 
   let resumption = function
     | [] -> None,[]
     | (f_forest,f_tree)::resume -> 
+      LOG "Building a tree from a forest" LEVEL DEBUG;
+      LOG "It remains %d elements in the resumption list" (List.length resume) LEVEL DEBUG;
       let _,(_,tree),resume=build_tree f_forest f_tree resume in
       Some tree,resume
 

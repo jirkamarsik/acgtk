@@ -95,11 +95,13 @@ let output_tree t =
 type inputs =
 | Stop
 | Next
+| All
     
 let return_input s =
   match String.lowercase (String.trim s) with
   | "y" | "yes"-> Some Next
   | "n" | "no" -> Some Stop
+  | "a" | "all" -> Some All
   | "" -> Some Next
   | _ -> None
     
@@ -115,13 +117,18 @@ let rec interact message get_input =
   | None -> interact message get_input
     
 let rec ask_for_next_parse f param =
-  let msg = Printf.sprintf "Do you want to look for another solution?\n\ty/yes\n\tn/no\n(Default: yes):" in
+  let rec all_results l_par =
+    match f l_par with
+    | None -> Printf.printf "No other returned value\n"
+    | Some new_par -> all_results new_par in
+  let msg = Printf.sprintf "Do you want to look for another solution?\n\ty/yes\n\tn/no\n\ta/all\n(Default: yes):" in
   match interact msg return_input with
   | Next -> 
     let () = Printf.printf "Going to get a term\n%!" in
     (match f param with
     | None -> Printf.printf "No other returned value\n"
     | Some new_param -> ask_for_next_parse f new_param)
+  | All -> all_results param
   | Stop -> ()
 
       
@@ -129,7 +136,7 @@ let rec ask_for_next_parse f param =
 
 
     
-let resume= [init [tree]] in
+let resume= init [tree;tree0] in
 ask_for_next_parse
   (fun res -> 
     match resumption res with

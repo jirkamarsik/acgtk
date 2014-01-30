@@ -250,6 +250,7 @@ struct
       
 
   let get_parse_tree resume abs_ty lex =
+    LOG "Going to get parse trees from a resume list of %s" (E.Lexicon.resume_info resume) LEVEL DEBUG;
     let abs_sig,_=E.Lexicon.get_sig lex in
     match E.Lexicon.get_analysis resume lex with
     | Some t,resume -> 
