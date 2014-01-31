@@ -23,20 +23,21 @@ module AlternTrees :
     type 'a focused_list = 'a list_context * 'a list
       
       
-    type 'a alternatives = 'a alt_tree focused_list
-    and 'a alt_tree = Tree of 'a tree | Link_to of relative_path
-    and 'a tree = Node of 'a * 'a children list
-    and 'a children = 'a alternatives
+  type 'a alternatives = 'a tree focused_list
+  and 'a tree = Node of 'a * 'a child list
+  and 'a child = 
+  | Forest of 'a alternatives
+  | Link_to of relative_path
+  and 'a alt_tree_zipper = 
+  | Top of ('a tree) focused_list
+  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * 'a alt_tree_zipper * 'a alt_tree_zipper option
+  (* The last argument is a local context when the current tree
+     was reached after a Link_to move *)
       
     type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
 	
-    type 'a alt_tree_zipper = 
-    | Top of ('a alt_tree) focused_list
-    | Zip of 'a * ('a alt_tree focused_list) focused_list * ('a alt_tree) focused_list * 'a alt_tree_zipper * 'a alt_tree_zipper option
-    (* The last argument is a local context when the current tree was
-       reached after a Link_to move *)
 	
-    type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  alt_tree
+    type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  tree
       
     type 'a zipper = 
     | ZTop | Zipper of ('a * 'a simple_tree focused_list * 'a zipper)
@@ -57,9 +58,9 @@ module AlternTrees :
 
     val fold_depth_first:  (('a -> 'b) * ('b -> 'b -> 'b)) -> 'a simple_tree -> 'b
 
-    val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree
+(*    val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree *)
 
-    val init : 'a alt_tree list -> ('a focused_alt_tree * 'a focused_tree) list
+    val init : 'a tree list -> ('a focused_alt_tree * 'a focused_tree) list
 
     val build_tree : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
     val down : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
@@ -75,6 +76,6 @@ module AlternTrees :
 	extracted *)
     val resumption : ('a focused_alt_tree * 'a focused_tree) list -> 'a simple_tree option * ('a focused_alt_tree * 'a focused_tree) list
 
-    val build_trees : 'a alt_tree list -> 'a simple_tree list
+    val build_trees : 'a tree list -> 'a simple_tree list
 
   end

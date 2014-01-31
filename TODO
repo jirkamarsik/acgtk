@@ -36,6 +36,11 @@
   des forêts où le sens des alternatives est différent  ? (ie pas la
   production d'un même non-terminal ?)
 
+* alterTrees.ml
++ [ ] changer la focused list des forêts en simple liste ?
++ [ ] garder trace de Link_to plutôt que de l'actual forest dans les move
++ [ ] gérer les analyses infinies (ordre sur les chemins)
+
 * unionFind.ml
 + [ ] Changer le rank dans "union" lorsque match de Value contre
   Link_to
@@ -56,3 +61,10 @@
 + [X] Définir le parsing de la composition de lexique
 + [ ] Définir le parsing pour les types non atomiques
 + [ ] Définir le parsing pour les almost linear terms
+
+* Divers
++ [ ] ajouter la commande compose dans les fichiers de définition de
+  lexiques et signature
++ [ ] ajouter un espace de nommage pour les lexiques et signatures
++ [ ] faire des dumps des interfaces et des représentations binaires
+  pour charger plus vite

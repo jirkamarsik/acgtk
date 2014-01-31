@@ -1,66 +1,66 @@
 open AlterTrees.AlternTrees
 
-let init_f_list l = [],l
+let init_f_list l = Forest ([],l)
 
 let tree0=
-  Tree (Node ("tree0.(0,1)",
+  Node ("tree0.(0,1)",
 	      [
 		init_f_list 
 		  [
-		    Tree (Node ("tree0.(0,1).(1,1)",[]));
-		    Tree (Node ("tree0.(0,1).(1,2)",[]));
-		    Tree (Node ("tree0.(0,1).(1,3)",[]));
+		    Node ("tree0.(0,1).(1,1)",[]);
+		    Node ("tree0.(0,1).(1,2)",[]);
+		    Node ("tree0.(0,1).(1,3)",[]);
 		  ];
 		init_f_list 
 		  [
-		    Tree (Node ("tree0.(0,1).(2,1)",[]));
-		    Tree (Node ("tree0.(0,1).(2,2)",[]));
-		    Tree (Node ("tree0.(0,1).(2,3)",[]));
+		    Node ("tree0.(0,1).(2,1)",[]);
+		    Node ("tree0.(0,1).(2,2)",[]);
+		    Node ("tree0.(0,1).(2,3)",[]);
 		  ];
 	      ]
-  ))
+  )
 
 
 let tree = 
-  Tree (Node ("(0,1)",
+  Node ("(0,1)",
 	      [
 		init_f_list 
 		  [
-		    Tree (Node ("(0,1).(1,1)",[]));
-		    Tree (Node ("(0,1).(1,2)",[]));
-		    Tree (Node ("(0,1).(1,3)",[]));
+		    Node ("(0,1).(1,1)",[]);
+		    Node ("(0,1).(1,2)",[]);
+		    Node ("(0,1).(1,3)",[]);
 		  ];
 		init_f_list
 		  [
-		    Tree (Node ("(0,1).(2,1)",
+		    Node ("(0,1).(2,1)",
 				[
 				  init_f_list
 				    [
-				      Tree (Node ("(0,1).(2,1),(1,1)",[]));
-				      Tree (Node ("(0,1).(2,1),(1,2)",[]));
+				      Node ("(0,1).(2,1),(1,1)",[]);
+				      Node ("(0,1).(2,1),(1,2)",[]);
 				    ];
 				  init_f_list
 				    [
-				      Tree (Node ("(0,1).(2,1),(2,1)",[]));
-				      Link_to (2,None,[(4,2);(2,2)]);
+				      Node ("(0,1).(2,1),(2,1)",[]);
 				    ];
-				]));
-		    Tree (Node ("(0,1).(2,2)",[]));
+				  Link_to (2,None,([],Some 4)); 
+				]);
+		    Node ("(0,1).(2,2)",[]);
 		  ];
 		init_f_list
 		  [
-		    Tree (Node ("(0,1).(3,1)",[]));
-		    Tree (Node ("(0,1).(3,2)",[]));
-		    Tree (Node ("(0,1).(3,3)",[]));
-		    Tree (Node ("(0,1).(3,4)",[]));
+		    Node ("(0,1).(3,1)",[]);
+		    Node ("(0,1).(3,2)",[]);
+		    Node ("(0,1).(3,3)",[]);
+		    Node ("(0,1).(3,4)",[]);
 		  ];
 		init_f_list
 		  [
-		    Tree (Node ("(0,1).(4,1)",[]));
+		    Node ("(0,1).(4,1)",[]);
 		    tree0;
 		  ];
 	      ]
-  ))
+  )
     
 
 let rec print_tree prefix buffer tree =

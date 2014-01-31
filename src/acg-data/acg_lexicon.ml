@@ -222,7 +222,8 @@ struct
       let resume = 
 	match parse_forest with
 	| [] -> []
-	| _ -> AlterTrees.AlternTrees.init parse_forest in
+	| [f] -> AlterTrees.AlternTrees.init f
+	| _ -> failwith "Bug: not fully specified query" in
       let () = Datalog.Predicate.format_derivations2 
 	~query:query
 	temp_prog.Datalog.Program.pred_table
