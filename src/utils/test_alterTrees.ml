@@ -64,6 +64,23 @@ let tree =
   )
     
 
+let tree1 =
+  [
+    Node ("1",
+	  [
+	    init_f_list
+	      [
+		Node ("2.1",[]);
+	      ];
+	  ]);
+    Node ("2",
+	  [
+	    Link_to (1,[]);
+	  ]);
+
+
+  ]
+    
 let rec print_tree prefix buffer tree =
   match tree with
   | SimpleTree (v,[]) ->
@@ -137,7 +154,8 @@ let rec ask_for_next_parse f param =
 
   
 (*let resume= init [tree;tree0] in*)
-let resume= init [tree] in
+(*let resume= init [tree] in*)
+let resume= init tree1 in
 let () = Printf.printf "**********************************\n%!" in
 ask_for_next_parse
   (fun (res,i) -> 
@@ -147,4 +165,4 @@ ask_for_next_parse
       let () = Printf.printf "Got result %i\n%!" i in
       let () = output_tree t in
       Some (resume,i+1))
-  (resume,1)
+  (((resume,[]),AddressMap.empty),1)

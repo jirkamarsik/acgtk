@@ -23,6 +23,30 @@ struct
     Printf.sprintf "(-%d,%s)" i (address_to_string add)
 
 
+
+  module AddressMap = 
+    Map.Make(
+      struct
+	type t = address
+	let rec compare add1 add2 = 
+	  match add1,add2 with
+	  | [],[] -> 0
+	  | _,[] -> 1
+	  | [],_ -> -1
+	  | (a,b)::tl1,(a',b')::tl2 -> 
+	    let res=a-a' in
+	    if res <> 0 then
+	      res
+	    else
+	      let res=b-b' in
+	      if res <> 0 then
+		res
+	      else
+		compare tl1 tl2
+      end)
+
+
+
   type 'a stack='a list
   type 'a list_context ='a stack
 
@@ -39,7 +63,7 @@ struct
   (* the last int argument correspond to the position of the focused
      tree in the list. It is useful to check wheter an child point to one
      of its ancestor *)
-  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option
+  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option * address
   (* the int argument after the focused list correspond to the
      position of the focused tree in the list. It is useful to check
      wheter an child point to one of its ancestor *)
@@ -48,6 +72,16 @@ struct
 
 
   type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
+
+
+  let forest_address = function
+    | Top _ -> []
+    | Zip (_,_,_,_,_,_,add) -> add
+
+  let tree_address = function
+    | Top ((_,_),i) -> i,[]
+    | Zip (_,_,_,i,_,_,add) -> i,add
+
 
 
   let rec fold_depth_first ((transform,apply) as f) t =
@@ -71,10 +105,25 @@ struct
   type 'a focused_tree = 'a zipper * 'a simple_tree
 
 
-  type 'a resumption = ('a focused_alt_tree * 'a focused_tree) list
+  type 'a simple_resumption = ('a focused_alt_tree * 'a focused_tree) list
 
+  type 'a resumption = 'a simple_resumption * 'a simple_resumption
 
-  let extend_resume (f_f,f_t) (resume:'a resumption) = (f_f,f_t)::resume
+  exception Infinite_loop
+
+  let extend_simple_resume (f_f,f_t) resume = (f_f,f_t)::resume
+
+  let extend_resume ?actual ?delayed ((resume1,resume2):'a resumption) =
+    match actual,delayed with
+    | None,None -> resume1,resume2
+    | Some v,None -> extend_simple_resume v resume1,resume2
+    | None,Some v -> resume1,extend_simple_resume v resume2
+    | Some v1,Some v2->extend_simple_resume v1 resume1,extend_simple_resume v2 resume2
+
+  let swap (resume1,resume2) =
+    match resume1 with
+    | a::tl -> a,(tl,resume2)
+    | [] -> raise Infinite_loop
 
   type move =
   | Up
@@ -171,7 +220,7 @@ struct
       let forest =
 	match z with
 	| Top ((p,n),_) -> unstack (p,t::n)
-	| Zip (_,_,(p,n),_,_,_) -> unstack (p,t::n) in
+	| Zip (_,_,(p,n),_,_,_,_) -> unstack (p,t::n) in
       (z,t),forest
     | (j_alt,i_child)::tl ->
       let z,Node(v',children')=
@@ -179,14 +228,14 @@ struct
 	| Top ((p,n),_) -> 
 	  let (p,n),t'= move_forward j_alt (f_list_up (p,t::n)) in
 	  Top ((p,n),j_alt),t'
-	| Zip (v',(l,r),(p,n),_,z',l_c) ->
+	| Zip (v',(l,r),(p,n),_,z',l_c,add) ->
 	  let (p,n),t'=move_forward j_alt (f_list_up (p,t::n)) in
-	  Zip (v',(l,r),(p,n),j_alt,z',l_c),t' in
+	  Zip (v',(l,r),(p,n),j_alt,z',l_c,add),t' in
       let (l',r'),f_forest=move_forward i_child ([],children') in
       match f_forest with
       | Forest f ->
 	let (p',n'), t'=move_forward 1 (f_list_up f) in
-	enter tl (Zip(v',(l',r'),(p',n'),1,z,None),t')
+	enter tl (Zip(v',(l',r'),(p',n'),1,z,None,(j_alt,i_child)::(forest_address z)),t')
       | Link_to (back,addr) -> forest_at (back-1,addr) (z,Node(v',children'))
   and forest_at (back,addr) (z,(Node (_,children) as t)) = 
     LOG "Look for forest at path %s\n%!" (path_to_string (back,addr)) LEVEL DEBUG;
@@ -197,21 +246,20 @@ struct
       match z,t with
       | Top _ ,_ when back>0 -> raise (Move_failure Up)
       | _,_ when back=0 -> enter addr (z,t)
-      | Zip (v,(l,r),(p,n),_,z',None),t -> 
-	let children=unstack (l,(Forest (p,t::n))::r) in
+      | Zip (v,(l,r),(p,n),_,z',None,_),t -> 
+	let children=unstack (l,(Forest (f_list_up (p,t::n)))::r) in
 	forest_at (back-1,addr) (z',Node (v,children))      
-      | Zip (_,_,(p,n),_,_,Some local_context),t -> 
+      | Zip (_,_,(p,n),_,_,Some local_context,_),t -> 
 	(match local_context with
-      (*      | Top ((p,n),i) when back=1-> forest_at (0,alt,addr) (Top((p,n),i),t) *)
 	| Top ((p,n),i) -> failwith "want to move back on a top context"
-	| Zip (v,(l,r),(p,n),_,z',_) ->
-	  let children=unstack (l,(Forest (p,t::n))::r) in
+	| Zip (v,(l,r),(p,n),_,z',_,_) ->
+	  let children=unstack (l,(Forest (f_list_up (p,t::n)))::r) in
 	  forest_at (back-1,addr) (z',Node (v,children)))
       | _,_ -> raise Bad_address
 	
   let set_local_context l_ctxt = function
     | Top _ -> raise Bad_argument
-    | Zip (v,sibling,alt,i,z,_) -> Zip (v,sibling,alt,i,z,Some l_ctxt) 
+    | Zip (v,sibling,alt,i,z,_,add) -> Zip (v,sibling,alt,i,z,Some l_ctxt,add) 
 
   (*  let rec down_in_tree (z,t) =
       match t with
@@ -251,9 +299,9 @@ struct
     match z with
     | Top ((_,[]),_) -> raise No_next_alt
     | Top ((p,a::tl),i) ->  Top ((t::p,tl),i+1),a
-    | Zip (_,(_,_),(_,[]),_,_,_) -> raise No_next_alt
-    | Zip (v,(l,r),(p,a::n),i,z',local_context) -> 
-      Zip (v,(l,r),(t::p,n),i+1,z',local_context),a
+    | Zip (_,(_,_),(_,[]),_,_,_,_) -> raise No_next_alt
+    | Zip (v,(l,r),(p,a::n),i,z',local_context,add) -> 
+      Zip (v,(l,r),(t::p,n),i+1,z',local_context,add),a
     
 
   let rec get_all_alt (z,t) acc =
@@ -269,7 +317,22 @@ struct
     let (z',t'),f = forest_at path (z,t) in
     (z',t'),([],f)
 
-  let rec down (z,t) (zipper,b_t) resume =
+
+  let pick_new_alt add max map =
+    LOG "Trying to pick the last alternative chosen at [%s]. Max is %d" (address_to_string add) max LEVEL DEBUG;
+    let i=
+      try
+	AddressMap.find add map
+      with
+      | Not_found -> 0 in
+    LOG "Found %d" i LEVEL DEBUG;
+    if i<max then
+      i+1,AddressMap.add add (i+1) map
+    else
+      1,AddressMap.add add 1 map
+
+
+  let rec down (z,t) (zipper,b_t) resume visited_addresses=
     match t with
     | Node (_,[]) -> raise (Move_failure Down)
     | Node (v,forest::tl) ->
@@ -280,59 +343,116 @@ struct
 	  match f with
 	  | _,[] -> raise Bad_address
 	  | p,a::n -> (p,n),a in
-	let foc_forest = Zip (v,([],tl),(p,n),1,z,Some z''),a in
+	let foc_forest = Zip (v,([],tl),(p,n),1,z,Some z'',forest_address z''),a in
 	let zipper=Zipper(v,([],[]),zipper) in
 	let foc_tree=zipper,simple_tree a in
-	let resume =
-	  let all_alt = get_all_alt foc_forest [] in
-	  List.fold_left
-	    (fun acc (z,t) ->
-	      extend_resume ((z,t),(zipper,simple_tree t)) acc)
-	    resume
-	    all_alt in
-	foc_forest,foc_tree,resume
+	(match add with
+	| [] ->
+	  let alt,visited_addresses=pick_new_alt (forest_address z'') (List.length (snd f)) visited_addresses in
+	  let resume,_ =
+	    let all_alt = get_all_alt foc_forest [foc_forest] in
+	    List.fold_left
+	      (fun (acc,j) (z,t) ->
+		(if j=alt then
+		    extend_resume ~actual:((z,t),(zipper,simple_tree t)) acc
+		 else
+		    extend_resume ~delayed:((z,t),(zipper,simple_tree t)) acc),
+		j-1)
+	      (resume,List.length (snd f))
+	      all_alt in
+	  let (foc_forest,foc_tree),resume =
+	    match resume with
+	    | [],[] -> failwith "Bug"
+	    | [],a::tl -> a,([],tl)
+	    | a::tl,r2 -> a,(tl,r2) in
+	  foc_forest,foc_tree,resume,visited_addresses
+	(*	  (try
+		  let (foc_forest,foc_tree),resume = swap (extend_resume ~delayed:(foc_forest,foc_tree) resume) in
+		  foc_forest,foc_tree,resume
+		  with
+		  | Infinite_loop -> foc_forest,foc_tree,resume) *)
+	| _ ->
+	  let resume =
+	    let all_alt = get_all_alt foc_forest [] in
+	    List.fold_left
+	      (fun acc (z,t) ->
+		extend_resume ~actual:((z,t),(zipper,simple_tree t)) acc)
+	      resume
+	      all_alt in
+	  foc_forest,foc_tree,resume,visited_addresses)
       | Forest ([],[]) -> raise Not_well_defined
       | Forest (_,[]) -> raise No_next_alt
-      |	Forest (p,a::n) ->
-	let foc_forest=Zip (v,([],tl),(p,n),1,z,None),a in
+      | Forest l_f ->
+	let t_alt,add=tree_address z in
+	let (p,n),a=move_forward 1 (f_list_up l_f) in
+	let foc_forest=Zip (v,([],tl),(p,n),1,z,None,(t_alt,1)::add),a in
 	let zipper=Zipper(v,([],[]),zipper) in
 	let foc_tree=zipper,simple_tree a in
 	let resume =
 	  let all_alt = get_all_alt foc_forest [] in
 	  List.fold_left
-	    (fun acc (z,t) -> extend_resume ((z,t),(zipper,simple_tree t)) acc)
+	    (fun acc (z,t) -> extend_resume ~actual:((z,t),(zipper,simple_tree t)) acc)
 	    resume
 	    all_alt in
-	foc_forest,foc_tree,resume)
-      
-  let right (z,t) (zipper,b_t) resume =
+	foc_forest,foc_tree,resume,visited_addresses)
+	
+  let right (z,t) (zipper,b_t) resume visited_addresses=
     match z,zipper with
     | _ ,ZTop -> raise (Move_failure Right)
     | Top _,_ ->  raise (Move_failure Right)
-    | Zip (v,(_,[]),_,_,_,_), Zipper(v',_,_) when v=v'-> raise (Move_failure Right)
-    | Zip (v,(l,a::r),(p,n),i,z',_), Zipper(v',(l',r'),z'') when v=v'->
-      let l_c,f =
+    | Zip (v,(_,[]),_,_,_,_,_), Zipper(v',_,_) when v=v'-> raise (Move_failure Right)
+    | Zip (v,(l,a::r),(p,n),i,z',_,add), Zipper(v',(l',r'),z'') when v=v'->
+      let l_c,f,loop,(alt,visited_addresses) =
 	match a with
-	| Forest f -> None,f
+	| Forest f -> None,f_list_up f,false,(-1,visited_addresses)
+	| Link_to (back,[]) -> 
+	  let new_ctx = z', Node(v,unstack (l,(Forest(f_list_up (p,t::n)))::a::r)) in
+	  let (z,_),f=actual_forest (back-1,[]) new_ctx in
+	  Some z,f,true,pick_new_alt (forest_address z) (List.length (snd f)) visited_addresses
 	| Link_to (back,add) -> 
-	  let new_ctx = z', Node(v,unstack (l,(Forest(p,t::n))::a::r)) in
+	  let new_ctx = z', Node(v,unstack (l,(Forest(f_list_up (p,t::n)))::a::r)) in
 	  let (z,_),f=actual_forest (back-1,add) new_ctx in
-	  Some z,f in
+	  Some z,f,false,(-1,visited_addresses) in
       let (p',n'),t' = 
 	match f with
 	| _,[] -> raise Bad_address
 	| p,a::n -> (p,n),a in
-      let foc_forest = Zip (v,((Forest(p,t::n))::l,r),(p',n'),1,z',l_c),t' in
+      let foc_forest = Zip (v,((Forest(p,t::n))::l,r),(p',n'),1,z',l_c,add),t' in
       let zipper= Zipper(v',(b_t::l',r'),z'') in
       let foc_tree=zipper,simple_tree t' in
-      let resume =
-	let all_alt = get_all_alt foc_forest [] in
-	List.fold_left
-	  (fun acc (z,t) ->
-	    extend_resume ((z,t),(zipper,simple_tree t)) acc)
-	  resume
-	  all_alt in
-      foc_forest,foc_tree,resume
+      (match loop with
+      | true -> 
+	let resume,_ =
+	  let all_alt = get_all_alt foc_forest [foc_forest] in
+	  List.fold_left
+	    (fun (acc,j) (z,t) ->
+	      (if j=alt then
+		  extend_resume ~actual:((z,t),(zipper,simple_tree t)) acc
+	       else
+		  extend_resume ~delayed:((z,t),(zipper,simple_tree t)) acc),
+	      j-1)
+	    (resume,List.length (snd f))
+	    all_alt in
+	let (foc_forest,foc_tree),resume = 
+	  match resume with
+	  | [],[] -> failwith "Bug"
+	  | [],a::tl -> a,([],tl)
+	  | a::tl,r2 -> a,(tl,r2) in
+	foc_forest,foc_tree,resume,visited_addresses
+(*	  try
+	    swap (extend_resume ~delayed:(foc_forest,foc_tree) resume)
+	  with
+	  | Infinite_loop -> (foc_forest,foc_tree),resume in
+	foc_forest,foc_tree,resume *)
+      | false ->
+	let resume =
+	  let all_alt = get_all_alt foc_forest [] in
+	  List.fold_left
+	    (fun acc (z,t) ->
+	      extend_resume ~actual:((z,t),(zipper,simple_tree t)) acc)
+	    resume
+	    all_alt in
+	foc_forest,foc_tree,resume,visited_addresses)
     | _ -> failwith "Bug: alt_tree and Simpletree are not representing the same trees"
       
 
@@ -341,86 +461,88 @@ struct
     | Top _,ZTop -> raise (Move_failure Up)
     | _,ZTop -> failwith "Bug: both forest and tree context should be top"
     | Top _,_ ->  failwith "Bug: both forest and tree context should be top"
-    | Zip (v,(l,r),(p,n),_,z',_),Zipper(v',_,_) when v=v' -> 
-      (z',Node (v,unstack (l,(Forest(p,t::n))::r))),
+    | Zip (v,(l,r),(p,n),_,z',_,_),Zipper(v',_,_) when v=v' -> 
+      (z',Node (v,unstack (l,(Forest(f_list_up (p,t::n)))::r))),
       f_tree_up (zipper,b_t)
     | _ -> failwith "Bug: alt_tree and Simpletree are not representing the same trees"
 
 
-  let rec close_forest_context_up f_forest f_tree resume =
+  let rec close_forest_context_up f_forest f_tree resume visited_addresses =
     let f_forest,f_tree = up f_forest f_tree in
     try
-      right f_forest f_tree resume
+      right f_forest f_tree resume visited_addresses
     with 
     | Move_failure Right -> 
       (try
-	 close_forest_context_up f_forest f_tree resume
+	 close_forest_context_up f_forest f_tree resume visited_addresses
        with
-       | Move_failure Up -> f_forest,f_tree,resume)
+       | Move_failure Up -> f_forest,f_tree,resume,visited_addresses)
 	
 	
-  let rec build_tree_aux f_forest f_tree resume =
+  let rec build_tree_aux f_forest f_tree resume visited_addresses=
     try
       LOG "Trying to go down" LEVEL DEBUG;
-      let f_forest,f_tree,resume = down f_forest f_tree resume in
+      let f_forest,f_tree,resume,visited_addresses = down f_forest f_tree resume visited_addresses in
       LOG "Succeeded" LEVEL DEBUG;
-      build_tree_aux f_forest f_tree resume
+      build_tree_aux f_forest f_tree resume visited_addresses
     with
     | Move_failure Down ->
       (try
 	 LOG "Trying to go right" LEVEL DEBUG;
-	 let f_forest,f_tree,resume = right f_forest f_tree resume in
+	 let f_forest,f_tree,resume,visited_addresses = right f_forest f_tree resume visited_addresses in
 	 LOG "Succeeded" LEVEL DEBUG;
-	 build_tree_aux f_forest f_tree resume
+	 build_tree_aux f_forest f_tree resume visited_addresses
        with
        | Move_failure Right ->
 	 LOG "Trying to close up" LEVEL DEBUG;
-	 (match close_forest_context_up f_forest f_tree resume with
-	 | ((Top _ ,_),(ZTop,_),_) as res -> 
+	 (match close_forest_context_up f_forest f_tree resume visited_addresses with
+	 | ((Top _ ,_),(ZTop,_),_,_) as res -> 
 	   LOG "Succeeded" LEVEL DEBUG;
 	   res
-	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree),resume' -> 
+	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree),resume',v_a -> 
 	   LOG "Succeeded" LEVEL DEBUG;
 	   LOG "Trying to restart a building" LEVEL DEBUG;
-	   build_tree_aux l_f_forest l_f_tree resume'
+	   build_tree_aux l_f_forest l_f_tree resume' v_a
 	 | _ -> failwith "Bug: not representing the same tree"))
 	
-  let build_tree f_forest f_tree resume = build_tree_aux f_forest f_tree resume
+  let build_tree f_forest f_tree resume v_a = build_tree_aux f_forest f_tree resume v_a
 
-  let rec build_trees_aux f_forest f_tree resume acc =
-    let _,(_,tree),resume = build_tree f_forest f_tree resume in
+  let rec build_trees_aux f_forest f_tree resume v_a acc =
+    let _,(_,tree),resume,v_a = build_tree f_forest f_tree resume v_a in
     match resume with
-    | [] -> tree::acc
-    | (f_forest,f_tree)::tl -> build_trees_aux f_forest f_tree tl (tree::acc)
+    | [],[] -> tree::acc,v_a
+    | [],(f_forest,f_tree)::tl -> build_trees_aux f_forest f_tree ([],tl) v_a (tree::acc)
+    | (f_forest,f_tree)::tl,delayed -> build_trees_aux f_forest f_tree (tl,delayed) v_a (tree::acc)
 
       
 
   let init = function
     | [] -> raise Not_well_defined
     | alt_trees ->
-      snd (f_list_fold
+      (snd (f_list_fold
 	     (([],alt_trees),1)
 	     (fun ((p,n),i) t acc -> ((Top ((p,n),i),t),(ZTop,simple_tree t))::acc)
-	     [])
+	     []))
 
   let build_trees forest =
     match init forest with
     | [] -> failwith "Bug"
-    | (f_forest,f_tree)::resume -> build_trees_aux f_forest f_tree resume []
-
-  let resumption = function
-    | [] -> None,[]
     | (f_forest,f_tree)::resume -> 
+      let res,_ = build_trees_aux f_forest f_tree (resume,[]) AddressMap.empty [] in
+      res
+
+  let resumption (res,v_a) = 
+    match res with
+    | [],[] -> None,(([],[]),v_a)
+    | (f_forest,f_tree)::resume,delayed -> 
       LOG "Building a tree from a forest" LEVEL DEBUG;
       LOG "It remains %d elements in the resumption list" (List.length resume) LEVEL DEBUG;
-      let _,(_,tree),resume=build_tree f_forest f_tree resume in
-(*      let resume =
-	try
-	  let f_forest = next_alt f_forest in
-	  (f_forest,f_tree)::resume
-	with
-	| No_next_alt -> resume in *)
-      Some tree,resume
+      let _,(_,tree),res',v_a=build_tree f_forest f_tree (resume,delayed) v_a in
+      Some tree,(res',v_a)
+    | [],(f_forest,f_tree)::delayed -> 
+      LOG "Swapping with the delayed resumption list" LEVEL DEBUG;
+      let _,(_,tree),resume,v_a=build_tree f_forest f_tree ([],delayed) v_a in
+      Some tree,(resume,v_a)
 
 end
 

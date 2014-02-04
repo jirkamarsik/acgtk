@@ -17,6 +17,8 @@ module AlternTrees :
     val path_to_string : relative_path -> string
 
     val address_to_string : address -> string
+
+    module AddressMap:Map.S with type key=address
       
     type 'a stack='a list
     type 'a list_context ='a stack
@@ -31,7 +33,7 @@ module AlternTrees :
   | Link_to of relative_path
   and 'a alt_tree_zipper = 
   | Top of ('a tree) focused_list * int
-  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option
+  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option * address
   (* The last argument is a local context when the current tree
      was reached after a Link_to move *)
       
@@ -45,7 +47,9 @@ module AlternTrees :
 	
     type 'a focused_tree = 'a zipper * 'a simple_tree
       
-  type 'a resumption = ('a focused_alt_tree * 'a focused_tree) list
+  type 'a simple_resumption = ('a focused_alt_tree * 'a focused_tree) list
+
+  type 'a resumption = 'a simple_resumption * 'a simple_resumption
       
     type move =
     | Up
@@ -62,11 +66,11 @@ module AlternTrees :
 
 (*    val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree *)
 
-    val init : 'a tree list -> ('a focused_alt_tree * 'a focused_tree) list
+    val init : 'a tree list -> 'a simple_resumption
 
-    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> ('a focused_alt_tree * 'a focused_tree) list -> 'a focused_alt_tree * 'a focused_tree * ('a focused_alt_tree * 'a focused_tree) list
-    val down : 'a focused_alt_tree -> 'a focused_tree -> ('a resumption) -> 'a focused_alt_tree * 'a focused_tree *  'a resumption
-    val right : 'a focused_alt_tree -> 'a focused_tree -> ('a resumption) -> 'a focused_alt_tree * 'a focused_tree * ('a resumption)
+    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> 'a resumption -> int AddressMap.t -> 'a focused_alt_tree * 'a focused_tree * 'a resumption * int AddressMap.t
+    val down : 'a focused_alt_tree -> 'a focused_tree -> 'a resumption -> int AddressMap.t -> 'a focused_alt_tree * 'a focused_tree *  'a resumption * int AddressMap.t
+    val right : 'a focused_alt_tree -> 'a focused_tree -> ('a resumption)  -> int AddressMap.t -> 'a focused_alt_tree * 'a focused_tree * ('a resumption) * int AddressMap.t
     val up : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
 
     val zip_up : 'a focused_tree -> 'a simple_tree
@@ -76,7 +80,7 @@ module AlternTrees :
 	possible alternatives met in building [t] to produce
 	[resume']. It returns [(None,[])] if no tree can be
 	extracted *)
-    val resumption : 'a resumption ->  'a simple_tree option * ('a resumption)
+    val resumption : 'a resumption* int AddressMap.t ->  'a simple_tree option * ('a resumption * int AddressMap.t)
 
     val build_trees : 'a tree list -> 'a simple_tree list
 
