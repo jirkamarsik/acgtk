@@ -61,14 +61,19 @@ struct
   | Forest of 'a alternatives
   | Link_to of relative_path
   and 'a alt_tree_zipper = 
-  | Top of ('a tree) focused_list
-  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * 'a alt_tree_zipper * 'a alt_tree_zipper option
-  (* The last argument is a local context when the current tree
-     was reached after a Link_to move *)
+  | Top of ('a tree) focused_list * int
+  (* the last int argument correspond to the position of the focused
+     tree in the list. It is useful to check wheter an child point to one
+     of its ancestor *)
+  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option
+  (* the int argument after the focused list correspond to the
+     position of the focused tree in the list. It is useful to check
+     wheter an child point to one of its ancestor *)
+  (* The last argument is a local context when the current tree was
+     reached after a Link_to move *)
 
 
   type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
-
 
 
   let rec fold_depth_first ((transform,apply) as f) t =
@@ -82,7 +87,7 @@ struct
 
 
 
-      
+	
   type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  tree
 
   type 'a zipper = 
@@ -117,12 +122,12 @@ struct
 
 
   let f_list_forward = function
-    | _,[] -> raise (Move_failure Forward)
-    | s,a::tl -> a::s,tl
+    | (_,[],_) -> raise (Move_failure Forward)
+    | (s,a::tl,i) -> (a::s,tl),i+1
 
   let f_list_backward = function
-    | [],_ -> raise (Move_failure Backward)
-    | a::s,l-> s,a::l
+    | ([],_),_ -> raise (Move_failure Backward)
+    | (a::s,l),i-> (s,a::l),i-1
 
   let rec f_list_up = function
     | [],l -> [],l
@@ -133,20 +138,23 @@ struct
     | s,a::tl -> f_list_down (a::s,tl)
 
 
-  let rec f_list_fold (p,n) f acc =
+  let rec f_list_fold ((p,n),i) f acc =
     match n with
     | [] -> (p,[]),acc
-    | a::tl -> f_list_fold (a::p,tl) f (f (p,tl) a acc)
+    | a::tl -> f_list_fold ((a::p,tl),i+1) f (f ((p,tl),i) a acc)
 
   let f_list_fold_and_hd (p,n) f acc =
     match n with
     | [] -> raise Bad_argument
-    | [a] -> f (p,[]) a,(p,[]),acc
+    | [a] -> f ((p,[]),1) a,(p,[]),acc
     | a::tl ->
-      let head = f (p,tl) a in
-      let ctxt,res = f_list_fold (a::p,tl) (fun ctxt elt l_acc -> (f ctxt elt)::l_acc) acc in
+      let head = f ((p,tl),1) a in
+      let ctxt,res = 
+	f_list_fold
+	  ((a::p,tl),2)
+	  (fun ctxt elt l_acc -> (f ctxt elt)::l_acc) acc in
       head,ctxt,res
-	
+
 
 
 
@@ -173,74 +181,77 @@ struct
     | i,a::tl when i>1 -> move_forward (i-1) (a::l,tl)
     | _ -> raise Bad_address
       
-  let rec enter addr (z,(Node (v,children) as t)) =
+  let rec enter loop addr (z,(Node (v,children) as t)) =
     LOG "Entering \"%s\" on a node with %d children%!" (address_to_string addr) (List.length children) LEVEL DEBUG;
     match addr with
     | [],None ->
       (match z with
-      | Top (p,n) -> None,([],[]),f_list_up (p,t::n)
+      | Top ((p,n),i) -> loop, None,([],[]),f_list_up (p,t::n)
       | _ -> failwith "Bug: entering a non top forest with an empty address")
     | _,None -> raise Not_well_defined
     | [],Some i -> 
       let (l,r),c = move_forward i ([],children) in
       (match c with
-      | Forest (p,n) -> Some (z,t),(l,r),(p,n)
-      | Link_to (back,alt,add) -> forest_at (back-1,alt,add) (z,t))
+      | Forest (p,n) -> loop, Some (z,t),(l,r),(p,n)
+      | Link_to (back,alt,add) -> 
+	let l,f_f,c,f = forest_at (back-1,alt,add) (z,t) in
+	l||loop,f_f,c,f)
     | (i_child,j_alt)::tl,Some c ->
       let (l,r),forest=move_forward i_child ([],children) in
       (match forest with
       | Forest (p,n) -> 
 	let (p,n),t = move_forward j_alt (f_list_up (p,n)) in
-	enter (tl,Some c) (Zip(v,(l,r),(p,n),z,None),t)
+	enter loop (tl,Some c) (Zip(v,(l,r),(p,n),j_alt,z,None),t)
       | Link_to (back,alt,add) -> 
 	(match forest_at (back-1,alt,add) (z,t) with
-	| None,(l',r'),f ->
+	| b,None,(l',r'),f ->
 	  let (p'',n''),t''= move_forward j_alt (f_list_up f) in
-	  enter (tl,Some c) (Zip (v,(l,r),(p'',n''),z,Some (Top (p'',n''))),t'')
-	| Some (z',Node(v',_)),(l',r'),f ->
+	  enter (b||loop) (tl,Some c) (Zip (v,(l,r),(p'',n''),j_alt,z,Some (Top ((p'',n''),j_alt))),t'')
+	| b,Some (z',Node(v',_)),(l',r'),f ->
 	  let (p'',n''),t''= move_forward j_alt (f_list_up f) in
-	  let local_context=Zip(v',(l',r'),(p'',n''),z',None) in
-	  enter (tl,Some c) (Zip (v,(l,r),(p'',n''),z',Some local_context),t'')))
+	  let local_context=Zip(v',(l',r'),(p'',n''),j_alt,z',None) in
+	  enter (b||loop) (tl,Some c) (Zip (v,(l,r),(p'',n''),j_alt,z',Some local_context),t'')))
   and forest_at (back,alt,addr) (z,(Node (_,children) as t)) = 
     LOG "Look for forest at path %s\n%!" (path_to_string (back,alt,addr)) LEVEL DEBUG;
     LOG "current focused tree has %d children\n%!" (List.length children) LEVEL DEBUG;
     match z,t with
     | Top _ ,_ when back>0 -> raise (Move_failure Up)
-    | Top (p,n) as z,t when back=0 ->
+    | Top ((p,n),i) as z,t when back=0 ->
       (match alt with
-      | None -> enter addr (z,t)
+      | None -> enter true addr (z,t)
       | Some j_alt -> 
 	let (p,n),t = move_forward j_alt ([],unstack (p,t::n)) in
-	enter addr (Top (p,n),t))
-    | z,t when back=0 -> enter addr (z,t)
-    | Zip (v,(l,r),(p,n),z',None),t -> 
+	enter true addr (Top ((p,n),j_alt),t))
+    | z,t when back=0 -> enter false addr (z,t)
+    | Zip (v,(l,r),(p,n),_,z',None),t -> 
       let children=unstack (l,(Forest (p,t::n))::r) in
       forest_at (back-1,alt,addr) (z',Node (v,children))      
-    | Zip (_,_,(p,n),_,Some local_context),t -> 
+    | Zip (_,_,(p,n),_,_,Some local_context),t -> 
       (match local_context with
-      | Top (p,n) -> failwith "want to move back on a top context"
-      | Zip (v,(l,r),(p,n),z',_) ->
+      | Top ((p,n),i) when back=1-> forest_at (0,alt,addr) (Top((p,n),i),t)
+      | Top ((p,n),i) -> failwith "want to move back on a top context"
+      | Zip (v,(l,r),(p,n),_,z',_) ->
 	let children=unstack (l,(Forest (p,t::n))::r) in
 	forest_at (back-1,alt,addr) (z',Node (v,children)))
     | _,_ -> raise Bad_address
       
   let set_local_context l_ctxt = function
     | Top _ -> raise Bad_argument
-    | Zip (v,sibling,alt,z,_) -> Zip (v,sibling,alt,z,Some l_ctxt) 
+    | Zip (v,sibling,alt,i,z,_) -> Zip (v,sibling,alt,i,z,Some l_ctxt) 
 
-(*  let rec down_in_tree (z,t) =
-    match t with
-    | Node (_,[]) -> raise  (Move_failure Down)
-    | Node (v,a::tl) -> 
+  (*  let rec down_in_tree (z,t) =
+      match t with
+      | Node (_,[]) -> raise  (Move_failure Down)
+      | Node (v,a::tl) -> 
       (match a with
       | Forest ([],[]) -> raise Not_well_defined
       | Forest (_,[]) -> raise  (Move_failure Down)
       | Forest (p,f_t::n) -> Zip (v,([],tl),(p,n),z,None),f_t
       | Link_to path -> 
-	let z',t' = tree_at path (z,t) in
-	let z = set_local_context z' z in
-	down_in_tree (z,t'))
-*)
+      let z',t' = tree_at path (z,t) in
+      let z = set_local_context z' z in
+      down_in_tree (z,t'))
+  *)
     
 (*  let up_in_tree (z,t) =
     match z with
@@ -262,61 +273,31 @@ struct
       | (p,f_t::n) -> Zip(v,(alt::l,r),(p,n),z',local_context),f_t)
 *)
 	
-(*  let next_alt_forward (z,t) =
+  let next_alt (z,t) =
     match z with
-    | Top (_,[]) -> raise No_next_alt
-    | Top (p,a::tl) ->  Top (t::p,tl),a
-    | Zip (_,(_,_),(_,[]),_,_) -> raise No_next_alt
-    | Zip (v,(l,r),(p,a::n),z',local_context) -> Zip (v,(l,r),(t::p,n),z',local_context),a
-*)    
+    | Top ((_,[]),_) -> raise No_next_alt
+    | Top ((p,a::tl),i) ->  Top ((t::p,tl),i+1),a
+    | Zip (_,(_,_),(_,[]),_,_,_) -> raise No_next_alt
+    | Zip (v,(l,r),(p,a::n),i,z',local_context) -> 
+      Zip (v,(l,r),(t::p,n),i+1,z',local_context),a
+    
 
-(*  let rec fold_on_children_aux (l,r) f acc =
-    match r with
-    | [] -> acc,l
-    | a::tl ->
-      (match a with
-      | (_,[]) -> raise No_next_alt
-      | (p,t::n) -> 
-	let acc',t'=f t acc in
-	fold_on_children_aux ((t'::p,n)::l,tl) f acc')
-	
-  let rec extract_tree t  =
-    match t with
-    | Tree (Node (v,children)) ->
-      let tree_children_rev,alt_tree_children_rev=
-	fold_on_children_aux
-	  ([],children)
-	  (fun t acc -> 
-	    let tree,alt_tree= extract_tree t in
-	    tree::acc,alt_tree)
-	  [] in
-      SimpleTree(v,List.rev tree_children_rev),Tree (Node(v,List.rev alt_tree_children_rev))
-    | Link_to path -> failwith "Not possible to implement: missing context arg"
-*)
+  let rec get_all_alt (z,t) acc =
+    try
+      let alt= next_alt (z,t) in
+      get_all_alt alt (alt::acc)
+    with
+    | No_next_alt -> acc
     
   let simple_tree (Node (v,_)) = SimpleTree (v,[])
       
-
-  let dispatch f acc = function
-    | [] -> raise Bad_argument
-    | a::tl -> f a,List.fold_left f acc tl
-      
-      
-(*  let actual_tree (z,t) = 
-    match t with
-    | Tree _ as t -> z,t
-    | Link_to path -> 
-      let z',t'=tree_at path (z,t) in
-      set_local_context z' z,t'
-*)
-
   let actual_forest path (z,t)=
-    let local_context,_,(p,n) = forest_at path (z,t) in
+    let loop,local_context,_,(p,n) = forest_at path (z,t) in
     let l_ctxt=
       match local_context with
       | None -> None
       | Some (z',_) -> Some z' in
-    l_ctxt,(p,n)
+    loop,l_ctxt,(p,n)
 
   let rec down (z,t) (zipper,b_t) resume =
     match t with
@@ -324,54 +305,113 @@ struct
     | Node (v,forest::tl) ->
       (match forest with
       | Link_to (back,alt,add) ->
-	let z'',f =  actual_forest (back-1,alt,add) (z,t) in
+	let loop,z'',f =  actual_forest (back-1,alt,add) (z,t) in
+	let (p,n),a = 
+	  match f with
+	  | _,[] -> raise Bad_address
+	  | p,a::n -> (p,n),a in
+	let foc_forest = Zip (v,([],tl),(p,n),1,z,z''),a in
+	let zipper=Zipper(v,([],[]),zipper) in
+	let foc_tree=zipper,simple_tree a in
+	let resume =
+(*	  try *)
+	    let all_alt = get_all_alt foc_forest [] in
+	    List.fold_left
+	      (fun acc (z,t) ->
+		((z,t),(zipper,simple_tree t))::acc)
+	      resume
+	      all_alt
+(*	    let z,t = next_alt foc_forest in
+	    ((z,t),(zipper,simple_tree t))::resume
+	  with
+	  | No_next_alt -> resume *) in
+	foc_forest,foc_tree,resume
+      (*	  
 	let (f_forest,f_tree),_,resume =
-	  f_list_fold_and_hd
-	    f
-	    (fun (p,n) t' ->
-	      let z'=Zip (v,([],tl),(p,n),z,z'') in
-	      (z',t'),
-	      (Zipper(v,([],[]),zipper),
-	       simple_tree t'))
-	    resume in
-	f_forest,f_tree,resume
+		  f_list_fold_and_hd
+		  f
+		  (fun ((p,n),i) t' ->
+		  let z'=Zip (v,([],tl),(p,n),i,z,z'') in
+		  (z',t'),
+		  (Zipper(v,([],[]),zipper),
+		  simple_tree t'))
+		  resume in
+		  f_forest,f_tree,resume *)
       | Forest ([],[]) -> raise Not_well_defined
       | Forest (_,[]) -> raise No_next_alt
-      | Forest f -> 
+      |	Forest (p,a::n) ->
+	let foc_forest=Zip (v,([],tl),(p,n),1,z,None),a in
+	let zipper=Zipper(v,([],[]),zipper) in
+	let foc_tree=zipper,simple_tree a in
+	let resume =
+	  let all_alt = get_all_alt foc_forest [] in
+	  List.fold_left
+	    (fun acc (z,t) -> ((z,t),(zipper,simple_tree t))::acc)
+	    resume
+	    all_alt in
+(*	  try
+	    let z,t = next_alt foc_forest in
+	    ((z,t),(zipper,simple_tree t))::resume
+	  with
+	  | No_next_alt -> resume in *)
+	foc_forest,foc_tree,resume)
+(*      | Forest f -> 
 	let (f_forest,f_tree),_,resume =
 	  f_list_fold_and_hd
 	    f
-	    (fun (p,n) t' ->
-	      let z'=Zip (v,([],tl),(p,n),z,None) in
-	      (*	      let z',t'= actual_tree (z',t') in *)
+	    (fun ((p,n),i) t' ->
+	      let z'=Zip (v,([],tl),(p,n),i,z,None) in
 	      (z',t'),
 	      (Zipper(v,([],[]),zipper),
 	       simple_tree t'))
 	    resume in
-	f_forest,f_tree,resume)
+	f_forest,f_tree,resume) *)
       
   let right (z,t) (zipper,b_t) resume =
     match z,zipper with
     | _ ,ZTop -> raise (Move_failure Right)
     | Top _,_ ->  raise (Move_failure Right)
-    | Zip (v,(_,[]),_,_,_), Zipper(v',_,_) when v=v'-> raise (Move_failure Right)
-    | Zip (v,(l,a::r),(p,n),z',_), Zipper(v',(l',r'),z'') when v=v'->
-      let l_c,f =
+    | Zip (v,(_,[]),_,_,_,_), Zipper(v',_,_) when v=v'-> raise (Move_failure Right)
+    | Zip (v,(l,a::r),(p,n),i,z',_), Zipper(v',(l',r'),z'') when v=v'->
+      let loop,l_c,f =
 	match a with
-	| Forest f -> None,f
-	| Link_to (0,alt,add) -> actual_forest (0,alt,add)  (z',Node(v,unstack (l,(Forest(p,t::n))::a::r)))
+	| Forest f -> false,None,f
+	| Link_to (0,alt,add) -> 
+	  actual_forest (0,alt,add)  (z',Node(v,unstack (l,(Forest(p,t::n))::a::r))) 
 	| Link_to (back,alt,add) -> 
 	  let new_ctx = z', Node(v,unstack (l,(Forest(p,t::n))::a::r)) in
 	  actual_forest (back-1,alt,add) new_ctx in
+      let (p',n'),t' = 
+	match f with
+	| _,[] -> raise Bad_address
+	| p,a::n -> (p,n),a in
+      let foc_forest = Zip (v,((Forest(p,t::n))::l,r),(p',n'),1,z',l_c),t' in
+      let zipper= Zipper(v',(b_t::l',r'),z'') in
+      let foc_tree=zipper,simple_tree t' in
+      let resume =
+	let all_alt = get_all_alt foc_forest [] in
+	List.fold_left
+	  (fun acc (z,t) ->
+	    	  ((z,t),(zipper,simple_tree t))::acc)
+	  resume
+	  all_alt in
+(*	try
+	  let z,t = next_alt foc_forest in
+	  ((z,t),(zipper,simple_tree t))::resume
+	with
+	| No_next_alt -> resume in *)
+      foc_forest,foc_tree,resume
+(*
+
       let (f_forest,f_tree),_,resume =
 	f_list_fold_and_hd
 	  f
-	  (fun (p',n') t' ->
-	    let z'=Zip (v,((Forest(p,t::n))::l,r),(p',n'),z',l_c) in
+	  (fun ((p',n'),i') t' ->
+	    let z'=Zip (v,((Forest(p,t::n))::l,r),(p',n'),i',z',l_c) in
 	    (z',t'),
 	    (Zipper(v',(b_t::l',r'),z''),simple_tree t'))
 	  resume in
-      f_forest,f_tree,resume
+      f_forest,f_tree,resume *)
     | _ -> failwith "Bug: alt_tree and Simpletree are not representing the same trees"
       
 
@@ -380,7 +420,7 @@ struct
     | Top _,ZTop -> raise (Move_failure Up)
     | _,ZTop -> failwith "Bug: both forest and tree context should be top"
     | Top _,_ ->  failwith "Bug: both forest and tree context should be top"
-    | Zip (v,(l,r),(p,n),z',_),Zipper(v',_,_) when v=v' -> 
+    | Zip (v,(l,r),(p,n),_,z',_),Zipper(v',_,_) when v=v' -> 
       (z',Node (v,unstack (l,(Forest(p,t::n))::r))),
       f_tree_up (zipper,b_t)
     | _ -> failwith "Bug: alt_tree and Simpletree are not representing the same trees"
@@ -438,8 +478,8 @@ struct
     | [] -> raise Not_well_defined
     | alt_trees ->
       snd (f_list_fold
-	     ([],alt_trees) 
-	     (fun (p,n) t acc -> ((Top (p,n),t),(ZTop,simple_tree t))::acc)
+	     (([],alt_trees),1)
+	     (fun ((p,n),i) t acc -> ((Top ((p,n),i),t),(ZTop,simple_tree t))::acc)
 	     [])
 
   let build_trees forest =
@@ -453,6 +493,12 @@ struct
       LOG "Building a tree from a forest" LEVEL DEBUG;
       LOG "It remains %d elements in the resumption list" (List.length resume) LEVEL DEBUG;
       let _,(_,tree),resume=build_tree f_forest f_tree resume in
+(*      let resume =
+	try
+	  let f_forest = next_alt f_forest in
+	  (f_forest,f_tree)::resume
+	with
+	| No_next_alt -> resume in *)
       Some tree,resume
 
 end

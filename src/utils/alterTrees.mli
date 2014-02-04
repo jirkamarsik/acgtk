@@ -29,8 +29,8 @@ module AlternTrees :
   | Forest of 'a alternatives
   | Link_to of relative_path
   and 'a alt_tree_zipper = 
-  | Top of ('a tree) focused_list
-  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * 'a alt_tree_zipper * 'a alt_tree_zipper option
+  | Top of ('a tree) focused_list * int
+  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option
   (* The last argument is a local context when the current tree
      was reached after a Link_to move *)
       

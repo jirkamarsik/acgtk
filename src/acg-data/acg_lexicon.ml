@@ -224,11 +224,11 @@ struct
 	| [] -> []
 	| [f] -> AlterTrees.AlternTrees.init f
 	| _ -> failwith "Bug: not fully specified query" in
-      let () = Datalog.Predicate.format_derivations2 
+(*      let () = Datalog.Predicate.format_derivations2 
 	~query:query
 	temp_prog.Datalog.Program.pred_table
 	temp_prog.Datalog.Program.const_table
-	derivations in
+	derivations in *)
       List.rev resume
     | Some _ , _ -> 
       let () = 

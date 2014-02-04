@@ -275,7 +275,7 @@ struct
       | E.Signature sg -> raise (Scripting_errors.Error (Scripting_errors.Parse_only_for_lexicons (fst (E.Signature1.name sg)),l))
       | E.Lexicon lex -> 
 	let abs,obj=E.Lexicon.get_sig lex in
-	match Data_parser.parse_heterogenous_term ~output:true ~offset:actual_offset data lex with
+	match Data_parser.parse_heterogenous_term ~output:false ~offset:actual_offset data lex with
 	| None -> ()
 	| Some (obj_t,abs_ty) -> 
 	  let resume = get_parse_tree (E.Lexicon.parse obj_t abs_ty lex) abs_ty lex in

@@ -43,7 +43,7 @@ let tree =
 				    [
 				      Node ("(0,1).(2,1),(2,1)",[]);
 				    ];
-				  Link_to (2,None,([],Some 4)); 
+				  Link_to (2,None,([],Some 2)); 
 				]);
 		    Node ("(0,1).(2,2)",[]);
 		  ];
@@ -74,7 +74,8 @@ let rec print_tree prefix buffer tree =
       children
 
 
-let trees= build_trees [tree] in
+(*
+let trees= build_trees [tree0] in
 let buff=Buffer.create 80 in
 let () = Printf.bprintf buff "Found %d trees:\n" (List.length trees) in
 let () = 
@@ -84,7 +85,7 @@ let () =
       Printf.bprintf buff "\n\n")
     trees in
 Printf.printf "%s" (Buffer.contents buff)
-
+*)
 let output_tree t = 
   let buff=Buffer.create 80 in
   let () = print_tree "" buff t in
@@ -131,15 +132,18 @@ let rec ask_for_next_parse f param =
   | All -> all_results param
   | Stop -> ()
 
-      
-
-
-
     
-let resume= init [tree;tree0] in
+
+  
+(*let resume= init [tree;tree0] in*)
+let resume= init [tree] in
+let () = Printf.printf "**********************************\n%!" in
 ask_for_next_parse
-  (fun res -> 
+  (fun (res,i) -> 
     match resumption res with
     | None,_ -> None
-    | Some t,resume -> let () = output_tree t in Some resume)
-  resume
+    | Some t,resume -> 
+      let () = Printf.printf "Got result %i\n%!" i in
+      let () = output_tree t in
+      Some (resume,i+1))
+  (resume,1)
