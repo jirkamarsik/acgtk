@@ -1195,7 +1195,7 @@ struct
     
 
 	
-    let rec build_children root_alt_num parent_address children_num facts derivations visited_facts prog =
+    let rec build_children alt_num parent_address children_num facts derivations visited_facts prog =
       List.fold_left
 	(fun (l_acc,child_num,l_visit) fact ->
 	  LOG "Analysing fact: %s" (ASPred.to_string fact prog.pred_table prog.const_table) LEVEL DEBUG;
@@ -1204,35 +1204,39 @@ struct
 	    l_acc,child_num,l_visit
 	  else
 	    let () = LOG "Keeping it" LEVEL DEBUG in
-	    let cur_add=List.rev parent_address,Some child_num in
+	    let cur_add=
+	      List.fold_left
+		(fun acc elt -> elt::acc)
+		[(alt_num,child_num)]
+		parent_address in
 	    LOG "It will have address [%s]" (AlterTrees.AlternTrees.address_to_string cur_add) LEVEL DEBUG;
 	    try
 	      let existing_add = Predicate.PredicateMap.find fact l_visit  in
-	      let patch=AlternTrees.diff (root_alt_num,cur_add) existing_add in      
-	      LOG "Will point to: (%d,%s) with patch %s" (fst existing_add) (AlternTrees.address_to_string (snd existing_add)) (AlternTrees.path_to_string patch) LEVEL DEBUG;
+	      let patch=AlternTrees.diff cur_add existing_add in      
+	      LOG "Will point to: %s with patch %s" (AlternTrees.address_to_string existing_add) (AlternTrees.path_to_string patch) LEVEL DEBUG;
 	      (AlternTrees.Link_to patch)::l_acc,
 	      child_num-1,
 	      l_visit
 	    with
 	    | Not_found -> 
-	      let l_visit=Predicate.PredicateMap.add fact (root_alt_num,cur_add) l_visit in
+	      let l_visit=Predicate.PredicateMap.add fact cur_add l_visit in
 	      let premises =
 		try 
 		  Predicate.PredicateMap.find fact derivations
 		with
 		| Not_found -> Predicate.PremiseSet.empty in
-	      let l_forest,_,l_visit = build_forest_aux root_alt_num fact premises derivations (child_num,parent_address) l_visit prog in
+	      let l_forest,_,l_visit = build_forest_aux fact premises derivations cur_add l_visit prog in
 	      (AlternTrees.Forest ([],List.rev l_forest))::l_acc,
 	      child_num-1,
 	      l_visit)
 	([],children_num,visited_facts)
 	facts
     and
-	build_forest_aux root_alt_num fact premises derivations (child_num,add) visited_facts_addresses prog =	
+	build_forest_aux fact premises derivations add visited_facts_addresses prog =	
       Predicate.PremiseSet.fold
 	(fun (facts,rule_id,i_rhs_num) (acc,alt_num,l_visited_facts) ->
 	  let children_rev,_,l_visited_facts = 
-	    build_children root_alt_num ((child_num,alt_num)::add) i_rhs_num facts derivations l_visited_facts prog in
+	    build_children alt_num add i_rhs_num facts derivations l_visited_facts prog in
 	  (AlternTrees.Node
 	     (rule_id,
 	      children_rev))::acc,
@@ -1246,13 +1250,13 @@ struct
       Predicate.PremiseSet.fold
 	(fun (facts,rule_id,i_rhs_num) (acc,alt_num,visited_facts_addresses) ->
 	  LOG "Building alt_tree for root: rule %d" rule_id LEVEL DEBUG;
-	  let cur_address= ([],None) in
-	  let visited_facts_addresses = Predicate.PredicateMap.add fact (alt_num,cur_address) visited_facts_addresses in
+	  let cur_address= [] in
+	  let visited_facts_addresses = Predicate.PredicateMap.add fact cur_address visited_facts_addresses in
 	  let children_rev,_,visited_facts_addresses = 
 	    build_children alt_num [] i_rhs_num facts derivations visited_facts_addresses prog in
 	  (AlternTrees.Node
 	     (rule_id,
-		   (*List.rev*) children_rev
+	      children_rev
 	     ))::acc,
 	  alt_num+1,
 	  visited_facts_addresses)
