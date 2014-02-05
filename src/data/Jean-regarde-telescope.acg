@@ -1,5 +1,5 @@
 signature Syntax=
-    S,NP,V,VP,PN,Det,N,Prep,PP:type;
+    S,NP,V,VP,PN,Det,N,Prep,PP,T:type;
 
     subj:NP->VP->S;
     
@@ -15,9 +15,14 @@ signature Syntax=
     Jean:PN;
     un:Det;
     regarde:V;
+    dort:VP;
     homme:N;
     telescope:N;
     avec:Prep;
+
+    loop1:T->NP;
+    loop2:NP->T;
+
 
 end
 
@@ -26,13 +31,13 @@ signature Strings =
     string=o->o: type;
     infix +=lambda x y z.x(y z):string -> string -> string;
 
-    Jean, regarde, un ,homme, avec,telescope:string;
+    Jean, regarde, dort,un ,homme, avec,telescope:string;
 
 
 end
 
 lexicon CFG(Syntax):Strings =
-    S,NP,V,VP,PN,Det,N,Prep,PP:=string;
+    S,NP,V,VP,PN,Det,N,Prep,PP,T:=string;
 
     subj,np,np_pp,obj,vp_pp,pp:=lambda x y.x+y;
     
@@ -41,9 +46,12 @@ lexicon CFG(Syntax):Strings =
     Jean:=Jean;
     un:=un;
     regarde:=regarde;
+    dort:=dort;
     homme:=homme;
     telescope:=telescope;
     avec:=avec;
+
+    loop1,loop2:=lambda x.x;
 end
     
 

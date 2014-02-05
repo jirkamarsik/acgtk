@@ -1204,16 +1204,16 @@ struct
 	    l_acc,child_num,l_visit
 	  else
 	    let () = LOG "Keeping it" LEVEL DEBUG in
-	    let cur_add=
-	      List.fold_left
+	    let cur_add=(alt_num,child_num)::parent_address in
+(*	      List.fold_left
 		(fun acc elt -> elt::acc)
 		[(alt_num,child_num)]
-		parent_address in
-	    LOG "It will have address [%s]" (AlterTrees.AlternTrees.address_to_string cur_add) LEVEL DEBUG;
+		parent_address in *)
+	    LOG "It will have address [%s]" (AlterTrees.AlternTrees.address_to_string (List.rev cur_add)) LEVEL DEBUG;
 	    try
 	      let existing_add = Predicate.PredicateMap.find fact l_visit  in
-	      let patch=AlternTrees.diff cur_add existing_add in      
-	      LOG "Will point to: %s with patch %s" (AlternTrees.address_to_string existing_add) (AlternTrees.path_to_string patch) LEVEL DEBUG;
+	      let patch=AlternTrees.diff (List.rev cur_add) (List.rev existing_add) in      
+	      LOG "Will point to: %s with patch %s" (AlternTrees.address_to_string (List.rev existing_add)) (AlternTrees.path_to_string patch) LEVEL DEBUG;
 	      (AlternTrees.Link_to patch)::l_acc,
 	      child_num-1,
 	      l_visit

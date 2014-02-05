@@ -45,9 +45,11 @@ module AlternTrees :
 	
     type 'a focused_tree = 'a zipper * 'a simple_tree
       
-  type 'a simple_resumption = ('a focused_alt_tree * 'a focused_tree) list
+  type 'a simple_resumption = ('a focused_alt_tree * 'a focused_tree * int) list
 
-  type 'a resumption = 'a simple_resumption * 'a simple_resumption
+  type 'a delayed_resumption = ('a simple_resumption) Utils.IntMap.t
+
+  type 'a resumption = 'a simple_resumption * 'a delayed_resumption
       
     type move =
     | Up
@@ -55,6 +57,7 @@ module AlternTrees :
     | Right
     | Forward
     | Backward
+    | Cycle
 	
     exception Move_failure of move
     exception Not_well_defined
@@ -66,10 +69,10 @@ module AlternTrees :
 
     val init : 'a tree list -> 'a simple_resumption
 
-    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> 'a resumption -> 'a focused_alt_tree * 'a focused_tree * 'a resumption 
-    val down : 'a focused_alt_tree -> 'a focused_tree -> 'a resumption -> 'a focused_alt_tree * 'a focused_tree *  'a resumption 
-    val right : 'a focused_alt_tree -> 'a focused_tree -> ('a resumption)  -> 'a focused_alt_tree * 'a focused_tree * ('a resumption) 
-    val up : 'a focused_alt_tree -> 'a focused_tree -> 'a focused_alt_tree * 'a focused_tree
+    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> int -> 'a resumption -> 'a focused_alt_tree * 'a focused_tree * int * 'a resumption 
+    val down : 'a focused_alt_tree -> 'a focused_tree -> int  -> 'a resumption -> 'a focused_alt_tree * 'a focused_tree * int * 'a resumption 
+    val right : 'a focused_alt_tree -> 'a focused_tree -> int  -> ('a resumption)  -> 'a focused_alt_tree * 'a focused_tree * int * ('a resumption) 
+    val up : 'a focused_alt_tree -> 'a focused_tree -> int  -> 'a focused_alt_tree * 'a focused_tree * int
 
     val zip_up : 'a focused_tree -> 'a simple_tree
 

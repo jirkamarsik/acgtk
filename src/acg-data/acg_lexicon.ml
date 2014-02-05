@@ -34,9 +34,12 @@ struct
 
   type signature = Sg.t
 
-  type resume = (int AlterTrees.AlternTrees.focused_alt_tree * int AlterTrees.AlternTrees.focused_tree) list
+  type resume = int AlterTrees.AlternTrees.resumption
 
-  let resume_info resume = Printf.sprintf "%d entries." (List.length resume)
+  let resume_info (actual,delayed) =
+    let length = List.length actual in
+    let length = Utils.IntMap.fold (fun _ v acc -> acc+(List.length v)) delayed length in
+    Printf.sprintf "%d entries." length
 
   type interpretation =
     | Type of (Abstract_syntax.location * Lambda.stype )
@@ -186,7 +189,7 @@ struct
     match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
     | None,_ -> 
       let () = Printf.printf "Parsing is not implemented for non 2nd order ACG\n!" in
-      []
+      [],Utils.IntMap.empty
     | Some (prog,_), (Lambda.Atom _ as dist_type) ->
       let buff=Buffer.create 80 in
       let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract prog)) in
@@ -229,11 +232,11 @@ struct
 	temp_prog.Datalog.Program.pred_table
 	temp_prog.Datalog.Program.const_table
 	derivations in *)
-      List.rev resume
+      (List.rev resume,Utils.IntMap.empty)
     | Some _ , _ -> 
       let () = 
 	Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in
-      []
+      [],Utils.IntMap.empty
       
     
   let get_analysis resume lex =
@@ -242,8 +245,7 @@ struct
     | None -> let () = Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in None,resume
     | Some (_,rule_id_to_cst) ->
       match AlterTrees.AlternTrees.resumption resume with
-      | None,[] -> None,[]
-      | None,_ -> failwith "Bug: if resume is not empty, a tree should be returned"
+      | None,resume -> None,resume
       | Some t,resume ->
 	LOG "Got a result. Ready to map it" LEVEL DEBUG;
 	Some (AlterTrees.AlternTrees.fold_depth_first
