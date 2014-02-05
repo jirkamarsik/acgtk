@@ -10,6 +10,13 @@
 + [ ] Utiliser les outils de Paul
 ** Permettre l'utilisation des PersistentArray
 ** Vérifier (et supprimer ou mettre en IFDEBUG) les assert
+** Avant merge et prochaine release :
++ [ ] mettre la commande "analyse" en deprecated
++ [ ] la remplacer par
+  + [ ] une commande "check"
+  + [ ] une commande "realise"
++ [ ] mettre une commande "idb"
++ [ ] mettre une commande "edb-and-query"
 
 * datalog.ml
 + [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract
