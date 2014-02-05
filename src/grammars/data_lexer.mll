@@ -103,6 +103,9 @@ let string = (letter|digit|'_')*'\''*
       | ['='] {let () = update_data Entry.Equal (loc lexbuf) in
 	       let () = check_brackets () in
 		 Token.EQUAL(loc lexbuf)}
+      | "<<" {let () = update_data Entry.Compose (loc lexbuf) in
+	       let () = check_brackets () in
+		 Token.COMPOSE(loc lexbuf)}
       | [';'] {let () = update_data Entry.Semi_colon (loc lexbuf) in
 	       let () = check_brackets () in
 		 Token.SEMICOLON(loc lexbuf)}

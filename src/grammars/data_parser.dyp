@@ -156,6 +156,7 @@
 %token
 EOI
 					 <Abstract_syntax.location> EQUAL
+					 <Abstract_syntax.location> COMPOSE
 					 <Abstract_syntax.location> SEMICOLON
 					 <Abstract_syntax.location> COLON
 					 <Abstract_syntax.location> COMMA
@@ -217,6 +218,19 @@ EOI
 	  lexicon : 
 | LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e l}
 | LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e l}
+| LEX_OPEN IDENT<name> EQUAL lexicon_composition<c> {c name}
+
+lexicon_composition :
+| IDENT<name1> COMPOSE composition_argument<l> {
+  fun name ->
+    let env=get_env_value dyp.last_local_data in
+    let l1 = E.get_lexicon (fst name1) env in
+    E.Lexicon.compose l1 (l ("__NO__NAME__",(Lexing.dummy_pos,Lexing.dummy_pos))) ( name)}
+| LPAREN lexicon_composition<c> RPAREN {c}
+
+composition_argument:
+| IDENT<name> {fun res_name-> E.get_lexicon (fst name) (get_env_value dyp.last_local_data)}
+| lexicon_composition<c> {c}
 
 
       lex_opening :

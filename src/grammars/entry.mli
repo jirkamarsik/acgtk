@@ -47,6 +47,7 @@ sig
     | Lex_kwd
     | Id
     | Equal
+    | Compose
     | Comma
     | Colon
     | Colon_equal

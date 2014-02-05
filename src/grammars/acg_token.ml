@@ -43,5 +43,6 @@ struct
     | COLON of (Abstract_syntax.location)
     | SEMICOLON of (Abstract_syntax.location)
     | EQUAL of (Abstract_syntax.location)
+    | COMPOSE of (Abstract_syntax.location)
     | EOI
 end	

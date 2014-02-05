@@ -249,3 +249,4 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
     I_n,I_vp,I_s := lambda x.x;
 end
 
+lexicon tag_yields = tag_strings << tag_syntax
