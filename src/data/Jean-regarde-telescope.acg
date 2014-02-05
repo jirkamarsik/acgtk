@@ -36,7 +36,7 @@ signature Strings =
 
 end
 
-lexicon CFG(Syntax):Strings =
+lexicon CFG (Syntax):Strings =
     S,NP,V,VP,PN,Det,N,Prep,PP,T:=string;
 
     subj,np,np_pp,obj,vp_pp,pp:=lambda x y.x+y;

@@ -224,11 +224,14 @@ struct
   type inputs =
   | Stop
   | Next
+  | All
 
   let return_input s =
+    let () = print_newline () in
     match String.lowercase (String.trim s) with
     | "y" | "yes"-> Some Next
     | "n" | "no" -> Some Stop
+    | "a" | "all" -> Some All
     | "" -> Some Next
     | _ -> None
 
@@ -240,12 +243,17 @@ struct
     | None -> interact message get_input
       
   let rec ask_for_next_parse f param =
-    let msg = Printf.sprintf "Do you want to look for another solution?\n\ty/yes\n\tn/no\n(Default: yes):" in
+    let rec no_interaction f p =
+      match f p with
+      | None -> Printf.printf "No other possible value\n"
+      | Some new_param -> no_interaction f new_param in
+    let msg = Printf.sprintf "Do you want to look for another solution?\n\ty/yes\n\tn/no\n\ta/all\n(Default: yes):" in
     match interact msg return_input with
     | Next -> 
       (match f param with
       | None -> Printf.printf "No other possible value\n"
       | Some new_param -> ask_for_next_parse f new_param)
+    | All -> no_interaction f param
     | Stop -> ()
       
 
