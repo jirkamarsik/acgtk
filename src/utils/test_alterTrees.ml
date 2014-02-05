@@ -66,16 +66,17 @@ let tree =
 
 let tree1 =
   [
+
+    Node ("2",
+	  [
+	    Link_to (1,[]);
+	  ]);
     Node ("1",
 	  [
 	    init_f_list
 	      [
 		Node ("2.1",[]);
 	      ];
-	  ]);
-    Node ("2",
-	  [
-	    Link_to (1,[]);
 	  ]);
 
 
@@ -165,4 +166,4 @@ ask_for_next_parse
       let () = Printf.printf "Got result %i\n%!" i in
       let () = output_tree t in
       Some (resume,i+1))
-  (((resume,[]),AddressMap.empty),1)
+  ((resume,[]),1)
