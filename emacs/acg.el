@@ -31,7 +31,8 @@
     "end"
     "type"
     "signature"
-    "lexicon")
+    "lexicon"
+    "<<")
   '(
     ; FIXME while this regexp correctly capture multi-line comments,
     ; they they're not highlighted in the emace buffer. Only single
@@ -48,6 +49,14 @@
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 6 'font-lock-keyword-face)
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 7 'font-lock-constant-face)
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 8 'font-lock-keyword-face)
+    ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 1 'font-lock-keyword-face)
+    ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 2 'font-lock-constant-face)
+    ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 3 'font-lock-keyword-face)
+    ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 4 'font-lock-constant-face)
+    ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 5 'font-lock-keyword-face)
+    ("\\([a-zA-Z0-9_']*\\)[ \t\n]*\\(<<\\)[ \t\n]*\\([a-zA-Z0-9_']*\\)" 1 'font-lock-constant-face)
+    ("\\([a-zA-Z0-9_']*\\)[ \t\n]*\\(<<\\)[ \t\n]*\\([a-zA-Z0-9_']*\\)" 2 'font-lock-keyword-face)
+    ("\\([a-zA-Z0-9_']*\\)[ \t\n]*\\(<<\\)[ \t\n]*\\([a-zA-Z0-9_']*\\)" 3 'font-lock-constant-face)
         )
   '(".*\\.acg")
   nil
