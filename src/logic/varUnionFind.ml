@@ -167,75 +167,6 @@ struct
   let instantiate i t table h = find_and_instantiate_aux i t table h
 
 
-  (* Indexing starts at 1, not at 0 *)
-  (* TODO: Should we check that indexes belong to the range, or that
-     links to belong the set of indexes? *)
-  (* TODO: specify the properties of the data structure (no cycle,
-     coherent numbering, [find] always returns a value, etc. *)
-(*  let create contents table =
-    let ln = List.length contents in
-    let res,_=
-      List.fold_left
-	(fun ({rank=r;parents=p;limit=l} as h) content -> 
-	  LOG "Setting the following content at address %d:" k LEVEL DEBUG;
-	  match content with
-	  | Link_to i as c ->
-	    LOG "Link to %d" i LEVEL DEBUG;
-	    (* rank is unset for contents that are initially a link *)
-	    ({rank=
-		(try
-		   let rank=Store.get i r in
-		   Store.set i (rank+1) (Store.set k 0 r)
-		 with
-		 | Store.Store_Not_found -> Store.set i 1 r);
-	      parents=Store.set k c p;
-	      limit=max (max k i) l},k+1)
-	  | Value v as c ->
-	    LOG "Some value" LEVEL DEBUG;
-	    (match Value.unfold v table with
-	    | None ->
-	      ({rank=
-		  (try
-		     let _ = Store.get k r in
-		     r
-		   with
-		   | Store.Store_Not_found -> Store.set k 0 r);
-		parents=Store.set k c p;
-		limit=max k l},k+1)
-	    | Some (c,args) ->
-	      let i_args,new_content =
-		List.fold_left
-		  (fun (acc,cont) arg ->
-		    let var,new_cont=generate_new_var cont in
-		    var::acc,instantiate var arg table (rank_increment var new_cont))
-		  ([],h)
-		  args in
-	      {rank=
-		  (try
-		     let _ = Store.get k new_content.rank in
-		     r
-		   with
-		   | Store.Store_Not_found -> Store.set k 0 new_content.rank);
-	       parents=Store.set k (Constr (c,List.rev i_args)) new_content.parents;
-	       limit=max k new_content.limit },(max k new_content.limit)+1)
-	  | Constr (i,lst) as c ->
-	    LOG "Some value with constructor" LEVEL DEBUG;
-	    ({rank=
-		(try
-		   let _ = Store.get k r in
-		   r
-		 with
-		 | Store.Store_Not_found -> Store.set k 0 r);
-	      parents=Store.set k c p;
-	      limit=max k l},k+1))
-	({rank=Store.empty ln;parents=Store.empty ln;limit=1},1)
-	contents in
-    let () = 
-      for i = 1 to ln do
-	LOG "%d/%d\t<--->\t%s\t\t(%d)" i ln (content_to_string (Store.get i res.parents)) (Store.get i res.rank) LEVEL TRACE;
-      done in
-    res
-*)
     
   (** [find_aux i f] returns a pair [(i',v),f'] where [i'] is the
       index of the representative of the data indexed by [i]. [i=i']
@@ -260,9 +191,11 @@ struct
       (* Then we update the storage data structure linking the context
 	 indexed by [i] directly to the representative index *)
       let updated_f = Store.set i (Link_to representative_index) new_f in
+      IFDEF BOLT THEN
       LOG "the \"UnionFinf.find\" function indeed returns a Link_to itself: %b" (let ()=match representative_value with
       | Link_to variable -> assert (representative_index=variable)
       | _ -> () in true) LEVEL FATAL;
+      END;
       (representative_index,representative_value),updated_f
 	
   (** [find i h] returns a pair [(i',v),f'] where [i'] is the index of
@@ -282,7 +215,9 @@ struct
       values of representatives (i.e it follows the [Link_to] links
       until the value of the representative before returning it). *)
   let extract ?(start=1) i {parents=p} =
+    IFDEF BOLT THEN
     LOG "Going to extract %d elements starting at %d..." i start LEVEL DEBUG;
+    END;
     let rec extract_aux k res =
       match k-start with
       | j when j>0 -> 
@@ -380,7 +315,9 @@ struct
       let new_acc=IntSet.add i acc in
       List.fold_left
 	(fun (c,l_i,l_f) arg ->
+	  IFDEF BOLT THEN
 	  LOG "Preparing to check cyclicity from %d" arg LEVEL TRACE;
+	  END;
 	  if IntSet.mem arg new_acc then
 	    true,l_i,l_f
 	  else
@@ -393,11 +330,12 @@ struct
   (* the cyclic function, calling cyclic_aux, compress paths
      (hence also returns the parents) *)
   let cyclic i h = 
+    IFDEF BOLT THEN
     LOG "Checking cyclicity from %d of:" i LEVEL TRACE ;
-    let () = 
-      List.iter
-	(fun s -> LOG "%s" s LEVEL TRACE)
-	(Bolt.Utils.split "\n" (to_string h)) in
+    Utils.log_iteration
+      (fun s -> LOG "%s" s LEVEL TRACE)
+      (to_string h);
+    END;
     let res,_,f = cyclic_aux i h.parents (IntSet.empty) in
     res,{h with parents=f}
       

@@ -60,3 +60,5 @@ exception No_file of  (string * string)
 val find_file : string -> string list -> string
 
 val (>>) : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)
+
+val log_iteration : (string -> unit) -> string -> unit

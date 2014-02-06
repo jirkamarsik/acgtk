@@ -590,6 +590,7 @@ SET_MAKE
 OCAMLP4_LOC
 OCAML09WARNINGS
 TYPES
+BOLT
 BOLT_PP
 BOLT_LIB
 BOLT_INCLUDE
@@ -2343,6 +2344,7 @@ $as_echo "Could not find a suitable place for bolt library in $OCAML_LIB. No lin
 fi
 if test -f $BOLT_PLACE/bolt.cma ; then
    BOLT_LIB=bolt.cma
+   BOLT="-DBOLT"
    { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt library is $BOLT_PLACE/bolt.cma" >&5
 $as_echo "bolt library is $BOLT_PLACE/bolt.cma" >&6; }
 else
@@ -2442,6 +2444,7 @@ $as_echo "$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
 
 ############################
 # substitutions to perform
+
 
 
 

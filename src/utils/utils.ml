@@ -95,3 +95,12 @@ let find_file name dirs =
 	  
 
 let (>>) f g = fun x -> f (g x)
+
+let log_iteration log_function s =
+  IFDEF BOLT THEN
+  List.iter
+    log_function
+    (Bolt.Utils.split "\n" s)
+    ELSE
+    ()
+    END

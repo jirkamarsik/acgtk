@@ -294,9 +294,11 @@ struct
       try
 	let t_term,t_type,(_:typing_environment) = 
 	  typecheck_aux t (Some (local_expand ty)) {linear_level=0;level=0;env=Utils.StringMap.empty;wrapper=None} in    
+	IFDEF BOLT THEN
 	LOG "Type-checked %s : %s"  (Signature.term_to_string t_term sg ) (Signature.type_to_string t_type sg ) LEVEL TRACE ;
 	LOG "Type-checked %s : %s"  (Lambda.raw_to_string t_term ) (Lambda.raw_type_to_string t_type ) LEVEL TRACE ;
 	LOG "Type-checked %s : %s"  (Lambda.raw_to_caml t_term ) (Lambda.raw_type_to_caml t_type ) LEVEL TRACE ;
+	END;
 	t_term
       with
 	| Type_mismatch ((p1,p2),t1,t2) -> raise (Error.Error (Error.Type_error (Error.Is_Used (Signature.type_to_string t1 sg,Printf.sprintf "\"%s\"" (Signature.type_to_string t2 sg)),(p1,p2))))

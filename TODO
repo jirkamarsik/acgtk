@@ -18,6 +18,8 @@
 + [ ] mettre une commande "idb"
 + [ ] mettre une commande "edb-and-query"
 + [ ] vérifier que tous les "help cmd" fonctionnent
+** lexer and parser
++ [ ] change the compilation order and the token emission
 
 * datalog.ml
 + [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract
@@ -60,6 +62,8 @@
 * typeInference.ml
 + [ ] change or add inference (possibly with a signature) to principal
   typing
++ [ ] remove the level parameter (and any other useless parameter)
+  from the inference_aux function (when no LOG occur)
 
 
 * acg_lexicon.ml

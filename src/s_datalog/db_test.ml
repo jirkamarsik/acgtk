@@ -28,14 +28,17 @@ let parse_file query edb filename =
     let fullname = Utils.find_file filename [""]  in
     open_in fullname in
   let lexbuf = Lexing.from_channel in_ch in
+  IFDEF BOLT THEN
   LOG "Parsing \"%s\"..." filename LEVEL INFO;
+  END;
   let prog=Db_parser.program Db_lexer.lexer lexbuf AbstractSyntax.Proto_Program.empty in 
+  IFDEF BOLT THEN
   LOG "Done." LEVEL INFO;
   LOG "Current symbol tables:" LEVEL DEBUG ;
-  let () = 
-    List.iter
-      (fun s -> LOG s LEVEL DEBUG)
-      (Bolt.Utils.split "\n" (AbstractSyntax.Predicate.PredIdTable.to_string prog.AbstractSyntax.Proto_Program.pred_table)) in
+  Utils.log_iteration
+    (fun s -> LOG s LEVEL DEBUG)
+    (AbstractSyntax.Predicate.PredIdTable.to_string prog.AbstractSyntax.Proto_Program.pred_table);
+  END;
   let sep=String.make 15 '*' in
   let () = Printf.printf "%s\n%!" sep in
   let () = Printf.printf "Create the abstract program and print it...\n" in
@@ -51,17 +54,25 @@ let parse_file query edb filename =
   let program =
     match edb with
     | None -> 
-      LOG "I didn't find an edb file to parse." LEVEL DEBUG ;
+      IFDEF BOLT THEN
+	LOG "I didn't find an edb file to parse." LEVEL DEBUG ;
+      END;
       program
     | Some edb_filename ->
+      IFDEF BOLT THEN
       LOG "I found an edb file to parse." LEVEL DEBUG ;
+      END;
       let edb_in_ch = 
 	let edb_fullname = Utils.find_file edb_filename [""]  in
 	open_in edb_fullname in
       let edb_lexbuf = Lexing.from_channel edb_in_ch in
-      LOG "Parsing \"%s\"..." edb_filename LEVEL INFO;
+      IFDEF BOLT THEN
+	LOG "Parsing \"%s\"..." edb_filename LEVEL INFO;
+      END;
       let to_be_added=Db_parser.extensional_facts Db_lexer.lexer edb_lexbuf Datalog.Program.(program.pred_table,program.const_table,program.rule_id_gen) in 
+      IFDEF BOLT THEN
       LOG "Done." LEVEL INFO;
+      END;
       Datalog.Program.add_e_facts program to_be_added in
   let derived_facts,derivations = Datalog.Program.seminaive program in
   let () = Printf.printf "I could derive the following facts:\n%s\n" (Datalog.Predicate.facts_to_string derived_facts program.Datalog.Program.pred_table program.Datalog.Program.const_table) in

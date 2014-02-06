@@ -201,6 +201,7 @@ else
 fi  
 if test -f $BOLT_PLACE/bolt.cma ; then
    BOLT_LIB=bolt.cma
+   BOLT="-DBOLT"
    AC_MSG_RESULT(bolt library is $BOLT_PLACE/bolt.cma)
 else
    AC_MSG_RESULT(Could not find bolt library "bolt.cma" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation)
@@ -285,6 +286,7 @@ AC_SUBST(KAPUTT_PP)
 AC_SUBST(BOLT_INCLUDE)
 AC_SUBST(BOLT_LIB)
 AC_SUBST(BOLT_PP)
+AC_SUBST(BOLT)
 
 
 AC_SUBST(TYPES)

@@ -17,9 +17,9 @@
 #                                                                        #
 ##########################################################################
 
-.PHONY: config byte opt clean superclean install tar version release
+.PHONY: config byte opt clean superclean install tar version release test
 
-BINARIES=acgc acgc.opt acg acg.opt
+BINARIES=acg acg.opt acgc acgc.opt
 
 VERSION_FILE = src/utils/version.ml
 VERSION = $(shell date "+%Y%m%d")
@@ -32,17 +32,24 @@ TAR_RELEASE =acg-$(TAR_VERSION)
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-byte opt: 
-	$(MAKE) -C src $@ && for file in $(BINARIES); do find . -name "$$file" -exec cp {} . \; ; done
+byte: acg acgc
 
-all: byte opt
+opt: acg.opt acgc.opt
+
+all: byte opt test
+
+$(BINARIES):
+	$(MAKE) -C src $@ && find . -name "$@" -exec cp {} . \;
+
+test:
+	$(MAKE) -C src $@
 
 clean:
 	-if test "$@" = clean ; then $(MAKE) -C config $@ ; fi
 	-$(MAKE) -C src $@
 	rm -rf *.log  *~ autom4te.cache *.tar.gz
 	find . -name "*~" -exec rm -f {} \;
-	-for file in $(BINARIES); do rm $$file ; done
+	-for file in $(BINARIES); do rm -f $$file ; done
 
 superclean: clean
 	-find . -path "./*/*.in" -print | sed -e 's/\(.*\)\.in/\1/' | xargs -n 1 rm
