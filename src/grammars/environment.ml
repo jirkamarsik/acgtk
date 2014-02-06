@@ -43,7 +43,8 @@ sig
   val insert : ?override:bool -> entry -> t -> t
   val get_signature : string -> t -> Signature1.t
   val get_lexicon : string -> t -> Lexicon.t
-  val get : string -> t -> entry
+  val get : string -> t -> entry 
+  val append : ?override:bool -> t -> t -> t
   val iter : (entry -> unit) -> t -> unit
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
   val sig_number : t -> int
@@ -77,6 +78,40 @@ struct
   type t = {map:entry Env.t;sig_number:int;lex_number:int;focus:entry option}
 
   let empty = {map=Env.empty;sig_number=0;lex_number=0;focus=None}
+
+  let append ?(override=false) e1 e2 =
+    let erased_sig = ref 0 in
+    let erased_lex = ref 0 in
+    let new_map =
+      Env.merge
+	(fun k v1 v2 ->
+	  match v1,v2,override with
+	  | None,None,_ -> None
+	  | None,Some v,_ -> Some v
+	  | Some v,None,_ -> Some v
+	  | Some (Lexicon _),Some v2,true -> 
+	    let () = erased_lex:=!erased_lex+1 in
+	    Some v2
+	  | Some (Signature _),Some v2,true -> 
+	    let () = erased_sig:=!erased_sig+1 in
+	    Some v2
+	  | Some v1,Some v2,false ->
+	    match v2 with
+	    | Signature sg ->
+	      let _,pos=Sg.name sg in
+	      raise (Error.Error (Error.Env_error (Error.Duplicated_entry k,pos)))
+	    | Lexicon lex ->
+	      let _,pos=Lex.name lex in
+	      raise (Error.Error (Error.Env_error (Error.Duplicated_entry k,pos))))
+	e1.map
+	e2.map in
+    {map=new_map;
+     sig_number=e1.sig_number + e2.sig_number - !erased_sig;
+     lex_number=e1.lex_number + e2.lex_number - !erased_lex;
+     focus = match e2.focus with
+     | Some e -> Some e
+     | None -> e1.focus}
+    
 
   let insert ?(override=false) d e = match d with
     | Signature s -> let name,(p1,p2) = Sg.name s in

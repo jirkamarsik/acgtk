@@ -29,7 +29,10 @@ type error =
   | Command_expected
   | Not_yet_implemented of string
   | No_focus
-  | Parse_only_for_lexicons of string
+  | Accept_only of data_type * string
+and  data_type = 
+  | Lex of string
+  | Sg of string
 
 exception Error of (error * Abstract_syntax.location)
 
@@ -41,6 +44,7 @@ let error_msg er (s,e) =
     | No_such_lexicon  s -> Printf.sprintf "No lexicon \"%s\" in the current environmnet" s 
     | Command_expected -> "Command expected" 
     | No_focus -> "No data on which to apply the command"
-    | Parse_only_for_lexicons s -> Printf.sprintf "The parsing command can only apply to lexiocns. Here it is applied to a signature: \"%s\"" s
+    | Accept_only (Lex s,cmd) -> Printf.sprintf "The %s command can only apply to lexicons. Here it is applied to a signature: \"%s\"" cmd s
+    | Accept_only (Sg s,cmd) -> Printf.sprintf "The %s command can only apply to signatures. Here it is applied to a lexicon: \"%s\"" cmd s
     | Not_yet_implemented s -> Printf.sprintf "\"%s\": Command not yet implemented" s in
     Printf.sprintf "%s:\n%s\n%!" loc msg

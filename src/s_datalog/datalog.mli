@@ -125,6 +125,7 @@ sig
 
     val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int AlterTrees.AlternTrees.tree list list
 
+    val edb_to_buffer : program -> Buffer.t
 
   end
 end

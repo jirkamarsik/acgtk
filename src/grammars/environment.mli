@@ -68,7 +68,17 @@ sig
       signature does not exist *)
   val get_lexicon : string -> t -> Lexicon.t
 
+  (** [get name e] returns the entry of name [name] in the environment
+      [e]. Raise {!Environment.Environment_sig.Lexicon_not_found} if
+      such an entry does not exist. *)
   val get : string -> t -> entry
+
+  (** [append e1 e2] merges the two environment [e1] and [e2]. If an
+      entry appears in both environment then the one of [e2] is kept
+      if the [override] parameter is set to [true] (default is
+      [false]). If set to [false], if an enrtry appears in both
+      environment, an error is emitted. *)
+  val append : ?override:bool -> t -> t -> t
 
   (** [iter f e] applies f to every data contained in the environment
   *)

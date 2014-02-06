@@ -80,6 +80,7 @@ type type_error =
 type env_error =
   | Duplicated_signature of string
   | Duplicated_lexicon of string
+  | Duplicated_entry of string
 
 
 type lexicon_error =
@@ -159,6 +160,7 @@ let type_error_to_string = function
 let env_error_to_string = function
   | Duplicated_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" is used twice in this environment" s
   | Duplicated_lexicon s -> Printf.sprintf "Syntax error: Lexicon id \"%s\" is used twice in this environment" s
+  | Duplicated_entry s -> Printf.sprintf "Syntax error: Entry id \"%s\" is used twice in this environment" s
 
 let lexicon_error_to_string = function
   | Missing_interpretations (lex_name,abs_name,missing_inters) ->

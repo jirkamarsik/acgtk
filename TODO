@@ -17,6 +17,7 @@
   + [ ] une commande "realise"
 + [ ] mettre une commande "idb"
 + [ ] mettre une commande "edb-and-query"
++ [ ] vérifier que tous les "help cmd" fonctionnent
 
 * datalog.ml
 + [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract

@@ -125,6 +125,9 @@ sig
     val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int AlterTrees.AlternTrees.tree list list
 
 
+    val edb_to_buffer : program -> Buffer.t
+
+
   end
 end
 
@@ -1283,6 +1286,16 @@ struct
       LOG "The list of parse forest has %d forests" (List.length list_of_forest) LEVEL DEBUG;
       list_of_forest
 
+    let edb_to_buffer  prog =
+      let buff=Buffer.create 80 in
+      let () = 
+	Predicate.PredMap.iter
+	  (fun _ facts ->
+	    Predicate.FactSet.iter
+	      (fun fact -> Printf.bprintf buff "%s\n" (ASPred.to_string fact prog.pred_table prog.const_table))
+	      facts)
+	  prog.edb_facts in
+      buff
 
 	
   end

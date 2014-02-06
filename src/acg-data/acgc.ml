@@ -24,4 +24,4 @@ module Lex = Acg_lexicon.Sylvain_lexicon
 module Test = Interactive.Make(Lex)
 
 
-let () = Test.main ()
+Test.main ()

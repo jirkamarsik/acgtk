@@ -49,6 +49,7 @@
   EOII
 <(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_DATA
 <(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_SCRIPT
+<(string*Abstract_syntax.Abstract_syntax.location*string)>LOAD_OBJECT
   LOAD_HELP
   LIST
   SELECT
@@ -57,7 +58,11 @@
   HELP
 <Abstract_syntax.Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ANALYSE
+<(string*Abstract_syntax.Abstract_syntax.location*string)>CHECK
+<(string*Abstract_syntax.Abstract_syntax.location*string)>REALIZE
 <(string*Abstract_syntax.Abstract_syntax.location*string)>PARSE
+<Abstract_syntax.Abstract_syntax.location>IDB
+<(string*Abstract_syntax.Abstract_syntax.location*string)>QUERY
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ADD
   COMPOSE
 <string>SEMICOLONN
@@ -107,6 +112,9 @@
 | LOAD_DATA<s,loc,l>  {fun e ->  let () = echo dyp.global_data l in
 			 let _,_,incl = dyp.global_data in
 			   F.load F.Data  s  incl e}
+| LOAD_OBJECT<s,loc,l>  {fun e ->  let () = echo dyp.global_data l in
+			 let _,_,incl = dyp.global_data in
+			   F.load F.Object s incl e}
 | LOAD_SCRIPT<s,loc,l>  {fun e ->  let () = echo dyp.global_data l in
 			   let _,_,includes = dyp.global_data in
 			   let new_env = F.load (F.Script (snd dyp.last_local_data)) s includes e in
@@ -116,23 +124,48 @@
 | UNSELECT SEMICOLONN<l> { let () = echo dyp.global_data l in F.unselect}
 | TRACE SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> let () = F.trace () in e}
 | DONT TRACE SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> let () = F.dont_trace () in e}
-| optional_ident<name> PRINT<p> SEMICOLONN<l> { let () = echo dyp.global_data l in fun e -> 
-					   let loc = 
-					     match name with
-					       | None -> p
-					       | Some (_,l) -> l in
-					       match name with
-						 | None -> let () = F.print e loc in e
-						 | Some (n,l) -> let () = F.print ~name:n e loc in e}
+| optional_ident<name> PRINT<p> SEMICOLONN<l> {
+  let () = echo dyp.global_data l in fun e -> 
+    let loc = 
+      match name with
+      | None -> p
+      | Some (_,l) -> l in
+    match name with
+    | None -> let () = F.print e loc in e
+    | Some (n,l) -> let () = F.print ~name:n e loc in e}
 | optional_idents<names> ANALYSE<t,l,line>   { let () = echo dyp.global_data line in fun e -> 
 					     match names with
 					       | [] -> let () = F.analyse e t l in e
 					       | _ -> let () = F.analyse  ~names e t l in e}
+| optional_idents<names> CHECK<t,l,line>   { 
+  let () = echo dyp.global_data line in fun e -> 
+    match names with
+    | [] -> let () = F.check e t l in e
+    | _ -> let () = F.check  ~names e t l in e}
+| optional_idents<names> REALIZE<t,l,line>   { 
+  let () = echo dyp.global_data line in fun e -> 
+    match names with
+    | [] -> let () = F.realize e t l in e
+    | _ -> let () = F.realize  ~names e t l in e}
 | optional_ident<name> PARSE<t,l,line>   {
   let () = echo dyp.global_data line in fun e -> 
     match name with
     | None ->  let () = F.parse  e t l in e
     | Some (n,lex_loc) ->  let () = F.parse ~name:n e t lex_loc in e}
+| optional_ident<name> QUERY<t,l,line>   {
+  let () = echo dyp.global_data line in fun e -> 
+    match name with
+    | None ->  let () = F.query  e t l in e
+    | Some (n,lex_loc) ->  let () = F.query ~name:n e t lex_loc in e}
+| optional_ident<name> IDB<p> SEMICOLONN<l> {
+  let () = echo dyp.global_data l in fun e -> 
+    let loc = 
+      match name with
+      | None -> p
+      | Some (_,l) -> l in
+    match name with
+    | None -> let () = F.idb e loc in e
+    | Some (n,l) -> let () = F.idb ~name:n e loc in e}
 | optional_idents<names> ADD<t,l,line>   { let () = echo dyp.global_data line in fun e -> 
 					     match names with
 					       | [] -> F.add e t l

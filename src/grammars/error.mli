@@ -71,6 +71,7 @@ type lexicon_error =
 type env_error =
   | Duplicated_signature of string
   | Duplicated_lexicon of string
+  | Duplicated_entry of string
 
 
 (** The type for errors *)

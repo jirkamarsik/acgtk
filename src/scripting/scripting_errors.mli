@@ -27,7 +27,10 @@ type error =
   | Command_expected
   | Not_yet_implemented of string
   | No_focus
-  | Parse_only_for_lexicons of string
+  | Accept_only of data_type * string
+and  data_type = 
+| Lex of string
+| Sg of string
 
 
 exception Error of (error * (Lexing.position * Lexing.position))

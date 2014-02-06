@@ -87,4 +87,6 @@ sig
   val parse : Signature.term -> Signature.stype -> t -> resume
   val get_analysis : resume -> t -> Lambda.term option * resume
   val compose: t -> t -> (string*Abstract_syntax.location) -> t
+  val program_to_buffer : t -> Buffer.t
+  val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
 end

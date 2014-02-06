@@ -555,15 +555,15 @@ sig_entries :
 		 | E.Lexicon lex ->
 		     Printf.printf "%s\n%!" (E.Lexicon.to_string lex))
 	      e in
-	e
+	Some e
     with
       | Utils.No_file(f,msg) -> let e =  Error.System_error (Printf.sprintf "No such file \"%s\" in %s" f msg) in 
-	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in env
+	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in None
       | Sys_error s -> let e = Error.System_error s in
-	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in env
+	let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in None
       | Error.Error e -> 
 	  let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
-	  env 
+	  None
 	      
 let parse_term ?(offset="") ?(output=false) t sg = 
   let lexbuf = Lexing.from_string t in
@@ -696,9 +696,10 @@ end}
 
     (** [parse_data filename dirs e] adds the data (signatures or
 	lexicons) parsed from file [filename] to [e] and returns the
-	resulting environment. [filename] is looked for in [dirs]
-	directories. *)
-    val parse_data : ?override:bool -> ?output:bool -> string -> string list -> E.t  -> E.t
+	[Some e'] where ]e'] is the resulting environment if the parse
+	is successful. It returns [None] otherwise. [filename] is
+	looked for in [dirs] directories. *)
+    val parse_data : ?override:bool -> ?output:bool -> string -> string list -> E.t  -> E.t option
       
     (** [term s sg] returns [Some t] with [t] being an
 	{!Abstract_syntax.Abstract_syntax..Abstract_syntax.Abstract_syntax.term} if [s] is parsable,

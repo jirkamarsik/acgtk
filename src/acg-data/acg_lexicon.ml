@@ -314,6 +314,52 @@ struct
        object_sig=lex1.object_sig;
        datalog_prog=lex2.datalog_prog} in
     rebuild_prog temp_lex
+
+  let program_to_buffer lex =
+    let buff=Buffer.create 80 in
+    let () = match lex.datalog_prog with
+      | None -> Printf.bprintf buff "This lexicon was not recognized as having a 2nd order abstract signature\n" 
+      | Some (p,_) -> 
+	let () = Printf.bprintf buff "This lexicon recognized as having a 2nd order abstract signature. The associated datalog program is:\n" in
+	Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract p)) in
+    buff
+
+
+
+  let query_to_buffer term dist_type lex =
+    match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
+    | None,_ -> 
+      let buff=Buffer.create 80 in
+      let () = Printf.bprintf buff "Parsing is not implemented for non 2nd order ACG\n!" in
+      buff
+    | Some (prog,_), (Lambda.Atom _ as dist_type) ->
+      let dist_type_image = interpret_type dist_type lex in
+      let obj_term= 
+	Sg.eta_long_form
+	  (Lambda.normalize
+ 	     ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
+	     term)
+	  dist_type_image
+	  lex.object_sig in
+      let obj_princ_type,obj_typing_env = TypeInference.Type.inference obj_term in
+      let query,temp_prog =
+	Reduction.edb_and_query
+	  ~obj_term
+	  ~obj_type:obj_princ_type
+	  ~obj_typing_env
+	  ~dist_type
+	  prog
+	  ~abs_sig:lex.abstract_sig
+	  ~obj_sig:lex.object_sig in
+      let buff = Datalog.Program.edb_to_buffer temp_prog in
+      let () = Printf.bprintf buff "Query:\n\t%s?\n" (Datalog_AbstractSyntax.AbstractSyntax.Predicate.to_string query temp_prog.Datalog.Program.pred_table temp_prog.Datalog.Program.const_table) in
+      buff
+    | Some _ , _ -> 
+      let buff=Buffer.create 80 in
+      let () = 
+	Printf.bprintf buff "Parsing is not yet implemented for non atomic distinguished type\n%!" in
+      buff
+    
 	
 
 end

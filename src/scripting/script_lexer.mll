@@ -30,6 +30,7 @@ type token =
   | EOII
   | LOAD_DATA of (string*Abstract_syntax.location*string)
   | LOAD_SCRIPT of (string*Abstract_syntax.location*string)
+  | LOAD_OBJECT of (string*Abstract_syntax.location*string)
   | LOAD_HELP
   | LIST
   | SELECT
@@ -37,7 +38,11 @@ type token =
   | TRACE
   | PRINT   of Abstract_syntax.location
   | ANALYSE  of (string*Abstract_syntax.location*string)
+  | CHECK  of (string*Abstract_syntax.location*string)
+  | REALIZE  of (string*Abstract_syntax.location*string)
   | PARSE  of (string*Abstract_syntax.location*string)
+  | IDB   of Abstract_syntax.location
+  | QUERY  of (string*Abstract_syntax.location*string)
   | ADD of (string*Abstract_syntax.location*string)
   | COMPOSE
   | SEMICOLONN of string
@@ -106,8 +111,15 @@ let string = (letter|digit|'_')*
     | "print"  as c {let () = echo_str c in PRINT (loc lexbuf)}
     | "analyse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string (fun x l -> ANALYSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "check"  as c {let () = echo_str c in let () = Buffer.reset string_content in
+		string (fun x l -> CHECK (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "realize"  as c {let () = echo_str c in let () = Buffer.reset string_content in
+		string (fun x l -> REALIZE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "parse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string (fun x l -> PARSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "idb"  as c {let () = echo_str c in IDB (loc lexbuf)}
+    | "query"  as c {let () = echo_str c in let () = Buffer.reset string_content in
+		string (fun x l -> QUERY (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "add"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string_wo_space (fun x l -> ADD (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "compose"  as c {let () = echo_str c in COMPOSE}
@@ -142,6 +154,10 @@ let string = (letter|digit|'_')*
 		string_wo_space (fun x l -> LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "d" as c {let () = echo_chr c in let () = Buffer.reset string_content in
 		string_wo_space (fun x l -> LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "object" as c {let () = echo_str c in let () = Buffer.reset string_content in
+		string_wo_space (fun x l -> LOAD_OBJECT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "o" as c {let () = echo_chr c in let () = Buffer.reset string_content in
+		string_wo_space (fun x l -> LOAD_OBJECT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "script" as c {let () = echo_str c in let () = Buffer.reset string_content in
 		string_wo_space (fun x l -> LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "s" as c {let () = echo_chr c in let () = Buffer.reset string_content in
