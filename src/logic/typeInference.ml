@@ -44,51 +44,39 @@ struct
 		  cst_nbr=0;
 		  type_equations=UF.empty;}
     
-IFDEF BOLT THEN
   let type_equation_log prefix eq =
     Utils.log_iteration
       (fun s -> LOG "%s%s" prefix s LEVEL TRACE)
       (UF.to_string eq)
-      END;;
 
       
   let rec inference_aux level t ty_var env =
     let prefix=String.make (level*3) ' ' in
-    IFDEF BOLT THEN
     LOG "%sType inference of %s (currently %d). Equations are:" prefix (Lambda.raw_to_string t) ty_var LEVEL TRACE ;
     type_equation_log prefix env.type_equations;
-    END;
     let ty,new_env =
       match t with
       | Lambda.Var i ->
 	(try
 	   let ty_in_env=IntMap.find (env.nl_level-i-1) env.nlvar_typing in
-	   IFDEF BOLT THEN
 	   LOG "%sAdding an equation (variable found in the environment) %d<-->%d" prefix ty_var ty_in_env LEVEL TRACE ;
-	   END;
 	   let new_eq=UF.union ty_var ty_in_env env.type_equations in
 	   ty_var,{env with type_equations=new_eq}
 	 with
 	 | Not_found -> 
 	   let new_var,new_eq=UF.generate_new_var env.type_equations in
-	   IFDEF BOLT THEN
 	   LOG "%sAdding a new variable %d and an equation" prefix new_var LEVEL TRACE ;
-	   END;
 	   new_var,{env with nlvar_typing=IntMap.add i new_var env.nlvar_typing; type_equations=new_eq})
       | Lambda.LVar i -> 
 	(try
 	   let ty_in_env=IntMap.find (env.l_level-i-1) env.lvar_typing in
-	   IFDEF BOLT THEN
 	   LOG "%sAdding an equation (Lvariable found in the environment) %d<-->%d" prefix ty_var ty_in_env LEVEL TRACE ;
-	   END;
 	   let new_eq=UF.union ty_var (IntMap.find (env.l_level-i-1) env.lvar_typing) env.type_equations in
 	   ty_var,{env with type_equations=new_eq}
 	 with
 	 | Not_found -> 
 	   let new_var,new_eq=UF.generate_new_var env.type_equations in
-	   IFDEF BOLT THEN
 	   LOG "%sAdding a new Lvariable %d and an equation" prefix new_var LEVEL TRACE ;
-	   END;
 	   new_var,{env with lvar_typing=IntMap.add i new_var env.lvar_typing; type_equations=new_eq})
       | Lambda.Const i ->
 	(* Each occurence of a constants is considered as a new free
@@ -98,39 +86,25 @@ IFDEF BOLT THEN
 	new_var,{env with type_equations=new_eq;const_typing=IntMap.add (env.cst_nbr+1) (new_var,i) env.const_typing;cst_nbr=env.cst_nbr+1}
       | Lambda.DConst _ -> failwith "Bug: there should not remain any defined constant when  computing the principal type"
       | Lambda.Abs (x,t) ->
-	IFDEF BOLT THEN
 	LOG "%sType inference of an abstraction:" prefix LEVEL TRACE;
-	END;
 	let alpha,new_eq=UF.generate_new_var env.type_equations in
-	IFDEF BOLT THEN
 	LOG "%sAdded a variable at %d. Equations are:" prefix alpha LEVEL TRACE ;
-	END;
 	let () = type_equation_log prefix new_eq in
 	let beta,new_eq=UF.generate_new_var new_eq in
-	IFDEF BOLT THEN
 	LOG "%sAdded a variable at %d. Equations are:" prefix beta LEVEL TRACE ;
-	END;
 	let () = type_equation_log prefix new_eq in
 	let new_const,new_eq=UF.generate_new_constr new_eq (1,[alpha;beta]) in
-	IFDEF BOLT THEN
 	LOG "%sAdded new const at %d. Equations are:" prefix new_const LEVEL TRACE ;
-	END;
 	let () = type_equation_log prefix new_eq in
-	IFDEF BOLT THEN
 	LOG "%sPreparing a Union %d %d." prefix ty_var new_const LEVEL TRACE ;
-	END;
 	let new_eq=UF.union ty_var new_const new_eq in
-	IFDEF BOLT THEN
 	LOG "%sAdded a varibale at %d. Equations are:" prefix beta LEVEL TRACE ;
 	type_equation_log prefix new_eq;
-	END;
 	let _,new_env=inference_aux (level+1) t beta {env with nl_level=env.nl_level+1;nlvar_typing=IntMap.add env.nl_level alpha env.nlvar_typing;type_equations=new_eq} in
 	let is_cyclic,new_eq=UF.cyclic ty_var new_env.type_equations in
 	ty_var,{env with type_equations=new_eq;const_typing=new_env.const_typing;cst_nbr=new_env.cst_nbr}
       | Lambda.LAbs (x,t) ->
-	IFDEF BOLT THEN
 	LOG "%sType inference of a linear abstraction:" prefix LEVEL TRACE;
-	END;
 	let alpha,new_eq=UF.generate_new_var env.type_equations in
 	let beta,new_eq=UF.generate_new_var new_eq in
 	let new_const,new_eq=UF.generate_new_constr new_eq (1,[alpha;beta]) in
@@ -143,13 +117,9 @@ IFDEF BOLT THEN
       | Lambda.App (t,u) ->
 	let u_type,new_eq=UF.generate_new_var env.type_equations in
 	let t_type,new_eq=UF.generate_new_constr new_eq (1,[u_type;ty_var]) in
-	IFDEF BOLT THEN
 	LOG "%sType inference of the parameter in an application:" prefix LEVEL TRACE;
-	END;
 	let u_type,new_env=inference_aux (level+1) u u_type {env with type_equations=new_eq} in 
-	IFDEF BOLT THEN
 	LOG "%sType inference of the functor in an application:" prefix LEVEL TRACE;
-	END;
 	let t_type,new_env=inference_aux (level+1) t t_type new_env in 
 	ty_var,new_env
       | _ -> failwith "Bug: No principal typing algorithm for these types" in

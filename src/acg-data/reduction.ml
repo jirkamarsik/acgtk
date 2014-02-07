@@ -25,10 +25,8 @@ struct
       2nd order. *)
   let map_types abs_type obj_type sg obj_sg=
     let rec map_types_aux abs_type obj_type lst =
-      IFDEF BOLT THEN
-	LOG "Mapping (aux) type:%s" (Sg.type_to_string abs_type sg) LEVEL TRACE;
+      LOG "Mapping (aux) type:%s" (Sg.type_to_string abs_type sg) LEVEL TRACE;
       LOG "On (aux):          %s" (Lambda.raw_type_to_string obj_type) LEVEL TRACE;
-      END;
       match abs_type,obj_type with
       | Lambda.Atom i,_ -> (i,Sg.type_to_string abs_type sg,obj_type)::lst
       | Lambda.DAtom _,_ -> failwith (Printf.sprintf "Bug: type definition in \"%s\" as \"%s\" should be unfolded" (Sg.type_to_string abs_type sg) (Lambda.raw_type_to_string abs_type))
@@ -38,18 +36,14 @@ struct
       | Lambda.LFun _,Lambda.Fun _
       | Lambda.Fun _,Lambda.Fun _ -> failwith "Bug: should be 2nd order type for abstract constant"
       | _,_ -> failwith "Bug: Not a 2nd order type or not corresponding abstract and object type" in
-    IFDEF BOLT THEN
     LOG "Mapping type:%s (%s)" (Sg.type_to_string abs_type sg) (Lambda.raw_type_to_string abs_type) LEVEL TRACE;
     LOG "On:          %s" (Lambda.raw_type_to_string obj_type) LEVEL TRACE;
-    END;
     map_types_aux abs_type obj_type []
 
 
   let build_predicate_w_var_args (name,obj_type) (prog,var_gen,type_to_var_map) =
     let atom_sequence = sequentialize_rev obj_type [] in
-    IFDEF BOLT THEN
     LOG "Build predicate from %s:%s   ([%s])" name (Lambda.raw_type_to_string obj_type) (Utils.string_of_list ";" string_of_int atom_sequence) LEVEL TRACE;
-    END;
     let var_sequence,var_gen,type_to_var_map =
       List.fold_left
 	(fun (l_var_seq,l_var_gen,l_type_to_var_map) i ->
@@ -70,9 +64,7 @@ struct
 
   let build_predicate_w_cst_args (name,obj_type) prog =
     let atom_sequence = sequentialize obj_type in
-    IFDEF BOLT THEN
     LOG "Build predicate from %s:%s   ([%s])" name (Lambda.raw_type_to_string obj_type) (Utils.string_of_list ";" string_of_int atom_sequence) LEVEL TRACE;
-    END;
     let const_sequence,prog =
       List.fold_left
 	(fun (l_const_seq,l_prog) i ->
@@ -117,9 +109,7 @@ struct
 	    (new_pred,l_length)::rhs,l_length,new_tables)
 	  env
 	  ([],0,(prog,var_gen,type_to_var_map) ) in
-      IFDEF BOLT THEN
       LOG "Correctly set the number of intensional predi in rhs: %d" (let () = assert (length=List.length i_rhs) in length) LEVEL DEBUG;
-      END;
       let new_rule = AbstractSyntax.Rule.({id=rule_id;lhs;e_rhs;i_rhs;i_rhs_num=length}) in
       new_rule,Datalog.Program.add_rule ~intensional:true new_rule prog
 

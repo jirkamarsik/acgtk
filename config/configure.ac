@@ -20,6 +20,11 @@
 AC_INIT([ACG DTK],[0.1],[sylvain.pogodalla@loria.fr])
 
 #AC_COPYRIGHT([Cecill])
+#m4_include(ac_lib_checking.m4)
+#AC_LIB_CHECKING(Zen,zen,zen,zen,Word,"dynlink.cma -I +camlp4 camlp4lib.cma",true)
+#AC_SUBST(ZEN_INCLUDE,$LIB_INCLUDE)
+
+
 
 OCAML_REQUIRED=3.07
 
@@ -181,7 +186,7 @@ else
 fi
 
 # Look for BOLT_LIB with ocamlfind
-AC_MSG_CHECKING([(optional) bolt library])
+AC_MSG_CHECKING([Looking for bolt library])
 if test "$OCAMLFIND" != no ; then
    if $OCAMLFIND query bolt > /dev/null 2>&1 ; then
       BOLT_INCLUDE_DIR=`$OCAMLFIND query bolt`
@@ -196,7 +201,7 @@ else
 	      BOLT_PLACE=$OCAML_LIB/bolt
 	      BOLT_INCLUDE="-I +bolt"
    else
-   AC_MSG_RESULT(Could not find a suitable place for bolt library in $OCAML_LIB. No link to the bolt library will be allowed in compilation)
+   AC_MSG_ERROR(Cannot find a suitable place for the bolt library in $OCAML_LIB.)
    fi
 fi  
 if test -f $BOLT_PLACE/bolt.cma ; then
@@ -204,14 +209,14 @@ if test -f $BOLT_PLACE/bolt.cma ; then
    BOLT="-DBOLT"
    AC_MSG_RESULT(bolt library is $BOLT_PLACE/bolt.cma)
 else
-   AC_MSG_RESULT(Could not find bolt library "bolt.cma" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation)
+   AC_MSG_ERROR(Could not find bolt library "bolt.cma" in $BOLT_PLACE.)
 fi
 
 if test -f $BOLT_PLACE/bolt_pp.cmo ; then
    BOLT_PP="$BOLT_PLACE/bolt_pp.cmo -level \$(BOLT_LEVEL)"
    AC_MSG_RESULT(bolt_pp.byte preprocessor is $BOLT_PP)
 else
-   AC_MSG_RESULT(Could not find bolt_pp.byte preprocessor in $BOLT_PLACE.)
+   AC_MSG_ERROR(Could not find bolt_pp.byte preprocessor in $BOLT_PLACE.)
 fi
 
 

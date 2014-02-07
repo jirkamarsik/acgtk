@@ -226,9 +226,7 @@ struct
      forest *)
       
   let rec enter addr (z,(Node (v,children) as t)) =
-    IFDEF BOLT THEN
     LOG "Entering \"%s\" on a node with %d children%!" (address_to_string addr) (List.length children) LEVEL DEBUG;
-    END;
     match addr with
     | [] -> 
 	(match z with
@@ -261,10 +259,8 @@ struct
 	enter tl (Zip(v',(l',r'),(p',n'),1,z,None,(j_alt,i_child)::(forest_address z)),t')
       | Link_to (back,addr) -> forest_at (back-1,addr) (z,Node(v',children'))
   and forest_at (back,addr) (z,(Node (_,children) as t)) = 
-    IFDEF BOLT THEN
     LOG "Look for forest at path %s\n%!" (path_to_string (back,addr)) LEVEL DEBUG;
     LOG "current focused tree has %d children\n%!" (List.length children) LEVEL DEBUG;
-    END;
     if back < 0 then
       failwith "Bug: looking for a forest with a negative back parameter"
     else
@@ -506,41 +502,27 @@ struct
 	
   let rec build_tree_aux f_forest f_tree depth resume=
     try
-      IFDEF BOLT THEN
       LOG "Trying to go down" LEVEL DEBUG;
-      END;
       let f_forest,f_tree,depth,resume = down f_forest f_tree depth resume in
-      IFDEF BOLT THEN
       LOG "Succeeded" LEVEL DEBUG;
-      END;
       build_tree_aux f_forest f_tree depth resume
     with
     | Move_failure Down ->
       (try
-	 IFDEF BOLT THEN
 	 LOG "Trying to go right" LEVEL DEBUG;
-	 END;
 	 let f_forest,f_tree,depth,resume = right f_forest f_tree depth resume in
-	 IFDEF BOLT THEN
 	 LOG "Succeeded" LEVEL DEBUG;
-	 END;
 	 build_tree_aux f_forest f_tree depth resume
        with
        | Move_failure Right ->
-	 IFDEF BOLT THEN
 	 LOG "Trying to close up" LEVEL DEBUG;
-	 END;
 	 (match close_forest_context_up f_forest f_tree depth resume with
 	 | ((Top _ ,_),(ZTop,_),_,_) as res -> 
-	   IFDEF BOLT THEN
 	   LOG "Succeeded" LEVEL DEBUG;
-	   END;
 	   res
 	 | (Zip _,_) as l_f_forest,((Zipper _,_) as l_f_tree),depth',resume' -> 
-	   IFDEF BOLT THEN
 	   LOG "Succeeded" LEVEL DEBUG;
 	   LOG "Trying to restart a building" LEVEL DEBUG;
-	   END;
 	   build_tree_aux l_f_forest l_f_tree depth' resume'
 	 | _ -> failwith "Bug: not representing the same tree"))
 	

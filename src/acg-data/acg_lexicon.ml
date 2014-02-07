@@ -124,20 +124,16 @@ struct
 	interpreted_term
 	interpreted_type
 	lex.object_sig in
-    IFDEF BOLT THEN
     LOG "term: %s:%s" (Sg.term_to_string interpreted_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
     LOG "eta-long form: %s" (Sg.term_to_string eta_long_term lex.object_sig) LEVEL TRACE;
     LOG "eta-long form (as caml term): %s" (Lambda.raw_to_caml eta_long_term) LEVEL TRACE;
     LOG "Datalog rule addition: lexicon \"%s\", constant \"%s:%s\" mapped to \"%s:%s\"" (fst lex.name) name (Sg.type_to_string abs_type lex.abstract_sig) (Sg.term_to_string eta_long_term lex.object_sig) (Sg.type_to_string interpreted_type lex.object_sig) LEVEL TRACE;
-    END;
     let obj_princ_type,obj_typing_env = TypeInference.Type.inference eta_long_term in
-    IFDEF BOLT THEN
     LOG "Interpreting \"%s\" as \"%s=%s\" with principle type: \"%s\"" name (Sg.term_to_string eta_long_term lex.object_sig) (Lambda.raw_to_caml eta_long_term) (Lambda.raw_type_to_string obj_princ_type) LEVEL DEBUG;
     LOG "In the context of:" LEVEL DEBUG ;
-    Utils.IntMap.iter
-      (fun k (t,ty) -> LOG "%d --> %s : %s" k (Lambda.raw_to_string t) (Lambda.raw_type_to_string ty) LEVEL DEBUG)
-      obj_typing_env;
-    END;
+    (Utils.IntMap.iter
+       (fun k (t,ty) -> LOG "%d --> %s : %s" k (Lambda.raw_to_string t) (Lambda.raw_type_to_string ty) LEVEL DEBUG)
+       obj_typing_env);
     let rule,new_prog=Reduction.generate_and_add_rule
       ~abs_cst:(name,abs_type)
       ~obj_princ_type
@@ -196,12 +192,10 @@ struct
     | Some (prog,_), (Lambda.Atom _ as dist_type) ->
       let buff=Buffer.create 80 in
       let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract prog)) in
-      IFDEF BOLT THEN
       LOG "Before parsing. Program is currently:" LEVEL DEBUG;
       Utils.log_iteration
 	(fun s -> LOG s LEVEL DEBUG)
 	(Buffer.contents buff);
-      END;
       let dist_type_image = interpret_type dist_type lex in
       let obj_term= 
 	Sg.eta_long_form
@@ -211,11 +205,9 @@ struct
 	  dist_type_image
 	  lex.object_sig in
       let obj_princ_type,obj_typing_env = TypeInference.Type.inference obj_term in
-      IFDEF BOLT THEN
-	LOG "Going to set a query for the distinguised type \"%s(%s)\"" (Signature.type_to_string dist_type lex.abstract_sig) (Lambda.raw_type_to_string dist_type) LEVEL DEBUG;
+      LOG "Going to set a query for the distinguised type \"%s(%s)\"" (Signature.type_to_string dist_type lex.abstract_sig) (Lambda.raw_type_to_string dist_type) LEVEL DEBUG;
       LOG "whose image is \"%s(%s)\"" (Signature.type_to_string dist_type_image lex.object_sig) (Lambda.raw_type_to_string dist_type_image) LEVEL DEBUG;
       LOG "resulting int the principle type \"%s\"" (Lambda.raw_type_to_string obj_princ_type) LEVEL DEBUG;
-      END;
       let query,temp_prog =
 	Reduction.edb_and_query
 	  ~obj_term
@@ -227,12 +219,10 @@ struct
 	  ~obj_sig:lex.object_sig in
       let buff'=Buffer.create 80 in
       let () = Buffer.add_buffer buff' (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract temp_prog)) in
-      IFDEF BOLT THEN
       LOG "Going to solve the query: \"%s\" with the program" (Datalog_AbstractSyntax.AbstractSyntax.Predicate.to_string query temp_prog.Datalog.Program.pred_table temp_prog.Datalog.Program.const_table) LEVEL TRACE;
       Utils.log_iteration
 	(fun s -> LOG s LEVEL TRACE)
 	(Buffer.contents buff');
-      END;
       let derived_facts,derivations = Datalog.Program.seminaive temp_prog in
       let parse_forest = Datalog.Program.build_forest ~query:query derivations temp_prog in
       let resume = 
@@ -253,18 +243,14 @@ struct
       
     
   let get_analysis resume lex =
-    IFDEF BOLT THEN
     LOG "Trying to get some analysis" LEVEL DEBUG;
-    END;
     match lex.datalog_prog with
     | None -> let () = Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in None,resume
     | Some (_,rule_id_to_cst) ->
       match AlterTrees.AlternTrees.resumption resume with
       | None,resume -> None,resume
       | Some t,resume ->
-	IFDEF BOLT THEN
 	LOG "Got a result. Ready to map it" LEVEL DEBUG;
-	END;
 	Some (AlterTrees.AlternTrees.fold_depth_first
 		((fun rule_id -> RuleToCstMap.find rule_id rule_id_to_cst),
 		 (fun x y -> Lambda.App(x,y)))
@@ -316,9 +302,7 @@ struct
 	    
 
   let compose lex1 lex2 n =
-    IFDEF BOLT THEN
     LOG "Compose %s(%s) as %s" (fst(name lex1)) (fst(name lex2)) (fst n) LEVEL TRACE;
-    END;
     let temp_lex=
       {name=n;
        dico = 

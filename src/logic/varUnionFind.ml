@@ -191,11 +191,9 @@ struct
       (* Then we update the storage data structure linking the context
 	 indexed by [i] directly to the representative index *)
       let updated_f = Store.set i (Link_to representative_index) new_f in
-      IFDEF BOLT THEN
       LOG "the \"UnionFinf.find\" function indeed returns a Link_to itself: %b" (let ()=match representative_value with
       | Link_to variable -> assert (representative_index=variable)
       | _ -> () in true) LEVEL FATAL;
-      END;
       (representative_index,representative_value),updated_f
 	
   (** [find i h] returns a pair [(i',v),f'] where [i'] is the index of
@@ -215,9 +213,7 @@ struct
       values of representatives (i.e it follows the [Link_to] links
       until the value of the representative before returning it). *)
   let extract ?(start=1) i {parents=p} =
-    IFDEF BOLT THEN
     LOG "Going to extract %d elements starting at %d..." i start LEVEL DEBUG;
-    END;
     let rec extract_aux k res =
       match k-start with
       | j when j>0 -> 
@@ -315,9 +311,7 @@ struct
       let new_acc=IntSet.add i acc in
       List.fold_left
 	(fun (c,l_i,l_f) arg ->
-	  IFDEF BOLT THEN
 	  LOG "Preparing to check cyclicity from %d" arg LEVEL TRACE;
-	  END;
 	  if IntSet.mem arg new_acc then
 	    true,l_i,l_f
 	  else
@@ -330,12 +324,10 @@ struct
   (* the cyclic function, calling cyclic_aux, compress paths
      (hence also returns the parents) *)
   let cyclic i h = 
-    IFDEF BOLT THEN
     LOG "Checking cyclicity from %d of:" i LEVEL TRACE ;
     Utils.log_iteration
       (fun s -> LOG "%s" s LEVEL TRACE)
       (to_string h);
-    END;
     let res,_,f = cyclic_aux i h.parents (IntSet.empty) in
     res,{h with parents=f}
       

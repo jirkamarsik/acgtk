@@ -170,8 +170,7 @@ struct
 	variable index, and [vargen'] is the result of generating this
 	new variable from [vargen].*)
     let to_abstract {p_id=id;arity=arity} (start,content) (vars,vargen) pred_table =
-      IFDEF BOLT THEN
-	LOG "Starting the extraction of predicate %s/%d" (ASPred.to_string {ASPred.p_id=id;ASPred.arity=arity;ASPred.arguments=[]} pred_table ConstGen.Table.empty) arity LEVEL TRACE; END;
+	LOG "Starting the extraction of predicate %s/%d" (ASPred.to_string {ASPred.p_id=id;ASPred.arity=arity;ASPred.arguments=[]} pred_table ConstGen.Table.empty) arity LEVEL TRACE;
       let get_var i (vars,vargen) = 
 	try
 	  Utils.IntMap.find i vars,(vars,vargen)
@@ -530,13 +529,11 @@ struct
 	
     let make_rule {ASRule.id=id;ASRule.lhs=lhs;ASRule.e_rhs=e_rhs;ASRule.i_rhs=i_rhs;ASRule.i_rhs_num} =
     (* Be careful, the list of the rhs is reversed *)
-      IFDEF BOLT THEN LOG "Preparing the lhs content..." LEVEL TRACE; END;
+      LOG "Preparing the lhs content..." LEVEL TRACE;
       let lhs_content=
 	Predicate.add_pred_arguments_to_content lhs.ASPred.arguments ([],1,VarGen.IdMap.empty) in
-      IFDEF BOLT THEN
-	LOG "Done." LEVEL TRACE;
+      LOG "Done." LEVEL TRACE;
       LOG "Preparing the e_rhs..." LEVEL TRACE;
-      END;
       let e_rhs,e_rhs_content =
 	List.fold_left
 	  (fun (rhs,content) ({ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args},pos) ->
@@ -544,10 +541,8 @@ struct
 	     Predicate.add_pred_arguments_to_content pred_args content))
 	  ([],lhs_content)
 	  e_rhs in
-      IFDEF BOLT THEN
       LOG "Done." LEVEL TRACE;
       LOG "Preparing the i_rhs..." LEVEL TRACE;
-      END;
       let i_rhs,(content,_,_) =
 	List.fold_left
 	  (fun (rhs,content) ({ASPred.p_id=n;ASPred.arity=k;ASPred.arguments=pred_args},pos) ->
@@ -555,14 +550,10 @@ struct
 	     Predicate.add_pred_arguments_to_content pred_args content))
 	  ([],e_rhs_content)
 	  i_rhs in
-      IFDEF BOLT THEN
       LOG "Done. Content is of size %d" (List.length content) LEVEL TRACE;
-      END;
       let internal_content = UF.create (List.rev content) in
-      IFDEF BOLT THEN
       LOG "It is represented by:" LEVEL TRACE;
       Utils.log_iteration (fun c -> LOG c LEVEL TRACE) (UF.to_string internal_content);
-      END;
       {id=id;
        lhs=Predicate.make_predicate lhs;
        e_rhs=List.rev e_rhs;
@@ -614,10 +605,8 @@ struct
 	where the arguments of all (datalog abstract syntax)
 	predicates have been computed using [content]. *)
     let to_abstract {id=id;lhs=lhs;e_rhs=e_rhs;i_rhs=i_rhs;i_rhs_num} content pred_table =
-      IFDEF BOLT THEN
       LOG "Going to work with the following content:" LEVEL TRACE;
       Utils.log_iteration (fun s -> LOG s LEVEL TRACE) (UF.to_string content);
-      END;
       let abs_lhs,vars,vargen=Predicate.to_abstract lhs (1,content) (Utils.IntMap.empty,VarGen.init ()) pred_table in
       let abs_e_rhs,start',vars',vargen'=Predicate.lst_to_abstract e_rhs (1+lhs.Predicate.arity,content) (vars,vargen) pred_table in
       let abs_i_rhs,_,_,_ = Predicate.lst_to_abstract i_rhs (start',content) (vars',vargen') pred_table in
@@ -755,9 +744,7 @@ struct
       let rules,e_facts,rule_to_rule_map = 
 	ASRule.Rules.fold
 	  (fun ({ASRule.lhs=lhs} as r) (acc,e_facts,r_to_r) ->
-	    IFDEF BOLT THEN
 	    LOG "Dealing with rule:\t%s" (ASRule.to_string r pred_table cst_table) LEVEL TRACE;
-	    END;
 	    let new_rule = Rule.make_rule r in
 	    let updated_e_facts = 
 	      if not (ASPred.PredIds.mem lhs.ASPred.p_id i_preds) then
@@ -767,10 +754,8 @@ struct
 	    extend_map_to_list lhs.ASPred.p_id new_rule acc,updated_e_facts,ASRule.RuleMap.add r new_rule r_to_r)
 	  r
 	  (Predicate.PredMap.empty,Predicate.PredMap.empty,ASRule.RuleMap.empty) in
-      IFDEF BOLT THEN
       LOG "All rules done." LEVEL TRACE;
       LOG "Now separate the e and i predicates." LEVEL TRACE;
-      END;
       let edb,idb=
 	ASPred.PredIdTable.fold
 	  (fun k _ (e,i) ->
@@ -780,9 +765,7 @@ struct
 	      (k::e,i))
 	  pred_table
 	  ([],[]) in
-      IFDEF BOLT THEN
       LOG "Done." LEVEL TRACE;
-      END;
       {rules=rules;
        edb=edb;
        edb_facts=e_facts;
@@ -804,9 +787,7 @@ struct
 
 	
     let to_abstract {rules=r;idb=idb;pred_table=pred_table;const_table=cst_table;rule_id_gen;edb_facts(*e_pred_to_rules*)} =
-      IFDEF BOLT THEN
       LOG "Transforming internal rules into abastract ones..." LEVEL TRACE;
-      END;
       let rules = 
 	Predicate.PredMap.fold
 	  (fun _ rules acc -> 
@@ -817,10 +798,8 @@ struct
 	      rules)
 	  r
 	  ASRule.Rules.empty in
-      IFDEF BOLT THEN
       LOG "Done." LEVEL TRACE;
       LOG "Transforming facts into rules" LEVEL TRACE;
-      END;
       let rules,rule_id_gen = 
 	Predicate.PredMap.fold
 	  (fun pred fact_set (acc,gen) -> 
@@ -828,17 +807,13 @@ struct
 	      (fun fact (l_acc,id_rule_gen) -> 
 		let id_rule,id_rule_gen=IdGenerator.IntIdGen.get_fresh_id id_rule_gen in
 		let r=ASRule.({id=id_rule;lhs=fact;e_rhs=[];i_rhs=[];i_rhs_num=0}) in
-		IFDEF BOLT THEN
 		LOG "Adding fact: %s" (ASRule.to_string r pred_table cst_table) LEVEL DEBUG;
-		END;
 		ASRule.Rules.add r l_acc,id_rule_gen)
 	      fact_set
 	      (acc,gen))
 	  edb_facts
 	  (rules,rule_id_gen) in
-      IFDEF BOLT THEN
       LOG "Done." LEVEL TRACE;
-      END;
       let i_preds=
 	List.fold_left
 	  (fun acc id -> ASPred.PredIds.add id acc)
@@ -880,9 +855,7 @@ struct
   (* TODO: if a set of facts for a predicate of the rhs is empty, we
      can stop the computation *)
     let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table cst_table =
-      IFDEF BOLT THEN
       LOG "Scanning the rule: %s" (ASRule.to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
-      END;
       (* We first collect all the contents compatible with the facts of
 	 the intensional database. They depend on the intensional
 	 predicate [delta_position] and the ones that are before it
@@ -1020,9 +993,7 @@ struct
 	let new_delta_facts,new_derivations_for_all_i_pred = 
 	  List.fold_left
 	    (fun (acc,derivations) pred ->
-	      IFDEF BOLT THEN
 		LOG "Trying to derive facts for: %s" (ASPred.to_string {ASPred.p_id=pred;ASPred.arity=0;ASPred.arguments=[]} prog.pred_table prog.const_table) LEVEL DEBUG;
-	      END;
 	      let new_facts_for_pred,new_derivations=
 		p_semantics_for_predicate
 		  pred
@@ -1041,12 +1012,10 @@ struct
 		  acc,new_derivations) 
 	    (Predicate.PredMap.empty,derivations)
 	    prog.idb  in 
-	IFDEF BOLT THEN
 	LOG "%d new facts:" (Predicate.PredMap.fold (fun _ v acc -> acc+(Predicate.FactSet.cardinal v)) new_delta_facts 0) LEVEL DEBUG;
 	Utils.log_iteration
 	  (fun s -> LOG s LEVEL DEBUG)
 	  (Predicate.facts_to_string new_delta_facts prog.pred_table prog.const_table);
-	END;
 	(new_facts,new_delta_facts,new_derivations_for_all_i_pred) in
       (** [seminaive_rec (facts,delta_facts)] returns the result when
 	  the fixpoint is reached, ie when [seminaive_aux facts
@@ -1226,28 +1195,18 @@ struct
     let rec build_children alt_num parent_address children_num facts derivations visited_facts prog =
       List.fold_left
 	(fun (l_acc,child_num,l_visit) fact ->
-	  IFDEF BOLT THEN
 	  LOG "Analysing fact: %s" (ASPred.to_string fact prog.pred_table prog.const_table) LEVEL DEBUG;
-	  END;
 	  if List.mem fact.ASPred.p_id prog.edb then
-	    (IFDEF BOLT THEN
-	       LOG "Skipping it" LEVEL DEBUG;
-	     END;
+	    (LOG "Skipping it" LEVEL DEBUG;
 	     l_acc,child_num,l_visit)
 	  else
-	    (IFDEF BOLT THEN
-	       LOG "Keeping it" LEVEL DEBUG;
-	     END;
+	    (LOG "Keeping it" LEVEL DEBUG;
 	     let cur_add=(alt_num,child_num)::parent_address in
-	     IFDEF BOLT THEN
-	       LOG "It will have address [%s]" (AlterTrees.AlternTrees.address_to_string (List.rev cur_add)) LEVEL DEBUG;
-	     END;
+	     LOG "It will have address [%s]" (AlterTrees.AlternTrees.address_to_string (List.rev cur_add)) LEVEL DEBUG;
 	     try
 	       let existing_add = Predicate.PredicateMap.find fact l_visit  in
 	       let patch=AlternTrees.diff (List.rev cur_add) (List.rev existing_add) in      
-	       IFDEF BOLT THEN
 		 LOG "Will point to: %s with patch %s" (AlternTrees.address_to_string (List.rev existing_add)) (AlternTrees.path_to_string patch) LEVEL DEBUG;
-	       END;
 	       (AlternTrees.Link_to patch)::l_acc,
 	       child_num-1,
 	       l_visit
@@ -1283,9 +1242,7 @@ struct
     let build_forest_from_root fact premises derivations prog =
       Predicate.PremiseSet.fold
 	(fun (facts,rule_id,i_rhs_num) (acc,alt_num,visited_facts_addresses) ->
-	  IFDEF BOLT THEN
 	  LOG "Building alt_tree for root: rule %d" rule_id LEVEL DEBUG;
-	  END;
 	  let cur_address= [] in
 	  let visited_facts_addresses = Predicate.PredicateMap.add fact cur_address visited_facts_addresses in
 	  let children_rev,_,visited_facts_addresses = 

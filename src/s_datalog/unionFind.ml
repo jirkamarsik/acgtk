@@ -135,14 +135,10 @@ struct
     let res,_=
       List.fold_left
 	(fun ({rank=r;parents=p},k) content -> 
-	  IFDEF BOLT THEN
 	  LOG "Setting the following content at address %d:" k LEVEL DEBUG;
-	  END;
 	  match content with
 	| Link_to i as c ->
-	  IFDEF BOLT THEN
 	    LOG "Link to %d" i LEVEL DEBUG;
-	  END;
 	  (* rank is unset for contents that are initially a link *)
 	  ({rank=
 	      (try
@@ -152,9 +148,7 @@ struct
 	      | S.Store_Not_found -> S.set i 1 r);
 	    parents=S.set k c p},k+1)
 	| Value v as c ->
-	  IFDEF BOLT THEN
 	  LOG "Some value" LEVEL DEBUG;
-	  END;
 	  ({rank=
 	      (try
 		 let _ = S.get k r in
@@ -164,11 +158,9 @@ struct
 	    parents=S.set k c p},k+1))
 	({rank=S.empty ln;parents=S.empty ln},1)
 	contents in
-    IFDEF BOLT THEN
       for i = 1 to ln do
 	LOG "%d/%d\t<--->\t%s\t\t(%d)" i ln (content_to_string (S.get i res.parents)) (S.get i res.rank) LEVEL TRACE;
       done;
-    END;
     res
 
   
@@ -192,11 +184,9 @@ struct
       (* Then we update the storage data structure linking the context
 	 indexed by [i] directly to the representative index *)
       let updated_f = S.set i (Link_to representative_index) new_f in
-      IFDEF BOLT THEN
       LOG "the \"UnionFinf.find\" function indeed returns a Link_to itself: %b" (let ()=match representative_value with
       | Link_to variable -> assert (representative_index=variable)
       | _ -> () in true) LEVEL FATAL;
-      END;
       (representative_index,representative_value),updated_f
 	
   (** [find i h] returns a pair [(i',v),f'] where [i'] is the index of
@@ -216,9 +206,7 @@ struct
       values of representatives (i.e it follows the [Link_to] links
       until the value of the representative before returning it). *)
   let extract ?(start=1) i {parents=p} =
-    IFDEF BOLT THEN
     LOG "Going to extract %d elements starting at %d..." i start LEVEL DEBUG;
-    END;
     let rec extract_aux k res =
       match k-start with
       | j when j>0 -> 
