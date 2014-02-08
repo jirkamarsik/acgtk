@@ -591,6 +591,7 @@ OCAMLP4_LOC
 OCAML09WARNINGS
 TYPES
 CAMLP4_LIB
+BOLT_LEVEL
 BOLT_PP
 BOLT_LIB
 BOLT_INCLUDE
@@ -654,6 +655,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_kaputt
+enable_log
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1271,6 +1273,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-kaputt         Compile with kaputt for unit testing
+  --enable-log            Enable log information to be produced by bolt
 
 Some influential environment variables:
   DYPGEN_PATH Directory where to find dypgen if not in a standard location
@@ -2798,6 +2801,24 @@ $as_echo "bolt_pp.byte preprocessor is $BOLT_PP" >&6; }
       as_fn_error $? "Could not find bolt_pp.byte preprocessor in $LIB_DIR." "$LINENO" 5
    fi
 fi
+
+# Check whether --enable-log was given.
+if test "${enable_log+set}" = set; then :
+  enableval=$enable_log; with_log=$enableval
+else
+  with_log=no
+fi
+
+if test "$with_log" = "no" ; then
+   BOLT_LEVEL=NONE
+
+else
+   BOLT_LEVEL=TRACE
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Bolt log level is $BOLT_LEVEL." >&5
+$as_echo "Bolt log level is $BOLT_LEVEL." >&6; }
+
 
 # What is the OCAML version  ?
 # we extract Ocaml version number

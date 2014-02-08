@@ -147,6 +147,19 @@ if test "$FOUND_LIB" != "no" ; then
    fi
 fi
 
+AC_ARG_ENABLE(
+	[log],
+	[AS_HELP_STRING([--enable-log], [Enable log information to be produced by bolt])],
+	[with_log=$enableval],
+	[with_log=no])
+if test "$with_log" = "no" ; then
+   AC_SUBST(BOLT_LEVEL,NONE)
+else
+   AC_SUBST(BOLT_LEVEL,TRACE)
+fi
+AC_MSG_RESULT(Bolt log level is $BOLT_LEVEL.)
+
+
 # What is the OCAML version  ?
 # we extract Ocaml version number
 OCAML_VERSION=`$OCAMLC -version`
