@@ -590,18 +590,19 @@ SET_MAKE
 OCAMLP4_LOC
 OCAML09WARNINGS
 TYPES
-BOLT
+CAMLP4_LIB
 BOLT_PP
 BOLT_LIB
 BOLT_INCLUDE
+BOLTLIB_PATH
 KAPUTT_PP
 KAPUTT_LIB
 KAPUTT_INCLUDE
 DYPGEN_INCLUDE
-CAMLP4_LIB
 DYPGENLIB_PATH
 DYPGEN
 DYPGEN_PATH
+OPAM
 OCAMLFIND
 OCAMLYACC
 OCAMLLEX
@@ -652,12 +653,14 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+enable_kaputt
 '
       ac_precious_vars='build_alias
 host_alias
 target_alias
 DYPGEN_PATH
-DYPGENLIB_PATH'
+DYPGENLIB_PATH
+BOLTLIB_PATH'
 
 
 # Initialize some variables set by options.
@@ -1263,10 +1266,19 @@ if test -n "$ac_init_help"; then
    esac
   cat <<\_ACEOF
 
+Optional Features:
+  --disable-option-checking  ignore unrecognized --enable/--with options
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-kaputt         Compile with kaputt for unit testing
+
 Some influential environment variables:
   DYPGEN_PATH Directory where to find dypgen if not in a standard location
   DYPGENLIB_PATH
-              Directory where to find dypgen library if not in a standard
+              Directory where to find the dypgen library if not in a standard
+              location
+  BOLTLIB_PATH
+              Directory where to find the bolt library if not in a standard
               location
 
 Use these variables to override the choices made by `configure' or to help
@@ -1702,6 +1714,22 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 #AC_COPYRIGHT([Cecill])
+################################################################################
+# AC_LIB_CHECKING
+# permet le test de la présence d'une librairie Ocaml dans le repertoire
+# standard d'installation des librairies (ocamlc -where), dans un repertoire
+# dédié (+...), ou installée avec ocamlfind
+# @param $1 : le nom a afficher de la librairie
+# @param $2 : le repertoire standard de la librairie (par ex : zen pour -I +zen)
+# @param $3 : le nom du fichier contenant la librairie
+# @param $4 : le nom de la librairie pour ocamlfind
+# @param $5 : le module a tester pour vérifier la présence de la librairie
+# @param $6 : les options de "compilation" pour la verification de la présence de la lib
+# @param $7 : true si la librairie est obligatoire, false si elle est optionnelle
+# @param $7 : nom de la variable si un chemin non standard est spécifié
+
+################################################################################
+
 
 OCAML_REQUIRED=3.07
 
@@ -2126,6 +2154,49 @@ fi
 
 
 
+# Look for opam
+# Extract the first word of "opam", so it can be a program name with args.
+set dummy opam; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_OPAM+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $OPAM in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_OPAM="$OPAM" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_OPAM="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_OPAM" && ac_cv_path_OPAM="no"
+  ;;
+esac
+fi
+OPAM=$ac_cv_path_OPAM
+if test -n "$OPAM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OPAM" >&5
+$as_echo "$OPAM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
 #Look for dypgen
 DYPGEN_NEEDED=20080925
 
@@ -2169,7 +2240,7 @@ fi
 
 
 else
-	for ac_prog in dypgen.opt dypgen
+   for ac_prog in dypgen.opt dypgen
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2222,147 +2293,511 @@ $as_echo_n "checking for $DYPGEN version... " >&6; }
 	if test $DYPGEN_VERSION -ge $DYPGEN_NEEDED ; then
 		   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DYPGEN ($DYPGEN_VERSION) is ok" >&5
 $as_echo "$DYPGEN ($DYPGEN_VERSION) is ok" >&6; }
+
 	else
 		   as_fn_error $? "$DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed" "$LINENO" 5
 	fi
 fi
 
 # Look for DYPGEN_LIB with or without ocamlfind
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking dypgen library" >&5
-$as_echo_n "checking dypgen library... " >&6; }
 
-if test -n "$DYPGENLIB_PATH" ; then
-   DYPGEN_PLACE=$DYPGENLIB_PATH
-   DYPGEN_INCLUDE="-I $DYPGEN_PLACE"
-   if test -f $DYPGEN_PLACE/dyp.cma ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: dypgen library is $DYPGEN_PLACE/dyp.cma" >&5
-$as_echo "dypgen library is $DYPGEN_PLACE/dyp.cma" >&6; }
-   else
-      as_fn_error $? "Could not find dypgen library in $DYPGEN_PLACE" "$LINENO" 5
-   fi
-else
-	if test "$OCAMLFIND" != no ; then
-	   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
-	         DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dypgen`
-		 DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
-	   	 DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
-	   else
-		if $OCAMLFIND query dyp > /dev/null 2>&1 ; then
-		   DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dyp`
-		   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
-	   	   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
-		else
-		   { $as_echo "$as_me:${as_lineno-$LINENO}: result: dypgen library was not installed by ocamlfind" >&5
-$as_echo "dypgen library was not installed by ocamlfind" >&6; }
-	        fi
-	   fi
+MACRO="A"
+    MACRO=$MACRO"C_LIB_CHECKING"
+
+
+    NAME=dypgen
+    STD_FOLDER=dyp
+    LIB_FILE=dyp
+    OFIND_NAME=dyp
+    MOD=Dyp
+    OPTIONS=
+    NO_OPTIONAL=true
+    LIB_PATH=$DYPGENLIB_PATH
+
+	# test au cas ou un argument obligatoire est manquant
+    if test "$NAME" = "" || test "$STD_FOLDER" = "" || test "$OFIND_NAME" = "" || test "$LIB_FILE" = ""  || test "$MOD" = "" ; then
+	echo ""
+	echo "Can't check a library"
+	echo "Missing argument in $MACRO($NAME,$STD_FOLDER,$OFIND_NAME,$LIB_FILE,$MOD,$OPTIONS,$NO_OPTIONAL)"
+	echo ""
+	exit 1
+    fi
+
+	# affichage du nom de la librairie a checker (avec details sur l'optionalité)
+    if test "$NO_OPTIONAL" = true; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for requested library : $NAME" >&5
+$as_echo_n "checking for requested library : $NAME... " >&6; }
+    else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for optional library  : $NAME" >&5
+$as_echo_n "checking for optional library  : $NAME... " >&6; }
+    fi
+
+	# si le fichier ml de test existe
+    if test -f c_check_$STD_FOLDER.ml ; then
+		# si on peut le supprimer
+	if test -w c_check_$STD_FOLDER.ml ; then
+			# on le supprimer
+	    rm c_check_$STD_FOLDER.ml >& /dev/null
+		# sinon on arrete et on balance un message d'erreur (ie on a pas les droits sur le fichier
 	else
-	   OCAML_LIB=`$OCAMLC -where`
-	   # Old versions of dypgen where put in a dypgen directory
-	   if test -d $OCAML_LIB/dypgen ; then
-	      DYPGEN_PLACE=$OCAML_LIB/dypgen
-	      DYPGEN_INCLUDE="-I +dypgen"
-	   else
-	   # New versions of dypgen where put in a dyp directory
-	     if test -d $OCAML_LIB/dyp ; then
-	      	DYPGEN_PLACE=$OCAML_LIB/dyp
-	      	DYPGEN_INCLUDE="-I +dyp"
-	     else
-		as_fn_error $? "Could not find a suitable place for dypgen library in $OCAML_LIB" "$LINENO" 5
-	     fi
-	   fi
+	    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Cannot remove c_check_dyp.ml. Please change its right with chmod 666 c_check_dyp.ml
+See \`config.log' for more details" "$LINENO" 5; }
 	fi
-fi
-if test -f $DYPGEN_PLACE/dyp.cma ; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: dypgen library is $DYPGEN_PLACE/dyp.cma" >&5
-$as_echo "dypgen library is $DYPGEN_PLACE/dyp.cma" >&6; }
-else
-   as_fn_error $? "Could not find dypgen library \"dyp.cma\" in $DYPGEN_PLACE" "$LINENO" 5
+    fi
+
+	# on prepare le fichier ml de test
+    echo "open $MOD;;" > c_check_$STD_FOLDER.ml
+
+	# définition de la variable disant si on a trouvé la librairie ou pas
+    FOUND_LIB="no"
+
+    if test -n "$LIB_PATH" ; then
+	LIB_INCLUDE="-I $LIB_PATH"
+	    # on teste maintenant si on peut exectuer le fichier ml de test
+	if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+	    # on y arrive, on dit qu'on a trouvé la lib avec la variable d'environnement
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with the environment variable => $LIB_INCLUDE" >&5
+$as_echo "Found with the environment variable => $LIB_INCLUDE" >&6; }
+	fi
+    fi
+
+    if test "$FOUND_LIB" = "no" ; then
+	# si on arrive à l'executer avec la librairie dans le rep de lib de caml
+	if ($OCAMLC -c $OPTIONS c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		# pas besoin d'include
+	    LIB_INCLUDE=""
+	    LIB_DIR=`$OCAMLC -where`
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found in ocaml lib directory" >&5
+$as_echo "Found in ocaml lib directory" >&6; }
+	fi
+    fi
+
+    # sinon on essaie avec un repertoire dedié à la lib (-I +xxx yyy.cma)
+    if test "$FOUND_LIB" = "no" ; then
+	if ($OCAMLC -c $OPTIONS -I +$STD_FOLDER $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		# si ca marche, on s'arrete et on precise le include
+	    LIB_INCLUDE="-I +$STD_FOLDER"
+	    LIB_DIR=`$OCAMLC -where`
+	    LIB_DIR="$LIB_DIR/$STD_FOLDER"
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found in $STD_FOLDER directory => $LIB_INCLUDE" >&5
+$as_echo "Found in $STD_FOLDER directory => $LIB_INCLUDE" >&6; }
+	fi
+    fi
+
+	# sinon, on essaie avec ocamlfind
+    if test "$FOUND_LIB" = "no" ; then
+		# si on n'a pas ocamlfind , on s'arrete (dans le cas d'une lib oblig.) ou
+		# on lance un warning (dans le cas d'une lib optionelle)
+	if test "$OCAMLFIND" != "no" ; then
+	    echo testing with $OCAMLFIND
+			# on regarde déjà si la lib est installée avec ocamlfind
+	    if $OCAMLFIND query $OFIND_NAME > /dev/null 2>&1 ; then
+				# si c'est le cas, on recupere le repertoire d'installation et le include correspondant
+		LIB_INCLUDE=`$OCAMLFIND query $OFIND_NAME`
+		LIB_INCLUDE="-I $LIB_INCLUDE"
+
+			    # on teste maintenant si on peut exectuer le fichier ml de test
+		if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+			    	# on y arrive, on dit qu'on a trouvé la lib avec ocamlfind
+		    FOUND_LIB=yes
+		    LIB_DIR=`$OCAMLFIND query $OFIND_NAME`
+		    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with $OCAMLFIND => $LIB_INCLUDE" >&5
+$as_echo "Found with $OCAMLFIND => $LIB_INCLUDE" >&6; }
+		fi
+	    fi
+	fi
+    fi
+
+    if test "$FOUND_LIB" = "no" ; then
+    # si opam est installé, on essaye dans la lib de opam
+	if test "$OPAM$" != "no" ; then
+	    LIB_INCLUDE=`$OPAM config var lib`
+	    LIB_INCLUDE="-I $LIB_INCLUDE/$STD_FOLDER"
+
+        # on teste maintenant si on peut exectuer le fichier ml de test
+	    if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+    	# on y arrive, on dit qu'on a trouvé la lib avec opam
+		FOUND_LIB=yes
+		LIB_DIR=`$OPAM config var lib`
+		LIB_DIR="$LIB_DIR/$STD_FOLDER"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with $OPAM => $LIB_INCLUDE" >&5
+$as_echo "Found with $OPAM => $LIB_INCLUDE" >&6; }
+	    fi
+	fi
+    fi
+
+
+
+    if test "$FOUND_LIB" = "no" ; then
+ 	    	# suivant l'optionalité de la lib: un warning ou une erreur
+	if test "$NO_OPTIONAL" = "true"; then
+ 	    as_fn_error $? "The $NAME library is missing." "$LINENO" 5
+  	    LIB_INCLUDE="no"
+  	else
+ 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: The $NAME library is missing." >&5
+$as_echo "The $NAME library is missing." >&6; }
+  	    LIB_INCLUDE="no"
+  	fi
+    fi
+
+
+	# suppression du fichier ml de test
+    rm c_check_$STD_FOLDER.ml >& /dev/null
+    rm c_check_$STD_FOLDER.cmo >& /dev/null
+    rm c_check_$STD_FOLDER.cmi >& /dev/null
+
+
+if test "$FOUND_LIB" != "no" ; then
+   DYPGEN_INCLUDE=$LIB_INCLUDE
+
 fi
 
-# Look for KAPUTT_LIB with ocamlfind
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking (optional) kaputt library" >&5
-$as_echo_n "checking (optional) kaputt library... " >&6; }
-if test "$OCAMLFIND" != no ; then
-   if $OCAMLFIND query kaputt > /dev/null 2>&1 ; then
-      KAPUTT_INCLUDE_DIR=`$OCAMLFIND query kaputt`
-      KAPUTT_PLACE=$KAPUTT_INCLUDE_DIR
-      KAPUTT_INCLUDE="-I $KAPUTT_INCLUDE_DIR"
-   else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: kaputt library was not installed by ocamlfind" >&5
-$as_echo "kaputt library was not installed by ocamlfind" >&6; }
-   fi
+# Check whether --enable-kaputt was given.
+if test "${enable_kaputt+set}" = set; then :
+  enableval=$enable_kaputt; with_kaputt=$enableval
 else
-   OCAML_LIB=`$OCAMLC -where`
-   if test -d $OCAML_LIB/kaputt ; then
-	      KAPUTT_PLACE=$OCAML_LIB/kaputt
-	      KAPUTT_INCLUDE="-I +kaputt"
-   else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find a suitable place for kaputt library in $OCAML_LIB. No link to the kaputt library will be allowed in compilation" >&5
-$as_echo "Could not find a suitable place for kaputt library in $OCAML_LIB. No link to the kaputt library will be allowed in compilation" >&6; }
-   fi
-fi
-if test -f $KAPUTT_PLACE/kaputt.cma ; then
-   KAPUTT_LIB=kaputt.cma
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: kaputt library is $KAPUTT_PLACE/kaputt.cma" >&5
-$as_echo "kaputt library is $KAPUTT_PLACE/kaputt.cma" >&6; }
-else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find kaputt library \"kaputt.cma\" in $KAPUTT_PLACE. No link to the kaputt library will be allowed in compilation" >&5
-$as_echo "Could not find kaputt library \"kaputt.cma\" in $KAPUTT_PLACE. No link to the kaputt library will be allowed in compilation" >&6; }
+  with_kaputt=no
 fi
 
-if test -f $KAPUTT_PLACE/kaputt_pp.byte ; then
-   KAPUTT_PP=$KAPUTT_PLACE/kaputt_pp.byte
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: kaputt_pp.byte preprocessor is $KAPUTT_PP" >&5
+if test "$with_kaputt" != no ; then
+   # Look for KAPUTT_LIB
+   MACRO="A"
+    MACRO=$MACRO"C_LIB_CHECKING"
+
+
+    NAME=kaputt
+    STD_FOLDER=kaputt
+    LIB_FILE=kaputt
+    OFIND_NAME=kaputt
+    MOD=Kaputt
+    OPTIONS=
+    NO_OPTIONAL=false
+    LIB_PATH=
+
+	# test au cas ou un argument obligatoire est manquant
+    if test "$NAME" = "" || test "$STD_FOLDER" = "" || test "$OFIND_NAME" = "" || test "$LIB_FILE" = ""  || test "$MOD" = "" ; then
+	echo ""
+	echo "Can't check a library"
+	echo "Missing argument in $MACRO($NAME,$STD_FOLDER,$OFIND_NAME,$LIB_FILE,$MOD,$OPTIONS,$NO_OPTIONAL)"
+	echo ""
+	exit 1
+    fi
+
+	# affichage du nom de la librairie a checker (avec details sur l'optionalité)
+    if test "$NO_OPTIONAL" = true; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for requested library : $NAME" >&5
+$as_echo_n "checking for requested library : $NAME... " >&6; }
+    else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for optional library  : $NAME" >&5
+$as_echo_n "checking for optional library  : $NAME... " >&6; }
+    fi
+
+	# si le fichier ml de test existe
+    if test -f c_check_$STD_FOLDER.ml ; then
+		# si on peut le supprimer
+	if test -w c_check_$STD_FOLDER.ml ; then
+			# on le supprimer
+	    rm c_check_$STD_FOLDER.ml >& /dev/null
+		# sinon on arrete et on balance un message d'erreur (ie on a pas les droits sur le fichier
+	else
+	    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Cannot remove c_check_kaputt.ml. Please change its right with chmod 666 c_check_kaputt.ml
+See \`config.log' for more details" "$LINENO" 5; }
+	fi
+    fi
+
+	# on prepare le fichier ml de test
+    echo "open $MOD;;" > c_check_$STD_FOLDER.ml
+
+	# définition de la variable disant si on a trouvé la librairie ou pas
+    FOUND_LIB="no"
+
+    if test -n "$LIB_PATH" ; then
+	LIB_INCLUDE="-I $LIB_PATH"
+	    # on teste maintenant si on peut exectuer le fichier ml de test
+	if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+	    # on y arrive, on dit qu'on a trouvé la lib avec la variable d'environnement
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with the environment variable => $LIB_INCLUDE" >&5
+$as_echo "Found with the environment variable => $LIB_INCLUDE" >&6; }
+	fi
+    fi
+
+    if test "$FOUND_LIB" = "no" ; then
+	# si on arrive à l'executer avec la librairie dans le rep de lib de caml
+	if ($OCAMLC -c $OPTIONS c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		# pas besoin d'include
+	    LIB_INCLUDE=""
+	    LIB_DIR=`$OCAMLC -where`
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found in ocaml lib directory" >&5
+$as_echo "Found in ocaml lib directory" >&6; }
+	fi
+    fi
+
+    # sinon on essaie avec un repertoire dedié à la lib (-I +xxx yyy.cma)
+    if test "$FOUND_LIB" = "no" ; then
+	if ($OCAMLC -c $OPTIONS -I +$STD_FOLDER $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		# si ca marche, on s'arrete et on precise le include
+	    LIB_INCLUDE="-I +$STD_FOLDER"
+	    LIB_DIR=`$OCAMLC -where`
+	    LIB_DIR="$LIB_DIR/$STD_FOLDER"
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found in $STD_FOLDER directory => $LIB_INCLUDE" >&5
+$as_echo "Found in $STD_FOLDER directory => $LIB_INCLUDE" >&6; }
+	fi
+    fi
+
+	# sinon, on essaie avec ocamlfind
+    if test "$FOUND_LIB" = "no" ; then
+		# si on n'a pas ocamlfind , on s'arrete (dans le cas d'une lib oblig.) ou
+		# on lance un warning (dans le cas d'une lib optionelle)
+	if test "$OCAMLFIND" != "no" ; then
+	    echo testing with $OCAMLFIND
+			# on regarde déjà si la lib est installée avec ocamlfind
+	    if $OCAMLFIND query $OFIND_NAME > /dev/null 2>&1 ; then
+				# si c'est le cas, on recupere le repertoire d'installation et le include correspondant
+		LIB_INCLUDE=`$OCAMLFIND query $OFIND_NAME`
+		LIB_INCLUDE="-I $LIB_INCLUDE"
+
+			    # on teste maintenant si on peut exectuer le fichier ml de test
+		if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+			    	# on y arrive, on dit qu'on a trouvé la lib avec ocamlfind
+		    FOUND_LIB=yes
+		    LIB_DIR=`$OCAMLFIND query $OFIND_NAME`
+		    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with $OCAMLFIND => $LIB_INCLUDE" >&5
+$as_echo "Found with $OCAMLFIND => $LIB_INCLUDE" >&6; }
+		fi
+	    fi
+	fi
+    fi
+
+    if test "$FOUND_LIB" = "no" ; then
+    # si opam est installé, on essaye dans la lib de opam
+	if test "$OPAM$" != "no" ; then
+	    LIB_INCLUDE=`$OPAM config var lib`
+	    LIB_INCLUDE="-I $LIB_INCLUDE/$STD_FOLDER"
+
+        # on teste maintenant si on peut exectuer le fichier ml de test
+	    if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+    	# on y arrive, on dit qu'on a trouvé la lib avec opam
+		FOUND_LIB=yes
+		LIB_DIR=`$OPAM config var lib`
+		LIB_DIR="$LIB_DIR/$STD_FOLDER"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with $OPAM => $LIB_INCLUDE" >&5
+$as_echo "Found with $OPAM => $LIB_INCLUDE" >&6; }
+	    fi
+	fi
+    fi
+
+
+
+    if test "$FOUND_LIB" = "no" ; then
+ 	    	# suivant l'optionalité de la lib: un warning ou une erreur
+	if test "$NO_OPTIONAL" = "true"; then
+ 	    as_fn_error $? "The $NAME library is missing." "$LINENO" 5
+  	    LIB_INCLUDE="no"
+  	else
+ 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: The $NAME library is missing." >&5
+$as_echo "The $NAME library is missing." >&6; }
+  	    LIB_INCLUDE="no"
+  	fi
+    fi
+
+
+	# suppression du fichier ml de test
+    rm c_check_$STD_FOLDER.ml >& /dev/null
+    rm c_check_$STD_FOLDER.cmo >& /dev/null
+    rm c_check_$STD_FOLDER.cmi >& /dev/null
+
+   if test "$FOUND_LIB" != "no" ; then
+      if test -f $LIB_DIR/kaputt_pp.byte ; then
+      	 KAPUTT_PP="$LIB_DIR/kaputt_pp.byte"
+      	 { $as_echo "$as_me:${as_lineno-$LINENO}: result: kaputt_pp.byte preprocessor is $KAPUTT_PP" >&5
 $as_echo "kaputt_pp.byte preprocessor is $KAPUTT_PP" >&6; }
-else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find kaputt_pp.byte preprocessor in $KAPUTT_PLACE." >&5
-$as_echo "Could not find kaputt_pp.byte preprocessor in $KAPUTT_PLACE." >&6; }
+      	 KAPUTT_INCLUDE=$LIB_INCLUDE
+
+      	 KAPUTT_LIB=$LIB_FILE.cma
+
+
+      else
+	as_fn_error $? "Could not find kaputt_pp.byte preprocessor in $LIB_DIR." "$LINENO" 5
+      fi
+   fi
 fi
 
 # Look for BOLT_LIB with ocamlfind
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking (optional) bolt library" >&5
-$as_echo_n "checking (optional) bolt library... " >&6; }
-if test "$OCAMLFIND" != no ; then
-   if $OCAMLFIND query bolt > /dev/null 2>&1 ; then
-      BOLT_INCLUDE_DIR=`$OCAMLFIND query bolt`
-      BOLT_PLACE=$BOLT_INCLUDE_DIR
-      BOLT_INCLUDE="-I $BOLT_INCLUDE_DIR"
-   else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt library was not installed by ocamlfind" >&5
-$as_echo "bolt library was not installed by ocamlfind" >&6; }
-   fi
-else
-   OCAML_LIB=`$OCAMLC -where`
-   if test -d $OCAML_LIB/bolt ; then
-	      BOLT_PLACE=$OCAML_LIB/bolt
-	      BOLT_INCLUDE="-I +bolt"
-   else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find a suitable place for bolt library in $OCAML_LIB. No link to the bolt library will be allowed in compilation" >&5
-$as_echo "Could not find a suitable place for bolt library in $OCAML_LIB. No link to the bolt library will be allowed in compilation" >&6; }
-   fi
-fi
-if test -f $BOLT_PLACE/bolt.cma ; then
-   BOLT_LIB=bolt.cma
-   BOLT="-DBOLT"
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt library is $BOLT_PLACE/bolt.cma" >&5
-$as_echo "bolt library is $BOLT_PLACE/bolt.cma" >&6; }
-else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find bolt library \"bolt.cma\" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation" >&5
-$as_echo "Could not find bolt library \"bolt.cma\" in $BOLT_PLACE. No link to the bolt library will be allowed in compilation" >&6; }
-fi
 
-if test -f $BOLT_PLACE/bolt_pp.cmo ; then
-   BOLT_PP="$BOLT_PLACE/bolt_pp.cmo -level \$(BOLT_LEVEL)"
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt_pp.byte preprocessor is $BOLT_PP" >&5
+MACRO="A"
+    MACRO=$MACRO"C_LIB_CHECKING"
+
+
+    NAME=bolt
+    STD_FOLDER=bolt
+    LIB_FILE=bolt
+    OFIND_NAME=bolt
+    MOD=Bolt
+    OPTIONS="unix.cma dynlink.cma"
+    NO_OPTIONAL=true
+    LIB_PATH=$BOLTLIB_PATH
+
+	# test au cas ou un argument obligatoire est manquant
+    if test "$NAME" = "" || test "$STD_FOLDER" = "" || test "$OFIND_NAME" = "" || test "$LIB_FILE" = ""  || test "$MOD" = "" ; then
+	echo ""
+	echo "Can't check a library"
+	echo "Missing argument in $MACRO($NAME,$STD_FOLDER,$OFIND_NAME,$LIB_FILE,$MOD,$OPTIONS,$NO_OPTIONAL)"
+	echo ""
+	exit 1
+    fi
+
+	# affichage du nom de la librairie a checker (avec details sur l'optionalité)
+    if test "$NO_OPTIONAL" = true; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for requested library : $NAME" >&5
+$as_echo_n "checking for requested library : $NAME... " >&6; }
+    else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for optional library  : $NAME" >&5
+$as_echo_n "checking for optional library  : $NAME... " >&6; }
+    fi
+
+	# si le fichier ml de test existe
+    if test -f c_check_$STD_FOLDER.ml ; then
+		# si on peut le supprimer
+	if test -w c_check_$STD_FOLDER.ml ; then
+			# on le supprimer
+	    rm c_check_$STD_FOLDER.ml >& /dev/null
+		# sinon on arrete et on balance un message d'erreur (ie on a pas les droits sur le fichier
+	else
+	    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "Cannot remove c_check_bolt.ml. Please change its right with chmod 666 c_check_bolt.ml
+See \`config.log' for more details" "$LINENO" 5; }
+	fi
+    fi
+
+	# on prepare le fichier ml de test
+    echo "open $MOD;;" > c_check_$STD_FOLDER.ml
+
+	# définition de la variable disant si on a trouvé la librairie ou pas
+    FOUND_LIB="no"
+
+    if test -n "$LIB_PATH" ; then
+	LIB_INCLUDE="-I $LIB_PATH"
+	    # on teste maintenant si on peut exectuer le fichier ml de test
+	if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+	    # on y arrive, on dit qu'on a trouvé la lib avec la variable d'environnement
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with the environment variable => $LIB_INCLUDE" >&5
+$as_echo "Found with the environment variable => $LIB_INCLUDE" >&6; }
+	fi
+    fi
+
+    if test "$FOUND_LIB" = "no" ; then
+	# si on arrive à l'executer avec la librairie dans le rep de lib de caml
+	if ($OCAMLC -c $OPTIONS c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		# pas besoin d'include
+	    LIB_INCLUDE=""
+	    LIB_DIR=`$OCAMLC -where`
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found in ocaml lib directory" >&5
+$as_echo "Found in ocaml lib directory" >&6; }
+	fi
+    fi
+
+    # sinon on essaie avec un repertoire dedié à la lib (-I +xxx yyy.cma)
+    if test "$FOUND_LIB" = "no" ; then
+	if ($OCAMLC -c $OPTIONS -I +$STD_FOLDER $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		# si ca marche, on s'arrete et on precise le include
+	    LIB_INCLUDE="-I +$STD_FOLDER"
+	    LIB_DIR=`$OCAMLC -where`
+	    LIB_DIR="$LIB_DIR/$STD_FOLDER"
+	    FOUND_LIB=yes
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found in $STD_FOLDER directory => $LIB_INCLUDE" >&5
+$as_echo "Found in $STD_FOLDER directory => $LIB_INCLUDE" >&6; }
+	fi
+    fi
+
+	# sinon, on essaie avec ocamlfind
+    if test "$FOUND_LIB" = "no" ; then
+		# si on n'a pas ocamlfind , on s'arrete (dans le cas d'une lib oblig.) ou
+		# on lance un warning (dans le cas d'une lib optionelle)
+	if test "$OCAMLFIND" != "no" ; then
+	    echo testing with $OCAMLFIND
+			# on regarde déjà si la lib est installée avec ocamlfind
+	    if $OCAMLFIND query $OFIND_NAME > /dev/null 2>&1 ; then
+				# si c'est le cas, on recupere le repertoire d'installation et le include correspondant
+		LIB_INCLUDE=`$OCAMLFIND query $OFIND_NAME`
+		LIB_INCLUDE="-I $LIB_INCLUDE"
+
+			    # on teste maintenant si on peut exectuer le fichier ml de test
+		if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+			    	# on y arrive, on dit qu'on a trouvé la lib avec ocamlfind
+		    FOUND_LIB=yes
+		    LIB_DIR=`$OCAMLFIND query $OFIND_NAME`
+		    { $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with $OCAMLFIND => $LIB_INCLUDE" >&5
+$as_echo "Found with $OCAMLFIND => $LIB_INCLUDE" >&6; }
+		fi
+	    fi
+	fi
+    fi
+
+    if test "$FOUND_LIB" = "no" ; then
+    # si opam est installé, on essaye dans la lib de opam
+	if test "$OPAM$" != "no" ; then
+	    LIB_INCLUDE=`$OPAM config var lib`
+	    LIB_INCLUDE="-I $LIB_INCLUDE/$STD_FOLDER"
+
+        # on teste maintenant si on peut exectuer le fichier ml de test
+	    if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+    	# on y arrive, on dit qu'on a trouvé la lib avec opam
+		FOUND_LIB=yes
+		LIB_DIR=`$OPAM config var lib`
+		LIB_DIR="$LIB_DIR/$STD_FOLDER"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: Found with $OPAM => $LIB_INCLUDE" >&5
+$as_echo "Found with $OPAM => $LIB_INCLUDE" >&6; }
+	    fi
+	fi
+    fi
+
+
+
+    if test "$FOUND_LIB" = "no" ; then
+ 	    	# suivant l'optionalité de la lib: un warning ou une erreur
+	if test "$NO_OPTIONAL" = "true"; then
+ 	    as_fn_error $? "The $NAME library is missing." "$LINENO" 5
+  	    LIB_INCLUDE="no"
+  	else
+ 	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: The $NAME library is missing." >&5
+$as_echo "The $NAME library is missing." >&6; }
+  	    LIB_INCLUDE="no"
+  	fi
+    fi
+
+
+	# suppression du fichier ml de test
+    rm c_check_$STD_FOLDER.ml >& /dev/null
+    rm c_check_$STD_FOLDER.cmo >& /dev/null
+    rm c_check_$STD_FOLDER.cmi >& /dev/null
+
+if test "$FOUND_LIB" != "no" ; then
+   if test -f $LIB_DIR/bolt_pp.cmo ; then
+      BOLT_PP="$LIB_DIR/bolt_pp.cmo -level \$(BOLT_LEVEL)"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: bolt_pp.byte preprocessor is $BOLT_PP" >&5
 $as_echo "bolt_pp.byte preprocessor is $BOLT_PP" >&6; }
-else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Could not find bolt_pp.byte preprocessor in $BOLT_PLACE." >&5
-$as_echo "Could not find bolt_pp.byte preprocessor in $BOLT_PLACE." >&6; }
+      BOLT_INCLUDE=$LIB_INCLUDE
+
+      BOLT_LIB=$LIB_FILE.cma
+
+
+   else
+      as_fn_error $? "Could not find bolt_pp.byte preprocessor in $LIB_DIR." "$LINENO" 5
+   fi
 fi
-
-
-
 
 # What is the OCAML version  ?
 # we extract Ocaml version number
@@ -2444,15 +2879,6 @@ $as_echo "$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
 
 ############################
 # substitutions to perform
-
-
-
-
-
-
-
-
-
 
 
 

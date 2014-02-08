@@ -65,7 +65,7 @@ uninstall:
 
 config: configure
 
-configure: config/configure.ac
+configure: config/configure.ac  config/ac_lib_checking.m4
 	cd $(<D) && autoconf && mv configure .. & cd ..
 
 tar: TAR_VERSION = $(shell grep "^DEFINE" $(VERSION_FILE) | sed -e 's/DEFINE.* = "\(.*\)"/\1/')

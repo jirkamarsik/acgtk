@@ -20,11 +20,7 @@
 AC_INIT([ACG DTK],[0.1],[sylvain.pogodalla@loria.fr])
 
 #AC_COPYRIGHT([Cecill])
-#m4_include(ac_lib_checking.m4)
-#AC_LIB_CHECKING(Zen,zen,zen,zen,Word,"dynlink.cma -I +camlp4 camlp4lib.cma",true)
-#AC_SUBST(ZEN_INCLUDE,$LIB_INCLUDE)
-
-
+m4_include(ac_lib_checking.m4)
 
 OCAML_REQUIRED=3.07
 
@@ -83,13 +79,16 @@ fi
 # Look for ocamlfind
 AC_PATH_PROG(OCAMLFIND,ocamlfind,no)
 
+# Look for opam
+AC_PATH_PROG(OPAM,opam,no)
+
 #Look for dypgen
 DYPGEN_NEEDED=20080925
 AC_ARG_VAR(DYPGEN_PATH,[Directory where to find dypgen if not in a standard location])
 if test -n "$DYPGEN_PATH" ; then
    AC_CHECK_PROG(DYPGEN,dypgen,$DYPGEN_PATH/dypgen,no,$DYPGEN_PATH)
 else
-	AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
+   AC_CHECK_PROGS(DYPGEN,dypgen.opt dypgen,no)
 fi
 if test "$DYPGEN" = no ; then
    AC_MSG_ERROR(Cannot find dypgen)
@@ -98,129 +97,55 @@ else
 	AC_MSG_CHECKING([for $DYPGEN version])
 	if test $DYPGEN_VERSION -ge $DYPGEN_NEEDED ; then
 		   AC_MSG_RESULT($DYPGEN ($DYPGEN_VERSION) is ok)
+		   AC_SUBST(DYPGEN)
 	else
 		   AC_MSG_ERROR($DYPGEN version $DYPGEN_VERSION found ; version $DYPGEN_NEEDED or greater is needed)
 	fi
 fi
 
 # Look for DYPGEN_LIB with or without ocamlfind
-AC_MSG_CHECKING([dypgen library])
-AC_ARG_VAR(DYPGENLIB_PATH,[Directory where to find dypgen library if not in a standard location])
-if test -n "$DYPGENLIB_PATH" ; then
-   DYPGEN_PLACE=$DYPGENLIB_PATH
-   DYPGEN_INCLUDE="-I $DYPGEN_PLACE"
-   if test -f $DYPGEN_PLACE/dyp.cma ; then
-      AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dyp.cma)
-   else
-      AC_MSG_ERROR(Could not find dypgen library in $DYPGEN_PLACE)
-   fi
-else
-	if test "$OCAMLFIND" != no ; then
-	   if $OCAMLFIND query dypgen > /dev/null 2>&1 ; then
-	         DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dypgen`
-		 DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
-	   	 DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
-	   else
-		if $OCAMLFIND query dyp > /dev/null 2>&1 ; then
-		   DYPGEN_INCLUDE_DIR=`$OCAMLFIND query dyp`
-		   DYPGEN_PLACE=$DYPGEN_INCLUDE_DIR
-	   	   DYPGEN_INCLUDE="-I $DYPGEN_INCLUDE_DIR"
-		else
-		   AC_MSG_RESULT(dypgen library was not installed by ocamlfind)
-	        fi
-	   fi
-	else
-	   OCAML_LIB=`$OCAMLC -where`
-	   # Old versions of dypgen where put in a dypgen directory
-	   if test -d $OCAML_LIB/dypgen ; then
-	      DYPGEN_PLACE=$OCAML_LIB/dypgen
-	      DYPGEN_INCLUDE="-I +dypgen"
-	   else
-	   # New versions of dypgen where put in a dyp directory
-	     if test -d $OCAML_LIB/dyp ; then
-	      	DYPGEN_PLACE=$OCAML_LIB/dyp
-	      	DYPGEN_INCLUDE="-I +dyp"
-	     else
-		AC_MSG_ERROR(Could not find a suitable place for dypgen library in $OCAML_LIB)
-	     fi
-	   fi  
-	fi
-fi
-if test -f $DYPGEN_PLACE/dyp.cma ; then
-   AC_MSG_RESULT(dypgen library is $DYPGEN_PLACE/dyp.cma)
-else
-   AC_MSG_ERROR(Could not find dypgen library "dyp.cma" in $DYPGEN_PLACE)
+AC_ARG_VAR(DYPGENLIB_PATH,[Directory where to find the dypgen library if not in a standard location])
+AC_LIB_CHECKING(dypgen,dyp,dyp,dyp,Dyp,,true,$DYPGENLIB_PATH)
+
+if test "$FOUND_LIB" != "no" ; then
+   AC_SUBST(DYPGEN_INCLUDE,$LIB_INCLUDE)
 fi
 
-# Look for KAPUTT_LIB with ocamlfind
-AC_MSG_CHECKING([(optional) kaputt library])
-if test "$OCAMLFIND" != no ; then
-   if $OCAMLFIND query kaputt > /dev/null 2>&1 ; then
-      KAPUTT_INCLUDE_DIR=`$OCAMLFIND query kaputt`
-      KAPUTT_PLACE=$KAPUTT_INCLUDE_DIR
-      KAPUTT_INCLUDE="-I $KAPUTT_INCLUDE_DIR"
-   else
-      AC_MSG_RESULT(kaputt library was not installed by ocamlfind)
+AC_ARG_ENABLE(
+	[kaputt],
+	[AS_HELP_STRING([--enable-kaputt], [Compile with kaputt for unit testing])],
+	[with_kaputt=$enableval],
+	[with_kaputt=no])
+if test "$with_kaputt" != no ; then
+   # Look for KAPUTT_LIB
+   AC_LIB_CHECKING(kaputt,kaputt,kaputt,kaputt,Kaputt,,false,,)
+   if test "$FOUND_LIB" != "no" ; then
+      if test -f $LIB_DIR/kaputt_pp.byte ; then
+      	 KAPUTT_PP="$LIB_DIR/kaputt_pp.byte"
+      	 AC_MSG_RESULT(kaputt_pp.byte preprocessor is $KAPUTT_PP)
+      	 AC_SUBST(KAPUTT_INCLUDE,$LIB_INCLUDE)	
+      	 AC_SUBST(KAPUTT_LIB,$LIB_FILE.cma)	
+      	 AC_SUBST(KAPUTT_PP)
+      else
+	AC_MSG_ERROR(Could not find kaputt_pp.byte preprocessor in $LIB_DIR.)
+      fi
    fi
-else
-   OCAML_LIB=`$OCAMLC -where`
-   if test -d $OCAML_LIB/kaputt ; then
-	      KAPUTT_PLACE=$OCAML_LIB/kaputt
-	      KAPUTT_INCLUDE="-I +kaputt"
-   else
-   AC_MSG_RESULT(Could not find a suitable place for kaputt library in $OCAML_LIB. No link to the kaputt library will be allowed in compilation)
-   fi
-fi  
-if test -f $KAPUTT_PLACE/kaputt.cma ; then
-   KAPUTT_LIB=kaputt.cma
-   AC_MSG_RESULT(kaputt library is $KAPUTT_PLACE/kaputt.cma)
-else
-   AC_MSG_RESULT(Could not find kaputt library "kaputt.cma" in $KAPUTT_PLACE. No link to the kaputt library will be allowed in compilation)
-fi
-
-if test -f $KAPUTT_PLACE/kaputt_pp.byte ; then
-   KAPUTT_PP=$KAPUTT_PLACE/kaputt_pp.byte
-   AC_MSG_RESULT(kaputt_pp.byte preprocessor is $KAPUTT_PP)
-else
-   AC_MSG_RESULT(Could not find kaputt_pp.byte preprocessor in $KAPUTT_PLACE.)
 fi
 
 # Look for BOLT_LIB with ocamlfind
-AC_MSG_CHECKING([Looking for bolt library])
-if test "$OCAMLFIND" != no ; then
-   if $OCAMLFIND query bolt > /dev/null 2>&1 ; then
-      BOLT_INCLUDE_DIR=`$OCAMLFIND query bolt`
-      BOLT_PLACE=$BOLT_INCLUDE_DIR
-      BOLT_INCLUDE="-I $BOLT_INCLUDE_DIR"
+AC_ARG_VAR(BOLTLIB_PATH,[Directory where to find the bolt library if not in a standard location])
+AC_LIB_CHECKING(bolt,bolt,bolt,bolt,Bolt,"unix.cma dynlink.cma",true,$BOLTLIB_PATH)
+if test "$FOUND_LIB" != "no" ; then
+   if test -f $LIB_DIR/bolt_pp.cmo ; then
+      BOLT_PP="$LIB_DIR/bolt_pp.cmo -level \$(BOLT_LEVEL)"
+      AC_MSG_RESULT(bolt_pp.byte preprocessor is $BOLT_PP)
+      AC_SUBST(BOLT_INCLUDE,$LIB_INCLUDE)
+      AC_SUBST(BOLT_LIB,$LIB_FILE.cma)
+      AC_SUBST(BOLT_PP)
    else
-      AC_MSG_RESULT(bolt library was not installed by ocamlfind)
+      AC_MSG_ERROR(Could not find bolt_pp.byte preprocessor in $LIB_DIR.)
    fi
-else
-   OCAML_LIB=`$OCAMLC -where`
-   if test -d $OCAML_LIB/bolt ; then
-	      BOLT_PLACE=$OCAML_LIB/bolt
-	      BOLT_INCLUDE="-I +bolt"
-   else
-   AC_MSG_ERROR(Cannot find a suitable place for the bolt library in $OCAML_LIB.)
-   fi
-fi  
-if test -f $BOLT_PLACE/bolt.cma ; then
-   BOLT_LIB=bolt.cma
-   BOLT="-DBOLT"
-   AC_MSG_RESULT(bolt library is $BOLT_PLACE/bolt.cma)
-else
-   AC_MSG_ERROR(Could not find bolt library "bolt.cma" in $BOLT_PLACE.)
 fi
-
-if test -f $BOLT_PLACE/bolt_pp.cmo ; then
-   BOLT_PP="$BOLT_PLACE/bolt_pp.cmo -level \$(BOLT_LEVEL)"
-   AC_MSG_RESULT(bolt_pp.byte preprocessor is $BOLT_PP)
-else
-   AC_MSG_ERROR(Could not find bolt_pp.byte preprocessor in $BOLT_PLACE.)
-fi
-
-
-
 
 # What is the OCAML version  ?
 # we extract Ocaml version number
@@ -281,17 +206,8 @@ AC_SUBST(OCAMLDEP)
 
 AC_SUBST(OCAMLLEX)
 AC_SUBST(OCAMLYACC)
-AC_SUBST(DYPGEN)
-AC_SUBST(DYPGEN_INCLUDE)
-AC_SUBST(KAPUTT_INCLUDE)
-AC_SUBST(KAPUTT_LIB)
-AC_SUBST(KAPUTT_PP)
 
 
-AC_SUBST(BOLT_INCLUDE)
-AC_SUBST(BOLT_LIB)
-AC_SUBST(BOLT_PP)
-AC_SUBST(BOLT)
 
 
 AC_SUBST(TYPES)
