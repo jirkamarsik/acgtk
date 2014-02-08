@@ -105,7 +105,7 @@ fi
 
 # Look for DYPGEN_LIB with or without ocamlfind
 AC_ARG_VAR(DYPGENLIB_PATH,[Directory where to find the dypgen library if not in a standard location])
-AC_LIB_CHECKING(dypgen,dyp,dyp,dyp,Dyp,,true,$DYPGENLIB_PATH)
+AC_LIB_CHECKING(dypgen,dyp,dyp,dyp,dypgen,Dyp,,true,$DYPGENLIB_PATH)
 
 if test "$FOUND_LIB" != "no" ; then
    AC_SUBST(DYPGEN_INCLUDE,$LIB_INCLUDE)
@@ -118,7 +118,7 @@ AC_ARG_ENABLE(
 	[with_kaputt=no])
 if test "$with_kaputt" != no ; then
    # Look for KAPUTT_LIB
-   AC_LIB_CHECKING(kaputt,kaputt,kaputt,kaputt,Kaputt,,false,,)
+   AC_LIB_CHECKING(kaputt,kaputt,kaputt,kaputt,kaputt,Kaputt,,false,,)
    if test "$FOUND_LIB" != "no" ; then
       if test -f $LIB_DIR/kaputt_pp.byte ; then
       	 KAPUTT_PP="$LIB_DIR/kaputt_pp.byte"
@@ -134,7 +134,7 @@ fi
 
 # Look for BOLT_LIB with ocamlfind
 AC_ARG_VAR(BOLTLIB_PATH,[Directory where to find the bolt library if not in a standard location])
-AC_LIB_CHECKING(bolt,bolt,bolt,bolt,Bolt,"unix.cma dynlink.cma",true,$BOLTLIB_PATH)
+AC_LIB_CHECKING(bolt,bolt,bolt,bolt,bolt,Bolt,"unix.cma dynlink.cma",true,$BOLTLIB_PATH)
 if test "$FOUND_LIB" != "no" ; then
    if test -f $LIB_DIR/bolt_pp.cmo ; then
       BOLT_PP="$LIB_DIR/bolt_pp.cmo -level \$(BOLT_LEVEL)"

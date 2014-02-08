@@ -7,10 +7,11 @@
 # @param $2 : le repertoire standard de la librairie (par ex : zen pour -I +zen)
 # @param $3 : le nom du fichier contenant la librairie
 # @param $4 : le nom de la librairie pour ocamlfind
-# @param $5 : le module a tester pour vérifier la présence de la librairie
-# @param $6 : les options de "compilation" pour la verification de la présence de la lib
-# @param $7 : true si la librairie est obligatoire, false si elle est optionnelle
-# @param $7 : nom de la variable si un chemin non standard est spécifié
+# @param $5 : le nom du package opam (s'il existe)
+# @param $6 : le module a tester pour vérifier la présence de la librairie
+# @param $7 : les options de "compilation" pour la verification de la présence de la lib
+# @param $8 : true si la librairie est obligatoire, false si elle est optionnelle
+# @param $9 : nom de la variable si un chemin non standard est spécifié
 AC_DEFUN([AC_LIB_CHECKING], 
     
     MACRO="A"
@@ -21,10 +22,11 @@ AC_DEFUN([AC_LIB_CHECKING],
     STD_FOLDER=$2
     LIB_FILE=$3
     OFIND_NAME=$4
-    MOD=$5
-    OPTIONS=$6
-    NO_OPTIONAL=$7
-    LIB_PATH=$8
+    OPAM_PACKAGE=$5
+    MOD=$6
+    OPTIONS=$7
+    NO_OPTIONAL=$8
+    LIB_PATH=$9
     
 	# test au cas ou un argument obligatoire est manquant
     if test "$NAME" = "" || test "$STD_FOLDER" = "" || test "$OFIND_NAME" = "" || test "$LIB_FILE" = ""  || test "$MOD" = "" ; then
@@ -59,7 +61,8 @@ AC_DEFUN([AC_LIB_CHECKING],
     
 	# définition de la variable disant si on a trouvé la librairie ou pas
     FOUND_LIB="no"
-    
+
+
     if test -n "$LIB_PATH" ; then
 	LIB_INCLUDE="-I $LIB_PATH"
 	    # on teste maintenant si on peut exectuer le fichier ml de test
@@ -119,17 +122,25 @@ AC_DEFUN([AC_LIB_CHECKING],
     if test "$FOUND_LIB" = "no" ; then
     # si opam est installé, on essaye dans la lib de opam
 	if test "$OPAM$" != "no" ; then
-	    LIB_INCLUDE=`$OPAM config var lib`
-	    LIB_INCLUDE="-I $LIB_INCLUDE/$STD_FOLDER"
+	   if test "$OPAM config var $OPAM_PACKAGE:installed" = "true" ; then
+	      OPAM_OCAML_VERSION=`opam config var ocaml-version`
+	      OCAML_VERSION=`$OCAMLC -version`
+	      if test "$OPAM_OCAML_VERSION" = "$OCAML_VERSION" ; then
+	      	 LIB_INCLUDE=`$OPAM config var lib`
+	    	 LIB_INCLUDE="-I $LIB_INCLUDE/$STD_FOLDER"
 	    
-        # on teste maintenant si on peut exectuer le fichier ml de test
-	    if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
+		 # on teste maintenant si on peut exectuer le fichier ml de test
+	     	 if ($OCAMLC -c $OPTIONS $LIB_INCLUDE $LIB_FILE.cma c_check_$STD_FOLDER.ml >& /dev/null) ; then
     	# on y arrive, on dit qu'on a trouvé la lib avec opam
-		FOUND_LIB=yes
-		LIB_DIR=`$OPAM config var lib`
-		LIB_DIR="$LIB_DIR/$STD_FOLDER"
-		AC_MSG_RESULT(Found with $OPAM => $LIB_INCLUDE)
-	    fi
+		       FOUND_LIB=yes
+		       LIB_DIR=`$OPAM config var lib`
+		       LIB_DIR="$LIB_DIR/$STD_FOLDER"
+		       AC_MSG_RESULT(Found with $OPAM => $LIB_INCLUDE)
+	    	 fi
+	      else
+		AC_MSG_RESULT(There is an opam installation of the library, but the current $OPAM switch does not correspond to the $OCAMLC compiler)
+	      fi
+	   fi 
 	fi
     fi
 
