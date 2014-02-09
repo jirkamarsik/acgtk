@@ -26,7 +26,6 @@ struct
 
   exception Duplicate_type_interpretation
   exception Duplicate_constant_interpretation
-(*  exception Not_yet_interpreted_value*)
   exception Missing_interpretation of string
 
   module Dico = Utils.StringMap
@@ -36,10 +35,6 @@ struct
 
   type resume = int AlterTrees.AlternTrees.resumption
 
-  let resume_info (actual,delayed) =
-    let length = List.length actual in
-    let length = Utils.IntMap.fold (fun _ v acc -> acc+(List.length v)) delayed length in
-    Printf.sprintf "%d entries." length
 
   type interpretation =
     | Type of (Abstract_syntax.location * Lambda.stype )
@@ -111,7 +106,6 @@ struct
     
   let interpret t ty lex = 
     let t_interpretation = (interpret_term t lex) in
-(*    let () = Printf.printf "Going_to_normalize:\t%s\n%!" (Lambda.term_to_string  t_interpretation (Sg.id_to_string lex.object_sig)) in*)
       Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig) t_interpretation,interpret_type ty lex
 
   module Reduction=Reduction.Make(Sg)
@@ -188,7 +182,7 @@ struct
     match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
     | None,_ -> 
       let () = Printf.printf "Parsing is not implemented for non 2nd order ACG\n!" in
-      [],Utils.IntMap.empty
+      AlterTrees.AlternTrees.empty
     | Some (prog,_), (Lambda.Atom _ as dist_type) ->
       let buff=Buffer.create 80 in
       let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract prog)) in
@@ -227,19 +221,14 @@ struct
       let parse_forest = Datalog.Program.build_forest ~query:query derivations temp_prog in
       let resume = 
 	match parse_forest with
-	| [] -> []
+	| [] -> AlterTrees.AlternTrees.empty
 	| [f] -> AlterTrees.AlternTrees.init f
-	| _ -> failwith "Bug: not fully specified query" in
-(*      let () = Datalog.Predicate.format_derivations2 
-	~query:query
-	temp_prog.Datalog.Program.pred_table
-	temp_prog.Datalog.Program.const_table
-	derivations in *)
-      (List.rev resume,Utils.IntMap.empty)
+	| _ -> failwith "Bug: not fully specified query" in 
+      resume
     | Some _ , _ -> 
       let () = 
 	Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in
-      [],Utils.IntMap.empty
+      AlterTrees.AlternTrees.empty
       
     
   let get_analysis resume lex =

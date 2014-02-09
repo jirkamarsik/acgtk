@@ -183,7 +183,6 @@ sig
   type signature = Signature.t
   type resume
 
-  val resume_info : resume -> string
   val empty : (string*Abstract_syntax.location) -> abs:signature -> obj:signature -> t
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t

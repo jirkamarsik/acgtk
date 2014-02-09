@@ -167,4 +167,4 @@ ask_for_next_parse
       let () = Printf.printf "Got result %i\n%!" i in
       let () = output_tree t in
       Some (resume,i+1))
-  ((resume,Utils.IntMap.empty),1)
+  (resume,1)

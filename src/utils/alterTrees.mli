@@ -1,88 +1,102 @@
 module AlternTrees :
-  sig
+sig
+  (** This type is the type of addresses of forests. It is a list of
+      (position in the forest,position as a child). *)
   type address=(int*int) list
-  (* (position in the forest,child position) *)
+  (** This is the type of relative path from one forest to another
+      one. The first argument is the number of steps to move up, then
+      second argument is the address to reach from this point. *)
   type relative_path=int*address
-  (* the 2nd argument is to move in the alternative trees at the top
-     of the forest *)
 
-    (** [diff (alt,add) (alt',add')] returns the relative path to go
-	from the subtree wich occurs at address [add] in the [alt]-th
-	alternative of some forest to the subtree wich occurs at
-	address [add'] in the [alt']-th alternative the same
-	forest. *)
+  (** [diff add add'] returns the relative path to go from the
+      forest (subtree) wich occurs at address [add] to the forest
+      (subtree) wich occurs at address [add']. *)
+  val diff : address -> address -> relative_path
 
-    val diff : address -> address -> relative_path
+  (** [path_to_string p] returns a string describing the path [p].*)
+  val path_to_string : relative_path -> string
+    
+  (** [address_to_string add] returns a string describing the
+      address [add]. *)
+  val address_to_string : address -> string
 
-    val path_to_string : relative_path -> string
-
-    val address_to_string : address -> string
-
-    type 'a stack='a list
-    type 'a list_context ='a stack
-      
-    type 'a focused_list = 'a list_context * 'a list
-      
-      
-  type 'a alternatives = 'a tree focused_list
+  (** The type of a stack. *)  
+  type 'a stack='a list
+  (** A list context is a stack *)
+  type 'a list_context ='a stack
+    
+  (** a focused list is a pair of a list context and of a list *)
+  type 'a focused_list = 'a list_context * 'a list
+    
+    
+  (** Recursive definition of a shared forest. *)
+  type 'a forest = 'a tree focused_list
   and 'a tree = Node of 'a * 'a child list
   and 'a child = 
-  | Forest of 'a alternatives
+  | Forest of 'a forest
   | Link_to of relative_path
-  and 'a alt_tree_zipper = 
+
+  (** Defintion of a "forest zipper" *)
+  type 'a forest_zipper = 
   | Top of ('a tree) focused_list * int
-  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option * address
-  (* The last argument is a local context when the current tree
-     was reached after a Link_to move *)
+  | Zip of
+      'a * 
+	(* The first element is the label of the node *)
+	('a child) focused_list *
+	(* the focused list of children of the tree. Just as for tree
+	   zippers *)
+	('a tree) focused_list *
+	(* the focused list of the focuses child: a forest *)
+	int *
+	(* the position of the tree under focus in the current forest *)
+	'a forest_zipper *
+	(* the forest context *)
+	'a forest_zipper option *
+	(* a local context describing the way to reach the current
+	   tree from top in case it was reached after a [Link_to] move,
+	   so that if some other [Link_to] is met under thus subtree that
+	   points higher, it goes to the right place. *)
+	address
+    (* The address of the current tree. Actually not used. *)
+
+  (** Type definition for the focused forests *)
+  type 'a focused_forest = 'a forest_zipper * 'a  tree
+    
+      (** Type definition for standard trees *)
+  type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
+    
+  (** Type definition for standard tree zippers *)
+  type 'a zipper =  ZTop | Zipper of ('a * 'a simple_tree focused_list * 'a zipper)
       
-    type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
-	
-	
-    type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  tree
-      
-    type 'a zipper = 
-    | ZTop | Zipper of ('a * 'a simple_tree focused_list * 'a zipper)
-	
-    type 'a focused_tree = 'a zipper * 'a simple_tree
-      
-  type 'a simple_resumption = ('a focused_alt_tree * 'a focused_tree * int) list
+  (** Type definition for standard focused trees *)
+  type 'a focused_tree = 'a zipper * 'a simple_tree
+    
+  (** An abstract type to give access to resumption when
+      trees are built from a forest *)
+  type 'a resumption (*= 'a simple_resumption * 'a delayed_resumption *)
 
-  type 'a delayed_resumption = ('a simple_resumption) Utils.IntMap.t
+  (** [empty] is the empty resumption *)
+  val empty : 'a resumption
+    
+  (** [fold_depth_first (f,g) t] recursively computes [(g a) b_1
+      .... b_n] where [a=f t_0] and [b_i= f t_i] and [t] is a tree of
+      node [t_0] and of children [t_1...t_n]*)
+  val fold_depth_first:  (('a -> 'b) * ('b -> 'b -> 'b)) -> 'a simple_tree -> 'b
 
-  type 'a resumption = 'a simple_resumption * 'a delayed_resumption
-      
-    type move =
-    | Up
-    | Down
-    | Right
-    | Forward
-    | Backward
-    | Cycle
-	
-    exception Move_failure of move
-    exception Not_well_defined
-    exception No_next_alt
+  (** [init forest] builds the resumption with all the focused
+      forest focusing on each of the tree of [forest] *)
+  val init : 'a tree list -> 'a resumption
+    
+  (** [resumption resume] returns a pair [(Some t,resume')] where
+      [t] is extracted from [resume], the latter being updated with
+      possible alternatives met in building [t] to produce
+      [resume']. It returns [(None,[])] if no tree can be
+      extracted *)
+  val resumption : 'a resumption ->  'a simple_tree option * ('a resumption)
+    
+  (** [is_empty resume] returns [true] if [resume] does not propose
+      any other value on which to resume, [false] otherwise *)
+  val is_empty : 'a resumption -> bool
 
-    val fold_depth_first:  (('a -> 'b) * ('b -> 'b -> 'b)) -> 'a simple_tree -> 'b
 
-(*    val extract_tree : 'a alt_tree -> 'a simple_tree*'a alt_tree *)
-
-    val init : 'a tree list -> 'a simple_resumption
-
-    val build_tree : 'a focused_alt_tree -> 'a focused_tree -> int -> 'a resumption -> 'a focused_alt_tree * 'a focused_tree * int * 'a resumption 
-    val down : 'a focused_alt_tree -> 'a focused_tree -> int  -> 'a resumption -> 'a focused_alt_tree * 'a focused_tree * int * 'a resumption 
-    val right : 'a focused_alt_tree -> 'a focused_tree -> int  -> ('a resumption)  -> 'a focused_alt_tree * 'a focused_tree * int * ('a resumption) 
-    val up : 'a focused_alt_tree -> 'a focused_tree -> int  -> 'a focused_alt_tree * 'a focused_tree * int
-
-    val zip_up : 'a focused_tree -> 'a simple_tree
-
-    (** [resumption resume] returns a pair [(Some t,resume')] where
-	[t] is extracted from [resume], the latter being updated with
-	possible alternatives met in building [t] to produce
-	[resume']. It returns [(None,[])] if no tree can be
-	extracted *)
-    val resumption : 'a resumption ->  'a simple_tree option * ('a resumption)
-
-    val build_trees : 'a tree list -> 'a simple_tree list
-
-  end
+end

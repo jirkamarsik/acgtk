@@ -1,11 +1,13 @@
 module AlternTrees =
 struct
+  (** This type is the type of addresses of forests. It is a list of
+      (position in the forest,position as a child). *)
   type address=(int*int) list
-  (* (position in the forest,child position) *)
+  (** This is the type of relative path from one forest to another
+      one. The first argument is the number of steps to move up, then
+      second argument is the address to reach from this point. *)
   type relative_path=int*address
-  (* the 2nd argument is to move in the alternative trees at the top
-     of the forest *)
-
+    
   let rec diff_aux add1 add2 back =
     match add1,add2 with
     | [],[] -> back,[]
@@ -14,50 +16,67 @@ struct
     | (i,j)::tl1,(i',j')::tl2 when i=i' && j=j' -> diff_aux tl1 tl2 back
     | _::_,_::_ -> back+List.length add1,add2
 
+  (** [diff add add'] returns the relative path to go from the
+      forest (subtree) wich occurs at address [add] to the forest
+      (subtree) wich occurs at address [add']. *)
   let diff add1 add2 = diff_aux add1 add2 0
-
+    
   let address_to_string addr = 
-    Printf.sprintf "[%s]" (Utils.string_of_list ";" (fun (i,j) -> Printf.sprintf "(%d,%d)" i j) addr)
-
+    Printf.sprintf
+      "[%s]"
+      (Utils.string_of_list ";" (fun (i,j) -> Printf.sprintf "(%d,%d)" i j) addr)
+      
   let path_to_string (i,add) =
     Printf.sprintf "(-%d,%s)" i (address_to_string add)
-
+      
   type 'a stack='a list
   type 'a list_context ='a stack
-
+    
   type 'a focused_list = 'a list_context * 'a list
-
-
-  type 'a alternatives = 'a tree focused_list
+    
+    
+  (** Recursive definition of a shared forest. *)
+  type 'a forest = 'a tree focused_list
   and 'a tree = Node of 'a * 'a child list
   and 'a child = 
-  | Forest of 'a alternatives
+  | Forest of 'a forest
   | Link_to of relative_path
-  and 'a alt_tree_zipper = 
+
+  (** Defintion of a "forest zipper" *)
+  type 'a forest_zipper = 
   | Top of ('a tree) focused_list * int
-  (* the last int argument correspond to the position of the focused
-     tree in the list. It is useful to check wheter an child point to one
-     of its ancestor *)
-  | Zip of 'a * ('a child) focused_list * ('a tree) focused_list * int * 'a alt_tree_zipper * 'a alt_tree_zipper option * address
-  (* the int argument after the focused list correspond to the
-     position of the focused tree in the list. It is useful to check
-     wheter an child point to one of its ancestor *)
-  (* The last argument is a local context when the current tree was
-     reached after a Link_to move *)
+  | Zip of
+      'a * 
+	(* The first element is the label of the node *)
+	('a child) focused_list *
+	(* the focused list of children of the tree. Just as for tree
+	   zippers *)
+	('a tree) focused_list *
+	(* the focused list of the focuses child: a forest *)
+	int *
+	(* the position of the tree under focus in the current forest *)
+	'a forest_zipper *
+	(* the forest context *)
+	'a forest_zipper option *
+	(* a local context describing the way to reach the current
+	   tree from top in case it was reached after a [Link_to] move,
+	   so that if some other [Link_to] is met under thus subtree that
+	   points higher, it goes to the right place. *)
+	address
+    (* The address of the current tree. Actually not used. *)
 
-
+  (** Type definition for the focused forests *)
+  type 'a focused_forest = 'a forest_zipper * 'a  tree
+    
+  (** Type definition for standard trees *)
   type 'a simple_tree = SimpleTree of 'a * 'a simple_tree list
-
-
-  let forest_address = function
-    | Top _ -> []
-    | Zip (_,_,_,_,_,_,add) -> add
-
-  let tree_address = function
-    | Top ((_,_),i) -> i,[]
-    | Zip (_,_,_,i,_,_,add) -> i,add
-
-
+    
+  (** Type definition for standard tree zippers *)
+  type 'a zipper =  ZTop | Zipper of ('a * 'a simple_tree focused_list * 'a zipper)
+      
+  (** Type definition for standard focused trees *)
+  type 'a focused_tree = 'a zipper * 'a simple_tree
+    
 
   let rec fold_depth_first ((transform,apply) as f) t =
     match t with
@@ -68,31 +87,17 @@ struct
 	(transform v)
 	children
 
-
-
-	
-  type 'a focused_alt_tree = 'a alt_tree_zipper * 'a  tree
-
-  type 'a zipper = 
-  | ZTop
-  | Zipper of ('a * 'a simple_tree focused_list * 'a zipper)
-
-  type 'a focused_tree = 'a zipper * 'a simple_tree
-
-
-
-
-  type 'a simple_resumption = ('a focused_alt_tree * 'a focused_tree * int) list
-
+  type 'a simple_resumption = ('a focused_forest * 'a focused_tree * int) list
+    
   type 'a delayed_resumption = ('a simple_resumption) Utils.IntMap.t
-
+    
   type 'a resumption = 'a simple_resumption * 'a delayed_resumption
 
-
+  let empty = [],Utils.IntMap.empty
+    
   exception Infinite_loop
 
   let extend_simple_resume (f_f,f_t,i) resume = (f_f,f_t,i)::resume
-
 
   let extend_sized_indexed_resume (f_f,f_t,i) resume =
     try
@@ -138,33 +143,14 @@ struct
     | [],l ->l
     | a::tl,l -> unstack (tl,(a::l))
 
-
-  let rec unstack_rev = function
-    | [],l ->l
-    | a::tl,l -> unstack_rev (tl,((List.rev a)::l))
-
-
-  let f_list_forward = function
-    | (_,[],_) -> raise (Move_failure Forward)
-    | (s,a::tl,i) -> (a::s,tl),i+1
-
-  let f_list_backward = function
-    | ([],_),_ -> raise (Move_failure Backward)
-    | (a::s,l),i-> (s,a::l),i-1
-
   let rec f_list_up = function
     | [],l -> [],l
     | a::s,l-> f_list_up (s,a::l)
-
-  let rec f_list_down = function
-    | s,[] -> s,[]
-    | s,a::tl -> f_list_down (a::s,tl)
 
   let f_list_cycle = function
     | [],[] -> raise (Move_failure Cycle)
     | p,a::n -> a::p,n
     | f_lst -> f_list_up f_lst
-
 
   let focus_of = function
     | [],[] -> raise Not_well_defined
@@ -180,27 +166,9 @@ struct
     | [] -> (p,[]),acc
     | a::tl -> f_list_fold ((a::p,tl),i+1) f (f ((p,tl),i) a acc)
 
-  let f_list_fold_and_hd (p,n) f acc =
-    match n with
-    | [] -> raise Bad_argument
-    | [a] -> f ((p,[]),1) a,(p,[]),acc
-    | a::tl ->
-      let head = f ((p,tl),1) a in
-      let ctxt,res = 
-	f_list_fold
-	  ((a::p,tl),2)
-	  (fun ctxt elt l_acc -> (f ctxt elt)::l_acc) acc in
-      head,ctxt,res
-
-
-
-
   let f_tree_up = function
     | ZTop,t -> raise (Move_failure Up)
     | Zipper (v,(l,r),z'),t -> z',SimpleTree (v,unstack (l,t::r))
-
-
-
 
   let rec zip_up_aux f_tree = 
     try
@@ -219,30 +187,41 @@ struct
     | _ -> raise Bad_address
 
 
+  let forest_address = function
+    | Top _ -> []
+    | Zip (_,_,_,_,_,_,add) -> add
+
+  let tree_address = function
+    | Top ((_,_),i) -> i,[]
+    | Zip (_,_,_,i,_,_,add) -> i,add
 
 
-  (* invariant: the result is [(z,t),forest] where [t] belongs to the
-     forest [forest]. [t] is not necessarily the first element of the
-     forest *)
+
+
+
+  (** [enter add (z,t)] returns the forest at address [add] starting
+      from the current forest of [z] [t] is belonging to.
       
+      Invariant: the result is [(z,t),forest] where [t] belongs to the
+      forest [forest]. [t] is the focused element of the forest *)
   let rec enter addr (z,(Node (v,children) as t)) =
     LOG "Entering \"%s\" on a node with %d children%!" (address_to_string addr) (List.length children) LEVEL DEBUG;
     match addr with
     | [] -> 
-	(match z with
-	| Top (([],[]),_) -> (z,t),([],[t])
-	| Top ((p,[]),_) ->
-	  (match unstack (p,[t]) with
-	  | [] -> raise Not_well_defined
-	  | a::n -> (Top (([],n),1),a),([],a::n))
-	| Top ((p,a::n),i) -> (Top ((t::p,n),i+1),a),(t::p,a::n)
-	| Zip (_,_,([],[]),_,_,_,_) -> (z,t),([],[t])
-	| Zip (v,sibling,(p,[]),i,z',l_c,add) -> 
-	  (match unstack (p,[t]) with
-	  | [] -> raise Not_well_defined
-	  | a::n -> (Zip (v,sibling,([],n),1,z',l_c,add),a),([],a::n))
-	| Zip (v,sibling,(p,a::n),i,z',l_c,add) -> 
-	  (Zip (v,sibling,(t::p,n),i+1,z',l_c,add),a),(t::p,a::n))
+      (match z with
+      | Top (([],[]),_) -> (z,t),([],[t])
+      | Top ((p,[]),_) ->
+	(match unstack (p,[t]) with
+	| [] -> raise Not_well_defined
+	| a::n -> (Top (([],n),1),a),([],a::n))
+      | Top ((p,a::n),i) -> (Top ((t::p,n),i+1),a),(t::p,a::n)
+      | Zip (_,_,([],[]),_,_,_,_) -> (z,t),([],[t])
+      | Zip (v,sibling,(p,[]),i,z',l_c,add) -> 
+	(match unstack (p,[t]) with
+	| [] -> raise Not_well_defined
+	| a::n -> (Zip (v,sibling,([],n),1,z',l_c,add),a),([],a::n))
+      | Zip (v,sibling,(p,a::n),i,z',l_c,add) -> 
+	(Zip (v,sibling,(t::p,n),i+1,z',l_c,add),a),(t::p,a::n))
     | (j_alt,i_child)::tl ->
       let z,Node(v',children')=
 	match z with
@@ -282,40 +261,10 @@ struct
     | Top _ -> raise Bad_argument
     | Zip (v,sibling,alt,i,z,_,add) -> Zip (v,sibling,alt,i,z,Some l_ctxt,add) 
 
-  (*  let rec down_in_tree (z,t) =
-      match t with
-      | Node (_,[]) -> raise  (Move_failure Down)
-      | Node (v,a::tl) -> 
-      (match a with
-      | Forest ([],[]) -> raise Not_well_defined
-      | Forest (_,[]) -> raise  (Move_failure Down)
-      | Forest (p,f_t::n) -> Zip (v,([],tl),(p,n),z,None),f_t
-      | Link_to path -> 
-      let z',t' = tree_at path (z,t) in
-      let z = set_local_context z' z in
-      down_in_tree (z,t'))
-  *)
-    
-(*  let up_in_tree (z,t) =
-    match z with
-    | Top _ -> raise (Move_failure Up)
-    | Zip (v,(left,right),(p,n),z',_) -> 
-      let alt= (p,t::n) in
-      let children = unstack (left,alt::right) in
-      z',Tree (Node (v,children))
-*)
-	
-(*  let right_in_tree (z,t) =
-    match z with 
-    | Top _ -> raise (Move_failure Right)
-    | Zip(_,(_,[]),_,_,_) -> raise (Move_failure Right)
-    | Zip(v,(l,a::r),alt,z',local_context) -> 
-      (match a with
-      | ([],[]) -> raise Not_well_defined
-      | (_,[]) -> raise (Move_failure Right)
-      | (p,f_t::n) -> Zip(v,(alt::l,r),(p,n),z',local_context),f_t)
-*)
-	
+  (** [next_alt f_forest] returns the next possible focused forest
+      where the tree under focus in the forest has moved to the next
+      one. It raises [No_next_alt] if [f_forest] focuses on the last
+      one of the current forest. *)
   let next_alt (z,t) =
     match z with
     | Top ((_,[]),_) -> raise No_next_alt
@@ -324,6 +273,10 @@ struct
     | Zip (v,(l,r),(p,a::n),i,z',local_context,add) -> 
       (Zip (v,(l,r),(t::p,n),i+1,z',local_context,add),a)
 
+  (** [previous_alt f_forest] returns the previous possible focused
+      forest where the tree under focus in the forest has moved to the
+      previous one. It raises [No_next_alt] if [f_forest] focuses on
+      the first one of the current forest. *)
   let previous_alt (z,t) =
     match z with
     | Top (([],n),_) -> raise No_previous_alt
@@ -354,20 +307,14 @@ struct
     List.rev acc
       
   let simple_tree (Node (v,_)) = SimpleTree (v,[])
-      
-  let actual_forest path (z,t)=
-    let (z',t'),f = forest_at path (z,t) in
-    (z',t'),f
-
-
-
+    
   let rec down (z,t) (zipper,b_t) depth resume=
     match t with
     | Node (_,[]) -> raise (Move_failure Down)
     | Node (v,forest::tl) ->
       (match forest with
       | Link_to (back,add) ->
-	let (z'',_),f =  actual_forest (back-1,add) (z,t) in
+	let (z'',_),f =  forest_at (back-1,add) (z,t) in
 	let (p,n),a = 
 	  match f with
 	  | _,[] -> raise Bad_address
@@ -385,16 +332,7 @@ struct
 	      resume
 	      all_alt in
 	  let (foc_forest,foc_tree,depth'),resume = swap resume in
-	  (*	    match resume with
-		    | [],[] -> failwith "Bug"
-		    | [],a::tl -> a,([],tl)
-		    | a::tl,r2 -> a,(tl,r2) in*)
 	  foc_forest,foc_tree,depth',resume
-	(*	  (try
-		  let (foc_forest,foc_tree),resume = swap (extend_resume ~delayed:(foc_forest,foc_tree) resume) in
-		  foc_forest,foc_tree,resume
-		  with
-		  | Infinite_loop -> foc_forest,foc_tree,resume) *)
 	| _ ->
 	  let resume =
 	    let all_alt = get_all_alt foc_forest [] in
@@ -405,7 +343,6 @@ struct
 	      all_alt in
 	  foc_forest,foc_tree,depth+1,resume)
       | Forest ([],[]) -> raise Not_well_defined
-(*      | Forest (_,[]) -> raise No_next_alt *)
       | Forest l_f ->
 	let t_alt,add=tree_address z in
 	let (p,n),a,pos=focus_of l_f in
@@ -431,11 +368,11 @@ struct
 	| Forest f -> None,f_list_up f,false
 	| Link_to (back,[]) -> 
 	  let new_ctx = z', Node(v,unstack (l,(Forest(t::p,n))::a::r)) in
-	  let (z,_),f=actual_forest (back-1,[]) new_ctx in
+	  let (z,_),f=forest_at (back-1,[]) new_ctx in
 	  Some z,f,true
 	| Link_to (back,add) -> 
 	  let new_ctx = z', Node(v,unstack (l,(Forest(t::p,n))::a::r)) in
-	  let (z,_),f=actual_forest (back-1,add) new_ctx in
+	  let (z,_),f=forest_at (back-1,add) new_ctx in
 	  Some z,f,false in
       let (p',n'),t' = 
 	match f with
@@ -454,16 +391,7 @@ struct
 	    resume
 	    all_alt in
 	let (foc_forest,foc_tree,depth'),resume = swap resume in
-(*	  match resume with
-	  | [],[] -> failwith "Bug"
-	  | [],a::tl -> a,([],tl)
-	  | a::tl,r2 -> a,(tl,r2) in *)
 	foc_forest,foc_tree,depth',resume
-      (*	  try
-		  swap (extend_resume ~delayed:(foc_forest,foc_tree) resume)
-	  with
-	  | Infinite_loop -> (foc_forest,foc_tree),resume in
-	foc_forest,foc_tree,resume *)
       | false ->
 	let resume =
 	  let all_alt = get_all_alt foc_forest [] in
@@ -538,21 +466,20 @@ struct
 
       
 
-  let init = function
-    | [] -> raise Not_well_defined
-    | alt_trees ->
-      (snd (f_list_fold
-	     (([],alt_trees),1)
-	     (fun ((p,n),i) t acc -> ((Top ((p,n),i),t),(ZTop,simple_tree t),1)::acc)
-	     []))
+  let init alt_trees =
+    (snd (f_list_fold
+	    (([],alt_trees),1)
+	    (fun ((p,n),i) t acc -> ((Top ((p,n),i),t),(ZTop,simple_tree t),1)::acc)
+	    [])),
+    Utils.IntMap.empty
 
   let build_trees forest =
     match init forest with
-    | [] -> failwith "Bug"
-    | (f_forest,f_tree,depth)::resume -> 
-      let res = build_trees_aux f_forest f_tree depth (resume,Utils.IntMap.empty) [] in
+    | [],_ -> failwith "Bug"
+    | (f_forest,f_tree,depth)::res1,res2 -> 
+      let res = build_trees_aux f_forest f_tree depth (res1,res2) [] in
       res
-
+	
   let resumption (res) = 
     match res with
     | [],_ ->
@@ -566,6 +493,15 @@ struct
       let _,(_,tree),_,res'=build_tree f_forest f_tree depth (resume,delayed) in
       Some tree,(res')
 
+
+  let is_empty = function
+    | ([],_) as res ->
+      (try
+	 let _ =swap res in
+	 false
+       with
+       | No_next_alt -> true)
+    | _ -> false
 end
 
 
