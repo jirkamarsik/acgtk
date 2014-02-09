@@ -4,7 +4,7 @@
 *                                                                        *
 *                  Copyright 2008 INRIA                                  *
 *                                                                        *
-*  More information on "http://acg.gforge.loria.fr/"                     *
+*  More information on "http://acg.gforge.inria.fr/"                     *
 *  License: CeCILL, see the LICENSE file or "http://www.cecill.info"     *
 *  Authors: see the AUTHORS file                                         *
 *                                                                        *
@@ -25,6 +25,26 @@ In order to compile the ACG toolkit, you need:
 	+ ocaml (>=3.07) installed (http://caml.inria.fr/)
 	+ dypgen (>=20080925) installed (http://dypgen.free.fr/)
 	+ bolt (>=1.4) installed (http://bolt.x9c.fr/downloads.html
+
+
+=======
+IMPORTANT:
+
+A fast an easy way to install dypgen and all important ocaml libraries is
+to use "opam" (http://opam.ocaml.org/).
+
+The installation typically goes that way:
+    + first install OCaml using your prefered distribution/packaging mode
+    + then install opam
+    + then install dypgen with the command
+      	   opam install dypgen
+    + then install bolt with the command
+      	   opam install bolt
+    + don't forget to add the required library in your path
+      (look at "Initializing opam" at 
+      http://opam.ocaml.org/doc/Advanced_Install.html)
+    + then continue with the ACG toolkit installation
+
 
 
 To install the ACG toolkit, first run:
