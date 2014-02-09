@@ -178,7 +178,7 @@ struct
 
 
   let messages = function
-    | Load as command -> Format.sprintf "\t%s d|data|s|script|o|object file;\n\t\tloads the file \"file\" as data (d or data option) or as a script (script or s option)" (action_to_string command)
+    | Load as command -> Format.sprintf "\t%s d|data|s|script|o|object file;\n\t\tloads the file \"file\" as data (d or data option), as an object (compiled data, o or object option), or as a script (script or s option)" (action_to_string command)
     | List as command -> Format.sprintf "\t%s;\n\t\tlists the signatures and the lexicons of the current environment" (action_to_string command)
     | Select as command -> Format.sprintf "\t%s name;\n\t\tselects the name signature or lexicon in the current environment and make it an implicit context for following commands" (action_to_string command)
     | Unselect as command -> Format.sprintf "\t%s name;\n\t\tremoves any selected signature or lexicon from the context" (action_to_string command)
@@ -215,13 +215,19 @@ struct
 	  | None -> e
 	  | Some e' -> e')
 	| Object -> 
-	  let file =(Utils.find_file filename dirs) in
-	  let in_ch = open_in file in
-	  let () = Printf.printf "Loading \"%s\"...\n" file in
-	  let new_env = input_value in_ch in
-	  let () = Printf.printf "Done.\n" in
-	  let () = close_in in_ch in
-	  E.append e new_env
+	  (try
+	    let file =(Utils.find_file filename dirs) in
+	    let in_ch = open_in file in
+	    let () = Printf.printf "Loading \"%s\"...\n" file in
+	    let new_env = input_value in_ch in
+	    let () = Printf.printf "Done.\n" in
+	    let () = close_in in_ch in
+	    E.append e new_env
+	  with
+	  | Utils.No_file(f,msg) -> 
+	    let err = Error.System_error (Printf.sprintf "No such file \"%s\" in %s" f msg) in
+	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg err filename) in
+	    e)
 	| Script f  -> f filename dirs e
     with
       | Stop -> e
