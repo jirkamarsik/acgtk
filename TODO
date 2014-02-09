@@ -7,7 +7,7 @@
 + [ ] remplacer tous les gforge.loria en gforge.inria
 + [ ] réfléchir si changement de construction des numéros de version
 + [ ] renommer s_datalog et datalog en datalog.prover et datalog.solver
-+ [ ] modifier la documentation
++ [X] modifier la documentation
 
 ** TODO Faire un Bolt package
 
@@ -91,3 +91,4 @@
 + [ ] ajouter un espace de nommage pour les lexiques et signatures
 + [X] faire des dumps des interfaces et des représentations binaires
   pour charger plus vite
++ [ ] Ajouter un -nooout option pour acgc ?
