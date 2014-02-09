@@ -9,13 +9,15 @@ signature Derived_trees =
     tree:type;
     S_3:tree -> tree -> tree -> tree;
     S_2:tree -> tree -> tree;
+    Empty:tree;
     a,b,c,d:tree;
 end
 
 lexicon Abs(Derivation_trees):Derived_trees =
     S:=tree;
     S_A:=tree -> tree;
-    Start:=lambda aux.S_3 a (aux (S_2 b c)) d;
+    (*    Start:=lambda aux.S_3 a (aux (S_2 b c)) d; *)
+    Start := lambda aux. aux Empty;
     C:=lambda aux sub.S_3 a (aux (S_3 b sub c)) d;
     I_S:=lambda x.x;
 end
@@ -36,7 +38,10 @@ lexicon Yield (Derived_trees):Strings=
     b:=b;
     c:=c;
     d:=d;
+    Empty:=E;
 end
+
+lexicon Full = Yield << Abs
 	
 lexicon Direct(Derivation_trees):Strings=
     S:=string;
