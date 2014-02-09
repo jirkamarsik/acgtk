@@ -41,6 +41,7 @@ type parse_error =
   | Unknown_type of string
   | Missing_arg_of_Infix of string
   | No_such_signature of string
+  | No_such_lexicon of string
   | Dyp_error
 
 (** The types for errors raised by the typechecker. Names should be

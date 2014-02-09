@@ -221,15 +221,24 @@ EOI
 | LEX_OPEN IDENT<name> EQUAL lexicon_composition<c> {c name}
 
 lexicon_composition :
-| IDENT<name1> COMPOSE composition_argument<l> {
+| IDENT<name1,loc> COMPOSE composition_argument<l> {
   fun name ->
-    let env=get_env_value dyp.last_local_data in
-    let l1 = E.get_lexicon (fst name1) env in
-    E.Lexicon.compose l1 (l ("__NO__NAME__",(Lexing.dummy_pos,Lexing.dummy_pos))) ( name)}
+    try
+      let env=get_env_value dyp.last_local_data in
+      let l1 = E.get_lexicon name1 env in
+      E.Lexicon.compose l1 (l ("__NO__NAME__",(Lexing.dummy_pos,Lexing.dummy_pos))) ( name)
+    with
+    | E.Lexicon_not_found _ -> 
+      emit_parse_error (Error.No_such_signature name1) loc}
 | LPAREN lexicon_composition<c> RPAREN {c}
 
 composition_argument:
-| IDENT<name> {fun res_name-> E.get_lexicon (fst name) (get_env_value dyp.last_local_data)}
+| IDENT<name,loc> {fun res_name-> 
+  try
+    E.get_lexicon name (get_env_value dyp.last_local_data)
+  with
+  | E.Lexicon_not_found _ -> 
+    emit_parse_error (Error.No_such_signature name) loc}
 | lexicon_composition<c> {c}
 
 

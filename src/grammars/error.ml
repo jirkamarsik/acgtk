@@ -58,6 +58,7 @@ type parse_error =
   | Unknown_type of string
   | Missing_arg_of_Infix of string
   | No_such_signature of string
+  | No_such_lexicon of string
   | Dyp_error
 
 type type_error =
@@ -131,6 +132,7 @@ let parse_error_to_string = function
   | Unknown_type id -> Printf.sprintf "Syntax error: Unknown atomic type \"%s\"" id
   | Missing_arg_of_Infix  id -> Printf.sprintf "Syntax error: \"%s\" is defined as infix but used here with less than two arguments" id
   | No_such_signature s -> Printf.sprintf "Syntax error: Signature id \"%s\" not in the current environment" s
+  | No_such_lexicon s -> Printf.sprintf "Syntax error: Lexicon id \"%s\" not in the current environment" s
   | Dyp_error -> "Dyp: Syntax error"
 
 let type_error_to_string = function
