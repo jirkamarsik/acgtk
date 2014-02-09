@@ -1,23 +1,39 @@
 ; -*-org-*-
 
 * Général
-** Utiliser Bolt (http://bolt.x9c.fr/)
-+ [ ] Intégrer dans le configure.ac la dépendance à Bolt
-+ [ ] Laisser la possibilité que la librairie ne soit pas installée
+
+** Avant Prochaine release
++ [ ] merge avec trunk
++ [ ] remplacer tous les gforge.loria en gforge.inria
++ [ ] réfléchir si changement de construction des numéros de version
++ [ ] renommer s_datalog et datalog en datalog.prover et datalog.solver
++ [ ] modifier la documentation
+
+** TODO Faire un Bolt package
+
+
+** DONE Utiliser Bolt (http://bolt.x9c.fr/)
++ [X] Intégrer dans le configure.ac la dépendance à Bolt
++ [X] Laisser la possibilité que la librairie ne soit pas installée *Impossible*
 + [X] Gérer la présence d'un fichier bolt_config (bolt.config) (DONE:
-  bug fix in BOLT
-** Configuration
-+ [ ] Utiliser les outils de Paul
+  bug fix in BOLT)
+
+** DONE Configuration
++ [X] Utiliser les outils de Paul
+
 ** Permettre l'utilisation des PersistentArray
-** Vérifier (et supprimer ou mettre en IFDEBUG) les assert
-** Avant merge et prochaine release :
-+ [ ] mettre la commande "analyse" en deprecated
-+ [ ] la remplacer par
-  + [ ] une commande "check"
-  + [ ] une commande "realise"
-+ [ ] mettre une commande "idb"
-+ [ ] mettre une commande "edb-and-query"
+
+** TODO Vérifier (et supprimer ou mettre en IFDEBUG) les assert
+
+** TODO Avant merge et prochaine release :
++ [X] mettre la commande "analyse" en deprecated
++ [X] la remplacer par
+  + [X] une commande "check"
+  + [X] une commande "realise"
++ [X] mettre une commande "idb"
++ [X] mettre une commande "query"
 + [ ] vérifier que tous les "help cmd" fonctionnent
+
 ** lexer and parser
 + [ ] change the compilation order and the token emission
 
@@ -40,16 +56,11 @@
 + [ ] changer edb et idb en Set plutôt que list
 + [ ] build_forest sans query n'est pas correct (il faut faire
   plusieurs forêts)
-+ [ ] l'adresse dans les forêts n'est pas correcte : la dernière
-  indication de alt n'est pas pertinente. Modifier en conséquence dans
-  le fichier altertrees,ml. *Remarque :* considérer qu'il peut y avoir
-  des forêts où le sens des alternatives est différent  ? (ie pas la
-  production d'un même non-terminal ?)
 
 * alterTrees.ml
 + [ ] changer la focused list des forêts en simple liste ?
 + [ ] garder trace de Link_to plutôt que de l'actual forest dans les move
-+ [ ] gérer les analyses infinies (ordre sur les chemins)
++ [X] gérer les analyses infinies (ordre sur les chemins)
 
 * unionFind.ml
 + [ ] Changer le rank dans "union" lorsque match de Value contre
@@ -75,8 +86,8 @@
 + [ ] Définir le parsing pour les almost linear terms
 
 * Divers
-+ [ ] ajouter la commande compose dans les fichiers de définition de
++ [X] ajouter la commande compose dans les fichiers de définition de
   lexiques et signature
 + [ ] ajouter un espace de nommage pour les lexiques et signatures
-+ [ ] faire des dumps des interfaces et des représentations binaires
++ [X] faire des dumps des interfaces et des représentations binaires
   pour charger plus vite
