@@ -34,7 +34,7 @@ LIBS += dyp.cma str.cma
 LIBDIR += @DYPGEN_INCLUDE@
 
 # Directories to which the current source files depend on
-PREVIOUS_DIRS = ../utils ../s_datalog ../logic ../grammars ../acg-data
+PREVIOUS_DIRS = ../utils ../datalog.prover ../logic ../grammars ../acg-data
 
 # Source files in the right order of dependance
 

@@ -21,7 +21,7 @@
 
 #SUBDIRS= utils logic grammars acg-data scripting lambda datalog
 #SUBDIRS= utils logic grammars acg-data scripting datalog reduction s_datalog
-SUBDIRS= utils logic s_datalog grammars acg-data scripting datalog
+SUBDIRS= utils logic datalog.prover grammars acg-data scripting datalog.solver
 
 ACG_DIR=scripting
 ACGC_DIR=acg-data
