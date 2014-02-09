@@ -17,7 +17,7 @@
 #                                                                        #
 ##########################################################################
 
-.PHONY: config byte opt clean superclean install tar version release test
+.PHONY: config byte opt clean superclean install tar version release test force
 
 BINARIES=acg acg.opt acgc acgc.opt
 
@@ -27,10 +27,11 @@ RELEASE = acg-$(VERSION)
 
 TAR_RELEASE =acg-$(TAR_VERSION)
 
-
-
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+
+ACG_DIR=src/scripting
+ACGC_DIR=src/acg-data
 
 byte: acg acgc
 
@@ -38,8 +39,16 @@ opt: acg.opt acgc.opt
 
 all: byte opt test
 
-$(BINARIES):
-	$(MAKE) -C src $@ && find . -name "$@" -exec cp {} . \;
+acg acg.opt: force
+	$(MAKE) -C $(ACG_DIR) $@
+	cp $(ACG_DIR)/$@ .
+
+acgc acgc.opt: force
+	$(MAKE) -C $(ACGC_DIR) $@
+	cp $(ACGC_DIR)/$@ .
+
+force:
+
 
 test:
 	$(MAKE) -C src $@
