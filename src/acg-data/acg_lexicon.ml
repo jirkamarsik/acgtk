@@ -33,7 +33,7 @@ struct
 
   type signature = Sg.t
 
-  type resume = int AlterTrees.AlternTrees.resumption
+  type resume = int SharedForest.SharedForest.resumption
 
 
   type interpretation =
@@ -182,7 +182,7 @@ struct
     match lex.datalog_prog,Sg.expand_type dist_type lex.abstract_sig with
     | None,_ -> 
       let () = Printf.printf "Parsing is not implemented for non 2nd order ACG\n!" in
-      AlterTrees.AlternTrees.empty
+      SharedForest.SharedForest.empty
     | Some (prog,_), (Lambda.Atom _ as dist_type) ->
       let buff=Buffer.create 80 in
       let () = Buffer.add_buffer buff (Datalog_AbstractSyntax.AbstractSyntax.Program.to_buffer (Datalog.Program.to_abstract prog)) in
@@ -221,14 +221,14 @@ struct
       let parse_forest = Datalog.Program.build_forest ~query:query derivations temp_prog in
       let resume = 
 	match parse_forest with
-	| [] -> AlterTrees.AlternTrees.empty
-	| [f] -> AlterTrees.AlternTrees.init f
+	| [] -> SharedForest.SharedForest.empty
+	| [f] -> SharedForest.SharedForest.init f
 	| _ -> failwith "Bug: not fully specified query" in 
       resume
     | Some _ , _ -> 
       let () = 
 	Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in
-      AlterTrees.AlternTrees.empty
+      SharedForest.SharedForest.empty
       
     
   let get_analysis resume lex =
@@ -236,11 +236,11 @@ struct
     match lex.datalog_prog with
     | None -> let () = Printf.printf "Parsing is not yet implemented for non atomic distinguished type\n%!" in None,resume
     | Some (_,rule_id_to_cst) ->
-      match AlterTrees.AlternTrees.resumption resume with
+      match SharedForest.SharedForest.resumption resume with
       | None,resume -> None,resume
       | Some t,resume ->
 	LOG "Got a result. Ready to map it" LEVEL DEBUG;
-	Some (AlterTrees.AlternTrees.fold_depth_first
+	Some (SharedForest.SharedForest.fold_depth_first
 		((fun rule_id -> RuleToCstMap.find rule_id rule_id_to_cst),
 		 (fun x y -> Lambda.App(x,y)))
 		t),

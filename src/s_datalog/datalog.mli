@@ -123,7 +123,7 @@ sig
     val get_fresh_cst_id : string -> program -> (Datalog_AbstractSyntax.ConstGen.id * program)
     val add_pred_sym : string -> program -> (ASPred.pred_id*program)
 
-    val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int AlterTrees.AlternTrees.tree list list
+    val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int SharedForest.SharedForest.tree list list
 
     val edb_to_buffer : program -> Buffer.t
 

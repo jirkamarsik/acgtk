@@ -1,7 +1,7 @@
 open PersistentArray
 open Focused_list
 open Datalog_AbstractSyntax
-open AlterTrees
+open SharedForest
 
 
 module ASPred=AbstractSyntax.Predicate 
@@ -122,7 +122,7 @@ sig
     val get_fresh_cst_id : string -> program -> (Datalog_AbstractSyntax.ConstGen.id * program)
     val add_pred_sym : string -> program -> (ASPred.pred_id*program)
 
-    val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int AlterTrees.AlternTrees.tree list list
+    val build_forest : ?query:Datalog_AbstractSyntax.AbstractSyntax.Predicate.predicate -> Predicate.PremiseSet.t Predicate.PredicateMap.t -> program -> int SharedForest.tree list list
 
 
     val edb_to_buffer : program -> Buffer.t
@@ -1202,12 +1202,12 @@ struct
 	  else
 	    (LOG "Keeping it" LEVEL DEBUG;
 	     let cur_add=(alt_num,child_num)::parent_address in
-	     LOG "It will have address [%s]" (AlterTrees.AlternTrees.address_to_string (List.rev cur_add)) LEVEL DEBUG;
+	     LOG "It will have address [%s]" (AlterTrees.SharedForest.address_to_string (List.rev cur_add)) LEVEL DEBUG;
 	     try
 	       let existing_add = Predicate.PredicateMap.find fact l_visit  in
-	       let patch=AlternTrees.diff (List.rev cur_add) (List.rev existing_add) in      
-		 LOG "Will point to: %s with patch %s" (AlternTrees.address_to_string (List.rev existing_add)) (AlternTrees.path_to_string patch) LEVEL DEBUG;
-	       (AlternTrees.Link_to patch)::l_acc,
+	       let patch=SharedForest.diff (List.rev cur_add) (List.rev existing_add) in      
+		 LOG "Will point to: %s with patch %s" (SharedForest.address_to_string (List.rev existing_add)) (SharedForest.path_to_string patch) LEVEL DEBUG;
+	       (SharedForest.Link_to patch)::l_acc,
 	       child_num-1,
 	       l_visit
 	     with
@@ -1219,7 +1219,7 @@ struct
 		 with
 		 | Not_found -> Predicate.PremiseSet.empty in
 	       let l_forest,_,l_visit = build_forest_aux fact premises derivations cur_add l_visit prog in
-	       (AlternTrees.Forest ([],List.rev l_forest))::l_acc,
+	       (SharedForest.Forest ([],List.rev l_forest))::l_acc,
 	       child_num-1,
 	       l_visit))
 	([],children_num,visited_facts)
@@ -1230,7 +1230,7 @@ struct
 	(fun (facts,rule_id,i_rhs_num) (acc,alt_num,l_visited_facts) ->
 	  let children_rev,_,l_visited_facts = 
 	    build_children alt_num add i_rhs_num facts derivations l_visited_facts prog in
-	  (AlternTrees.Node
+	  (SharedForest.Node
 	     (rule_id,
 	      children_rev))::acc,
 	  alt_num+1,
@@ -1247,7 +1247,7 @@ struct
 	  let visited_facts_addresses = Predicate.PredicateMap.add fact cur_address visited_facts_addresses in
 	  let children_rev,_,visited_facts_addresses = 
 	    build_children alt_num [] i_rhs_num facts derivations visited_facts_addresses prog in
-	  (AlternTrees.Node
+	  (SharedForest.Node
 	     (rule_id,
 	      children_rev
 	     ))::acc,

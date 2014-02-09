@@ -1,4 +1,4 @@
-module AlternTrees :
+module SharedForest :
 sig
   (** This type is the type of addresses of forests. It is a list of
       (position in the forest,position as a child). *)

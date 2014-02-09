@@ -1,4 +1,4 @@
-open AlterTrees.AlternTrees
+open SharedForest.SharedForest
 
 let init_f_list l = Forest ([],l)
 

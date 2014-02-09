@@ -56,7 +56,7 @@ test:
 clean:
 	-if test "$@" = clean ; then $(MAKE) -C config $@ ; fi
 	-$(MAKE) -C src $@
-	rm -rf *.log  *~ autom4te.cache *.tar.gz
+	rm -rf *.log  *~ autom4te.cache *.tar.gz *.acgo
 	find . -name "*~" -exec rm -f {} \;
 	-for file in $(BINARIES); do rm -f $$file ; done
 
