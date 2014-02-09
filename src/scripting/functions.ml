@@ -493,7 +493,7 @@ struct
       | Some (obj_t,abs_ty) -> 
 	let resume = get_parse_tree (E.Lexicon.parse obj_t abs_ty lex) abs_ty lex in
 	match resume with
-	| None -> ()
+	| None -> Printf.printf "No solution.\n%!"
 	| Some resume ->
 	  ask_for_next_parse (fun res -> get_parse_tree res abs_ty lex) resume
       
