@@ -22,7 +22,7 @@
 BINARIES=acg acg.opt acgc acgc.opt
 
 VERSION_FILE = src/utils/version.ml
-VERSION = $(shell date "+%Y%m%d")
+VERSION = 1.0b-$(shell date "+%Y%m%d")
 RELEASE = acg-$(VERSION)
 
 TAR_RELEASE =acg-$(TAR_VERSION)
@@ -88,7 +88,7 @@ tar: superclean
 	./configure
 
 version :
-	sed -i 's/\(VERSION = \)".*"/\1"$(VERSION)"/' $(VERSION_FILE)
+	sed -i 's/\(VERSION *= *\)".*"/\1"$(VERSION)"/' $(VERSION_FILE) config/configure.ac
 
 release : version tar
 	if svn status -q -u | grep -v "^Status against" | grep -q -v "^\?" ; then printf "\n\nERROR:\nPlease commit before making a release\n\n" ; else svn cp svn+ssh://pogodall@scm.gforge.inria.fr/svn/acg/dev/trunk svn+ssh://pogodall@scm.gforge.inria.fr/svn/acg/dev/tags/release-$(VERSION) -m "Tagging the $(VERSION) release of the 'acg' project" ; cp acg-$(VERSION).tar.gz ~/www-acg/software/. ; cp INSTALL ~/www-acg/software/. ; cp README ~/www-acg/software/. ; sed -i -e 's/acg-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html ;fi

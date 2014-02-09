@@ -17,7 +17,9 @@
 (*                                                                        *)
 (**************************************************************************)
 
-AC_INIT([ACG DTK],[0.1],[sylvain.pogodalla@loria.fr])
+VERSION="1.0b-20140209"
+
+AC_INIT([ACG DTK],[$VERSION],[sylvain.pogodalla@loria.fr])
 
 #AC_COPYRIGHT([Cecill])
 m4_include(ac_lib_checking.m4)
