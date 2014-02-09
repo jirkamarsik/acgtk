@@ -24,8 +24,10 @@
 In order to compile the ACG toolkit, you need:
 	+ ocaml (>=3.07) installed (http://caml.inria.fr/)
 	+ dypgen (>=20080925) installed (http://dypgen.free.fr/)
+	+ bolt (>=1.4) installed (http://bolt.x9c.fr/downloads.html
 
 
+=======
 IMPORTANT:
 
 A fast an easy way to install dypgen and all important ocaml libraries is
@@ -36,6 +38,8 @@ The installation typically goes that way:
     + then install opam
     + then install dypgen with the command
       	   opam install dypgen
+    + then install bolt with the command
+      	   opam install bolt
     + don't forget to add the required library in your path
       (look at "Initializing opam" at 
       http://opam.ocaml.org/doc/Advanced_Install.html)
@@ -67,7 +71,7 @@ For instance, run:
 
 Then run:
 
-	make
+	make byte
 
 to get the bytecode executable, or
 
@@ -75,7 +79,7 @@ to get the bytecode executable, or
 
 to get native code binaries
 
-It should produce executables in the current directory: acgc (or
+It should produce two executables in the current directory: acgc (or
 acgc.opt for the native code executable) and acg (or acg.opt for the
 native code executable).
 

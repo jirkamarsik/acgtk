@@ -40,7 +40,7 @@ sig
 
   (** The type of the key *)
   type key
-      
+  
   (** [empty] returns the empty table *)
   val empty : 'a t
 
@@ -54,15 +54,15 @@ sig
   val add : ?override:bool -> key -> 'a -> 'a t -> 'a t
 
   (** [find k t] returns the element associated with the key [k] in
-      [t]. Raises {!Table.TABLE.Not_found} if no such element exists
-      *)
-    val find : key -> 'a t -> 'a
-
-      (** [fold f a t] returns [f kn vn (f kn-1 vn-1 (...(f k1 v1 a)
-	  ...))] where the [ki] and [vi] are the associated values in
-	  [t]. The elements are listed in order wrt. to the key *)
-    val fold : (key -> 'a -> 'b -> 'b) -> 'b -> 'a t -> 'b
-  end
+      [t]. Raises {!Table.TABLE.Not_found} if no such element
+      exists *)
+  val find : key -> 'a t -> 'a
+    
+  (** [fold f a t] returns [f kn vn (f kn-1 vn-1 (...(f k1 v1 a)
+      ...))] where the [ki] and [vi] are the associated values in
+      [t]. The elements are listed in order wrt. to the key *)
+  val fold : (key -> 'a -> 'b -> 'b) -> 'b -> 'a t -> 'b
+end
 
 (** This modules provides the functor *)
 module Make_table (Base : BASE) : TABLE with type key=int

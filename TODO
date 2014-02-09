@@ -1,0 +1,94 @@
+; -*-org-*-
+
+* Général
+
+** Avant Prochaine release
++ [ ] merge avec trunk
++ [ ] remplacer tous les gforge.loria en gforge.inria
++ [ ] réfléchir si changement de construction des numéros de version
++ [ ] renommer s_datalog et datalog en datalog.prover et datalog.solver
++ [X] modifier la documentation
+
+** TODO Faire un Bolt package
+
+
+** DONE Utiliser Bolt (http://bolt.x9c.fr/)
++ [X] Intégrer dans le configure.ac la dépendance à Bolt
++ [X] Laisser la possibilité que la librairie ne soit pas installée *Impossible*
++ [X] Gérer la présence d'un fichier bolt_config (bolt.config) (DONE:
+  bug fix in BOLT)
+
+** DONE Configuration
++ [X] Utiliser les outils de Paul
+
+** Permettre l'utilisation des PersistentArray
+
+** TODO Vérifier (et supprimer ou mettre en IFDEBUG) les assert
+
+** TODO Avant merge et prochaine release :
++ [X] mettre la commande "analyse" en deprecated
++ [X] la remplacer par
+  + [X] une commande "check"
+  + [X] une commande "realise"
++ [X] mettre une commande "idb"
++ [X] mettre une commande "query"
++ [ ] vérifier que tous les "help cmd" fonctionnent
+
+** lexer and parser
++ [ ] change the compilation order and the token emission
+
+* datalog.ml
++ [ ] Vérifier pourquoi "pred_table" est paramètre de Rule.to_abstract
+  et aussi de Datalog_AbstractSyntax.Rule.to_string
++ [ ] Vérifier pourquoi content est passé en paramètre dans les
+  to_abstract alors que c'est un champ du record rule
++ [ ] Idem pour Rule.extract_consequence
++ [ ] Réfléchir à la possibilité de faire de l'unification directement
+  entre contents. Ça réduirait par exemple les itérations dans
+  "extract_consequence"
++ [X] Autoriser l'instanciation avec des variables encore présentes
++ [X] Implanter la réponse à une requête.
++ [ ] Ajouter dans le programme l'enregistrement de toutes les
+  constantes et les parcourir pour ajouter aux faits ceux qui ont
+  encore des variables.
++ [ ] Ajouter la possibilité d'étendre un programme datalog
++ [ ] changer le champ idb de prog en Set plutôt que list
++ [ ] changer edb et idb en Set plutôt que list
++ [ ] build_forest sans query n'est pas correct (il faut faire
+  plusieurs forêts)
+
+* alterTrees.ml
++ [ ] changer la focused list des forêts en simple liste ?
++ [ ] garder trace de Link_to plutôt que de l'actual forest dans les move
++ [X] gérer les analyses infinies (ordre sur les chemins)
+
+* unionFind.ml
++ [ ] Changer le rank dans "union" lorsque match de Value contre
+  Link_to
+
+* lambda.ml
++ [ ] Vérifier les passages de paramètres dans les
+  unfold_{labs|abs|binder} pour l'affichage, et simplifier
+
+* typeInference.ml
++ [ ] change or add inference (possibly with a signature) to principal
+  typing
++ [ ] remove the level parameter (and any other useless parameter)
+  from the inference_aux function (when no LOG occur)
+
+
+* acg_lexicon.ml
++ [X] rebuild the datalog program after composition
++ [ ] add the int id (as in Lambda.Const i) in the map from the
+  constant name for abstract constants
++ [X] Définir le parsing de la composition de lexique
++ [ ] Définir le parsing pour les types non atomiques
++ [ ] Définir le parsing pour les almost linear terms
+
+* Divers
++ [X] ajouter la commande compose dans les fichiers de définition de
+  lexiques et signature
++ [ ] ajouter un espace de nommage pour les lexiques et signatures
++ [X] faire des dumps des interfaces et des représentations binaires
+  pour charger plus vite
++ [ ] Ajouter un -nooout option pour acgc ?

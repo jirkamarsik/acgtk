@@ -36,6 +36,8 @@ sig
     | Dont_trace
     | Print
     | Analyse
+    | Check
+    | Realize
     | Add
     | Compose
     | Dont_wait
@@ -43,11 +45,14 @@ sig
     | Help of action option
     | Create
     | Save
+    | Parse
+    | Idb
+    | Query
 
-
-
-
-  type file_type = | Data | Script of (string -> string list -> env -> env)
+  type file_type =
+  | Data
+  | Object
+  | Script of (string -> string list -> env -> env)
 
   val load : file_type -> string -> string list -> env -> env
 
@@ -63,6 +68,16 @@ sig
   val print : ?name:string -> env -> (Lexing.position * Lexing.position) -> unit
 
   val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val parse : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val idb : ?name:string -> env ->  ?offset:string -> (Lexing.position * Lexing.position) -> unit
+
+  val query : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
 
   val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
 

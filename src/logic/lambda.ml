@@ -230,7 +230,8 @@ module Lambda =
 
 
     let rec raw_to_string_aux = function
-      | (Var i | LVar i) -> Printf.sprintf "(%d)" i,true
+      | Var i  -> Printf.sprintf "(nl: %d)" i,true
+      | LVar i -> Printf.sprintf "(l:%d)" i,true
       | (Const i 
 	| DConst i)-> Printf.sprintf "[%d]" i,true
       | Abs (_,t) -> Printf.sprintf "Lambda.%s" (fst (raw_to_string_aux t)),false
@@ -239,6 +240,34 @@ module Lambda =
       | _ -> raise Not_yet_implemented
 
     let raw_to_string t = fst (raw_to_string_aux t)
+
+    let rec raw_to_caml = function
+      | Var i  -> Printf.sprintf "(Var %d)" i
+      | LVar i -> Printf.sprintf "(LVar %d)" i
+      | Const i -> Printf.sprintf "(Const %d)" i
+      | DConst i-> Printf.sprintf "(DConst %d)" i
+      | Abs (x,t) -> Printf.sprintf "(Abs (\"%s\",%s))" x (raw_to_caml t)
+      | LAbs (x,t) -> Printf.sprintf "(LAbs (\"%s\",%s))" x (raw_to_caml t)
+      | App (t,u) -> Printf.sprintf "(App (%s,%s))" (raw_to_caml t) (raw_to_caml u)
+      | _ -> raise Not_yet_implemented
+	
+
+    let rec raw_type_to_string_aux = function
+      | Atom i -> Printf.sprintf "(%d)" i,true
+      | DAtom i -> Printf.sprintf "[%d]" i,true
+      | LFun (alpha,beta) -> Printf.sprintf "%s -> %s" (parenthesize (raw_type_to_string_aux alpha)) (parenthesize (raw_type_to_string_aux beta)),false
+      | Fun (alpha,beta) -> Printf.sprintf "%s => %s" (parenthesize (raw_type_to_string_aux alpha)) (fst (raw_type_to_string_aux beta)),false
+      | _ -> failwith "Bug: Not yet implemented"
+
+    let raw_type_to_string t = fst (raw_type_to_string_aux t)
+
+    let rec raw_type_to_caml = function
+      | Atom i -> Printf.sprintf "(Atom %d)" i
+      | DAtom i -> Printf.sprintf "(DAtom %d)" i
+      | LFun (alpha,beta) -> Printf.sprintf "(LFun (%s,%s))" (raw_type_to_caml alpha) (raw_type_to_caml beta)
+      | Fun (alpha,beta) -> Printf.sprintf "(Fun (%s,%s))" (raw_type_to_caml alpha) (raw_type_to_caml beta)
+      | _ -> failwith "Bug: Not yet implemented"
+
 
 
     (* [is_linear tm] true if the lambda-term [tm] is such *)
@@ -569,6 +598,21 @@ module Lambda =
 	 normalize t'
 
 
+     (* We assume here that types in [ty] have been unfolded*)
+     let rec order stype f_unfold_defined_type = 
+       match stype with
+       | Atom _ -> 1
+       | DAtom i -> order (f_unfold_defined_type i) f_unfold_defined_type
+       | LFun (alpha,beta) -> max ((order alpha f_unfold_defined_type)+1) (order beta f_unfold_defined_type)
+       | Fun (alpha,beta) -> max ((order alpha f_unfold_defined_type)+1) (order beta f_unfold_defined_type)
+       | _ -> failwith "Bug: order of type not defined for this type constructor"
+
+
+     let is_2nd_order stype f_unfold_defined_type = 
+       (order stype f_unfold_defined_type)<=2
+
 
 
   end
+
+

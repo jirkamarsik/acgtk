@@ -43,6 +43,9 @@ sig
 (*  val type_to_string : stype -> t -> string*)
   val unfold_type_definition : int -> t -> Lambda.stype 
   val unfold_term_definition : int -> t -> Lambda.term 
+  val expand_type : Lambda.stype -> t -> Lambda.stype
+  val expand_term : Lambda.term -> t -> Lambda.term
+
   val add_warnings : Error.warning list -> t -> t
   val get_warnings : t -> Error.warning list
   val to_string : t -> string
@@ -57,6 +60,8 @@ sig
   val is_declared : entry -> t -> string option
   val eta_long_form : term -> stype -> t -> term
   val unfold : term -> t -> term
+  val is_2nd_order : t -> bool
+
 end
 
 module type Lexicon_sig =
@@ -65,16 +70,22 @@ sig
   exception Duplicate_constant_interpretation
 
   type t
-  module Signature:Signature_sig
+  module Signature:Signature_sig  with type term=Lambda.term
   type signature = Signature.t
+  type resume
   val empty : (string*Abstract_syntax.location) -> abs:signature -> obj:signature -> t
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t
   val to_string : t -> string
-  val interpret_type : Lambda.stype -> t -> Lambda.stype
+  val interpret_type : Signature.stype -> t -> Signature.stype
+(*  val interpret_type : Lambda.stype -> t -> Lambda.stype *)
   val interpret_term : Lambda.term -> t -> Lambda.term
   val interpret : Signature.term -> Signature.stype -> t -> (Signature.term*Signature.stype)
   val get_sig : t -> (signature*signature)
   val check : t -> unit
+  val parse : Signature.term -> Signature.stype -> t -> resume
+  val get_analysis : resume -> t -> Lambda.term option * resume
   val compose: t -> t -> (string*Abstract_syntax.location) -> t
+  val program_to_buffer : t -> Buffer.t
+  val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
 end

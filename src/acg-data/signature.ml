@@ -48,7 +48,8 @@ struct
 	    size:int;
 	    terms:entry Symbols.t;
 	    types:entry Symbols.t;
-	    ids:entry Id.t}
+	    ids:entry Id.t;
+	    is_2nd_order:bool}
 
   type term = Lambda.term
 
@@ -82,7 +83,7 @@ struct
       (id_to_string sg)
 
 
-  let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty}
+  let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty;is_2nd_order=true}
 
   let name {name=n} = n
 
@@ -225,6 +226,7 @@ struct
       let expand_type = expand_type
       let find_term = find_term
       let type_to_string = type_to_string
+      let term_to_string = term_to_string
     end)
 
   let typecheck=Type_System.typecheck
@@ -238,7 +240,8 @@ struct
 	  add_sig_type t (Type_definition (t,s,abstract_on_dependent_types k sg,convert_type ty sg)) sg
       | Abstract_syntax.Term_decl (t,behavior,_,ty) ->
 	  let t_type = convert_type ty sg in
-	    add_sig_term t (Term_declaration (t,s,behavior,convert_type ty sg)) sg
+	  let sg_is_2nd_order = sg.is_2nd_order && (Lambda.is_2nd_order t_type (fun i -> unfold_type_definition i sg)) in
+	  add_sig_term t (Term_declaration (t,s,behavior,convert_type ty sg)) {sg with is_2nd_order=sg_is_2nd_order}
       | Abstract_syntax.Term_def (t,behavior,_,term,ty) ->
 	  let t_type = convert_type ty sg in
 	  let t_term = typecheck term t_type sg in
@@ -294,7 +297,8 @@ struct
 
   let convert_term t ty sg =
     let t_type = convert_type ty sg in
-      typecheck t t_type sg,t_type
+    let t=typecheck t t_type sg in
+      t,t_type
 
   let type_of_constant x ({terms=syms} as sg) =
     try
@@ -317,6 +321,7 @@ struct
       | Term_declaration (s,_,_,_) -> Some s
       | _ -> None
 
+  let is_2nd_order {is_2nd_order} = is_2nd_order
 
 end	  
   

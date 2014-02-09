@@ -21,6 +21,9 @@ module StringSet = Set.Make (String)
 
 module StringMap = Map.Make (String)
 
+module IntMap = Map.Make (struct type t=int let compare i j = i-j end)
+module IntSet = Set.Make (struct type t=int let compare i j = i-j end)
+
 
 let string_of_list sep to_string = function
   | [] -> ""
@@ -90,3 +93,10 @@ let find_file name dirs =
       | Sys_error("Is a directory") -> 
 	  failwith (Printf.sprintf "Failed while trying to trace file '%s'" name )
 	  
+
+let (>>) f g = fun x -> f (g x)
+
+let log_iteration log_function s =
+  List.iter
+    log_function
+    (Bolt.Utils.split "\n" s)

@@ -37,6 +37,7 @@ sig
   val expand_type :  Lambda.stype -> t -> Lambda.stype 
   val find_term : string -> t -> Lambda.term *Lambda.stype
   val type_to_string : Lambda.stype -> t -> string
+  val term_to_string : Lambda.term -> t -> string
 (*  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string *)
 end
 
@@ -293,7 +294,10 @@ struct
       try
 	let t_term,t_type,(_:typing_environment) = 
 	  typecheck_aux t (Some (local_expand ty)) {linear_level=0;level=0;env=Utils.StringMap.empty;wrapper=None} in    
-	  t_term
+	LOG "Type-checked %s : %s"  (Signature.term_to_string t_term sg ) (Signature.type_to_string t_type sg ) LEVEL TRACE ;
+	LOG "Type-checked %s : %s"  (Lambda.raw_to_string t_term ) (Lambda.raw_type_to_string t_type ) LEVEL TRACE ;
+	LOG "Type-checked %s : %s"  (Lambda.raw_to_caml t_term ) (Lambda.raw_type_to_caml t_type ) LEVEL TRACE ;
+	t_term
       with
 	| Type_mismatch ((p1,p2),t1,t2) -> raise (Error.Error (Error.Type_error (Error.Is_Used (Signature.type_to_string t1 sg,Printf.sprintf "\"%s\"" (Signature.type_to_string t2 sg)),(p1,p2))))
 	| Not_linear ((s1,e1),(s2,e2)) -> raise (Error.Error (Error.Type_error (Error.Two_occurrences_of_linear_variable (s2,e2),(s1,s1))))

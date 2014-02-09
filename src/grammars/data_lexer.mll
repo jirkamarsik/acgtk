@@ -29,6 +29,7 @@
   type lexing_of =
     | Data of Entry.data
     | Term of Entry.term
+    | Type of Entry.stype
 
   let pr lexbuf = Printf.printf "%s\n%!" (Lexing.lexeme lexbuf)
 
@@ -57,6 +58,9 @@
   let set_to_term () =
     data := Term (Entry.start_term ())
 
+  let set_to_type () =
+    data := Type (Entry.start_type ())
+
   let set_to_sig_entry () =
     data := Data (Entry.start_sig_entry ())
 
@@ -69,6 +73,8 @@
       match !data with
 	| Data d -> data := Data (Entry.data_transition d v)
 	| Term t -> data := Term (Entry.term_transition t v)
+	| Type t -> data := Type (Entry.type_transition t v)
+
     with
       | Entry.Expect l -> 
 	  let s = Utils.string_of_list " or " Entry.valuation_to_string l in
@@ -97,6 +103,9 @@ let string = (letter|digit|'_')*'\''*
       | ['='] {let () = update_data Entry.Equal (loc lexbuf) in
 	       let () = check_brackets () in
 		 Token.EQUAL(loc lexbuf)}
+      | "<<" {let () = update_data Entry.Compose (loc lexbuf) in
+	       let () = check_brackets () in
+		 Token.COMPOSE(loc lexbuf)}
       | [';'] {let () = update_data Entry.Semi_colon (loc lexbuf) in
 	       let () = check_brackets () in
 		 Token.SEMICOLON(loc lexbuf)}

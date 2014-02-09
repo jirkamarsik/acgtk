@@ -32,8 +32,8 @@ and
 acgc is a "compiler" of ACG source code, i.e. files containing
 definitions of signarures and lexicons. It basically checks whether
 they are correctly written (syntactically and wrt types and constant
-typing). An interactive mode is available to parse terms according to
-signatures.
+typing) and outputs a .acgo object file. An interactive mode is
+available to parse terms according to signatures.
 
 Run
 
@@ -55,10 +55,56 @@ then on the prompt type
 	help;
 
 
-
-
 Example files are given in the ./examples directory. Read the
 ./examples/README file
+
+
+***************
+* Basic usage *
+***************
+
+Let's assume you defined a file my_acg.acg in directory my_dir. A
+basic usage of the acgc and acg commands could be:
+
+$ acgc -o my_acg.acgo my_acg.acg
+
+This will produce a my_acg.acgo file (note that this is the default
+name and location if the -o option is not provided).
+
+Then, running :
+
+$ acg
+
+will open a prompt in which you can type:
+
+# load o my_acg.acgo;
+
+to load the data contained in the my_acg.acg file. Assuming you have
+defined the signature Sig and the lexicon Lex, you can then run the
+following commands:
+
+# Sig check lambda x.some_cst x: NP ->S;
+
+to check whether "lambda x.cst x" is a term of type "NP ->S" according
+to Sig.
+
+You can type:
+
+# Lex realize lambda x.cst x: NP ->S;
+
+to compute the image of "lambda x.cst x" is a term of type "NP ->S" by
+Lex (assuming this term and this type are correct according to the
+abstract signature of Lex).
+
+You can type:
+
+# Lex parse John+loves+Mary: S;
+
+to check whether the term "John+loves+Mary" has an antecend of type
+"S" by Lex, assuming that "John+loves+Mary" is a term of type "Lex
+(S)" in the object signature of Lex.
+
+Type CTRL-D to exit from the program.
 
 ********************
 ** ACG emacs mode **
@@ -151,6 +197,9 @@ Lexicons are defined by:
 lexicon my_lex_name(abstract_sig_name) : object_sig_name =
 	lex_entries
 end
+
+or by lexicon composition as in:
+lexicon my_new_lex = lex_2 << lex_1
 
 Lex_entries always ends with a ; and have the following form:
 	abstract_atomic_type1, abstract_atomic_type2 := object_type;

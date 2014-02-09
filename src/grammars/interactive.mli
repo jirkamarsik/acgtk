@@ -23,5 +23,5 @@ lexicon module *)
 
 module Make(Lex:Interface.Lexicon_sig) :
 sig
-  val main : unit -> unit
+  val main : unit -> int
 end

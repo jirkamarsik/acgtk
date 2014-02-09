@@ -28,6 +28,7 @@ sig
   val expand_type :  Lambda.stype -> t -> Lambda.stype 
   val find_term : string -> t -> Lambda.term *Lambda.stype
   val type_to_string : Lambda.stype -> t -> string
+  val term_to_string : Lambda.term -> t -> string
 (*  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string*)
 end
 

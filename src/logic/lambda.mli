@@ -69,15 +69,27 @@ sig
   val type_to_string : stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> string
   val term_to_string : term -> (int -> Abstract_syntax.syntactic_behavior * string) -> string
   val raw_to_string : term -> string
+
+  val raw_type_to_string : stype -> string
+  val raw_to_caml : term -> string
+  val raw_type_to_caml : stype -> string
+
   val normalize : ?id_to_term:(int -> term) -> term -> term
     
 
   (** [eta_long_form t ty type_of_cst] returns the eta-long form of
       [t] with respect of type [ty]. [t] is supposed to be in
       beta-normal form and all the definitions of [t] and [ty] should
-      have been unfolded. [type_of_cst i] is a function that returns
+      have been unfolded. [type_of_cst i] returns
       the type (with unfolded definitions) of the constant whose id is
       [i]. [i] is supposed to be an actual id of a constant.*)
   val eta_long_form : term -> stype -> (int -> stype) -> term
+
+  (** [is_2nd_order ty type_definition] returns [true] if [ty] is 2nd
+      order. [ty] should have been unfolded and [type_definition i] is
+      returns the unfolded type of a defined type ([DAtom]) whose id
+      is [i]. [i] is supposed to be an actual id of such a defined type.*)
+  val is_2nd_order : stype -> (int -> stype) -> bool
+
 
 end

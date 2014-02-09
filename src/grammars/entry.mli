@@ -33,6 +33,12 @@ sig
   *)
   type term
 
+  (** The type for the automaton corresponding to the type being
+      parsed so far (it is intented to be used in some interaction
+      process) *)
+  type stype
+
+
   (** The type of the tokens or valuation found on the edges of the
       automaton *)
   type valuation =
@@ -41,6 +47,7 @@ sig
     | Lex_kwd
     | Id
     | Equal
+    | Compose
     | Comma
     | Colon
     | Colon_equal
@@ -71,6 +78,10 @@ sig
   initial state of the automaton *)
   val start_term : unit -> term
 
+  (** [start_term ()] returns an empty type corresponding to the
+  initial state of the automaton *)
+  val start_type : unit -> stype
+
   (** [start_sig_entry ()] returns a data corresponding to the state
       of the automaton for entering a sig entry *)
   val start_sig_entry : unit -> data
@@ -85,6 +96,11 @@ sig
   (** [term_transition d v] returns the state of the automaton reached
       from [d] with valuation [v] *)
   val term_transition : term -> valuation -> term
+
+  (** [type_transition d v] returns the state of the automaton reached
+      from [d] with valuation [v] *)
+  val type_transition : stype -> valuation -> stype
+
 
   (** [valuation_to_string v] returns a tring describing it *)
   val valuation_to_string : valuation -> string
