@@ -33,6 +33,8 @@ exec_prefix = @exec_prefix@
 ACG_DIR=src/scripting
 ACGC_DIR=src/acg-data
 
+EMACS_DIR=@emacs_dir@
+
 byte: acg acgc
 
 opt: acg.opt acgc.opt
@@ -68,6 +70,13 @@ install:
 
 uninstall:
 	for file in $(BINARIES); do if test -x @bindir@/$$file ; then rm @bindir@/$$file ; fi ; done
+
+install-emacs:
+	mkdir -p $(EMACS_DIR) && cp emacs/acg.el $(EMACS_DIR)/.
+
+uninstall-emacs:
+	rm $(EMACS_DIR)/acg.el
+	rm -r $(EMACS_DIR)
 
 
 # Part for the auto configuration

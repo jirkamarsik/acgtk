@@ -109,6 +109,18 @@ copy the following lines in your .emacs
 
 where EMACS_DIR_PATH is the path of a directory where you copied acg.el (typically)
 
+Note:
+
+	+ you can install the acg.el file into any directory
+	specifying the EMACS_PATH while invoking the ./configure
+	command.
+
+	Default is PREFIX/share/emacs/site-lisp/acg
+
+	+ If you installed acgtk using opam, then the default path is
+	OPAM_REPOSITORY/OCAML_VERSION/share/acg
+
+
 
 ** Site distribution:
 
