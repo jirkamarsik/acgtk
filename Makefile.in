@@ -33,7 +33,8 @@ exec_prefix = @exec_prefix@
 ACG_DIR=src/scripting
 ACGC_DIR=src/acg-data
 
-EMACS_DIR=@emacs_dir@
+DATA_DIR=@datarootdir@/acg
+
 
 byte: acg acgc
 
@@ -65,18 +66,30 @@ clean:
 superclean: clean
 	-find . -path "./*/*.in" -print | sed -e 's/\(.*\)\.in/\1/' | xargs -n 1 rm
 
+
+install-all: install install-emacs install-examples
+
+uninstall-all: uninstall uninstall-emacs uninstall-examples
+
 install:
 	for file in $(BINARIES); do if test -x $$file ; then cp $$file @bindir@/. ; fi ; done
 
 uninstall:
 	for file in $(BINARIES); do if test -x @bindir@/$$file ; then rm @bindir@/$$file ; fi ; done
+	rm -r $(DATA_DIR)
 
 install-emacs:
-	mkdir -p $(EMACS_DIR) && cp emacs/acg.el $(EMACS_DIR)/.
+	mkdir -p $(DATA_DIR) && cp -r emacs $(DATA_DIR)/.
 
 uninstall-emacs:
-	rm $(EMACS_DIR)/acg.el
-	rm -r $(EMACS_DIR)
+	rm -rf $(DATA_DIR)/emacs
+
+install-examples:
+	mkdir -p $(DATA_DIR) && cp -r examples $(DATA_DIR)/.
+
+uninstall-examples:
+	rm -rf $(DATA_DIR)/examples
+
 
 
 # Part for the auto configuration

@@ -591,8 +591,6 @@ OCAMLP4_LOC
 OCAML09WARNINGS
 TYPES
 CAMLP4_LIB
-emacs_dir
-EMACS_PATH
 BOLT_LEVEL
 BOLT_PP
 BOLT_LIB
@@ -664,8 +662,7 @@ host_alias
 target_alias
 DYPGEN_PATH
 DYPGENLIB_PATH
-BOLTLIB_PATH
-EMACS_PATH'
+BOLTLIB_PATH'
 
 
 # Initialize some variables set by options.
@@ -1286,8 +1283,6 @@ Some influential environment variables:
   BOLTLIB_PATH
               Directory where to find the bolt library if not in a standard
               location
-  EMACS_PATH  Directory where to installt the emacs acg-mode. Default is
-              PREFIX/share/emacs/site-lisp/acg.
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2933,17 +2928,6 @@ else
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&5
 $as_echo "$OCAMLP4 calls will be done with the $CAMLP4_LIB library" >&6; }
-
-
-
-
-if test -n "$EMACS_PATH" ; then
-   emacs_dir=$EMACS_PATH
-
-else
-   emacs_dir=$(prefix)/share/emacs/site-lisp/acg
-
-fi
 
 
 ############################

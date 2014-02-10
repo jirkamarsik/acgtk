@@ -208,15 +208,6 @@ fi
 AC_MSG_RESULT($OCAMLP4 calls will be done with the $CAMLP4_LIB library)
 
 
-AC_ARG_VAR(EMACS_PATH,[Directory where to installt the emacs acg-mode. Default is PREFIX/share/emacs/site-lisp/acg.])
-
-if test -n "$EMACS_PATH" ; then
-   AC_SUBST(emacs_dir,$EMACS_PATH)
-else
-   AC_SUBST(emacs_dir,$(prefix)/share/emacs/site-lisp/acg)
-fi
-
-
 ############################
 # substitutions to perform
 AC_SUBST(OCAMLC)
