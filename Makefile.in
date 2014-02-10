@@ -124,6 +124,6 @@ release : version tar
 	cp acg-$(VERSION).tar.gz ~/www-acg/software/. ; \
 	cp INSTALL ~/www-acg/software/. ; \
 	cp README ~/www-acg/software/. ; \
-	sed -i -e 's/acg-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html ;\
+	sed -i -e 's/acg-[^-]*-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html ;\
 	fi \
 	fi
