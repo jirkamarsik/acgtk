@@ -140,5 +140,5 @@ opam-package/url: tar
 	md5sum acg-$(VERSION).tar.gz | cut -d " " -f 1 | xargs -i printf "archive: \"http://calligramme.loria.fr/acg/software/acg-$(VERSION).tar.gz\"\nchecksum: \"%s\"\n" {} > $@
 
 opam:opam-package/url
-	cp -rT opam-package $(OPAM_TESTING_DIR)/acgtk.$(VERSION_BASENAME)
-	cp -rT opam-package $(OPAM_GIT_REPO_DIR)/acgtk.$(VERSION_BASENAME)
+	cp -rT opam-package $(OPAM_TESTING_DIR)/acgtk/acgtk.$(VERSION_BASENAME)
+	cp -rT opam-package $(OPAM_GIT_REPO_DIR)/acgtk/acgtk.$(VERSION_BASENAME)
