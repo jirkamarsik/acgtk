@@ -72,7 +72,7 @@ install-all: install install-emacs install-examples
 uninstall-all: uninstall uninstall-emacs uninstall-examples
 
 install:
-	for file in $(BINARIES); do if test -x $$file ; then cp $$file @bindir@/. ; fi ; done
+	mkdir -p @bindir@ && for file in $(BINARIES); do if test -x $$file ; then cp $$file @bindir@/. ; fi ; done
 
 uninstall:
 	for file in $(BINARIES); do if test -x @bindir@/$$file ; then rm @bindir@/$$file ; fi ; done
