@@ -117,7 +117,7 @@ release : version tar
 	then  \
 	printf "\n\nERROR:\nPlease commit before making a release\n\n" ; \
 	else \
-	if svn list ^/dev/tags/release-$(VERSION) >& /dev/null ; then \
+	if svn list ^/dev/tags/release-$(VERSION) > /dev/null ; then \
 	printf "\n\nERROR: the svn tag directory already exists\n" ; \
 	else \
 	svn cp ^/dev/trunk ^/dev/tags/release-$(VERSION) -m "Tagging the $(VERSION) release of the 'acg' project" ; \
