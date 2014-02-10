@@ -118,12 +118,12 @@ release : version tar
 	printf "\n\nERROR:\nPlease commit before making a release\n\n" ; \
 	else \
 	if svn list ^/dev/tags/release-$(VERSION) > /dev/null ; then \
+	printf "\n\nERROR: the svn tag directory already exists\n" ; \
+	else \
 	svn cp ^/dev/trunk ^/dev/tags/release-$(VERSION) -m "Tagging the $(VERSION) release of the 'acg' project" ; \
 	cp acg-$(VERSION).tar.gz ~/www-acg/software/. ; \
 	cp INSTALL ~/www-acg/software/. ; \
 	cp README ~/www-acg/software/. ; \
 	sed -i -e 's/acg-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html ;\
-	else \
-	printf "\n\nERROR: the svn tag directory already exists\n" ; \
 	fi \
 	fi
