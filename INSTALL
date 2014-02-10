@@ -140,13 +140,13 @@ copy the following lines in your .emacs
       make install-emacs
 
 the emacs directory and the emacs/acg.el file will be copied in the
-/DATAROOTDIR/acg directory. The default value for /DATAROOTDIR is
+/DATAROOTDIR/acgtk directory. The default value for /DATAROOTDIR is
 /PREFIX/share except if you ran the ./configure script with some
 --datarootdir=/SOME/DIR option.
 
 If you installed acgtk using opam, then the default path is
 
-	OPAM_REPOSITORY/OCAML_VERSION/share/acg
+	OPAM_REPOSITORY/OCAML_VERSION/share/acgtk
 
 To uninstall the emacs mode, run:
 
@@ -178,14 +178,14 @@ You can install this directory by running
 
       make install-examples
 
-the examples directoryfile will be copied in the /DATAROOTDIR/acg
+the examples directoryfile will be copied in the /DATAROOTDIR/acgtk
 directory. The default value for /DATAROOTDIR is /PREFIX/share except
 if you ran the ./configure script with some --datarootdir=/SOME/DIR
 option.
 
 If you installed acgtk using opam, then the default path is
 
-	OPAM_REPOSITORY/OCAML_VERSION/share/acg
+	OPAM_REPOSITORY/OCAML_VERSION/share/acgtk
 
 To uninstall the examples, run:
 

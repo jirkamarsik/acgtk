@@ -17,7 +17,7 @@
 #                                                                        #
 ##########################################################################
 
-.PHONY: config byte opt clean superclean install tar version release test force
+.PHONY: config byte opt clean superclean install uninstall tar version release test force www install-all install-emacs install-examples uninstall-all uninstall-emacs uninstall-examples
 
 BINARIES=acg acg.opt acgc acgc.opt
 
@@ -33,7 +33,7 @@ exec_prefix = @exec_prefix@
 ACG_DIR=src/scripting
 ACGC_DIR=src/acg-data
 
-DATA_DIR=@datarootdir@/acg
+DATA_DIR=@datarootdir@/acgtk
 
 
 byte: acg acgc
@@ -112,7 +112,13 @@ tar: superclean
 version :
 	sed -i 's/\(VERSION *= *\)".*"/\1"$(VERSION)"/' $(VERSION_FILE) config/configure.ac
 
-release : version tar
+www:
+	cp acg-$(VERSION).tar.gz ~/www-acg/software/.
+	cp INSTALL ~/www-acg/software/.
+	cp README ~/www-acg/software/.
+	sed -i -e 's/acg-[^-]*-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html
+
+release : version tar www
 	if svn status -q -u | grep -v "^Status against" | grep -q -v "^\?" ; \
 	then  \
 	printf "\n\nERROR:\nPlease commit before making a release\n\n" ; \
@@ -121,9 +127,5 @@ release : version tar
 	printf "\n\nERROR: the svn tag directory already exists\n" ; \
 	else \
 	svn cp ^/dev/trunk ^/dev/tags/release-$(VERSION) -m "Tagging the $(VERSION) release of the 'acg' project" ; \
-	cp acg-$(VERSION).tar.gz ~/www-acg/software/. ; \
-	cp INSTALL ~/www-acg/software/. ; \
-	cp README ~/www-acg/software/. ; \
-	sed -i -e 's/acg-[^-]*-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html ;\
 	fi \
 	fi
