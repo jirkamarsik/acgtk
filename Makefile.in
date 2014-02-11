@@ -122,7 +122,7 @@ www: opam
 	sed -i -e 's/acg-[^-]*-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html
 
 release : version tar www
-	if svn status -q -u | grep -v "^Status against" | grep -q -v "^\?" ; \
+	if svn status -q -u | grep -v "^Status against" | grep -q -v "opam-package/url" | grep -q -v "^\?" ; \
 	then  \
 	printf "\n\nERROR:\nPlease commit before making a release\n\n" ; \
 	else \
