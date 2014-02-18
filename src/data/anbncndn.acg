@@ -14,9 +14,8 @@ signature Derived_trees =
 end
 
 lexicon Abs(Derivation_trees):Derived_trees =
-    S:=tree;
+    S:=tree ;
     S_A:=tree -> tree;
-    (*    Start:=lambda aux.S_3 a (aux (S_2 b c)) d; *)
     Start := lambda aux. aux Empty;
     C:=lambda aux sub.S_3 a (aux (S_3 b sub c)) d;
     I_S:=lambda x.x;

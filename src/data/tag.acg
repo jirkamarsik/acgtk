@@ -57,12 +57,12 @@ signature derived_trees =
 end
 
 signature strings =
-(*	s:type ;
+	s:type ;
 	string = s->s : type;
-	infix + = lambda g f x.g(f x) : string -> string -> string; *)
+	infix + = lambda g f x.g(f x) : string -> string -> string;
 
-	string: type;
-	infix + : string -> string -> string;
+(*	string: type;
+	infix + : string -> string -> string; *)
 
 	every,dog,chases,a,cat,sleeps,slowly,new,big,black,seems,john,mary,bill,paul,
 	claims,loves,to,love,who,said,liked,does,think:string;
@@ -191,3 +191,5 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
 
 	I_n,I_vp,I_s := lambda x.x;
 end
+
+lexicon tag_yields = tag_strings << tag_syntax
