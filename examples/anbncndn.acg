@@ -42,12 +42,3 @@ end
 
 lexicon Full = Yield << Abs
 	
-lexicon Direct(Derivation_trees):Strings=
-    S:=string;
-    S_A:=string->string;
-
-    I_S:=lambda x.x;
-
-    Start:=lambda aux z. a (aux (lambda z'. b (c z')) (d z));
-    C:=lambda aux sub z. a (aux (lambda z'. b (sub (c z'))) (d z));
-end
