@@ -151,7 +151,7 @@ struct
       let prog = match lex.datalog_prog with
 	| None -> None
 	| Some p -> 
-	  let new_prog= add_rule_for_cst_in_prog id abs_type interpreted_term lex p in
+	  let new_prog= add_rule_for_cst_in_prog id abs_type (Signature.expand_term interpreted_term lex.object_sig) lex p in
 	  Some new_prog in
       {lex with
 	dico=Dico.add id (Constant (loc,interpreted_term)) d;
@@ -191,11 +191,14 @@ struct
 	(fun s -> LOG s LEVEL DEBUG)
 	(Buffer.contents buff);
       let dist_type_image = interpret_type dist_type lex in
+      let term =
+	Lambda.normalize
+ 	  ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
+	  (Signature.expand_term term lex.object_sig) in
+      LOG "Term for the query: %s" (Signature.term_to_string term lex.object_sig) LEVEL DEBUG;
       let obj_term= 
 	Sg.eta_long_form
-	  (Lambda.normalize
- 	     ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
-	     term)
+	  term
 	  dist_type_image
 	  lex.object_sig in
       let obj_princ_type,obj_typing_env = TypeInference.Type.inference obj_term in
@@ -330,7 +333,7 @@ struct
 	Sg.eta_long_form
 	  (Lambda.normalize
  	     ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
-	     term)
+	     (Signature.expand_term term lex.object_sig))
 	  dist_type_image
 	  lex.object_sig in
       let obj_princ_type,obj_typing_env = TypeInference.Type.inference obj_term in

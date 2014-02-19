@@ -1202,7 +1202,7 @@ struct
 	  else
 	    (LOG "Keeping it" LEVEL DEBUG;
 	     let cur_add=(alt_num,child_num)::parent_address in
-	     LOG "It will have address [%s]" (AlterTrees.SharedForest.address_to_string (List.rev cur_add)) LEVEL DEBUG;
+	     LOG "It will have address [%s]" (SharedForest.address_to_string (List.rev cur_add)) LEVEL DEBUG;
 	     try
 	       let existing_add = Predicate.PredicateMap.find fact l_visit  in
 	       let patch=SharedForest.diff (List.rev cur_add) (List.rev existing_add) in      
