@@ -1,0 +1,49 @@
+; -*-org-*-
+
+* Version 1.0b
+** The acgc.opt/acgc compiler:
++ Now outputs an "file.acgo" file when compilation is successful
++ Can declare a lexicon as the composition of two other lexicons
+  using the following declaration:
+  lexicon lex_name = lex_name2 << lex_name1
+
+** The acg.opt/acg interpreter:
++ Can load an acg object file using the command:
+
+  load o file.acco;
+
++ The "analyse" command is deprecated. It is replaced by:
+  + A "check" command, prefixed by signatures, that typecheck the
+    typing assignment of a term
+
+    Sig1 Sig2 check term:type;
+
+  + A "realize" command that must be preceded by lexicons and followed
+    by the type assignment of a term. It checks that the term is well
+    typed in the abstract signatures of the lexicons and compute its
+    realizations through the lexicons.
+
+    Lex1 Lex2 realize term:type;
+
++ A "parse" command has been added. It must be preceded with the name
+  of a lexicon and it returns the antecedent by this lexicon of the input
+  term with respect to some distinguished (atomic) type:
+
+  Lex parse object_term:distinguished_type;
+
++ A "query" command has been added. It follows the "parse" command
+  syntax and it outputs the associated query and associated extensional
+  database.
+
+  Lex query object_term:distinguished_type;
+
++ A "idb" command has been added. It must be preceded with the name of
+  a lexicon and it returns the intensional database associated with
+  the lexicon
+
+  Lex idb;
+  
+
+** Current limitation:
++ Only parse images of atomic types
++ The result of parsing with non-linear lexicons is unspecified yet

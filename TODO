@@ -3,13 +3,13 @@
 * Général
 
 ** Avant Prochaine release
-+ [ ] merge avec trunk
-+ [ ] remplacer tous les gforge.loria en gforge.inria
-+ [ ] réfléchir si changement de construction des numéros de version
-+ [ ] renommer s_datalog et datalog en datalog.prover et datalog.solver
++ [X] merge avec trunk
++ [X] remplacer tous les gforge.loria en gforge.inria
++ [X] réfléchir si changement de construction des numéros de version
++ [X] renommer s_datalog et datalog en datalog.prover et datalog.solver
 + [X] modifier la documentation
 
-** TODO Faire un Bolt package
+** DONE Faire un Bolt package
 
 
 ** DONE Utiliser Bolt (http://bolt.x9c.fr/)
@@ -84,6 +84,8 @@
 + [X] Définir le parsing de la composition de lexique
 + [ ] Définir le parsing pour les types non atomiques
 + [ ] Définir le parsing pour les almost linear terms
++ [ ] Vérifier que les Signature.expand_term ne sont pas redondants
+  avec les Lambda.normalize ~id_to_term
 
 * Divers
 + [X] ajouter la commande compose dans les fichiers de définition de
@@ -92,3 +94,5 @@
 + [X] faire des dumps des interfaces et des représentations binaires
   pour charger plus vite
 + [ ] Ajouter un -nooout option pour acgc ?
++ [ ] Vérifier ce qui se passe avec les différents parenthèsages lors
+  du parsing
