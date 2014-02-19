@@ -7,7 +7,7 @@
 (* "acgc MK-lecture-example.acg" *)
 
 (* Running the following commands in the acg environment *)
-(* "load o MK-lecture-example.acgo"; *)
+(* "load o MK-lecture-example.acgo;" *)
 (* then *)
 (* "surface parse  book+the+flight+from+Houston:S;" *)
 (* in the acg environment will produce 2 readings *)
