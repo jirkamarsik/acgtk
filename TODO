@@ -8,6 +8,8 @@
 + [X] réfléchir si changement de construction des numéros de version
 + [X] renommer s_datalog et datalog en datalog.prover et datalog.solver
 + [X] modifier la documentation
++ [ ] remove useless reduction.* files (hint: the useful one is in the
+  acg-data directory)
 
 ** DONE Faire un Bolt package
 
@@ -20,6 +22,11 @@
 
 ** DONE Configuration
 + [X] Utiliser les outils de Paul
+
+** Optimisation
++ [ ] magic rewriting
++ [ ] PersistentArray
++ [ ] paralélisme
 
 ** Permettre l'utilisation des PersistentArray
 
@@ -56,6 +63,11 @@
 + [ ] changer edb et idb en Set plutôt que list
 + [ ] build_forest sans query n'est pas correct (il faut faire
   plusieurs forêts)
+* reduction.ml
++ [ ] offrir la possibilité de construire une requête à partir de plusieurs terms
++ [ ] offrir la possibilité de construire une requête non totalement
+  instanciée (utile ?). Prévoir modifications dans la manière de
+  construire la forêt partagée après une requête.
 
 * alterTrees.ml
 + [ ] changer la focused list des forêts en simple liste ?
