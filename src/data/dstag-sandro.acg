@@ -1,0 +1,245 @@
+signature DERIVED_TREES =
+	tree : type;
+
+	DU_1,DC : tree=> tree;
+
+	DU_3 : tree=> tree=> tree=> tree ;
+	DU_4 : tree=> tree=> tree=> tree=> tree ;
+
+	dot,comma:tree;
+
+	parce_que:tree;
+	
+	de_plus : tree;
+
+	epsilon : tree;
+
+	ensuite : tree;
+
+	c1,c2,c3,c4,c5,c6,c7,c8,c9,c10:tree;
+
+	I = Lambda x.x : tree => tree;
+
+	adverbiaux = Lambda a.
+
+		Lambda d4 d3 d2 d_subst d.
+			d4 (DU_1 (d3 (DU_4 d dot a (d2 d_subst)))) :
+
+		tree=>
+			(tree=> tree)=>
+			(tree=> tree)=>
+			(tree=> tree)=>
+			tree=>
+			tree=>
+			tree ;
+
+
+	conjonction_postposees_ponct = Lambda c.
+
+		Lambda d4 d3 d2 d_subst d.
+			d4 (DU_1 (d3 (DU_4 d comma c (d2 d_subst)))) :
+
+		tree=>
+			(tree=> tree)=>
+			(tree=> tree)=>
+			(tree=> tree)=>
+			tree=>
+			tree=>
+			tree ;
+
+	conjonction_postposees = Lambda c.
+
+		Lambda d4 d3 d2 d_subst d.
+			d4 (DU_1 (d3 (DU_3 d c (d2 d_subst)))) :
+
+		tree=>
+			(tree=> tree)=>
+			(tree=> tree)=>
+			(tree=> tree)=>
+			tree=>
+			tree=>
+			tree ;
+			
+
+end
+
+signature STRINGS =
+	string : type;
+
+	infix + : string=> string=> string;
+
+	dot,comma : string;
+
+	parce_que,de_plus,epsilon,ensuite : string;
+
+	fred_est_de_mauvaise_humeur,
+	il_a_perdu_ses_clefs,
+	il_a_rate_son_permis,
+	il_a_mal_dormi,
+	il_a_fait_des_cauchemards,
+	fred_est_alle_au_supermarche,
+	son_frigo_etait_vide,
+	il_est_alle_au_cinema,
+	sa_femme_est_absente_une_semaine,
+	ceci_prouve_qu_il_l_aime_beaucoup:string;
+
+	fmh = fred_est_de_mauvaise_humeur:string ;
+	psc = il_a_perdu_ses_clefs:string ;
+	rsp = il_a_rate_son_permis:string ;
+	md = il_a_mal_dormi:string;
+	fc = il_a_fait_des_cauchemards:string;
+	fasm = fred_est_alle_au_supermarche:string;
+	fev = son_frigo_etait_vide:string;
+	aac = il_est_alle_au_cinema:string;
+	fas = sa_femme_est_absente_une_semaine:string;
+	pab = ceci_prouve_qu_il_l_aime_beaucoup:string;
+
+end
+
+lexicon YIELD (DERIVED_TREES) : STRINGS =
+
+	tree := string;
+
+	DU_1,DC := Lambda x.x;
+
+	DU_3 := Lambda x1 x2 x3. x1 + x2 + x3 ;
+	DU_4 := Lambda x1 x2 x3 x4. x1 + x2 + x3 + x4 ;
+
+	dot := dot;
+	comma := comma;
+	parce_que := parce_que;
+	de_plus := de_plus;
+	epsilon := epsilon;
+	ensuite := ensuite;
+
+	c1 := fmh;
+	c2 := psc;
+	c3 := rsp;
+	c4 := md;
+	c5 := fc;
+	c6 := fasm;
+	c7 := fev;
+	c8 := aac;
+	c9 := fas;
+	c10 := pab;
+end
+
+
+signature DERIVATION_TREES =
+	
+	DU,DU_a,DU_a':type;
+
+	DC1 = DU_a=> DU_a'=> DU_a'=> DU=> DU_a : type;
+	DC2 = DU_a'=> DU_a'=> DU_a'=> DU=> DU_a' : type;
+
+	PARCE_QUE : DC1;
+	DE_PLUS : DC1;
+	EMPTY : DC2;
+	ENSUITE : DC2;
+	EMPTY_COMMENT : DC1;
+
+	C1,C2,C3,C4,C5,C6,C7,C8,C9,C10: DU_a => DU;
+
+	I1 : DU_a;
+
+	I2 : DU_a';
+
+end
+
+
+lexicon SYNTAX (DERIVATION_TREES): DERIVED_TREES =
+	DU := tree;
+	DU_a,DU_a':= tree=> tree;
+
+	PARCE_QUE := conjonction_postposees parce_que;
+	DE_PLUS := adverbiaux de_plus;
+
+	EMPTY := adverbiaux epsilon;
+	ENSUITE := conjonction_postposees_ponct ensuite;
+	EMPTY_COMMENT := conjonction_postposees epsilon;
+
+	I1,I2 := I;
+
+	C1 := Lambda x . x c1;
+	C2 := Lambda x . x c2;
+	C3 := Lambda x . x c3;
+	C4 := Lambda x . x c4;
+	C5 := Lambda x . x c5;
+	C6 := Lambda x . x c6;
+	C7 := Lambda x . x c7;
+	C8 := Lambda x . x c8;
+	C9 := Lambda x . x c9;
+	C10 := Lambda x . x c10;
+end
+
+signature SEMANTICS =
+	t : type;
+
+	ttt=(t =>t) => t:type;
+
+	f1,f2,f3,f4,f5,f6,f7,f8,f9,f10:t;
+
+	infix & : t=> t=> t;
+
+	Explication : t=> t=> t ;
+	Continuation : t=> t=> t ;	
+	Narration : t=> t=> t ;	
+	Comment : t => t => t;
+
+	phi' = Lambda R X Y.X(Lambda x.Y(Lambda y.R x y)) : 
+		(t=> t=> t)=> ((t => t)=> t)=> ((t => t)=> t)=> t;
+
+	phi'' = Lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
+		(t => t=> t)=> ((t => t)=> t)=> ((t => t)=> t)=> (t=> t)=> t;
+
+	A = Lambda R.
+		Lambda d4 d3 d2 d_subst d_foot.
+			d4 (
+			    (phi' R)
+				(d3(Lambda P.P d_foot))
+				(d2(Lambda Q.Q d_subst))
+			   ) : (t => t => t) => (t => t) => (ttt => ttt) => (ttt => ttt) => t => (t => t);
+
+	B = Lambda R.
+		Lambda d4 d3 d2 d_subst d_foot.
+			d4 (
+			    (phi'' R)
+				(d3 d_foot)
+				(d2(Lambda Q.Q d_subst))
+			   ) : (t => t => t) => (ttt => ttt) => (ttt => ttt) => (ttt => ttt) => t => (ttt => ttt);
+
+
+end
+
+lexicon INTERPRETATION (DERIVATION_TREES) : SEMANTICS =
+
+	DU := t;
+
+	DU_a := t=> t;
+
+	DU_a' := ((t => t)=> t)=> (t => t)=> t;
+
+	I1 := Lambda x.x;
+	I2 := Lambda x.x;
+
+	PARCE_QUE := A Explication;
+
+	DE_PLUS := A Continuation;
+
+	EMPTY := B Explication ;
+
+	ENSUITE := B Narration ;
+
+	EMPTY_COMMENT := A Comment ;
+
+	C1 := Lambda x. x f1;
+	C2 := Lambda x. x f2;
+	C3 := Lambda x. x f3;
+	C4 := Lambda x. x f2;
+	C5 := Lambda x. x f3;
+	C6 := Lambda x. x f1;
+	C7 := Lambda x. x f2;
+	C8 := Lambda x. x f3;
+	C9 := Lambda x. x f2;
+	C10 := Lambda x. x f3;
+end
