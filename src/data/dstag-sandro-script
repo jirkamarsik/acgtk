@@ -1,19 +1,41 @@
+# requires dstag-sandro.acgo to be compiled with the following command line:
+# acgc dstag-sandro.acgc dstag-sandro-discourse-derived-trees.acg dstag-sandro-semantics.acg
+
 load o dstag-sandro.acgo;
+
+# alternatively, the sequence of the following three commands should work:
+# load d dstag-sandro.acg;
+# load d dstag-sandro-discourse-derived-trees.acg;
+# load d dstag-sandro-semantics.acg;
 
 list;
 
-compose YIELD SYNTAX as NORMALIZED_D;
+# Here we have the type-raised versions
 
-SYNTAX NORMALIZED_D INTERPRETATION analyse (PARCE_QUE I1 I2 I2 (C2 I1))  : DU_a;
+SYNTAX NORMALIZED_D INTERPRETATION realize (PARCE_QUE I_DU I_DU I_DU (C2 I_DU))  : DU_a;
 
-SYNTAX NORMALIZED_D INTERPRETATION analyse C1 (PARCE_QUE I1 I2 I2 (C2 I1))  : DU;
+SYNTAX NORMALIZED_D INTERPRETATION realize C1 (PARCE_QUE I_DU I_DU I_DU (C2 I_DU))  : DU;
 
-SYNTAX NORMALIZED_D INTERPRETATION analyse C1 (PARCE_QUE I1 I2 I2 (C2 (DE_PLUS I1 I2 I2 (C3 I1))))  : DU;
+SYNTAX NORMALIZED_D INTERPRETATION realize C1 (PARCE_QUE I_DU I_DU I_DU (C2 (DE_PLUS I_DU I_DU I_DU (C3 I_DU))))  : DU;
 
-SYNTAX NORMALIZED_D INTERPRETATION analyse C1 (PARCE_QUE I1 I2 (EMPTY I2 I2 I2 (C5 I1)) (C4 I1))  : DU;
+SYNTAX NORMALIZED_D INTERPRETATION realize C1 (PARCE_QUE I_DU I_DU (EMPTY I_DU I_DU I_DU (C5 I_DU)) (C4 I_DU))  : DU;
 
-SYNTAX NORMALIZED_D INTERPRETATION analyse C6 (PARCE_QUE I1 (ENSUITE I2 I2 I2 (C8 I1)) I2 (C7 I1))  : DU;
+SYNTAX NORMALIZED_D INTERPRETATION realize C6 (PARCE_QUE I_DU (ENSUITE I_DU I_DU I_DU (C8 I_DU)) I_DU (C7 I_DU))  : DU;
 
-SYNTAX NORMALIZED_D INTERPRETATION analyse C1 (PARCE_QUE (EMPTY_COMMENT I1 I2 I2 (C10 I1)) I2 I2 (C9 I1))  : DU;
+SYNTAX NORMALIZED_D INTERPRETATION realize C1 (PARCE_QUE (EMPTY_COMMENT I_DU I_DU I_DU (C10 I_DU)) I_DU I_DU (C9 I_DU))  : DU;
+
+# And here the closed discourses (of type t)
+
+SYNTAX NORMALIZED_D INTERPRETATION realize (PARCE_QUE I_DU I_DU I_DU (C2 I_DU))  : DU_a;
+
+SYNTAX NORMALIZED_D INTERPRETATION realize CLOSE_DISCOURS (C1 (PARCE_QUE I_DU I_DU I_DU (C2 I_DU))  ) : T;
+
+SYNTAX NORMALIZED_D INTERPRETATION realize CLOSE_DISCOURS (C1 (PARCE_QUE I_DU I_DU I_DU (C2 (DE_PLUS I_DU I_DU I_DU (C3 I_DU))))  ) : T;
+
+SYNTAX NORMALIZED_D INTERPRETATION realize CLOSE_DISCOURS (C1 (PARCE_QUE I_DU I_DU (EMPTY I_DU I_DU I_DU (C5 I_DU)) (C4 I_DU))  ) : T;
+
+SYNTAX NORMALIZED_D INTERPRETATION realize CLOSE_DISCOURS (C6 (PARCE_QUE I_DU (ENSUITE I_DU I_DU I_DU (C8 I_DU)) I_DU (C7 I_DU))  ) : T;
+
+SYNTAX NORMALIZED_D INTERPRETATION realize CLOSE_DISCOURS (C1 (PARCE_QUE (EMPTY_COMMENT I_DU I_DU I_DU (C10 I_DU)) I_DU I_DU (C9 I_DU))  ) : T;
 
 

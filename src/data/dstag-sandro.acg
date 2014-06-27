@@ -1,269 +1,42 @@
-signature DERIVED_TREES =
-	tree : type;
-
-	DU_1,DC : tree-> tree;
-
-	DU_3 : tree-> tree-> tree-> tree ;
-	DU_4 : tree-> tree-> tree-> tree-> tree ;
-
-	dot,comma:tree;
-
-	parce_que:tree;
-	
-	de_plus : tree;
-
-	epsilon : tree;
-
-	ensuite : tree;
-
-	c1,c2,c3,c4,c5,c6,c7,c8,c9,c10:tree;
-
-	I = lambda x.x : tree -> tree;
-
-	adverbiaux = lambda a.
-
-		lambda d4 d3 d2 d_subst d.
-			d4 (DU_1 (d3 (DU_4 d dot a (d2 d_subst)))) :
-
-		tree->
-			(tree-> tree)->
-			(tree-> tree)->
-			(tree-> tree)->
-			tree->
-			tree->
-			tree ;
-
-
-	conjonction_postposees_ponct = lambda c.
-
-		lambda d4 d3 d2 d_subst d.
-			d4 (DU_1 (d3 (DU_4 d comma c (d2 d_subst)))) :
-
-		tree->
-			(tree-> tree)->
-			(tree-> tree)->
-			(tree-> tree)->
-			tree->
-			tree->
-			tree ;
-
-	conjonction_postposees = lambda c.
-
-		lambda d4 d3 d2 d_subst d.
-			d4 (DU_1 (d3 (DU_3 d c (d2 d_subst)))) :
-
-		tree->
-			(tree-> tree)->
-			(tree-> tree)->
-			(tree-> tree)->
-			tree->
-			tree->
-			tree ;
-			
-
-end
-
-signature STRINGS =
-	string : type;
-
-	infix + : string-> string-> string;
-
-	dot,comma : string;
-
-	parce_que,de_plus,epsilon,ensuite : string;
-
-	fred_est_de_mauvaise_humeur,
-	il_a_perdu_ses_clefs,
-	il_a_rate_son_permis,
-	il_a_mal_dormi,
-	il_a_fait_des_cauchemards,
-	fred_est_alle_au_supermarche,
-	son_frigo_etait_vide,
-	il_est_alle_au_cinema,
-	sa_femme_est_absente_une_semaine,
-	ceci_prouve_qu_il_l_aime_beaucoup:string;
-
-	fmh = fred_est_de_mauvaise_humeur:string ;
-	psc = il_a_perdu_ses_clefs:string ;
-	rsp = il_a_rate_son_permis:string ;
-	md = il_a_mal_dormi:string;
-	fc = il_a_fait_des_cauchemards:string;
-	fasm = fred_est_alle_au_supermarche:string;
-	fev = son_frigo_etait_vide:string;
-	aac = il_est_alle_au_cinema:string;
-	fas = sa_femme_est_absente_une_semaine:string;
-	pab = ceci_prouve_qu_il_l_aime_beaucoup:string;
-
-end
-
-lexicon YIELD (DERIVED_TREES) : STRINGS =
-
-	tree := string;
-
-	DU_1,DC := lambda x.x;
-
-	DU_3 := lambda x1 x2 x3. x1 + x2 + x3 ;
-	DU_4 := lambda x1 x2 x3 x4. x1 + x2 + x3 + x4 ;
-
-	dot := dot;
-	comma := comma;
-	parce_que := parce_que;
-	de_plus := de_plus;
-	epsilon := epsilon;
-	ensuite := ensuite;
-
-	c1 := fmh;
-	c2 := psc;
-	c3 := rsp;
-	c4 := md;
-	c5 := fc;
-	c6 := fasm;
-	c7 := fev;
-	c8 := aac;
-	c9 := fas;
-	c10 := pab;
-end
-
-
 signature DERIVATION_TREES =
-	
-	DU,DU_a,DU_a':type;
+    
+    DU,DU_a,T:type;
+    
+    DC1 = DU_a-> DU_a-> DU_a-> DU-> DU_a : type;
+    DC2 = DU_a-> DU_a-> DU_a-> DU-> DU_a : type;
+    
+    PARCE_QUE : DC1;
+    DE_PLUS : DC1;
+    
+    EMPTY : DC2;
+    ENSUITE : DC2;
+    
+    EMPTY_COMMENT : DC1;
+    
+    (* C1 stands for "Fred est de mauvaise humeur" / fred_is_in_bad_mood *)
+    C1,
+	(* C2 stands for "Il a perdu ses clefs" / fred_lost_his_keys *)
+	C2,
+	(* C3 stands for "Il a rate son permis" / fred_failed_at_his_driving_license_test *)
+	C3,
+	(* C4 stands for "Il a mal dormi" / fred_didnt_sleep_well *)
+	C4,
+	(* C5 stands for "Il a fait des cauchemards" / fred_had_nightmares *)
+	C5,
+	(* C6 stands for "Fred est allé au supermatché" / fred_went_to_the_supermarket *)
+	C6,
+	(* C7 stands for "Son frigo était vide" / fred_s_fridge_was_empty *)
+	C7,
+	(* C8 stands for "Il est allé au cinéma" / fred_went_to_the_movies *)
+	C8,
+	(* C9 stands for "Sa femme est absente une semaine" / fred_s_wife_is_away *)
+	C9,
+	(* C10 stands for "Ceci prouve qu'il l'aime beaucoup" / it_proves_how_much_he_cares *)
+	C10: DU_a -> DU;
+    
+    I_DU : DU_a;
 
-	DC1 = DU_a-> DU_a'-> DU_a'-> DU-> DU_a : type;
-	DC2 = DU_a'-> DU_a'-> DU_a'-> DU-> DU_a' : type;
-
-	PARCE_QUE : DC1;
-	DE_PLUS : DC1;
-
-	EMPTY : DC2;
-	ENSUITE : DC2;
-
-	EMPTY_COMMENT : DC1;
-
-	C1,C2,C3,C4,C5,C6,C7,C8,C9,C10: DU_a -> DU;
-
-	I1 : DU_a;
-
-	I2 : DU_a';
-
+    CLOSE_DISCOURS : DU -> T;
+    
 end
 
-
-lexicon SYNTAX (DERIVATION_TREES): DERIVED_TREES =
-	DU := tree;
-	DU_a,DU_a':= tree-> tree;
-
-	PARCE_QUE := conjonction_postposees parce_que;
-	DE_PLUS := adverbiaux de_plus;
-
-	EMPTY := adverbiaux epsilon;
-	ENSUITE := conjonction_postposees_ponct ensuite;
-	EMPTY_COMMENT := conjonction_postposees epsilon;
-
-	I1,I2 := I;
-
-	C1 := lambda x . x c1;
-	C2 := lambda x . x c2;
-	C3 := lambda x . x c3;
-	C4 := lambda x . x c4;
-	C5 := lambda x . x c5;
-	C6 := lambda x . x c6;
-	C7 := lambda x . x c7;
-	C8 := lambda x . x c8;
-	C9 := lambda x . x c9;
-	C10 := lambda x . x c10;
-end
-
-signature SEMANTICS =
-	t : type;
-
-	ttt=(t => t) -> t:type;
-
-	f1,f2,f3,f4,f5,f6,f7,f8,f9,f10:t;
-
-	infix & : t-> t-> t;
-
-	Explication : t=> t=> t ;
-	Continuation : t=> t=> t ;	
-	Narration : t=> t=> t ;	
-	Comment : t => t => t;
-
-
-	phi'' = lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
-		(t => t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
-
-	my_phi' = Lambda R. lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
-		(t => t=> t)=> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
-
-        (* laurence_phi'=my_phi (Lambda x.x) *) 
-	laurence_phi' = lambda R X Y.X(Lambda x.Y(Lambda y.R x y)) : 
-		(t=> t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> t; 
-
-
-	A = lambda R.
-		lambda d4 d3 d2.
-                    Lambda d_subst.
-                    Lambda  d_foot.
-			d4 (
-			    (laurence_phi' R)
-				(d3(lambda P.P d_foot))
-				(d2(lambda Q.Q d_subst))
-			   ) : (t => t => t) -> (t -> t) -> (ttt -> ttt) -> (ttt -> ttt) -> t => (t => t);
-
-
-	B = lambda R.
-		lambda d4 d3 d2.
-                   lambda d_subst.
-                        lambda d_foot.
-			d4 (
-			    (phi'' R)
-				(d3 d_foot)
-				(d2 d_subst)
-			   ) : (t => t => t) -> (ttt -> ttt) -> (ttt -> ttt) -> (ttt -> ttt) -> ttt -> (ttt -> ttt);
-
-       A' = Lambda R.
-		lambda d4 d3 d2.
-                   lambda d_subst.
-                        lambda d_foot.
-			d4 (
-			    (my_phi' R)
-				(d3 d_foot)
-				(d2 d_subst)
-			   ) : (t => t => t) => (ttt -> ttt) -> (ttt -> ttt) -> (ttt -> ttt) -> ttt -> (ttt -> ttt);
-
-
-end
-
-
-lexicon INTERPRETATION (DERIVATION_TREES) : SEMANTICS =
-
-	DU := ttt;
-
-	DU_a := ttt -> ttt;
-
-	DU_a' := ((t => t)-> t) -> (t => t) -> t;
-
-	I1 := lambda x.x;
-	I2 := lambda x.x;
-
-	PARCE_QUE := A' Explication;
-
-	DE_PLUS := A' Continuation;
-
-	EMPTY := B Explication ;
-
-	ENSUITE := B Narration ;
-
-	EMPTY_COMMENT := A' Comment ;
-
-	C1 := lambda M. M(lambda x. x f1);
-	C2 := lambda M. M(lambda x. x f2);
-	C3 := lambda M. M(lambda x. x f3);
-	C4 := lambda M. M(lambda x. x f2);
-	C5 := lambda M. M(lambda x. x f3);
-	C6 := lambda M. M(lambda x. x f1);
-	C7 := lambda M. M(lambda x. x f2);
-	C8 := lambda M. M(lambda x. x f3);
-	C9 := lambda M. M(lambda x. x f2);
-	C10 := lambda M. M(lambda x. x f3);
-end
