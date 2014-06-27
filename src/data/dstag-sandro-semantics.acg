@@ -1,0 +1,127 @@
+(* requires a compilation command line including dstag-sandro.acg.
+   For instance:
+   acgc dstag-sandro.acgc dstag-sandro-discourse-derived-trees.acg dstag-sandro-semantics.acg *)
+
+signature SEMANTICS =
+    t : type;
+    
+    ttt=(t => t) -> t:type;
+    
+    fred_is_in_bad_mood,
+        fred_lost_his_keys,
+        fred_failed_at_his_driving_license_test,
+        fred_didnt_sleep_well,
+        fred_had_nightmares,
+        fred_went_to_the_supermarket,
+        fred_s_fridge_was_empty,
+        fred_went_to_the_movies,
+        fred_s_wife_is_away,
+        it_proves_how_much_he_cares:t;
+    
+    infix & : t-> t-> t;
+    
+    Explication : t=> t=> t ;
+    Continuation : t=> t=> t ;	
+    Narration : t=> t=> t ;	
+    Comment : t => t => t;
+    
+    
+    phi'' = lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
+	(t => t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    
+    my_phi' = Lambda R. lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
+	(t => t=> t)=> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    
+    (* laurence_phi'=my_phi (Lambda x.x) *) 
+    laurence_phi' = lambda R X Y.X(Lambda x.Y(Lambda y.R x y)) : 
+	(t=> t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> t; 
+    
+    
+    A = lambda R.
+	lambda d4 d3 d2.
+            Lambda d_subst.
+		Lambda  d_foot.
+		    d4 (
+			(laurence_phi' R)
+			    (d3(lambda P.P d_foot))
+				(d2(lambda Q.Q d_subst))
+				    ) :
+					(t => t => t) ->
+					    (t -> t) ->
+						(ttt -> ttt) ->
+						    (ttt -> ttt) ->
+							t => 
+							    (t => t);
+    
+    
+    B = lambda R.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(phi'' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    ) :
+					(t => t => t) ->
+					    (ttt -> ttt) ->
+						(ttt -> ttt) -> 
+						    (ttt -> ttt) ->
+							ttt ->
+							    (ttt -> ttt);
+    
+    A' = Lambda R.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(my_phi' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    ) :
+					(t => t => t)  =>
+					    (ttt -> ttt) ->
+						(ttt -> ttt) ->
+						    (ttt -> ttt) ->
+							ttt ->
+							    (ttt -> ttt);
+    
+    build_du_intial_tree = Lambda f. lambda M. M(lambda x. x f): t => (ttt->ttt) -> ttt    ;
+    
+end
+
+
+lexicon INTERPRETATION (DERIVATION_TREES) : SEMANTICS =
+    
+    DU := ttt;
+    
+    DU_a := ttt -> ttt;
+
+    T := t;
+    
+    I_DU := lambda x.x;
+    
+    PARCE_QUE := A' Explication;
+    
+    DE_PLUS := A' Continuation;
+    
+    EMPTY_COMMENT := A' Comment ;
+    
+    EMPTY := B Explication ;
+    
+    ENSUITE := B Narration ;
+    
+    C1 := build_du_intial_tree fred_is_in_bad_mood ;
+    
+    C2 := build_du_intial_tree fred_lost_his_keys;
+    C3 := build_du_intial_tree fred_failed_at_his_driving_license_test;
+    C4 := build_du_intial_tree fred_didnt_sleep_well;
+    C5 := build_du_intial_tree fred_had_nightmares;
+    C6 := build_du_intial_tree fred_went_to_the_supermarket;
+    C7 := build_du_intial_tree fred_s_fridge_was_empty ;
+    C8 := build_du_intial_tree fred_went_to_the_movies;
+    C9 := build_du_intial_tree fred_s_wife_is_away;
+    C10 := build_du_intial_tree it_proves_how_much_he_cares;
+
+    CLOSE_DISCOURS := lambda D.D(Lambda x.x);
+end
