@@ -1,10 +1,10 @@
 signature DERIVED_TREES =
 	tree : type;
 
-	DU_1,DC : tree=> tree;
+	DU_1,DC : tree-> tree;
 
-	DU_3 : tree=> tree=> tree=> tree ;
-	DU_4 : tree=> tree=> tree=> tree=> tree ;
+	DU_3 : tree-> tree-> tree-> tree ;
+	DU_4 : tree-> tree-> tree-> tree-> tree ;
 
 	dot,comma:tree;
 
@@ -18,46 +18,46 @@ signature DERIVED_TREES =
 
 	c1,c2,c3,c4,c5,c6,c7,c8,c9,c10:tree;
 
-	I = Lambda x.x : tree => tree;
+	I = lambda x.x : tree -> tree;
 
-	adverbiaux = Lambda a.
+	adverbiaux = lambda a.
 
-		Lambda d4 d3 d2 d_subst d.
+		lambda d4 d3 d2 d_subst d.
 			d4 (DU_1 (d3 (DU_4 d dot a (d2 d_subst)))) :
 
-		tree=>
-			(tree=> tree)=>
-			(tree=> tree)=>
-			(tree=> tree)=>
-			tree=>
-			tree=>
+		tree->
+			(tree-> tree)->
+			(tree-> tree)->
+			(tree-> tree)->
+			tree->
+			tree->
 			tree ;
 
 
-	conjonction_postposees_ponct = Lambda c.
+	conjonction_postposees_ponct = lambda c.
 
-		Lambda d4 d3 d2 d_subst d.
+		lambda d4 d3 d2 d_subst d.
 			d4 (DU_1 (d3 (DU_4 d comma c (d2 d_subst)))) :
 
-		tree=>
-			(tree=> tree)=>
-			(tree=> tree)=>
-			(tree=> tree)=>
-			tree=>
-			tree=>
+		tree->
+			(tree-> tree)->
+			(tree-> tree)->
+			(tree-> tree)->
+			tree->
+			tree->
 			tree ;
 
-	conjonction_postposees = Lambda c.
+	conjonction_postposees = lambda c.
 
-		Lambda d4 d3 d2 d_subst d.
+		lambda d4 d3 d2 d_subst d.
 			d4 (DU_1 (d3 (DU_3 d c (d2 d_subst)))) :
 
-		tree=>
-			(tree=> tree)=>
-			(tree=> tree)=>
-			(tree=> tree)=>
-			tree=>
-			tree=>
+		tree->
+			(tree-> tree)->
+			(tree-> tree)->
+			(tree-> tree)->
+			tree->
+			tree->
 			tree ;
 			
 
@@ -66,7 +66,7 @@ end
 signature STRINGS =
 	string : type;
 
-	infix + : string=> string=> string;
+	infix + : string-> string-> string;
 
 	dot,comma : string;
 
@@ -100,10 +100,10 @@ lexicon YIELD (DERIVED_TREES) : STRINGS =
 
 	tree := string;
 
-	DU_1,DC := Lambda x.x;
+	DU_1,DC := lambda x.x;
 
-	DU_3 := Lambda x1 x2 x3. x1 + x2 + x3 ;
-	DU_4 := Lambda x1 x2 x3 x4. x1 + x2 + x3 + x4 ;
+	DU_3 := lambda x1 x2 x3. x1 + x2 + x3 ;
+	DU_4 := lambda x1 x2 x3 x4. x1 + x2 + x3 + x4 ;
 
 	dot := dot;
 	comma := comma;
@@ -129,16 +129,18 @@ signature DERIVATION_TREES =
 	
 	DU,DU_a,DU_a':type;
 
-	DC1 = DU_a=> DU_a'=> DU_a'=> DU=> DU_a : type;
-	DC2 = DU_a'=> DU_a'=> DU_a'=> DU=> DU_a' : type;
+	DC1 = DU_a-> DU_a'-> DU_a'-> DU-> DU_a : type;
+	DC2 = DU_a'-> DU_a'-> DU_a'-> DU-> DU_a' : type;
 
 	PARCE_QUE : DC1;
 	DE_PLUS : DC1;
+
 	EMPTY : DC2;
 	ENSUITE : DC2;
+
 	EMPTY_COMMENT : DC1;
 
-	C1,C2,C3,C4,C5,C6,C7,C8,C9,C10: DU_a => DU;
+	C1,C2,C3,C4,C5,C6,C7,C8,C9,C10: DU_a -> DU;
 
 	I1 : DU_a;
 
@@ -149,7 +151,7 @@ end
 
 lexicon SYNTAX (DERIVATION_TREES): DERIVED_TREES =
 	DU := tree;
-	DU_a,DU_a':= tree=> tree;
+	DU_a,DU_a':= tree-> tree;
 
 	PARCE_QUE := conjonction_postposees parce_que;
 	DE_PLUS := adverbiaux de_plus;
@@ -160,86 +162,108 @@ lexicon SYNTAX (DERIVATION_TREES): DERIVED_TREES =
 
 	I1,I2 := I;
 
-	C1 := Lambda x . x c1;
-	C2 := Lambda x . x c2;
-	C3 := Lambda x . x c3;
-	C4 := Lambda x . x c4;
-	C5 := Lambda x . x c5;
-	C6 := Lambda x . x c6;
-	C7 := Lambda x . x c7;
-	C8 := Lambda x . x c8;
-	C9 := Lambda x . x c9;
-	C10 := Lambda x . x c10;
+	C1 := lambda x . x c1;
+	C2 := lambda x . x c2;
+	C3 := lambda x . x c3;
+	C4 := lambda x . x c4;
+	C5 := lambda x . x c5;
+	C6 := lambda x . x c6;
+	C7 := lambda x . x c7;
+	C8 := lambda x . x c8;
+	C9 := lambda x . x c9;
+	C10 := lambda x . x c10;
 end
 
 signature SEMANTICS =
 	t : type;
 
-	ttt=(t =>t) => t:type;
+	ttt=(t => t) -> t:type;
 
 	f1,f2,f3,f4,f5,f6,f7,f8,f9,f10:t;
 
-	infix & : t=> t=> t;
+	infix & : t-> t-> t;
 
 	Explication : t=> t=> t ;
 	Continuation : t=> t=> t ;	
 	Narration : t=> t=> t ;	
 	Comment : t => t => t;
 
-	phi' = Lambda R X Y.X(Lambda x.Y(Lambda y.R x y)) : 
-		(t=> t=> t)=> ((t => t)=> t)=> ((t => t)=> t)=> t;
 
-	phi'' = Lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
-		(t => t=> t)=> ((t => t)=> t)=> ((t => t)=> t)=> (t=> t)=> t;
+	phi'' = lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
+		(t => t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
 
-	A = Lambda R.
-		Lambda d4 d3 d2 d_subst d_foot.
+	my_phi' = Lambda R. lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
+		(t => t=> t)=> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+
+        (* laurence_phi'=my_phi (Lambda x.x) *) 
+	laurence_phi' = lambda R X Y.X(Lambda x.Y(Lambda y.R x y)) : 
+		(t=> t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> t; 
+
+
+	A = lambda R.
+		lambda d4 d3 d2.
+                    Lambda d_subst.
+                    Lambda  d_foot.
 			d4 (
-			    (phi' R)
-				(d3(Lambda P.P d_foot))
-				(d2(Lambda Q.Q d_subst))
-			   ) : (t => t => t) => (t => t) => (ttt => ttt) => (ttt => ttt) => t => (t => t);
+			    (laurence_phi' R)
+				(d3(lambda P.P d_foot))
+				(d2(lambda Q.Q d_subst))
+			   ) : (t => t => t) -> (t -> t) -> (ttt -> ttt) -> (ttt -> ttt) -> t => (t => t);
 
-	B = Lambda R.
-		Lambda d4 d3 d2 d_subst d_foot.
+
+	B = lambda R.
+		lambda d4 d3 d2.
+                   lambda d_subst.
+                        lambda d_foot.
 			d4 (
 			    (phi'' R)
 				(d3 d_foot)
-				(d2(Lambda Q.Q d_subst))
-			   ) : (t => t => t) => (ttt => ttt) => (ttt => ttt) => (ttt => ttt) => t => (ttt => ttt);
+				(d2 d_subst)
+			   ) : (t => t => t) -> (ttt -> ttt) -> (ttt -> ttt) -> (ttt -> ttt) -> ttt -> (ttt -> ttt);
+
+       A' = Lambda R.
+		lambda d4 d3 d2.
+                   lambda d_subst.
+                        lambda d_foot.
+			d4 (
+			    (my_phi' R)
+				(d3 d_foot)
+				(d2 d_subst)
+			   ) : (t => t => t) => (ttt -> ttt) -> (ttt -> ttt) -> (ttt -> ttt) -> ttt -> (ttt -> ttt);
 
 
 end
 
+
 lexicon INTERPRETATION (DERIVATION_TREES) : SEMANTICS =
 
-	DU := t;
+	DU := ttt;
 
-	DU_a := t=> t;
+	DU_a := ttt -> ttt;
 
-	DU_a' := ((t => t)=> t)=> (t => t)=> t;
+	DU_a' := ((t => t)-> t) -> (t => t) -> t;
 
-	I1 := Lambda x.x;
-	I2 := Lambda x.x;
+	I1 := lambda x.x;
+	I2 := lambda x.x;
 
-	PARCE_QUE := A Explication;
+	PARCE_QUE := A' Explication;
 
-	DE_PLUS := A Continuation;
+	DE_PLUS := A' Continuation;
 
 	EMPTY := B Explication ;
 
 	ENSUITE := B Narration ;
 
-	EMPTY_COMMENT := A Comment ;
+	EMPTY_COMMENT := A' Comment ;
 
-	C1 := Lambda x. x f1;
-	C2 := Lambda x. x f2;
-	C3 := Lambda x. x f3;
-	C4 := Lambda x. x f2;
-	C5 := Lambda x. x f3;
-	C6 := Lambda x. x f1;
-	C7 := Lambda x. x f2;
-	C8 := Lambda x. x f3;
-	C9 := Lambda x. x f2;
-	C10 := Lambda x. x f3;
+	C1 := lambda M. M(lambda x. x f1);
+	C2 := lambda M. M(lambda x. x f2);
+	C3 := lambda M. M(lambda x. x f3);
+	C4 := lambda M. M(lambda x. x f2);
+	C5 := lambda M. M(lambda x. x f3);
+	C6 := lambda M. M(lambda x. x f1);
+	C7 := lambda M. M(lambda x. x f2);
+	C8 := lambda M. M(lambda x. x f3);
+	C9 := lambda M. M(lambda x. x f2);
+	C10 := lambda M. M(lambda x. x f3);
 end
