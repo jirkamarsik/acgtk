@@ -224,6 +224,10 @@ possible."
 ; declaration on the line and that for each declaration (or
 ; definition) not to have anything else after the closing ";"
 
+; To allow the algorithm work with long files.
+(setq max-lisp-eval-depth 10000)
+
+
 ;(make-local-variable 'indent-line-function)
 (setq indent-line-function 'acg-indent-line)
 
@@ -329,6 +333,15 @@ possible."
 		   )
 		  ((looking-at "^.*;[ \t]*$")
 		   (setq cur-indent  acg-default-indent)
+		   )
+		  ((looking-at "^.*,[ \t]*$")
+		   (if (= (current-indentation) acg-default-indent)
+		       (setq cur-indent  (+ (current-indentation) acg-default-indent))
+		     (setq cur-indent  (current-indentation))
+		     )
+		   )
+		  ((looking-at "^.*\\(->\\|\.\\)[ \t]*$")
+		   (setq cur-indent  (+ (current-indentation) acg-default-indent))
 		   )
 		  (t
 		   (setq cur-indent (+ acg-default-indent acg-default-indent))
