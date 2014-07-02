@@ -1,0 +1,345 @@
+signature derivation_trees =
+    NP,NP_cl,N,Adj,S,Det:type;
+    NPa,Na,Va,Adja,Sa:type;
+    Inp:NPa;
+    In:Na;
+    Iv:Va;
+    Iadj:Adja;
+    Is : Sa;
+    
+    c_fred,c_ceci,c_il : NP;
+    c_l : NP_cl;
+    c_etre: Sa -> Va -> NP -> Adj -> S;
+    c_mauvaise_humeur,c_vide: Adja -> Adj;
+    c_absente: Adja -> NP -> Adj;
+    
+    
+    c_les,c_des,c_le,c_sa,c_une : N -> NP;
+    c_clefs,c_cauchemards,c_permis,
+	c_supermarche,c_frigo,c_cinema,c_femme,c_semaine : Na -> N;
+    
+    c_perdre,c_faire,c_rater,c_aimer: Sa -> Va -> NP -> NP -> S;
+    c_aimer_cl : Sa -> Va -> NP -> NP_cl -> S;
+    c_aller_a : Sa -> Va -> NP -> NP -> S;
+
+    c_prouver: Sa -> Va -> NP -> Sa;
+    
+    c_avoir,c_etre_aux:Va -> Va;
+    c_mal,c_beaucoup:Va -> Va;
+    c_dormir: Sa -> Va -> NP -> S;
+
+    c_parce_que:Sa;
+    c_de_plus: Sa ;
+    c_ensuite_s:Sa;
+    c_ensuite_v:Va;
+    
+end
+
+signature elementary_trees =
+    tree:type;
+    N1,NP1,V1,Adv1,Aux1,Adj1,S1,Det1,Prep1: tree -> tree;
+    N2,NP2,PP2,V2,Adj2,S2:tree -> tree -> tree;
+    V3,S3: tree -> tree -> tree -> tree;
+
+    Id=lambda x.x:tree -> tree;
+
+    transitive_verb=
+	lambda v. lambda S A s o.S(S3 s (A (V1 v)) o):
+	tree ->
+	(tree -> tree) ->
+	(tree -> tree) ->
+	tree ->
+	tree ->
+	tree ;
+
+
+    cl_transitive_verb=
+	lambda v. lambda S A s o.S(S3 s o (A (V1 v)) ):
+	tree ->
+	(tree -> tree) ->
+	(tree -> tree) ->
+	tree ->
+	tree ->
+	tree ;
+    
+    intransitive_verb=
+	lambda v. lambda S A s.S(S2 s (A (V1 v))):
+	tree ->
+	(tree -> tree) ->
+	(tree -> tree) ->
+	tree ->
+	tree ;
+    
+    aux =
+	lambda a. lambda A x. V2 (A(Aux1 a)) x :
+	tree ->
+	(tree -> tree) ->
+	tree ->
+	tree ;
+    
+    v_adv = lambda a. lambda A x. A(V2 x (Adv1 a)) :
+	tree ->
+	(tree -> tree) ->
+	tree ->
+	tree ;
+    
+    s_adv = lambda a. lambda S x. S(S2 (Adv1 a) x) :
+	tree ->
+	(tree -> tree) ->
+	tree ->
+	tree ;
+
+    que:tree;
+
+    pont=
+	lambda v. lambda S A s x.S(S3 s (A (V1 v)) (S2 que x)):
+	tree ->
+	(tree -> tree) ->
+	(tree -> tree) ->
+	tree ->
+	tree ->
+	tree ;
+
+    
+    noun = lambda n. lambda a. a (N1 n) : tree -> (tree -> tree) -> tree;
+    det = lambda det. lambda x. NP2 (Det1 det) x : tree -> tree -> tree ;
+    l_adj = lambda a. lambda A x. A (N2 a x) : tree -> (tree -> tree) -> tree -> tree;
+    
+    Fred,a,est,mauvaise,humeur,perdu,les,clefs,rate,le,permis,de,conduire,
+	mal,dormi,fait,des,cauchemards,alle,au,supermarche,frigo,vide,cinema,
+	sa,femme,absente,une,semaine,ceci,prouve,il,l,aime,beaucoup,
+	de_plus,ensuite,parce_que:tree;
+    
+end
+
+lexicon syntax(derivation_trees):elementary_trees =
+    NP,NP_cl,N,Adj,S,Det:=tree;
+
+    NPa,Na,Va,Adja,Sa:=tree -> tree;
+
+    Iadj,Iv,In,Inp,Is := lambda x.x;
+
+    c_fred:= NP1 Fred;
+    c_ceci := NP1 ceci;
+    c_il := NP1 il;
+    c_l := NP1 l;
+    c_etre:= lambda S A s adj. S(S3 s (A (V1 est)) adj);
+    c_mauvaise_humeur:= lambda m. PP2 (Prep1 de) ((noun humeur) (l_adj mauvaise m));
+    c_vide := lambda m.m(Adj1 vide);
+
+    c_absente := lambda m n .m (Adj2 (Adj1 absente) n) ;
+
+    c_les := det les;
+    c_des := det des;
+    c_le := det le;
+    c_sa := det sa;
+    c_une := det une;
+    c_clefs:= noun clefs;
+    c_frigo:= noun frigo;
+    c_cinema:= noun cinema;
+    c_permis:= noun permis;
+    c_supermarche:= noun supermarche;
+    c_cauchemards:= noun cauchemards;
+    c_femme:= noun femme;
+    c_semaine:= noun semaine;
+
+    c_perdre:=transitive_verb perdu;
+    c_faire:=transitive_verb fait;
+    c_rater:=transitive_verb rate;
+    c_aimer:=transitive_verb aime;
+    c_aimer_cl:=cl_transitive_verb aime;
+
+    c_aller_a:=  lambda S A s c.S(S3 s (A (V1 alle)) (PP2 (Prep1 a) c));
+
+    c_avoir:= aux a;
+    c_etre_aux:= aux est;
+    c_mal:= v_adv mal;
+    c_beaucoup:= v_adv beaucoup;
+    c_dormir:= intransitive_verb dormi;
+
+    c_prouver:= pont prouve;
+
+    c_ensuite_s := s_adv ensuite Id;
+    c_ensuite_v := v_adv ensuite Id;
+    c_de_plus := s_adv de_plus Id;
+    c_parce_que := s_adv de_plus Id;
+	    
+
+end
+
+
+signature strings =
+    o:type;
+    string = o->o:type;
+    infix + = lambda a b z.a (b z):string -> string -> string;
+    binary = lambda x y. x + y: string -> string -> string ;
+    ternary = lambda x y z. x + y + z:  string -> string -> string -> string;
+    E=lambda x.x:string;
+    
+    Fred,a,est,mauvaise,humeur,perdu,les,clefs,rate,le,permis,de,conduire,
+	mal,dormi,fait,des,cauchemards,alle,au,supermarche,frigo,vide,cinema,
+	sa,femme,absente,une,semaine,ceci,prouve,que,il,l,aime,beaucoup,
+	plus,ensuite,parce:string;
+end
+
+
+lexicon yield(elementary_trees):strings =
+    tree := string;
+    S3,
+	V3 := ternary;
+    N2,NP2,PP2,V2,Adj2,S2 := binary;
+    N1,NP1,V1,Adv1,Aux1,Adj1,S1,Det1,Prep1 := lambda x.x;
+
+    Fred := Fred;
+    a := a;
+    est := est;
+    mauvaise:=mauvaise;
+    humeur := humeur;
+    perdu := perdu;
+    les := les;
+    clefs := clefs;
+    rate := rate;
+    le := le;
+    permis := permis;
+    de := de;
+    conduire := conduire;
+    mal := mal;
+    dormi := dormi;
+    fait := fait;
+    des := des;
+    cauchemards := cauchemards;
+    alle := alle;
+    au := au;
+    supermarche := supermarche;
+    frigo := frigo;
+    vide := vide;
+    cinema := cinema;
+    sa := sa;
+    femme := femme;
+    absente := absente;
+    une := une;
+    semaine := semaine;
+    ceci := ceci;
+    prouve := prouve;
+    que := que;
+    il := il;
+    l := l;
+    aime := aime;
+    beaucoup:=beaucoup;
+
+    parce_que := parce+que;
+    ensuite:=ensuite;
+    de_plus:=de+plus
+end
+
+lexicon surface = yield << syntax
+
+
+signature logic =
+    e,t:type;
+    qnp=(e=>t)->t:type;
+    infix & : t -> t -> t;	
+	
+    (* Implications*)
+    infix > : t -> t -> t;
+    
+    (* Quantifiers *)
+    binder All : (e=>t) -> t;
+    binder Ex : (e=>t) -> t;
+    binder ExUni : (e=>t) -> t;
+
+    fred,ceci,il,elle:e;
+    bad_mood:e->t;
+    away:e-> e -> t;
+    empty:e->t;
+    key,nightmare,license,supermarket,fridge,movies,wife,week:e->t;
+
+    lose,have,miss,love,go_to:e->e->t;
+
+    prove:e->t->t;
+
+    PAST:t->t;
+    
+    sleep:e->t;
+    badly,a_lot:t->t;
+
+    Explication : t=> t=> t ;
+    Continuation : t=> t=> t ;	
+    Narration : t=> t=> t ;	
+    Comment : t => t => t;
+
+
+    missing_arg : (t=>t=>t) -> t->t;
+
+    transitive_verb =
+	lambda v. lambda S A s o.S(s(A(Lambda x.o(Lambda y.v x y)))):
+	    (e->e->t) -> (t->t) -> ((e=>t)->(e=>t)) -> qnp -> qnp -> t;
+
+    intransitive_verb =
+	lambda v. lambda S A s.S(s(A(Lambda x.v x))):
+	    (e->t) -> (t->t) -> ((e=>t)->(e=>t)) -> qnp -> t;
+
+    noun = lambda n. lambda m. m (Lambda x.n x):
+	(e->t) -> ((e=>t)->(e=>t)) -> (e=>t);
+
+end
+
+lexicon semantics(derivation_trees):logic =
+    NP,NP_cl := qnp;
+    N := e=>t;
+    Adj := e->t;
+    S := t;
+    Det := (e->t) -> qnp;
+
+    NPa:= qnp -> qnp;
+    Na := (e=>t) -> (e=>t);
+    Va := (e=>t) -> (e=>t);
+    Adja:= (e->t) -> (e->t);
+    Sa:= t -> t;
+
+
+    Inp,Iv,Iadj,Is,In:=lambda x.x;
+
+    (* To be changed for pronouns *)
+    c_fred,c_il,c_l := lambda P.P fred;
+    c_ceci:= lambda P.P  ceci;
+    
+    c_etre := lambda S A s adj. S(s (A(Lambda x.adj x)));
+    c_mauvaise_humeur := lambda m.m bad_mood;
+    c_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
+    c_vide := lambda m.m empty;
+
+    c_les,c_le,c_sa := lambda P Q.ExUni x.(P x) & (Q x);
+    c_des,c_une := lambda P Q.Ex x.(P x) & (Q x);
+
+    c_clefs:= noun key;
+    c_cauchemards := noun nightmare;
+    c_permis := noun license;
+    c_supermarche := noun supermarket;
+    c_frigo := noun fridge;
+    c_cinema := noun movies ;
+    c_femme := noun wife;
+    c_semaine := noun week;
+
+    c_perdre := transitive_verb lose;
+    c_faire := transitive_verb have;
+    c_rater := transitive_verb miss;
+    c_aimer := transitive_verb love;
+    c_aimer_cl := transitive_verb love;
+    c_aller_a := transitive_verb go_to;
+
+    c_prouver := lambda S A s c.S(s(A(Lambda x.prove x c)));
+
+    c_dormir := intransitive_verb sleep;
+
+    c_beaucoup := lambda m P. m(Lambda x. a_lot(P x));
+    c_mal := lambda m P. m(Lambda x. badly(P x));
+
+    c_etre_aux,c_avoir := lambda m P.m (Lambda x. PAST(P x));
+
+    c_parce_que := lambda s. missing_arg Explication s;
+    c_de_plus := missing_arg Continuation;
+    c_ensuite_s := missing_arg Narration;
+    c_ensuite_v := lambda P.Lambda x. missing_arg Narration (P x) ;
+
+end

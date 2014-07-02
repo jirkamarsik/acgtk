@@ -1,0 +1,60 @@
+signature strings =
+    o:type;
+    string = o->o:type;
+    infix + = lambda a b z.a (b z):string -> string -> string;
+    binary = lambda x y. x + y: string -> string -> string ;
+    ternary = lambda x y z. x + y + z:  string -> string -> string -> string;
+    E=lambda x.x:string;
+    
+    Fred,a,est,mauvaise,humeur,perdu,les,clefs,rate,le,permis,de,conduire,
+	mal,dormi,fait,des,cauchemards,alle,au,supermerche,frigo,vide,cinema,
+	sa,femme,absente,une,semaine,ceci,prouve,qu,il,l,aime,beaucoup:string;
+end
+
+
+lexicon yield(elementary_trees):strings =
+    tree := string;
+    S3,
+	V3 := ternary;
+    N2,NP2,V2,Adj2,S2 := binary;
+    N1,NP1,V1,Adv1,Aux1,Adj1,S1,Det1 := lambda x.x;
+
+    Fred := Fred;
+    a := a;
+    est := est;
+    mauvaise:=mauvaise;
+    humeur := humeur;
+    perdu := perdu;
+    les := les;
+    clefs := clefs;
+    rate := rate;
+    le := le;
+    permis := permis;
+    de := de;
+    conduire := conduire;
+    mal := mal;
+    dormi := dormi;
+    fait := fait;
+    des := des;
+    cauchemards := cauchemards;
+    alle := alle;
+    au := au;
+    supermerche := supermerche;
+    frigo := frigo;
+    vide := vide;
+    cinema := cinema;
+    sa := sa;
+    femme := femme;
+    absente := absente;
+    une := une;
+    semaine := semaine;
+    ceci := ceci;
+    prouve := prouve;
+    qu := qu;
+    il := il;
+    l := l;
+    aime := aime;
+    beaucoup:=beaucoup;
+end
+
+lexicon surface = yield << syntax

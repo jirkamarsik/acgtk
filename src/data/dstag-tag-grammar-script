@@ -1,0 +1,24 @@
+load o dstag-clausal-grammar.acgo;
+
+syntax surface semantics realize c_etre Is Iv c_fred (c_mauvaise_humeur Iadj) : S;
+
+syntax surface semantics realize c_perdre Is (c_avoir Iv) c_fred (c_les (c_clefs In)):S;
+
+syntax surface semantics realize c_rater Is (c_avoir Iv) c_fred (c_le (c_permis In)):S;
+
+syntax surface semantics realize c_dormir Is (c_avoir (c_mal Iv)) c_fred :S;
+
+syntax surface semantics realize c_faire Is (c_avoir Iv) c_fred (c_des (c_cauchemards In)):S;
+
+syntax surface semantics realize c_aller_a Is (c_etre_aux Iv) c_fred (c_le (c_supermarche In)) :S;
+
+syntax surface semantics realize c_etre Is Iv (c_le (c_frigo In)) (c_vide Iadj):S;
+
+syntax surface semantics realize c_aller_a Is (c_etre_aux Iv) c_fred (c_le (c_cinema In)) :S;
+
+syntax surface semantics realize c_etre Is Iv (c_sa (c_femme In)) (c_absente Iadj (c_le (c_semaine In))):S;
+
+syntax surface semantics realize c_aimer_cl (c_prouver Is Iv c_ceci) (c_beaucoup Iv) c_il c_l:S;
+
+syntax surface semantics realize c_aller_a c_ensuite_s (c_etre_aux Iv) (c_le (c_cinema In)) c_fred:S;
+
