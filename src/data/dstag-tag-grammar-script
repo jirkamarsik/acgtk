@@ -20,5 +20,5 @@ syntax surface semantics realize c_etre Is Iv (c_sa (c_femme In)) (c_absente Iad
 
 syntax surface semantics realize c_aimer_cl (c_prouver Is Iv c_ceci) (c_beaucoup Iv) c_il c_l:S;
 
-syntax surface semantics realize c_aller_a c_ensuite_s (c_etre_aux Iv) (c_le (c_cinema In)) c_fred:S;
+syntax surface semantics realize c_aller_a c_ensuite_s (c_etre_aux Iv) c_fred (c_le (c_cinema In)) :S;
 

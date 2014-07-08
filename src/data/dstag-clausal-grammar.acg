@@ -31,8 +31,61 @@ signature derivation_trees =
     c_parce_que:Sa;
     c_de_plus: Sa ;
     c_ensuite_s:Sa;
-    c_ensuite_v:Va;
-    
+    c_ensuite_v:Va -> Va;
+
+    c_discours_ensuite_s: Sa -> Sa -> Sa -> S -> Sa;
+    c_discours_ensuite_v: Sa -> Sa -> Sa -> S -> Sa;
+    c_discours_parce_que: Sa -> Sa -> Sa -> S -> Sa;
+    c_discours_de_plus: Sa -> Sa -> Sa -> S -> Sa;
+
+    c_anchor_discours: Sa -> S -> S;
+
+    transitive_verb=
+	lambda v.
+	    lambda sa va1 va2 subj obj.
+		lambda mod.
+		    v sa (va2 (mod (va1 Iv))) subj obj:
+			(Sa -> Va -> NP -> NP -> S) ->
+			    Sa -> (Va -> Va) -> (Va -> Va) -> NP -> NP ->
+				(Va -> Va) -> S;
+
+    cl_transitive_verb=
+	lambda v.
+	    lambda sa va1 va2 subj obj.
+		lambda mod.
+		    v sa (va2 (mod (va1 Iv))) subj obj:
+			(Sa -> Va -> NP -> NP_cl -> S) ->
+			    Sa -> (Va -> Va) -> (Va -> Va) -> NP -> NP_cl ->
+				(Va -> Va) -> S;
+
+
+    intransitive_verb=
+	lambda v.
+	    lambda sa va1 va2 subj.
+		lambda mod.
+		    v sa (va2 (mod (va1 Iv))) subj:
+			(Sa -> Va -> NP -> S) ->
+			    Sa -> (Va -> Va) -> (Va -> Va) -> NP ->
+				(Va -> Va) -> S;
+
+    pont =
+	lambda v.
+	    lambda sa va1 va2 subj.v sa (va2 (va1 Iv)) subj :
+		(Sa -> Va -> NP -> Sa) ->
+		    Sa -> (Va -> Va) -> (Va -> Va) -> NP -> Sa;
+
+    aux = lambda aux.
+	lambda va v .aux (va v) :
+	    (Va -> Va) -> 
+		(Va -> Va) -> Va -> Va;
+
+    v_adv = lambda adv.
+	lambda va v. adv (va v) :
+	    (Va -> Va) -> 
+		(Va -> Va) -> Va -> Va;
+
+    I_va = lambda x.x : Va -> Va;
+    I_va_va = lambda x.x : (Va -> Va) -> Va -> Va;
 end
 
 signature elementary_trees =
@@ -100,6 +153,24 @@ signature elementary_trees =
 	tree ->
 	tree ;
 
+    c_discours = lambda c. lambda s1 s2 s3 s x.
+	s1 (s2 (S3 x c (s3 s))) :
+	    tree ->
+		(tree -> tree) ->
+		    (tree -> tree) ->
+			(tree -> tree) ->
+			    tree ->
+				tree -> tree;
+
+    c_discours_v = lambda s1 s2 s3 s x.
+	s1 (s2 (S2 x (s3 s))) :
+	    (tree -> tree) ->
+		(tree -> tree) ->
+		    (tree -> tree) ->
+			tree ->
+			    tree -> tree;
+    
+
     
     noun = lambda n. lambda a. a (N1 n) : tree -> (tree -> tree) -> tree;
     det = lambda det. lambda x. NP2 (Det1 det) x : tree -> tree -> tree ;
@@ -160,10 +231,17 @@ lexicon syntax(derivation_trees):elementary_trees =
     c_prouver:= pont prouve;
 
     c_ensuite_s := s_adv ensuite Id;
-    c_ensuite_v := v_adv ensuite Id;
+    c_ensuite_v := v_adv ensuite;
     c_de_plus := s_adv de_plus Id;
-    c_parce_que := s_adv de_plus Id;
-	    
+    c_parce_que := s_adv parce_que Id;
+
+    c_discours_ensuite_s := c_discours (Adv1 ensuite) ;
+    c_discours_de_plus := c_discours (Adv1 de_plus) ;
+    c_discours_parce_que := c_discours (Adv1 parce_que) ;
+    c_discours_ensuite_v := c_discours_v;
+
+    c_anchor_discours := lambda m s.m s;
+
 
 end
 
@@ -230,6 +308,8 @@ lexicon yield(elementary_trees):strings =
     parce_que := parce+que;
     ensuite:=ensuite;
     de_plus:=de+plus
+
+
 end
 
 lexicon surface = yield << syntax
@@ -237,6 +317,9 @@ lexicon surface = yield << syntax
 
 signature logic =
     e,t:type;
+
+    ttt=(t => t) -> t:type;
+
     qnp=(e=>t)->t:type;
     infix & : t -> t -> t;	
 	
@@ -252,7 +335,8 @@ signature logic =
     bad_mood:e->t;
     away:e-> e -> t;
     empty:e->t;
-    key,nightmare,license,supermarket,fridge,movies,wife,week:e->t;
+    key,nightmare,license,supermarket,fridge,movies,week:e->t;
+    wife:e->e->t;
 
     lose,have,miss,love,go_to:e->e->t;
 
@@ -272,19 +356,62 @@ signature logic =
     missing_arg : (t=>t=>t) -> t->t;
 
     transitive_verb =
-	lambda v. lambda S A s o.S(s(A(Lambda x.o(Lambda y.v x y)))):
-	    (e->e->t) -> (t->t) -> ((e=>t)->(e=>t)) -> qnp -> qnp -> t;
+	lambda v. lambda S A s o.S(s(Lambda x.o(Lambda y.A(v x y)))):
+	    (e->e->t) -> (t->t) -> (t->t) -> qnp -> qnp -> t;
 
     intransitive_verb =
-	lambda v. lambda S A s.S(s(A(Lambda x.v x))):
-	    (e->t) -> (t->t) -> ((e=>t)->(e=>t)) -> qnp -> t;
+	lambda v. lambda S A s.S(s(Lambda x.A(v x))):
+	    (e->t) -> (t->t) -> (t->t) -> qnp -> t;
 
     noun = lambda n. lambda m. m (Lambda x.n x):
 	(e->t) -> ((e=>t)->(e=>t)) -> (e=>t);
 
+
+    phi'' = lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
+	(t => t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    
+    my_phi' = Lambda R. lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
+	(t => t=> t)=> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    
+    B = lambda R.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(phi'' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    ) :
+					(t => t => t) ->
+					    (ttt -> ttt) ->
+						(ttt -> ttt) -> 
+						    (ttt -> ttt) ->
+							ttt ->
+							    (ttt -> ttt);
+    
+    A' = Lambda R.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(my_phi' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    ) :
+					(t => t => t)  =>
+					    (ttt -> ttt) ->
+						(ttt -> ttt) ->
+						    (ttt -> ttt) ->
+							ttt ->
+							    (ttt -> ttt);
+    
+
+    cont = Lambda t.lambda P.P t:t => (t=>t) -> t;
+
+
 end
 
-lexicon semantics(derivation_trees):logic =
+(* lexicon semantics(derivation_trees):logic =
     NP,NP_cl := qnp;
     N := e=>t;
     Adj := e->t;
@@ -293,7 +420,7 @@ lexicon semantics(derivation_trees):logic =
 
     NPa:= qnp -> qnp;
     Na := (e=>t) -> (e=>t);
-    Va := (e=>t) -> (e=>t);
+    Va := t -> t;
     Adja:= (e->t) -> (e->t);
     Sa:= t -> t;
 
@@ -301,10 +428,11 @@ lexicon semantics(derivation_trees):logic =
     Inp,Iv,Iadj,Is,In:=lambda x.x;
 
     (* To be changed for pronouns *)
-    c_fred,c_il,c_l := lambda P.P fred;
+    c_fred,c_il := lambda P.P fred;
+    c_l := lambda P.ExUni x. (wife x fred) & (P x);
     c_ceci:= lambda P.P  ceci;
     
-    c_etre := lambda S A s adj. S(s (A(Lambda x.adj x)));
+    c_etre := lambda S A s adj. S(s (Lambda x.A(adj x)));
     c_mauvaise_humeur := lambda m.m bad_mood;
     c_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
     c_vide := lambda m.m empty;
@@ -318,7 +446,7 @@ lexicon semantics(derivation_trees):logic =
     c_supermarche := noun supermarket;
     c_frigo := noun fridge;
     c_cinema := noun movies ;
-    c_femme := noun wife;
+    c_femme := noun (lambda x. wife x fred);
     c_semaine := noun week;
 
     c_perdre := transitive_verb lose;
@@ -328,18 +456,24 @@ lexicon semantics(derivation_trees):logic =
     c_aimer_cl := transitive_verb love;
     c_aller_a := transitive_verb go_to;
 
-    c_prouver := lambda S A s c.S(s(A(Lambda x.prove x c)));
+    c_prouver := lambda S A s c.S(s(Lambda x.A(prove x c)));
 
     c_dormir := intransitive_verb sleep;
 
-    c_beaucoup := lambda m P. m(Lambda x. a_lot(P x));
-    c_mal := lambda m P. m(Lambda x. badly(P x));
+    c_beaucoup := lambda m P. m (a_lot P);
+    c_mal := lambda m P. m (badly P);
 
-    c_etre_aux,c_avoir := lambda m P.m (Lambda x. PAST(P x));
+    c_etre_aux,c_avoir := lambda m P.m (PAST P);
 
     c_parce_que := lambda s. missing_arg Explication s;
     c_de_plus := missing_arg Continuation;
     c_ensuite_s := missing_arg Narration;
-    c_ensuite_v := lambda P.Lambda x. missing_arg Narration (P x) ;
+    c_ensuite_v := lambda P.missing_arg Narration P ;
+
+
+    I_du := lambda f x. f (lambda y.y) x;
+
+
 
 end
+*)

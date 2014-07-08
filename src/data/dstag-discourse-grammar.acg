@@ -1,0 +1,238 @@
+signature discourse_grammar =
+    DU,DUa,T:type;
+    NP,NP_cl,N,Adj,Det,S:type;
+    NPa,Na,Va,Adja,Sa:type;
+    
+    DC1 = DUa-> DUa-> DUa-> DU-> DUa : type;
+    DC2 = DUa-> DUa-> DUa-> DU-> DUa : type;
+
+    DC1' = DUa-> DUa-> DUa-> DUa : type;
+    DC2' = DUa-> DUa-> DUa-> DUa : type;
+
+
+(*    Inp:NPa; *)
+    In:Na;
+    Iv:Va;
+    Iadj:Adja;
+    Is : Sa;
+    
+    d_fred,d_ceci,d_il : NP;
+    d_l : NP_cl;
+    d_etre: Sa -> Va -> Va -> NP -> Adj -> S;
+    d_mauvaise_humeur,d_vide: Adja -> Adj;
+    d_absente: Adja -> NP -> Adj;
+    
+    
+    d_les,d_des,d_le,d_sa,d_une : N -> NP;
+    d_clefs,d_cauchemards,d_permis,
+	d_supermarche,d_frigo,d_cinema,d_femme,d_semaine : Na -> N;
+    
+    d_perdre,d_faire,d_rater,d_aimer: Sa -> Va -> Va -> NP -> NP -> S;
+    d_aimer_cl : Sa -> Va -> Va -> NP -> NP_cl -> S;
+    d_aller_a : Sa -> Va -> Va -> NP -> NP -> S;
+
+    d_prouver: Sa -> Va -> Va -> NP -> Sa;
+    
+    d_avoir,d_etre_aux:Va -> Va;
+    d_mal,d_beaucoup:Va -> Va;
+    d_dormir: Sa -> Va -> Va -> NP -> S;
+
+(*    PARCE_QUE : DC1;
+    DE_PLUS : DC1;
+    
+    EMPTY : DC2;
+    ENSUITE : DC2;
+    
+    EMPTY_COMMENT : DC1;
+*)
+
+    d_parce_que:S->DC1';
+    d_de_plus: S->DC1' ;
+    d_ensuite_s:S->DC2';
+    d_ensuite_v:S->DC2';
+    d_start:S-> DUa -> DU;
+
+(*    d_anchor_s:S -> DUa -> DU;
+    d_anchor_v:S -> DUa -> DU_v; *)
+
+    I_DU : DUa;
+
+    CLOSE_DISCOURS : DU -> T;
+
+
+    C1=d_etre Is Iv Iv d_fred (d_mauvaise_humeur Iadj) : S;
+    C2=d_perdre Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_les (d_clefs In)) :S;
+    C3=d_rater Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_le (d_permis In)) :S;
+    C4=d_dormir Is (d_beaucoup Iv) (d_avoir (d_mal Iv)) d_fred :S;
+    C5= d_faire Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_des (d_cauchemards In)):S;
+    C6= d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_supermarche In)) :S;
+    C7= d_etre Is Iv (d_beaucoup Iv) (d_le (d_frigo In)) (d_vide Iadj):S;
+    C8= d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_cinema In)) :S;
+    C9= d_etre Is Iv (d_beaucoup Iv) (d_sa (d_femme In)) (d_absente Iadj (d_le (d_semaine In))):S;
+    C10= d_aimer_cl (d_prouver Is Iv Iv d_ceci) (d_beaucoup Iv) Iv d_il d_l :S;
+	
+    
+end
+
+(*
+lexicon discourse_semantics(discourse_grammar):logic =
+    NP,NP_cl := qnp;
+    N := e=>t;
+    Adj := e->t;
+    S := t;
+    Det := (e->t) -> qnp;
+
+    NPa:= qnp -> qnp;
+    Na := (e=>t) -> (e=>t);
+    Va := t -> t;
+    Adja:= (e->t) -> (e->t);
+    Sa:= t -> t;
+
+
+    Inp,Iv,Iadj,Is,In:=lambda x.x;
+
+    (* To be changed for pronouns *)
+    d_fred,d_il := lambda P.P fred;
+    d_l := lambda P.ExUni x. (wife x fred) & (P x);
+    d_ceci:= lambda P.P  ceci;
+    
+    d_etre := lambda S A s adj . (S(s (Lambda x.A(adj x))));
+    d_mauvaise_humeur := lambda m.m bad_mood;
+    d_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
+    d_vide := lambda m.m empty;
+
+    d_les,d_le,d_sa := lambda P Q.ExUni x.(P x) & (Q x);
+    d_des,d_une := lambda P Q.Ex x.(P x) & (Q x);
+
+    d_clefs:= noun key;
+    d_cauchemards := noun nightmare;
+    d_permis := noun license;
+    d_supermarche := noun supermarket;
+    d_frigo := noun fridge;
+    d_cinema := noun movies ;
+    d_femme := noun (lambda x. wife x fred);
+    d_semaine := noun week;
+
+    d_perdre := transitive_verb lose;
+    d_faire := transitive_verb have;
+    d_rater := transitive_verb miss;
+    d_aimer := transitive_verb love;
+    d_aimer_cl := transitive_verb love;
+    d_aller_a := transitive_verb go_to;
+
+    d_prouver := lambda S A s c.S(s(Lambda x.A(prove x c)));
+
+    d_dormir := intransitive_verb sleep;
+
+    d_beaucoup := lambda m P. m (a_lot P);
+    d_mal := lambda m P. m (badly P);
+
+    d_etre_aux,d_avoir := lambda m P.m (PAST P);
+
+    DU := ttt;
+    DU_a := ttt -> ttt;
+    T := t;
+    I_DU := lambda x.x;    
+    CLOSE_DISCOURS := lambda D.D(Lambda x.x);
+    
+    d_parce_que := A' Explication;
+    d_de_plus := A' Continuation;
+    d_ensuite_s := B Narration;
+    d_ensuite_v := 
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(phi'' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    )
+
+
+end
+*)
+lexicon disc_to_sent(discourse_grammar):derivation_trees =
+
+
+    DU:= S;
+    DUa:= Sa;
+    T := S;
+
+    NP:=NP;
+    NP_cl:=NP_cl;
+    N:=N;
+    Adj:=Adj;
+    Det:=Det;
+    NPa:=NPa;
+    Na:=Na;
+    Va:=Va -> Va;
+    Adja:=Adja;
+    Sa:=Sa;
+    S:=(Va -> Va) -> S;
+    
+(*    Inp:=NPa; *)
+    In:=In;
+    Iv:=lambda P.P;
+    Iadj:=Iadj;
+    Is := Is;
+    
+    d_fred := c_fred;
+    d_ceci := c_ceci;
+    d_il :=c_il;
+    d_l  := c_l ;
+    d_etre := lambda sa va1 va2 np adj.lambda mod. c_etre sa (va2 (mod (va1 Iv))) np adj ;
+    d_mauvaise_humeur:=c_mauvaise_humeur;
+    d_vide:=c_vide;
+    d_absente := c_absente;
+    
+    
+    d_les:=c_les;
+    d_des := c_des;
+    d_le := c_le;
+    d_sa := c_sa;
+    d_une:=c_une;
+    d_clefs:=c_clefs;
+    d_cauchemards := c_cauchemards;
+    d_permis := c_permis;
+    d_supermarche := c_supermarche;
+    d_frigo := c_frigo;
+    d_cinema := c_cinema;
+    d_femme := c_femme;
+    d_semaine:=c_semaine;
+    
+    d_perdre:=transitive_verb c_perdre;
+    d_faire := transitive_verb c_faire;
+    d_rater := transitive_verb c_rater;
+    d_aimer:=transitive_verb c_aimer;
+    d_aimer_cl  := cl_transitive_verb c_aimer_cl ;
+    d_aller_a  := transitive_verb c_aller_a ;
+    
+    d_prouver := pont c_prouver;
+    
+    d_avoir:=aux c_avoir;
+    d_etre_aux:=aux c_etre_aux;
+    d_mal:=v_adv c_mal;
+    d_beaucoup:=v_adv  c_beaucoup;
+    d_dormir := intransitive_verb c_dormir;
+    
+   
+    CLOSE_DISCOURS := lambda x.x;
+    I_DU := Is;
+    d_ensuite_v :=  lambda s.lambda dua1 dua2 dua3.
+	c_discours_ensuite_v dua1 dua2 dua3 (s c_ensuite_v);
+    d_ensuite_s := lambda s.lambda dua1 dua2 dua3.
+	c_discours_ensuite_s dua1 dua2 dua3 (s (lambda x.x));
+    d_de_plus :=  lambda s.lambda dua1 dua2 dua3.
+	c_discours_de_plus dua1 dua2 dua3 (s (lambda x.x));
+    d_parce_que := lambda s.lambda dua1 dua2 dua3.
+	c_discours_parce_que dua1 dua2 dua3 (s (lambda x.x));
+
+    d_start := lambda s mod. c_anchor_discours mod (s(lambda x.x));
+    
+
+
+
+end
+
+lexicon tag_discourse = surface << disc_to_sent
+lexicon tag_discourse_derivation = syntax << disc_to_sent
