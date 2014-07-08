@@ -410,12 +410,12 @@ signature logic =
     missing_arg : (t=>t=>t) -> t->t;
 
     transitive_verb =
-	lambda v. lambda S A s o.S(s(Lambda x.o(Lambda y.A(v x y)))):
-	    (e->e->t) -> (t->t) -> (t->t) -> qnp -> qnp -> t;
+	lambda v. lambda S A1 A2 s o mod.S(s(Lambda x.o(Lambda y.A2 (mod (A1(v x y)))))):
+	    (e->e->t) -> (t->t) -> (t->t) -> (t->t) -> qnp -> qnp -> (t->t) -> t;
 
     intransitive_verb =
-	lambda v. lambda S A s.S(s(Lambda x.A(v x))):
-	    (e->t) -> (t->t) -> (t->t) -> qnp -> t;
+	lambda v. lambda S A1 A2 s mod.S(s(Lambda x.A2 (mod (A1 (v x))))):
+	    (e->t) -> (t->t) -> (t->t) -> (t->t) -> qnp -> (t->t) -> t;
 
     noun = lambda n. lambda m. m (Lambda x.n x):
 	(e->t) -> ((e=>t)->(e=>t)) -> (e=>t);

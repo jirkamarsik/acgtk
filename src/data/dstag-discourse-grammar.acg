@@ -85,12 +85,12 @@ signature discourse_grammar =
     
 end
 
-(*
+
 lexicon discourse_semantics(discourse_grammar):logic =
     NP,NP_cl := qnp;
     N := e=>t;
     Adj := e->t;
-    S := t;
+    S := (t->t) -> t;
     Det := (e->t) -> qnp;
 
     NPa:= qnp -> qnp;
@@ -100,14 +100,14 @@ lexicon discourse_semantics(discourse_grammar):logic =
     Sa:= t -> t;
 
 
-    Inp,Iv,Iadj,Is,In:=lambda x.x;
+    Iv,Iadj,Is,In:=lambda x.x;
 
     (* To be changed for pronouns *)
     d_fred,d_il := lambda P.P fred;
     d_l := lambda P.ExUni x. (wife x fred) & (P x);
     d_ceci:= lambda P.P  ceci;
     
-    d_etre := lambda S A s adj . (S(s (Lambda x.A(adj x))));
+    d_etre := lambda S A1 A2 s adj mod. (S(s (Lambda x.A2 (mod (A1 (adj x))))));
     d_mauvaise_humeur := lambda m.m bad_mood;
     d_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
     d_vide := lambda m.m empty;
@@ -131,7 +131,7 @@ lexicon discourse_semantics(discourse_grammar):logic =
     d_aimer_cl := transitive_verb love;
     d_aller_a := transitive_verb go_to;
 
-    d_prouver := lambda S A s c.S(s(Lambda x.A(prove x c)));
+    d_prouver := lambda S A1 A2 s c.S(s(Lambda x.A2 (A1 (prove x c))));
 
     d_dormir := intransitive_verb sleep;
 
@@ -141,7 +141,7 @@ lexicon discourse_semantics(discourse_grammar):logic =
     d_etre_aux,d_avoir := lambda m P.m (PAST P);
 
     DU := ttt;
-    DU_a := ttt -> ttt;
+    DUa := ttt -> ttt;
     T := t;
     I_DU := lambda x.x;    
     CLOSE_DISCOURS := lambda D.D(Lambda x.x);
@@ -149,19 +149,28 @@ lexicon discourse_semantics(discourse_grammar):logic =
     d_parce_que := A' Explication;
     d_de_plus := A' Continuation;
     d_ensuite_s := B Narration;
-    d_ensuite_v := 
-	lambda d4 d3 d2.
-            lambda d_subst.
-		lambda d_foot.
-		    d4 (
-			(phi'' R)
-			    (d3 d_foot)
-				(d2 d_subst)
-				    )
+    (*    d_ensuite_v := 
+       lambda d4 d3 d2.
+       lambda d_subst.
+       lambda d_foot.
+       d4 (
+       (phi'' R)
+       (d3 d_foot)
+       (d2 d_subst)
+       )
+       *)
+    
+    DU_v := (t->t) -> t;
 
+    d_anchor_v := lambda s mod adv.lambda P.P (mod (lambda Q.Q(s adv)) (Lambda y.y))  ;
+    d_anchor_s := lambda s mod.lambda P. P (mod (s (lambda x.x)));
+    d_start := lambda s mod.lambda P. P (mod (s (lambda x.x)));
+    d_empty_comment := A' comment;
+    d_empty := B Explication;
+(*    d_ensuite_v := ; *)
 
 end
-*)
+
 lexicon disc_to_sent(discourse_grammar):derivation_trees =
 
 
