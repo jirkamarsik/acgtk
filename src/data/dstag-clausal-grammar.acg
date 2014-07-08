@@ -37,6 +37,8 @@ signature derivation_trees =
     c_discours_ensuite_v: Sa -> Sa -> Sa -> S -> Sa;
     c_discours_parce_que: Sa -> Sa -> Sa -> S -> Sa;
     c_discours_de_plus: Sa -> Sa -> Sa -> S -> Sa;
+    c_discours_empty: Sa -> Sa -> Sa -> S -> Sa;
+    c_discours_empty_comment: Sa -> Sa -> Sa -> S -> Sa;
 
     c_anchor_discours: Sa -> S -> S;
 
@@ -93,8 +95,11 @@ signature elementary_trees =
     N1,NP1,V1,Adv1,Aux1,Adj1,S1,Det1,Prep1: tree -> tree;
     N2,NP2,PP2,V2,Adj2,S2:tree -> tree -> tree;
     V3,S3: tree -> tree -> tree -> tree;
+    S4: tree -> tree -> tree -> tree -> tree;
 
     Id=lambda x.x:tree -> tree;
+
+    dot,comma:tree;
 
     transitive_verb=
 	lambda v. lambda S A s o.S(S3 s (A (V1 v)) o):
@@ -170,6 +175,41 @@ signature elementary_trees =
 			tree ->
 			    tree -> tree;
     
+    
+    adverbiaux_s = lambda a.
+	lambda d4 d3 d2 d_subst d.
+	    d4 (S1 (d3 (S4 d dot a (d2 d_subst)))) :
+		tree->
+		    (tree-> tree)->
+			(tree-> tree)->
+			    (tree-> tree)->
+				tree->
+				    tree->
+					tree ;
+    
+    conjonction_postposees_ponct = lambda c.
+	lambda d4 d3 d2 d_subst d.
+	    d4 (S1 (d3 (S4 d comma c (d2 d_subst)))) :
+		tree->
+		    (tree-> tree)->
+			(tree-> tree)->
+			    (tree-> tree)->
+				tree->
+				    tree->
+					tree ;
+    
+    conjonction_postposees_s = lambda c.
+	lambda d4 d3 d2 d_subst d.
+	    d4 (S1 (d3 (S3 d c (d2 d_subst)))) :
+		tree->
+		    (tree-> tree)->
+			(tree-> tree)->
+			    (tree-> tree)->
+				tree->
+				    tree->
+					tree ;
+    
+
 
     
     noun = lambda n. lambda a. a (N1 n) : tree -> (tree -> tree) -> tree;
@@ -180,6 +220,10 @@ signature elementary_trees =
 	mal,dormi,fait,des,cauchemards,alle,au,supermarche,frigo,vide,cinema,
 	sa,femme,absente,une,semaine,ceci,prouve,il,l,aime,beaucoup,
 	de_plus,ensuite,parce_que:tree;
+
+    epsilon:tree;
+
+    
     
 end
 
@@ -240,6 +284,10 @@ lexicon syntax(derivation_trees):elementary_trees =
     c_discours_parce_que := c_discours (Adv1 parce_que) ;
     c_discours_ensuite_v := c_discours_v;
 
+
+    c_discours_empty_comment := conjonction_postposees_s epsilon;
+    c_discours_empty := adverbiaux_s epsilon;
+
     c_anchor_discours := lambda m s.m s;
 
 
@@ -258,6 +306,8 @@ signature strings =
 	mal,dormi,fait,des,cauchemards,alle,au,supermarche,frigo,vide,cinema,
 	sa,femme,absente,une,semaine,ceci,prouve,que,il,l,aime,beaucoup,
 	plus,ensuite,parce:string;
+
+    DOT,COMMA:string;
 end
 
 
@@ -267,7 +317,11 @@ lexicon yield(elementary_trees):strings =
 	V3 := ternary;
     N2,NP2,PP2,V2,Adj2,S2 := binary;
     N1,NP1,V1,Adv1,Aux1,Adj1,S1,Det1,Prep1 := lambda x.x;
+    S4 := lambda x y z t.x+y+z+t;
 
+    epsilon:=lambda x.x;
+    dot:=DOT;
+    comma:=COMMA;
     Fred := Fred;
     a := a;
     est := est;

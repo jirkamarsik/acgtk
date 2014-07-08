@@ -55,6 +55,11 @@ signature discourse_grammar =
     d_de_plus: DC1 ;
     d_ensuite_s:DC2;
     d_ensuite_v:DC2_v;
+
+    d_empty:DC2;
+    d_empty_comment:DC1;
+
+
     d_start:S-> DUa -> DU;
 
     d_anchor_s:S -> DUa -> DU;
@@ -230,6 +235,10 @@ lexicon disc_to_sent(discourse_grammar):derivation_trees =
     d_ensuite_s := c_discours_ensuite_s ;
     d_de_plus :=  c_discours_de_plus;
     d_parce_que := c_discours_parce_que ;
+
+
+    d_empty := c_discours_empty ;
+    d_empty_comment := c_discours_empty_comment ;
 
     d_start := lambda s mod. c_anchor_discours mod (s(lambda x.x));
 
