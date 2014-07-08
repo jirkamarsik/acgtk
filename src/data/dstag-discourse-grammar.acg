@@ -1,13 +1,18 @@
 signature discourse_grammar =
-    DU,DUa,T:type;
+    DU,DUa,DU_v,T:type;
     NP,NP_cl,N,Adj,Det,S:type;
     NPa,Na,Va,Adja,Sa:type;
     
     DC1 = DUa-> DUa-> DUa-> DU-> DUa : type;
     DC2 = DUa-> DUa-> DUa-> DU-> DUa : type;
 
+    DC1_v = DUa-> DUa-> DUa-> DU_v-> DUa : type;
+    DC2_v = DUa-> DUa-> DUa-> DU_v-> DUa : type;
+
+
     DC1' = DUa-> DUa-> DUa-> DUa : type;
     DC2' = DUa-> DUa-> DUa-> DUa : type;
+
 
 
 (*    Inp:NPa; *)
@@ -46,14 +51,14 @@ signature discourse_grammar =
     EMPTY_COMMENT : DC1;
 *)
 
-    d_parce_que:S->DC1';
-    d_de_plus: S->DC1' ;
-    d_ensuite_s:S->DC2';
-    d_ensuite_v:S->DC2';
+    d_parce_que:DC1;
+    d_de_plus: DC1 ;
+    d_ensuite_s:DC2;
+    d_ensuite_v:DC2_v;
     d_start:S-> DUa -> DU;
 
-(*    d_anchor_s:S -> DUa -> DU;
-    d_anchor_v:S -> DUa -> DU_v; *)
+    d_anchor_s:S -> DUa -> DU;
+    d_anchor_v:S -> DUa -> DU_v; 
 
     I_DU : DUa;
 
@@ -61,7 +66,8 @@ signature discourse_grammar =
 
 
     C1=d_etre Is Iv Iv d_fred (d_mauvaise_humeur Iadj) : S;
-    C2=d_perdre Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_les (d_clefs In)) :S;
+    C2'=d_perdre Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_les (d_clefs In)) :S;
+    C2=d_perdre Is Iv (d_avoir Iv) d_fred (d_les (d_clefs In)) :S;
     C3=d_rater Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_le (d_permis In)) :S;
     C4=d_dormir Is (d_beaucoup Iv) (d_avoir (d_mal Iv)) d_fred :S;
     C5= d_faire Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_des (d_cauchemards In)):S;
@@ -156,6 +162,7 @@ lexicon disc_to_sent(discourse_grammar):derivation_trees =
 
     DU:= S;
     DUa:= Sa;
+    DU_v:= (Va -> Va)-> S;
     T := S;
 
     NP:=NP;
@@ -218,16 +225,18 @@ lexicon disc_to_sent(discourse_grammar):derivation_trees =
    
     CLOSE_DISCOURS := lambda x.x;
     I_DU := Is;
-    d_ensuite_v :=  lambda s.lambda dua1 dua2 dua3.
+    d_ensuite_v :=  lambda dua1 dua2 dua3 s.
 	c_discours_ensuite_v dua1 dua2 dua3 (s c_ensuite_v);
-    d_ensuite_s := lambda s.lambda dua1 dua2 dua3.
-	c_discours_ensuite_s dua1 dua2 dua3 (s (lambda x.x));
-    d_de_plus :=  lambda s.lambda dua1 dua2 dua3.
-	c_discours_de_plus dua1 dua2 dua3 (s (lambda x.x));
-    d_parce_que := lambda s.lambda dua1 dua2 dua3.
-	c_discours_parce_que dua1 dua2 dua3 (s (lambda x.x));
+    d_ensuite_s := c_discours_ensuite_s ;
+    d_de_plus :=  c_discours_de_plus;
+    d_parce_que := c_discours_parce_que ;
 
     d_start := lambda s mod. c_anchor_discours mod (s(lambda x.x));
+
+    d_anchor_s := lambda s mod. c_anchor_discours mod (s(lambda x.x));
+    d_anchor_v := lambda s mod adv. c_anchor_discours mod (s adv);
+
+    
     
 
 
