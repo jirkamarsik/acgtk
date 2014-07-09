@@ -3,19 +3,11 @@ signature discourse_grammar =
     NP,NP_cl,N,Adj,Det,S:type;
     NPa,Na,Va,Adja,Sa:type;
     
-    DC1 = DUa-> DUa-> DUa-> DU-> DUa : type;
-    DC2 = DUa-> DUa-> DUa-> DU-> DUa : type;
+    DC = DUa-> DUa-> DUa-> DU-> DUa : type;
 
-    DC1_v = DUa-> DUa-> DUa-> DU_v-> DUa : type;
-    DC2_v = DUa-> DUa-> DUa-> DU_v-> DUa : type;
+    DC_v = DUa-> DUa-> DUa-> DU_v-> DUa : type;
 
 
-    DC1' = DUa-> DUa-> DUa-> DUa : type;
-    DC2' = DUa-> DUa-> DUa-> DUa : type;
-
-
-
-(*    Inp:NPa; *)
     In:Na;
     Iv:Va;
     Iadj:Adja;
@@ -42,25 +34,14 @@ signature discourse_grammar =
     d_mal,d_beaucoup:Va -> Va;
     d_dormir: Sa -> Va -> Va -> NP -> S;
 
-(*    PARCE_QUE : DC1;
-    DE_PLUS : DC1;
-    
-    EMPTY : DC2;
-    ENSUITE : DC2;
-    
-    EMPTY_COMMENT : DC1;
-*)
+    d_parce_que:DC;
+    d_de_plus: DC ;
+    d_ensuite_s:DC;
+    d_ensuite_v:DC_v;
 
-    d_parce_que:DC1;
-    d_de_plus: DC1 ;
-    d_ensuite_s:DC2;
-    d_ensuite_v:DC2_v;
+    d_empty:DC;
+    d_empty_comment:DC;
 
-    d_empty:DC2;
-    d_empty_comment:DC1;
-
-
-    d_start:S-> DUa -> DU;
 
     d_anchor_s:S -> DUa -> DU;
     d_anchor_v:S -> DUa -> DU_v; 
@@ -86,7 +67,7 @@ signature discourse_grammar =
 end
 
 
-lexicon discourse_semantics(discourse_grammar):logic =
+nl_lexicon discourse_semantics(discourse_grammar):logic =
     NP,NP_cl := qnp;
     N := e=>t;
     Adj := e->t;
@@ -160,17 +141,16 @@ lexicon discourse_semantics(discourse_grammar):logic =
        )
        *)
     
-    DU_v := (t->t) -> t;
+    DU_v := (t->t) -> ttt;
 
     d_anchor_v := lambda s mod adv.lambda P.P (mod (lambda Q.Q(s adv)) (Lambda y.y))  ;
     d_anchor_s := lambda s mod.lambda P. P (mod (s (lambda x.x)));
-    d_start := lambda s mod.lambda P. P (mod (s (lambda x.x)));
     d_empty_comment := A' comment;
     d_empty := B Explication;
 (*    d_ensuite_v := ; *)
 
 end
-
+*)
 lexicon disc_to_sent(discourse_grammar):derivation_trees =
 
 
@@ -248,8 +228,6 @@ lexicon disc_to_sent(discourse_grammar):derivation_trees =
 
     d_empty := c_discours_empty ;
     d_empty_comment := c_discours_empty_comment ;
-
-    d_start := lambda s mod. c_anchor_discours mod (s(lambda x.x));
 
     d_anchor_s := lambda s mod. c_anchor_discours mod (s(lambda x.x));
     d_anchor_v := lambda s mod adv. c_anchor_discours mod (s adv);

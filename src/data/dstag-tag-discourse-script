@@ -1,24 +1,24 @@
 load o dstag-clausal-grammar.acgo;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_etre Is Iv Iv d_fred (d_mauvaise_humeur Iadj)) I_DU : DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_etre Is Iv Iv d_fred (d_mauvaise_humeur Iadj)) I_DU : DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_perdre Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_les (d_clefs In))) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_perdre Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_les (d_clefs In))) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_rater Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_le (d_permis In))) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_rater Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_le (d_permis In))) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_dormir Is (d_beaucoup Iv) (d_avoir (d_mal Iv)) d_fred ) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_dormir Is (d_beaucoup Iv) (d_avoir (d_mal Iv)) d_fred ) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_faire Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_des (d_cauchemards In))) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_faire Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_des (d_cauchemards In))) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_supermarche In)) ) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_supermarche In)) ) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_etre Is Iv (d_beaucoup Iv) (d_le (d_frigo In)) (d_vide Iadj))  I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_etre Is Iv (d_beaucoup Iv) (d_le (d_frigo In)) (d_vide Iadj))  I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_cinema In)) ) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_cinema In)) ) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_etre Is Iv (d_beaucoup Iv) (d_sa (d_femme In)) (d_absente Iadj (d_le (d_semaine In)))) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_etre Is Iv (d_beaucoup Iv) (d_sa (d_femme In)) (d_absente Iadj (d_le (d_semaine In)))) I_DU :DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start (d_aimer_cl (d_prouver Is Iv Iv d_ceci) (d_beaucoup Iv) Iv d_il d_l) I_DU :DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_aimer_cl (d_prouver Is Iv Iv d_ceci) (d_beaucoup Iv) Iv d_il d_l) I_DU :DU;
 
 disc_to_sent tag_discourse_derivation tag_discourse realize lambda dua1 dua2 dua3.d_ensuite_s dua1 dua2 dua3 (d_anchor_s (d_aller_a Is (d_etre_aux Iv) Iv d_fred (d_le (d_cinema In)) ) I_DU) :DUa -> DUa -> DUa -> DUa;
 
@@ -28,7 +28,7 @@ disc_to_sent tag_discourse_derivation tag_discourse realize lambda dua1 dua2 dua
 
 # Les exemples de D-STAG
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_start C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 I_DU)): DU;
+disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 I_DU)): DU;
 
 disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 I_DU)): DU;
 
