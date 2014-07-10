@@ -66,35 +66,34 @@ signature discourse_grammar =
     
 end
 
-
 nl_lexicon discourse_semantics(discourse_grammar):logic =
     NP,NP_cl := qnp;
     N := e=>t;
-    Adj := e->t;
-    S := (t->t) -> t;
-    Det := (e->t) -> qnp;
+    Adj := e=>t;
+    S := (t=>t) => t;
+    Det := (e=>t) => qnp;
 
-    NPa:= qnp -> qnp;
-    Na := (e=>t) -> (e=>t);
-    Va := t -> t;
-    Adja:= (e->t) -> (e->t);
-    Sa:= t -> t;
+    NPa:= qnp => qnp;
+    Na := (e=>t) => (e=>t);
+    Va := t => t;
+    Adja:= (e=>t) => (e=>t);
+    Sa:= t => t;
 
 
-    Iv,Iadj,Is,In:=lambda x.x;
+    Iv,Iadj,Is,In:=Lambda x.x;
 
     (* To be changed for pronouns *)
-    d_fred,d_il := lambda P.P fred;
-    d_l := lambda P.ExUni x. (wife x fred) & (P x);
-    d_ceci:= lambda P.P  ceci;
+    d_fred,d_il := Lambda P.P fred;
+    d_l := Lambda P.ExUni x. (wife x fred) & (P x);
+    d_ceci:= Lambda P.P  ceci;
     
-    d_etre := lambda S A1 A2 s adj mod. (S(s (Lambda x.A2 (mod (A1 (adj x))))));
-    d_mauvaise_humeur := lambda m.m bad_mood;
-    d_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
-    d_vide := lambda m.m empty;
+    d_etre := Lambda S A1 A2 s adj mod. (S(s (Lambda x.A2 (mod (A1 (adj x))))));
+    d_mauvaise_humeur := Lambda m.m bad_mood;
+    d_absente := Lambda m P z .P(Lambda x. m (Lambda y. away y x) z)  ;
+    d_vide := Lambda m.m empty;
 
-    d_les,d_le,d_sa := lambda P Q.ExUni x.(P x) & (Q x);
-    d_des,d_une := lambda P Q.Ex x.(P x) & (Q x);
+    d_les,d_le,d_sa := Lambda P Q.ExUni x.(P x) & (Q x);
+    d_des,d_une := Lambda P Q.Ex x.(P x) & (Q x);
 
     d_clefs:= noun key;
     d_cauchemards := noun nightmare;
@@ -102,7 +101,7 @@ nl_lexicon discourse_semantics(discourse_grammar):logic =
     d_supermarche := noun supermarket;
     d_frigo := noun fridge;
     d_cinema := noun movies ;
-    d_femme := noun (lambda x. wife x fred);
+    d_femme := noun (Lambda x. wife x fred);
     d_semaine := noun week;
 
     d_perdre := transitive_verb lose;
@@ -112,45 +111,46 @@ nl_lexicon discourse_semantics(discourse_grammar):logic =
     d_aimer_cl := transitive_verb love;
     d_aller_a := transitive_verb go_to;
 
-    d_prouver := lambda S A1 A2 s c.S(s(Lambda x.A2 (A1 (prove x c))));
+    d_prouver := Lambda S A1 A2 s c.S(s(Lambda x.A2 (A1 (prove x c))));
 
     d_dormir := intransitive_verb sleep;
 
-    d_beaucoup := lambda m P. m (a_lot P);
-    d_mal := lambda m P. m (badly P);
+    d_beaucoup := Lambda m P. m (a_lot P);
+    d_mal := Lambda m P. m (badly P);
 
-    d_etre_aux,d_avoir := lambda m P.m (PAST P);
+    d_etre_aux,d_avoir := Lambda m P.m (PAST P);
 
     DU := ttt;
-    DUa := ttt -> ttt;
+    DU_v := (t=>t) => ttt;
+    DUa := ttt => ttt;
     T := t;
-    I_DU := lambda x.x;    
-    CLOSE_DISCOURS := lambda D.D(Lambda x.x);
+    I_DU := Lambda x.x;    
+    CLOSE_DISCOURS := Lambda D.D(Lambda x.x);
     
     d_parce_que := A' Explication;
     d_de_plus := A' Continuation;
     d_ensuite_s := B Narration;
-    (*    d_ensuite_v := 
-       lambda d4 d3 d2.
-       lambda d_subst.
-       lambda d_foot.
-       d4 (
-       (phi'' R)
-       (d3 d_foot)
-       (d2 d_subst)
-       )
-       *)
-    
-    DU_v := (t->t) -> ttt;
+    d_ensuite_v := 
+	Lambda d4 d3 d2.
+            Lambda d_subst.
+		Lambda d_foot.
+		    d4 (
+			(my_phi' Narration)
+			    (d3 d_foot)
+				(d2 (d_subst (Lambda x.x)))
+				    ) ;
 
-    d_anchor_v := lambda s mod adv.lambda P.P (mod (lambda Q.Q(s adv)) (Lambda y.y))  ;
-    d_anchor_s := lambda s mod.lambda P. P (mod (s (lambda x.x)));
-    d_empty_comment := A' comment;
+    DU_v := (t=>t) => ttt;
+
+(*    d_anchor_v := Lambda s mod adv.Lambda P.P (mod (Lambda Q.Q(s adv)) (Lambda y.y))  ;*)
+    d_anchor_v := Lambda s mod adv.Lambda P.mod (Lambda Q.Q(s adv)) P  ;
+    (*    d_anchor_s := Lambda s mod.Lambda P. P (mod (Lambda Q.Q (s (Lambda x.x))) (Lambda y.y)); *)
+    d_anchor_s := Lambda s mod.Lambda P. mod (Lambda Q.Q (s (Lambda x.x))) P;
+    d_empty_comment := A' Comment;
     d_empty := B Explication;
-(*    d_ensuite_v := ; *)
 
 end
-*)
+
 lexicon disc_to_sent(discourse_grammar):derivation_trees =
 
 
@@ -241,3 +241,4 @@ end
 
 lexicon tag_discourse = surface << disc_to_sent
 lexicon tag_discourse_derivation = syntax << disc_to_sent
+

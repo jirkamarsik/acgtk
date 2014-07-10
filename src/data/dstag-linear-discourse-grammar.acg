@@ -1,0 +1,252 @@
+(* If the discourse_grammar signature is absent or cmmented, need to be compiled with *)
+(* acgc dstag-clausal-grammar.acg dstag-discourse-grammar.acg dstag-linear-discourse-grammar.acg *)
+
+signature discourse_grammar =
+    DU,DUa,DU_v,T:type;
+    NP,NP_cl,N,Adj,Det,S:type;
+    NPa,Na,Va,Adja,Sa:type;
+    
+    DC = DUa-> DUa-> DUa-> DU-> DUa : type;
+
+    DC_v = DUa-> DUa-> DUa-> DU_v-> DUa : type;
+
+
+    In:Na;
+    Iv:Va;
+    Iadj:Adja;
+    Is : Sa;
+    
+    d_fred,d_ceci,d_il : NP;
+    d_l : NP_cl;
+    d_etre: Sa -> Va -> Va -> NP -> Adj -> S;
+    d_mauvaise_humeur,d_vide: Adja -> Adj;
+    d_absente: Adja -> NP -> Adj;
+    
+    
+    d_les,d_des,d_le,d_sa,d_une : N -> NP;
+    d_clefs,d_cauchemards,d_permis,
+	d_supermarche,d_frigo,d_cinema,d_femme,d_semaine : Na -> N;
+    
+    d_perdre,d_faire,d_rater,d_aimer: Sa -> Va -> Va -> NP -> NP -> S;
+    d_aimer_cl : Sa -> Va -> Va -> NP -> NP_cl -> S;
+    d_aller_a : Sa -> Va -> Va -> NP -> NP -> S;
+
+    d_prouver: Sa -> Va -> Va -> NP -> Sa;
+    
+    d_avoir,d_etre_aux:Va -> Va;
+    d_mal,d_beaucoup:Va -> Va;
+    d_dormir: Sa -> Va -> Va -> NP -> S;
+
+    d_parce_que:DC;
+    d_de_plus: DC ;
+    d_ensuite_s:DC;
+    d_ensuite_v:DC_v;
+
+    d_empty:DC;
+    d_empty_comment:DC;
+
+
+    d_anchor_s:S -> DUa -> DU;
+    d_anchor_v:S -> DUa -> DU_v; 
+
+    I_DU : DUa;
+
+    CLOSE_DISCOURS : DU -> T;
+
+
+    C1=d_etre Is Iv Iv d_fred (d_mauvaise_humeur Iadj) : S;
+    C2'=d_perdre Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_les (d_clefs In)) :S;
+    C2=d_perdre Is Iv (d_avoir Iv) d_fred (d_les (d_clefs In)) :S;
+    C3=d_rater Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_le (d_permis In)) :S;
+    C4=d_dormir Is (d_beaucoup Iv) (d_avoir (d_mal Iv)) d_fred :S;
+    C5= d_faire Is (d_beaucoup Iv) (d_avoir Iv) d_fred (d_des (d_cauchemards In)):S;
+    C6= d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_supermarche In)) :S;
+    C7= d_etre Is Iv (d_beaucoup Iv) (d_le (d_frigo In)) (d_vide Iadj):S;
+    C8= d_aller_a Is (d_beaucoup Iv) (d_etre_aux Iv) d_fred (d_le (d_cinema In)) :S;
+    C9= d_etre Is Iv (d_beaucoup Iv) (d_sa (d_femme In)) (d_absente Iadj (d_le (d_semaine In))):S;
+    C10= d_aimer_cl (d_prouver Is Iv Iv d_ceci) (d_beaucoup Iv) Iv d_il d_l :S;
+	
+    
+end
+
+
+
+signature linear_logic =
+    e,t:type;
+
+    ttt=(t => t) -> t:type;
+
+    qnp=(e=>t)->t:type;
+    infix & : t -> t -> t;	
+	
+    (* Implications*)
+    infix > : t -> t -> t;
+    
+    (* Quantifiers *)
+    binder All : (e=>t) -> t;
+    binder Ex : (e=>t) -> t;
+    binder ExUni : (e=>t) -> t;
+
+    fred,ceci,il,elle:e;
+    bad_mood:e->t;
+    away:e-> e -> t;
+    empty:e->t;
+    key,nightmare,license,supermarket,fridge,movies,week:e->t;
+    wife:e->e->t;
+
+    lose,have,miss,love,go_to:e->e->t;
+
+    prove:e->t->t;
+
+    PAST:t->t;
+    
+    sleep:e->t;
+    badly,a_lot:t->t;
+
+    Explication : t=> t=> t ;
+    Continuation : t=> t=> t ;	
+    Narration : t=> t=> t ;	
+    Comment : t => t => t;
+
+
+    missing_arg : (t=>t=>t) -> t->t;
+
+    transitive_verb =
+	lambda v. lambda S A1 A2 s o mod.S(s(Lambda x.o(Lambda y.A2 (mod (A1(v x y)))))):
+	    (e->e->t) -> (t->t) -> (t->t) -> (t->t) -> qnp -> qnp -> (t->t) -> t;
+
+    intransitive_verb =
+	lambda v. lambda S A1 A2 s mod.S(s(Lambda x.A2 (mod (A1 (v x))))):
+	    (e->t) -> (t->t) -> (t->t) -> (t->t) -> qnp -> (t->t) -> t;
+
+    noun = lambda n. lambda m. m (Lambda x.n x):
+	(e->t) -> ((e=>t)->(e=>t)) -> (e=>t);
+
+
+    phi'' = lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
+	(t => t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    
+    my_phi' = Lambda R. lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
+	(t => t=> t)=> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    
+    B = lambda R.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(phi'' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    ) :
+					(t => t => t) ->
+					    (ttt -> ttt) ->
+						(ttt -> ttt) -> 
+						    (ttt -> ttt) ->
+							ttt ->
+							    (ttt -> ttt);
+    
+    A' = Lambda R.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
+		    d4 (
+			(my_phi' R)
+			    (d3 d_foot)
+				(d2 d_subst)
+				    ) :
+					(t => t => t)  =>
+					    (ttt -> ttt) ->
+						(ttt -> ttt) ->
+						    (ttt -> ttt) ->
+							ttt ->
+							    (ttt -> ttt);
+    
+
+    cont = Lambda t.lambda P.P t:t => (t=>t) -> t;
+
+
+end
+
+
+lexicon linear_discourse_semantics(discourse_grammar):linear_logic =
+    NP,NP_cl := qnp;
+    N := e=>t;
+    Adj := e->t;
+    S := (t->t) -> t;
+    Det := (e->t) -> qnp;
+
+    NPa:= qnp -> qnp;
+    Na := (e=>t) -> (e=>t);
+    Va := t -> t;
+    Adja:= (e->t) -> (e->t);
+    Sa:= t -> t;
+
+
+    Iv,Iadj,Is,In:=lambda x.x;
+
+    (* To be changed for pronouns *)
+    d_fred,d_il := lambda P.P fred;
+    d_l := lambda P.ExUni x. (wife x fred) & (P x);
+    d_ceci:= lambda P.P  ceci;
+    
+    d_etre := lambda S A1 A2 s adj mod. (S(s (Lambda x.A2 (mod (A1 (adj x))))));
+    d_mauvaise_humeur := lambda m.m bad_mood;
+    d_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
+    d_vide := lambda m.m empty;
+
+    d_les,d_le,d_sa := lambda P Q.ExUni x.(P x) & (Q x);
+    d_des,d_une := lambda P Q.Ex x.(P x) & (Q x);
+
+    d_clefs:= noun key;
+    d_cauchemards := noun nightmare;
+    d_permis := noun license;
+    d_supermarche := noun supermarket;
+    d_frigo := noun fridge;
+    d_cinema := noun movies ;
+    d_femme := noun (lambda x. wife x fred);
+    d_semaine := noun week;
+
+    d_perdre := transitive_verb lose;
+    d_faire := transitive_verb have;
+    d_rater := transitive_verb miss;
+    d_aimer := transitive_verb love;
+    d_aimer_cl := transitive_verb love;
+    d_aller_a := transitive_verb go_to;
+
+    d_prouver := lambda S A1 A2 s c.S(s(Lambda x.A2 (A1 (prove x c))));
+
+    d_dormir := intransitive_verb sleep;
+
+    d_beaucoup := lambda m P. m (a_lot P);
+    d_mal := lambda m P. m (badly P);
+
+    d_etre_aux,d_avoir := lambda m P.m (PAST P);
+
+    DU := ttt;
+    DUa := ttt -> ttt;
+    T := t;
+    I_DU := lambda x.x;    
+    CLOSE_DISCOURS := lambda D.D(Lambda x.x);
+    
+    d_parce_que := A' Explication;
+    d_de_plus := A' Continuation;
+    d_ensuite_s := B Narration;
+
+    DU_v := (t=>t) => ttt;
+
+    d_ensuite_v := 
+	Lambda d4 d3 d2.
+            Lambda d_subst.
+		Lambda d_foot.
+		    d4 (
+			(my_phi' Narration)
+			    (d3 d_foot)
+				(d2 (d_subst (Lambda x.x)))
+				    ) ;
+
+    d_anchor_v := lambda s mod adv.lambda P.mod (lambda Q.Q(s adv)) P  ;
+    d_anchor_s := lambda s mod.lambda P. mod (Lambda Q.Q (s (Lambda x.x))) P;
+    d_empty_comment := A' comment;
+    d_empty := B Explication;
+
+end

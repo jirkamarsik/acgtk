@@ -24,25 +24,19 @@ disc_to_sent tag_discourse_derivation tag_discourse realize lambda dua1 dua2 dua
 
 disc_to_sent tag_discourse_derivation tag_discourse realize lambda dua1 dua2 dua3.d_ensuite_s dua1 dua2 dua3 (d_anchor_s C8 I_DU) :DUa -> DUa -> DUa -> DUa;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize lambda dua1 dua2 dua3.d_ensuite_v dua1 dua2 dua3 (d_anchor_v (d_aller_a Is Iv (d_etre_aux Iv) d_fred (d_le (d_cinema In)) ) I_DU) :DUa -> DUa -> DUa -> DUa;
+disc_to_sent tag_discourse_derivation tag_discourse discourse_semantics realize lambda dua1 dua2 dua3.d_ensuite_v dua1 dua2 dua3 (d_anchor_v (d_aller_a Is Iv (d_etre_aux Iv) d_fred (d_le (d_cinema In)) ) I_DU) :DUa -> DUa -> DUa -> DUa;
 
 # Les exemples de D-STAG
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 I_DU)): DU;
+disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 I_DU)): DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 I_DU)): DU;
+disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 (d_de_plus I_DU I_DU I_DU (d_anchor_s C3 I_DU)))): DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 (d_de_plus I_DU I_DU I_DU (d_anchor_s C3 I_DU)))): DU;
+disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize d_anchor_s C1 (d_parce_que I_DU I_DU (d_empty I_DU I_DU I_DU (d_anchor_s C5 I_DU)) (d_anchor_s C4 I_DU)): DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU I_DU (d_anchor_s C2 (d_de_plus I_DU I_DU I_DU (d_anchor_s C3 I_DU)))): DU;
+disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize d_anchor_s C6 (d_parce_que I_DU (d_ensuite_s I_DU I_DU I_DU (d_anchor_s C8 I_DU)) I_DU (d_anchor_s C7 I_DU)) : DU;
 
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que I_DU I_DU (d_empty I_DU I_DU I_DU (d_anchor_s C5 I_DU)) (d_anchor_s C4 I_DU)): DU;
-
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C6 (d_parce_que I_DU (d_ensuite_s I_DU I_DU I_DU (d_anchor_s C8 I_DU)) I_DU (d_anchor_s C7 I_DU)) : DU;
-
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C6 (d_parce_que I_DU (d_ensuite_v I_DU I_DU I_DU (d_anchor_v C8 I_DU)) I_DU (d_anchor_s C7 I_DU)) : DU;
-
-disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s C1 (d_parce_que (d_empty_comment I_DU I_DU I_DU (d_anchor_s C10 I_DU)) I_DU  I_DU (d_anchor_s C9 I_DU)) : DU;
+disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize d_anchor_s C1 (d_parce_que (d_empty_comment I_DU I_DU I_DU (d_anchor_s C10 I_DU)) I_DU  I_DU (d_anchor_s C9 I_DU)) : DU;
 
 
 

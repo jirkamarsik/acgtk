@@ -1,3 +1,7 @@
+(* To be compiled with *)
+(* acgc dstag-clausal-grammar.acg dstag-discourse-grammar.acg *)
+
+
 signature derivation_trees =
     NP,NP_cl,N,Adj,S,Det:type;
     NPa,Na,Va,Adja,Sa:type;
@@ -372,34 +376,34 @@ lexicon surface = yield << syntax
 signature logic =
     e,t:type;
 
-    ttt=(t => t) -> t:type;
+    ttt=(t => t) => t:type;
 
-    qnp=(e=>t)->t:type;
-    infix & : t -> t -> t;	
+    qnp=(e=>t)=>t:type;
+    infix & : t => t => t;	
 	
     (* Implications*)
-    infix > : t -> t -> t;
+    infix > : t => t => t;
     
     (* Quantifiers *)
-    binder All : (e=>t) -> t;
-    binder Ex : (e=>t) -> t;
-    binder ExUni : (e=>t) -> t;
+    binder All : (e=>t) => t;
+    binder Ex : (e=>t) => t;
+    binder ExUni : (e=>t) => t;
 
     fred,ceci,il,elle:e;
-    bad_mood:e->t;
-    away:e-> e -> t;
-    empty:e->t;
-    key,nightmare,license,supermarket,fridge,movies,week:e->t;
-    wife:e->e->t;
+    bad_mood:e=>t;
+    away:e=> e => t;
+    empty:e=>t;
+    key,nightmare,license,supermarket,fridge,movies,week:e=>t;
+    wife:e=>e=>t;
 
-    lose,have,miss,love,go_to:e->e->t;
+    lose,have,miss,love,go_to:e=>e=>t;
 
-    prove:e->t->t;
+    prove:e=>t=>t;
 
-    PAST:t->t;
+    PAST:t=>t;
     
-    sleep:e->t;
-    badly,a_lot:t->t;
+    sleep:e=>t;
+    badly,a_lot:t=>t;
 
     Explication : t=> t=> t ;
     Continuation : t=> t=> t ;	
@@ -407,60 +411,60 @@ signature logic =
     Comment : t => t => t;
 
 
-    missing_arg : (t=>t=>t) -> t->t;
+    missing_arg : (t=>t=>t) => t=>t;
 
     transitive_verb =
-	lambda v. lambda S A1 A2 s o mod.S(s(Lambda x.o(Lambda y.A2 (mod (A1(v x y)))))):
-	    (e->e->t) -> (t->t) -> (t->t) -> (t->t) -> qnp -> qnp -> (t->t) -> t;
+	Lambda v. Lambda S A1 A2 s o mod.S(s(Lambda x.o(Lambda y.A2 (mod (A1(v x y)))))):
+	    (e=>e=>t) => (t=>t) => (t=>t) => (t=>t) => qnp => qnp => (t=>t) => t;
 
     intransitive_verb =
-	lambda v. lambda S A1 A2 s mod.S(s(Lambda x.A2 (mod (A1 (v x))))):
-	    (e->t) -> (t->t) -> (t->t) -> (t->t) -> qnp -> (t->t) -> t;
+	Lambda v. Lambda S A1 A2 s mod.S(s(Lambda x.A2 (mod (A1 (v x))))):
+	    (e=>t) => (t=>t) => (t=>t) => (t=>t) => qnp => (t=>t) => t;
 
-    noun = lambda n. lambda m. m (Lambda x.n x):
-	(e->t) -> ((e=>t)->(e=>t)) -> (e=>t);
+    noun = Lambda n. Lambda m. m (Lambda x.n x):
+	(e=>t) => ((e=>t)=>(e=>t)) => (e=>t);
 
 
-    phi'' = lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
-	(t => t=> t)-> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    phi'' = Lambda R X Y P.X(Lambda x.Y(Lambda y.(P x) & (R x y))):
+	(t => t=> t)=> ((t => t)=> t)=> ((t => t)=> t)=> (t=> t)=> t;
     
-    my_phi' = Lambda R. lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
-	(t => t=> t)=> ((t => t)-> t)-> ((t => t)-> t)-> (t=> t)-> t;
+    my_phi' = Lambda R. Lambda X Y P.X(Lambda x.Y(Lambda y. P (R x y))):
+	(t => t=> t)=> ((t => t)=> t)=> ((t => t)=> t)=> (t=> t)=> t;
     
-    B = lambda R.
-	lambda d4 d3 d2.
-            lambda d_subst.
-		lambda d_foot.
+    B = Lambda R.
+	Lambda d4 d3 d2.
+            Lambda d_subst.
+		Lambda d_foot.
 		    d4 (
 			(phi'' R)
 			    (d3 d_foot)
 				(d2 d_subst)
 				    ) :
-					(t => t => t) ->
-					    (ttt -> ttt) ->
-						(ttt -> ttt) -> 
-						    (ttt -> ttt) ->
-							ttt ->
-							    (ttt -> ttt);
+					(t => t => t) =>
+					    (ttt => ttt) =>
+						(ttt => ttt) => 
+						    (ttt => ttt) =>
+							ttt =>
+							    (ttt => ttt);
     
     A' = Lambda R.
-	lambda d4 d3 d2.
-            lambda d_subst.
-		lambda d_foot.
+	Lambda d4 d3 d2.
+            Lambda d_subst.
+		Lambda d_foot.
 		    d4 (
 			(my_phi' R)
 			    (d3 d_foot)
 				(d2 d_subst)
 				    ) :
 					(t => t => t)  =>
-					    (ttt -> ttt) ->
-						(ttt -> ttt) ->
-						    (ttt -> ttt) ->
-							ttt ->
-							    (ttt -> ttt);
+					    (ttt => ttt) =>
+						(ttt => ttt) =>
+						    (ttt => ttt) =>
+							ttt =>
+							    (ttt => ttt);
     
 
-    cont = Lambda t.lambda P.P t:t => (t=>t) -> t;
+    cont = Lambda t.Lambda P.P t:t => (t=>t) => t;
 
 
 end
