@@ -45,6 +45,13 @@ struct
     | App of term * term * location
 	(** If the term is an application *)	
 
+  let rec unlinearize_term = function
+    | Var _ as v -> v
+    | Const _ as c -> c
+    | Abs (x,loc,t,loc') -> Abs (x,loc,unlinearize_term t,loc')
+    | LAbs (x,loc,t,loc') -> Abs (x,loc,unlinearize_term t,loc')
+    | App (t,u,loc) -> App (unlinearize_term t,unlinearize_term u,loc)
+
   type type_def =
     | Type_atom of string * location * term list
 	(** If the type is atomic. The third parameter is the terms to

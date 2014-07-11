@@ -165,6 +165,7 @@ EOI
 					 <Abstract_syntax.location> DOT
 					 <Abstract_syntax.location> SIG_OPEN
 					 <Abstract_syntax.location> LEX_OPEN
+					 <Abstract_syntax.location> NL_LEX_OPEN
 					 <Abstract_syntax.location> END_OF_DEC
 					 <Abstract_syntax.location> TYPE
 					 <Abstract_syntax.location> PREFIX
@@ -216,8 +217,9 @@ EOI
 | IDENT<n> @{n,[Local_data (Some (Signature (E.Signature1.empty n)))]}
 	  
 	  lexicon : 
-| LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e l}
-| LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e l}
+| LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e (l~non_linear:false)}
+| LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e (l ~non_linear:false)}
+| NL_LEX_OPEN lex_opening<l> EQUAL lex_entries<e> {e (l ~non_linear:true)}
 | LEX_OPEN IDENT<name> EQUAL lexicon_composition<c> {c name}
 
 lexicon_composition :
@@ -249,13 +251,14 @@ composition_argument:
       try
 	E.get_signature abs_name env
       with
-	| E.Signature_not_found _ -> emit_parse_error (Error.No_such_signature abs_name) abs_loc in
+      | E.Signature_not_found _ -> emit_parse_error (Error.No_such_signature abs_name) abs_loc in
     let obj = 
       try
 	E.get_signature obj_name env
       with
-	| E.Signature_not_found _ -> emit_parse_error (Error.No_such_signature obj_name) obj_loc in
-    let lex = E.Lexicon.empty name ~abs:abs ~obj:obj in
+      | E.Signature_not_found _ -> emit_parse_error (Error.No_such_signature obj_name) obj_loc in
+    let lex = fun ~non_linear ->
+      E.Lexicon.empty name ~abs:abs ~obj:obj ~non_linear:non_linear in
       lex,[Local_data (Some (Abs_and_obj (abs,obj)))]}
 
 sig_entries :

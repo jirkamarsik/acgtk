@@ -611,6 +611,22 @@ module Lambda =
      let is_2nd_order stype f_unfold_defined_type = 
        (order stype f_unfold_defined_type)<=2
 
+     let rec unlinearize_term = function
+       | Var i -> Var i
+       | LVar i -> Var i
+       | Const i -> Const i
+       | DConst i -> DConst i
+       | Abs (x,t) -> Abs(x,unlinearize_term t)
+       | LAbs (x,t) -> Abs(x,unlinearize_term t)
+       | App (t,u) -> App (unlinearize_term t,unlinearize_term u)
+       | _ -> failwith "Unlinearization not implemented for this term"
+
+     let rec unlinearize_type = function
+       | Atom i -> Atom i
+       | DAtom i -> DAtom i
+       | LFun (ty1,ty2) -> Fun (unlinearize_type ty1,unlinearize_type ty2)
+       | Fun  (ty1,ty2) -> Fun (unlinearize_type ty1,unlinearize_type ty2)
+       | _ -> failwith "Unlinearization not implemented for this type"
 
 
   end

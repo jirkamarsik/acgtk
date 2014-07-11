@@ -183,7 +183,7 @@ sig
   type signature = Signature.t
   type resume
 
-  val empty : (string*Abstract_syntax.location) -> abs:signature -> obj:signature -> t
+  val empty : (string*Abstract_syntax.location) -> ?non_linear:bool -> abs:signature -> obj:signature -> t 
   val name : t -> (string*Abstract_syntax.location)
   val insert : Abstract_syntax.lex_entry -> t -> t
   val to_string : t -> string
@@ -199,4 +199,5 @@ sig
   val compose: t -> t -> (string*Abstract_syntax.location) -> t
   val program_to_buffer : t -> Buffer.t
   val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
+  val interpret_linear_arrow_as_non_linear : t -> bool
 end

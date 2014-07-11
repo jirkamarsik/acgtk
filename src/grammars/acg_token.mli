@@ -40,6 +40,7 @@ sig
     | TYPE of (Abstract_syntax.location)
     | END_OF_DEC of (Abstract_syntax.location)
     | LEX_OPEN of (Abstract_syntax.location)
+    | NL_LEX_OPEN of (Abstract_syntax.location)
     | SIG_OPEN of (Abstract_syntax.location)
     | DOT of (Abstract_syntax.location)
     | RPAREN of (Abstract_syntax.location)

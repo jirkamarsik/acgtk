@@ -131,6 +131,9 @@ let string = (letter|digit|'_')*'\''*
       | "lexicon" {let () = update_data Entry.Lex_kwd (loc lexbuf) in
 		     let () = check_brackets () in
 		       Token.LEX_OPEN(loc lexbuf)}
+      | "nl_lexicon" {let () = update_data Entry.Lex_kwd (loc lexbuf) in
+		     let () = check_brackets () in
+		       Token.NL_LEX_OPEN(loc lexbuf)}
       | "end" {let () = update_data Entry.End_kwd (loc lexbuf) in
 	       let () = check_brackets () in
 		 Token.END_OF_DEC(loc lexbuf)}

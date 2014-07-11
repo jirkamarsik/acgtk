@@ -32,6 +32,7 @@
     "type"
     "signature"
     "lexicon"
+    "nl_lexicon"
     "<<")
   '(
     ; FIXME while this regexp correctly capture multi-line comments,
@@ -49,6 +50,17 @@
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 6 'font-lock-keyword-face)
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 7 'font-lock-constant-face)
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 8 'font-lock-keyword-face)
+
+
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 1 'font-lock-keyword-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 2 'font-lock-constant-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 3 'font-lock-keyword-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 4 'font-lock-constant-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 5 'font-lock-keyword-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 6 'font-lock-keyword-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 7 'font-lock-constant-face)
+    ("\\(nl_lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\((\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\()\\)[ \n\t]*\\(:\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)" 8 'font-lock-keyword-face)
+
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 1 'font-lock-keyword-face)
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 2 'font-lock-constant-face)
     ("\\(lexicon\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(=\\)[ \n\t]*\\([a-zA-Z0-9_']*\\)[ \n\t]*\\(<<\\)" 3 'font-lock-keyword-face)

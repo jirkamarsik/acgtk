@@ -57,6 +57,8 @@ sig
     | App of term * term * location
 	(** If the term is an application *)	
 	
+
+  val unlinearize_term : term -> term
 	
   (** The type of types as found in the signature files *)
 	

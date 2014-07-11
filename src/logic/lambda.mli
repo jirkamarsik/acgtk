@@ -75,6 +75,9 @@ sig
   val raw_type_to_caml : stype -> string
 
   val normalize : ?id_to_term:(int -> term) -> term -> term
+
+  val unlinearize_term : term -> term
+  val unlinearize_type : stype -> stype
     
 
   (** [eta_long_form t ty type_of_cst] returns the eta-long form of

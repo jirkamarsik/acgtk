@@ -53,6 +53,7 @@ struct
 
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
+	    non_linear_interpretation:bool;
 	    abstract_sig:Sg.t;
 	    object_sig:Sg.t;
 	    datalog_prog:(Datalog.Program.program * Lambda.term RuleToCstMap.t) option}
@@ -62,9 +63,11 @@ struct
 
   let get_sig {abstract_sig=abs;object_sig=obj} = abs,obj
 
-  let empty name ~abs ~obj = 
-    let prog = if Sg.is_2nd_order abs then Some (Datalog.Program.empty,RuleToCstMap.empty) else None in
-    {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj;datalog_prog=prog}
+  let empty name  ?(non_linear=false) ~abs ~obj = 
+    let prog = if (Sg.is_2nd_order abs) && (not non_linear) then Some (Datalog.Program.empty,RuleToCstMap.empty) else None in
+    {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj;datalog_prog=prog;non_linear_interpretation=non_linear}
+
+  let interpret_linear_arrow_as_non_linear {non_linear_interpretation} = non_linear_interpretation
 
   let emit_missing_inter lex lst =
     let lex_name,loc = name lex in
@@ -73,40 +76,46 @@ struct
 
   let rec interpret_type abs_ty ({abstract_sig=abs_sg;dico=dico} as lex) =
     match abs_ty with
-      | Lambda.Atom i -> 
-	  (let abs_ty_as_str = Sg.type_to_string abs_ty abs_sg in
-	     try
-	       match Dico.find abs_ty_as_str dico with
-		 | Type (_,obj_ty) -> obj_ty
-		 | Constant _ -> failwith "Bug"
-	     with
-	       | Not_found -> emit_missing_inter lex [abs_ty_as_str])
-      | Lambda.DAtom i -> interpret_type (Sg.unfold_type_definition i abs_sg) lex
-      | Lambda.LFun (ty1,ty2) -> Lambda.LFun (interpret_type ty1 lex,interpret_type ty2 lex)
-      | Lambda.Fun (ty1,ty2) -> Lambda.Fun (interpret_type ty1 lex,interpret_type ty2 lex)
-      | _ -> failwith "Not yet implemented"
-
+    | Lambda.Atom i -> 
+      (let abs_ty_as_str = Sg.type_to_string abs_ty abs_sg in
+       try
+	 match Dico.find abs_ty_as_str dico with
+	 | Type (_,obj_ty) -> obj_ty
+	 | Constant _ -> failwith "Bug"
+       with
+       | Not_found -> emit_missing_inter lex [abs_ty_as_str])
+    | Lambda.DAtom i -> interpret_type (Sg.unfold_type_definition i abs_sg) lex
+    | Lambda.LFun (ty1,ty2) -> Lambda.LFun (interpret_type ty1 lex,interpret_type ty2 lex)
+    | Lambda.Fun (ty1,ty2) -> Lambda.Fun (interpret_type ty1 lex,interpret_type ty2 lex)
+    | _ -> failwith "Not yet implemented"
+      
   let rec interpret_term abs_t ({abstract_sig=abs_sg;dico=dico} as lex) =
     match abs_t with
-      | (Lambda.Var i| Lambda.LVar i) -> abs_t
-      | Lambda.Const i -> 
-	  (let abs_term_as_str = Sg.term_to_string abs_t abs_sg in
-	     try
-	       match Dico.find abs_term_as_str dico with
-		 | Constant (_,obj_t) -> obj_t
-		 | Type _ -> failwith "Bug"
-	     with
-	       | Not_found -> emit_missing_inter lex [abs_term_as_str] )
-      | Lambda.DConst i -> 
-	 interpret_term (Sg.unfold_term_definition i abs_sg) lex
-      | Lambda.Abs(x,t) -> Lambda.Abs(x,interpret_term t lex)
-      | Lambda.LAbs(x,t) -> Lambda.LAbs(x,interpret_term t lex)
-      | Lambda.App(t,u) -> Lambda.App(interpret_term t lex,interpret_term u lex)
-      | _ -> failwith "Not yet implemented"
+    | Lambda.Var i -> abs_t
+    | Lambda.LVar i -> abs_t
+    | Lambda.Const i -> 
+      (let abs_term_as_str = Sg.term_to_string abs_t abs_sg in
+       try
+	 match Dico.find abs_term_as_str dico with
+	 | Constant (_,obj_t) -> obj_t
+	 | Type _ -> failwith "Bug"
+       with
+       | Not_found -> emit_missing_inter lex [abs_term_as_str] )
+    | Lambda.DConst i -> 
+      interpret_term (Sg.unfold_term_definition i abs_sg) lex
+    | Lambda.Abs(x,t) -> Lambda.Abs(x,interpret_term t lex)
+    | Lambda.LAbs(x,t) -> Lambda.LAbs(x,interpret_term t lex)
+    | Lambda.App(t,u) -> Lambda.App(interpret_term t lex,interpret_term u lex)
+    | _ -> failwith "Not yet implemented"
     
   let interpret t ty lex = 
-    let t_interpretation = (interpret_term t lex) in
-      Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig) t_interpretation,interpret_type ty lex
+    let t_interpretation = interpret_term t lex in
+    let t_interpretation = Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig) t_interpretation in
+    let ty_interpretation = interpret_type ty lex in
+    if lex.non_linear_interpretation then
+      Lambda.unlinearize_term t_interpretation,Lambda.unlinearize_type ty_interpretation
+    else
+      t_interpretation,ty_interpretation
 
   module Reduction=Reduction.Make(Sg)
 
@@ -140,13 +149,34 @@ struct
       
       
   let insert e ({dico=d} as lex) = match e with
-    | Abstract_syntax.Type (id,loc,ty) -> {lex with dico=Dico.add id (Type (loc,Sg.convert_type ty lex.object_sig)) d}
+    | Abstract_syntax.Type (id,loc,ty) ->
+      let interpreted_type = Sg.convert_type ty lex.object_sig in
+      let interpreted_type =
+	if lex.non_linear_interpretation then
+	  Lambda.unlinearize_type interpreted_type 
+	else
+	  interpreted_type in
+      {lex with dico=Dico.add id (Type (loc,interpreted_type)) d}
     | Abstract_syntax.Constant (id,loc,t) ->
       let abs_type=Sg.expand_type (Sg.type_of_constant id lex.abstract_sig) lex.abstract_sig in
-      let interpreted_type = (interpret_type abs_type lex) in
+      let interpreted_type = 
+	if lex.non_linear_interpretation then
+	  interpret_type (Lambda.unlinearize_type abs_type) lex
+	else 
+	  interpret_type abs_type lex in
+      let t = 
+	if lex.non_linear_interpretation then
+	  Abstract_syntax.unlinearize_term t
+	else
+	  t in	
+      let unfold i = 
+	if lex.non_linear_interpretation then
+	  Lambda.unlinearize_term (Sg.unfold_term_definition i lex.object_sig)
+	else
+	  Sg.unfold_term_definition i lex.object_sig in	
       let interpreted_term = 
 	Lambda.normalize
-	  ~id_to_term:(fun i -> Sg.unfold_term_definition i lex.object_sig)
+	  ~id_to_term:unfold
 	  (Sg.typecheck t interpreted_type lex.object_sig) in
       let prog = match lex.datalog_prog with
 	| None -> None
@@ -226,7 +256,9 @@ struct
 	match parse_forest with
 	| [] -> SharedForest.SharedForest.empty
 	| [f] -> SharedForest.SharedForest.init f
-	| _ -> failwith "Bug: not fully specified query" in 
+(*	| a::b::tl -> SharedForest.SharedForest.init a *)
+	| _ -> failwith "Bug: not fully specified query"
+      in 
       resume
     | Some _ , _ -> 
       let () = 
@@ -307,7 +339,8 @@ struct
 	    Dico.empty;
        abstract_sig = lex2.abstract_sig;
        object_sig=lex1.object_sig;
-       datalog_prog=lex2.datalog_prog} in
+       datalog_prog=lex2.datalog_prog;
+       non_linear_interpretation=(interpret_linear_arrow_as_non_linear lex1) || (interpret_linear_arrow_as_non_linear lex2)} in
     rebuild_prog temp_lex
 
   let program_to_buffer lex =
