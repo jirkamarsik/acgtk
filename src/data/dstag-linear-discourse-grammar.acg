@@ -18,7 +18,7 @@ signature discourse_grammar =
     
     d_fred,d_ceci,d_il : NP;
     d_l : NP_cl;
-    d_etre: Sa -> Va -> Va -> NP -> Adj -> S;
+    d_etre: Sa -> Va => Va -> NP -> Adj => S;
     d_mauvaise_humeur,d_vide: Adja -> Adj;
     d_absente: Adja -> NP -> Adj;
     
@@ -47,7 +47,7 @@ signature discourse_grammar =
 
 
     d_anchor_s:S -> DUa -> DU;
-    d_anchor_v:S -> DUa -> DU_v; 
+    d_anchor_v:S => DUa => DU_v; 
 
     I_DU : DUa;
 
@@ -172,7 +172,7 @@ lexicon linear_discourse_semantics(discourse_grammar):linear_logic =
     NP,NP_cl := qnp;
     N := e=>t;
     Adj := e->t;
-    S := (t->t) -> t;
+    S := (t=>t) -> t;
     Det := (e->t) -> qnp;
 
     NPa:= qnp -> qnp;
@@ -189,7 +189,7 @@ lexicon linear_discourse_semantics(discourse_grammar):linear_logic =
     d_l := lambda P.ExUni x. (wife x fred) & (P x);
     d_ceci:= lambda P.P  ceci;
     
-    d_etre := lambda S A1 A2 s adj mod. (S(s (Lambda x.A2 (mod (A1 (adj x))))));
+    d_etre := lambda S.Lambda A1.lambda A2 s.Lambda adj.lambda mod. (S(s (Lambda x.A2 (mod (A1 (adj x))))));
     d_mauvaise_humeur := lambda m.m bad_mood;
     d_absente := lambda m P z .P(Lambda x. m (lambda y. away y x) z)  ;
     d_vide := lambda m.m empty;
@@ -235,16 +235,16 @@ lexicon linear_discourse_semantics(discourse_grammar):linear_logic =
     DU_v := (t=>t) => ttt;
 
     d_ensuite_v := 
-	Lambda d4 d3 d2.
-            Lambda d_subst.
-		Lambda d_foot.
+	lambda d4 d3 d2.
+            lambda d_subst.
+		lambda d_foot.
 		    d4 (
 			(my_phi' Narration)
 			    (d3 d_foot)
 				(d2 (d_subst (Lambda x.x)))
 				    ) ;
 
-    d_anchor_v := lambda s mod adv.lambda P.mod (lambda Q.Q(s adv)) P  ;
+    d_anchor_v := Lambda s mod adv.lambda P.mod (lambda Q.Q(s adv)) P  ;
     d_anchor_s := lambda s mod.lambda P. mod (Lambda Q.Q (s (Lambda x.x))) P;
     d_empty_comment := A' comment;
     d_empty := B Explication;
