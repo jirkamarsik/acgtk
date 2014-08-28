@@ -80,7 +80,7 @@ struct
       (let abs_ty_as_str = Sg.type_to_string abs_ty abs_sg in
        try
 	 match Dico.find abs_ty_as_str dico with
-	 | Type (_,obj_ty) -> obj_ty
+	 | Type (_,obj_ty) -> Sg.expand_type obj_ty lex.object_sig
 	 | Constant _ -> failwith "Bug"
        with
        | Not_found -> emit_missing_inter lex [abs_ty_as_str])

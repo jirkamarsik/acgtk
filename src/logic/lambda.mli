@@ -88,6 +88,16 @@ sig
       [i]. [i] is supposed to be an actual id of a constant.*)
   val eta_long_form : term -> stype -> (int -> stype) -> term
 
+  (** [eta_expansion t ty type_of_cst] returns the eta-long form of
+      [t] with respect of type [ty]. [t] is supposed to be in
+      beta-normal form and all the definitions of [t] and [ty] should
+      have been unfolded. [type_of_cst i] returns
+      the type (with unfolded definitions) of the constant whose id is
+      [i]. [i] is supposed to be an actual id of a constant.*)
+  val eta_expansion : term -> stype -> (int -> stype) -> term
+
+
+
   (** [is_2nd_order ty type_definition] returns [true] if [ty] is 2nd
       order. [ty] should have been unfolded and [type_definition i] is
       returns the unfolded type of a defined type ([DAtom]) whose id
