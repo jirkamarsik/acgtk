@@ -555,58 +555,58 @@ module Lambda =
        let rec eta_expansion_rec term stype ~is_functor l_shift nl_shift linear_typing_env non_linear_typing_env =
 	 match term,stype,is_functor with
 	 | LVar i, None, is_f -> 
-	   eta_expansion_rec (LVar i) (Some (List.nth linear_typing_env (i+l_shift))) ~is_functor:is_f l_shift nl_shift linear_typing_env non_linear_typing_env
+	   eta_expansion_rec (LVar i) (Some (List.nth linear_typing_env (i))) ~is_functor:is_f l_shift nl_shift linear_typing_env non_linear_typing_env
 	 | LVar i , Some (Atom _ as ty) , false ->
-	   let () = assert (ty = List.nth linear_typing_env (i+l_shift)) in
-	   LVar (i+l_shift),ty
+	     let () = assert (ty = List.nth linear_typing_env (i)) in
+	     LVar (i),ty
 	     
 	 | LVar i , Some (LFun (a,b) as ty) ,true ->
-	   let () = assert (ty = List.nth linear_typing_env (i+l_shift))  in
-	   LVar (i+l_shift),ty
+	   let () = assert (ty = List.nth linear_typing_env (i))  in
+	   LVar (i),ty
 	     
 	 | LVar i , Some (LFun (a,b) as ty),false ->
-	   let () = assert (ty = List.nth linear_typing_env (i+l_shift)) in
+	   let () = assert (ty = List.nth linear_typing_env (i)) in
 	   let new_var,_ = eta_expansion_rec (LVar 0) (Some a) ~is_functor:false 0 0 [a] [] in
-	   let res,_ = eta_expansion_rec (App(LVar (i+l_shift),new_var)) (Some b) ~is_functor:false 0 0 (a::linear_typing_env) non_linear_typing_env in
+	   let res,_ = eta_expansion_rec (App(LVar (i+1),new_var)) (Some b) ~is_functor:false 0 0 (a::linear_typing_env) non_linear_typing_env in
 	   LAbs ("x",res),ty
 	     
 	 | LVar i , Some (Fun (a,b) as ty), true -> 
-	   let () = assert (Fun(a,b) = List.nth linear_typing_env (i+l_shift)) in
-	   LVar (i+l_shift),ty
+	   let () = assert (Fun(a,b) = List.nth linear_typing_env (i)) in
+	   LVar (i),ty
 	     
 	 | LVar i , Some (Fun (a,b) as ty), false ->
-	   let () = assert (Fun(a,b) = List.nth linear_typing_env (i+l_shift)) in
+	   let () = assert (Fun(a,b) = List.nth linear_typing_env (i)) in
 	   let new_var,_ = eta_expansion_rec (Var 0) (Some a) ~is_functor:false 0 0 [] [a] in
-	   let res,_ = eta_expansion_rec (App(LVar (i+l_shift),new_var)) (Some b) ~is_functor:false 0 0 linear_typing_env (a::non_linear_typing_env) in
+	   let res,_ = eta_expansion_rec (App(LVar i,new_var)) (Some b) ~is_functor:false 0 0 linear_typing_env (a::non_linear_typing_env) in
 	   Abs ("x",res),ty
 
 
 
 	 | Var i, None, is_f -> 
-	   eta_expansion_rec (Var i) (Some (List.nth non_linear_typing_env (i+nl_shift))) ~is_functor:is_f l_shift nl_shift linear_typing_env non_linear_typing_env
+	   eta_expansion_rec (Var i) (Some (List.nth non_linear_typing_env (i))) ~is_functor:is_f l_shift nl_shift linear_typing_env non_linear_typing_env
 
 	 | Var i , Some (Atom j as ty) , false -> 
-	   let () = assert (Atom j = List.nth non_linear_typing_env (i+nl_shift)) in
-	   Var (i+nl_shift),ty
+	   let () = assert (Atom j = List.nth non_linear_typing_env (i)) in
+	   Var (i),ty
 
 	 | Var i , Some (LFun (a,b) as ty), true ->
-	   let () = assert (LFun (a,b) = List.nth non_linear_typing_env (i+nl_shift)) in
-	   Var (i+nl_shift),ty
+	   let () = assert (LFun (a,b) = List.nth non_linear_typing_env (i)) in
+	   Var (i),ty
 
 	 | Var i , Some (LFun (a,b) as ty), false ->
-	   let () = assert (LFun(a,b) = List.nth non_linear_typing_env (i+nl_shift)) in
+	   let () = assert (LFun(a,b) = List.nth non_linear_typing_env (i)) in
 	   let new_var,_ = eta_expansion_rec (LVar 0) (Some a) ~is_functor:false 0 0 [a] [] in
-	   let res,_=eta_expansion_rec (App(Var (i+nl_shift),new_var))  (Some b) ~is_functor:false 0 0 (a::linear_typing_env) non_linear_typing_env in
+	   let res,_=eta_expansion_rec (App(Var i,new_var))  (Some b) ~is_functor:false 0 0 (a::linear_typing_env) non_linear_typing_env in
 	   LAbs ("x",res),ty
 
 	 | Var i , Some (Fun (a,b) as ty), true ->
-	   let () = assert (Fun(a,b) = List.nth non_linear_typing_env (i+nl_shift)) in
-	   Var (i+nl_shift),ty
+	   let () = assert (Fun(a,b) = List.nth non_linear_typing_env (i)) in
+	   Var (i),ty
 
 	 | Var i , Some (Fun (a,b) as ty), false ->
-	   let () = assert (Fun(a,b) = List.nth non_linear_typing_env (i+nl_shift)) in
+	   let () = assert (Fun(a,b) = List.nth non_linear_typing_env (i)) in
 	   let new_var,_ = eta_expansion_rec (Var 0) (Some a) ~is_functor:false 0 0 [] [a] in
-	   let res,_=eta_expansion_rec (App(Var (i+nl_shift),new_var)) (Some b) ~is_functor:false 0 0 linear_typing_env (a::non_linear_typing_env) in
+	   let res,_=eta_expansion_rec (App(Var (i+1),new_var)) (Some b) ~is_functor:false 0 0  linear_typing_env (a::non_linear_typing_env) in
 	   Abs ("x",res),ty
 
 
@@ -620,11 +620,13 @@ module Lambda =
 	 | Const _, Some (Fun (a,b) as ty), true -> term,ty
 	 | Const _, Some (LFun (a,b) as ty), false -> 
 	   let new_var,_ = eta_expansion_rec (LVar 0) (Some a) ~is_functor:false 0 0 [a] [] in
-	   let res,_ = eta_expansion_rec (App(term,new_var)) (Some b) ~is_functor:false l_shift nl_shift (a::linear_typing_env) non_linear_typing_env in
+	   let term = lift 1 0 term in
+	   let res,_ = eta_expansion_rec (App(term,new_var)) (Some b) ~is_functor:false 0 0 (a::linear_typing_env) non_linear_typing_env in
 	   LAbs ("x",res),ty
 	 | Const _, Some (Fun (a,b) as ty), false -> 
 	   let new_var,_ = eta_expansion_rec (Var 0) (Some a) ~is_functor:false 0 0 [] [a] in
-	   let res,_ = eta_expansion_rec (App(term,new_var)) (Some b) ~is_functor:false nl_shift nl_shift linear_typing_env (a::non_linear_typing_env) in
+	   let term = lift 0 1 term in
+	   let res,_ = eta_expansion_rec (App(term,new_var)) (Some b) ~is_functor:false 0 0 linear_typing_env (a::non_linear_typing_env) in
 	   Abs ("x",res),ty
 	     
 	 | DConst _, _, _ -> failwith "All the definitions should have been unfolded"
@@ -667,14 +669,16 @@ module Lambda =
 	     App (u',v'), b
 	   | _ -> failwith "Should be well typed 2")
 
-	 | App (u,v), Some (Fun (ty',_) as ty), false ->
-	   let var',_= eta_expansion_rec (Var 0) (Some ty') ~is_functor:false 0 0 [] [ty'] in
-	   let u',u_type = eta_expansion_rec u None ~is_functor:true l_shift (nl_shift+1) linear_typing_env (ty'::non_linear_typing_env) in
+	 | App (u,v), Some (Fun (a',b') as ty), false ->
+	   let var',_= eta_expansion_rec (Var 0) (Some a') ~is_functor:false 0 0 [] [a'] in
+	   let u = lift 0 1 u in
+	   let u',u_type = eta_expansion_rec u None ~is_functor:true l_shift nl_shift linear_typing_env (a'::non_linear_typing_env) in
 	   (match u_type with
 	   | (LFun (a,b)|Fun (a,b)) ->
 	     let () = assert (b=ty) in
-	     let v',v_type = eta_expansion_rec v (Some a) ~is_functor:false l_shift (nl_shift+1) linear_typing_env (ty'::non_linear_typing_env)  in
-	     let res,_=eta_expansion_rec (App (App (u',v'),var')) (Some b) ~is_functor:false 0 0 linear_typing_env (ty'::non_linear_typing_env) in
+	     let v = lift 0 1 v in
+	     let v',v_type = eta_expansion_rec v (Some a) ~is_functor:false l_shift nl_shift linear_typing_env (a'::non_linear_typing_env)  in
+	     let res,_=eta_expansion_rec (App (App (u',v'),var')) (Some b') ~is_functor:false l_shift nl_shift linear_typing_env (a'::non_linear_typing_env) in
 	     Abs("x",res), b
 	   | _ -> failwith "Should be well typed 3")
 
@@ -690,12 +694,14 @@ module Lambda =
 
 	 | App (u,v), Some (LFun (a',b') as ty), false ->
 	   let var',_= eta_expansion_rec (LVar 0) (Some a') ~is_functor:false 0 0 [a'] [] in
-	   let u',u_type = eta_expansion_rec u None ~is_functor:true (l_shift+1) nl_shift (a'::linear_typing_env) non_linear_typing_env in
+	   let u = lift 1 0 u in
+	   let u',u_type = eta_expansion_rec u None ~is_functor:true l_shift nl_shift (a'::linear_typing_env) non_linear_typing_env in
 	   (match u_type with
 	   | (LFun (a,b)|Fun (a,b)) ->
 	     let () = assert (b=ty) in
-	     let v',v_type = eta_expansion_rec v (Some a) ~is_functor:false (l_shift+1) nl_shift (a'::linear_typing_env) non_linear_typing_env  in
-	     let res,_ = eta_expansion_rec (App (App (u',v'),var')) (Some b') ~is_functor:false 0 0  (a'::linear_typing_env) non_linear_typing_env in
+	     let v = lift 1 0 v in
+	     let v',v_type = eta_expansion_rec v (Some a) ~is_functor:false l_shift nl_shift (a'::linear_typing_env) non_linear_typing_env  in
+	     let res,_ = eta_expansion_rec (App (App (u',v'),var')) (Some b') ~is_functor:false l_shift nl_shift  (a'::linear_typing_env) non_linear_typing_env in
 	     LAbs("x",res), b
 	   | _ -> failwith "Should be well typed 5")
 	     
@@ -712,7 +718,7 @@ module Lambda =
 
 	   	   
 	 |  _, Some (DAtom _) , _ -> failwith "type definitions should have been unfolded" 
-	 | LVar _ , _ ,_ -> failwith "LVar Term should be well typed"
+	 | LVar _ , Some ty ,b -> failwith (Printf.sprintf "LVar Term should be well typed. Type: %s. Is_functor: %b" (raw_type_to_string ty) b)
 	 | Var _ , _ , _  -> failwith "Var Term should be well typed"
 
 	 | _ -> raise Not_yet_implemented in
