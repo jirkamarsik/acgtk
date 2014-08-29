@@ -211,19 +211,10 @@ struct
   let eta_long_form term stype sg =
     let expanded_type= expand_type stype sg in
     let expanded_term= expand_term term sg in
-    let res = Lambda.eta_long_form (Lambda.normalize expanded_term) expanded_type (fun id -> get_type_of_const_id id sg) in
+    let res = Lambda.eta_long_form expanded_term expanded_type (fun id -> get_type_of_const_id id sg) in
     LOG "term: %s:%s" (term_to_string term sg) (type_to_string stype sg) LEVEL TRACE;
     LOG "eta_long_form: %s:%s" (term_to_string res sg) (type_to_string expanded_type sg) LEVEL TRACE;
-    let res' = Lambda.eta_expansion expanded_term expanded_type (fun id -> get_type_of_const_id id sg) in
-    LOG "eta_expansion: %s:%s" (term_to_string res' sg) (type_to_string expanded_type sg) LEVEL TRACE; 
-    let () =
-      if res=res' then
-	(LOG "Both expansion give the same result" LEVEL TRACE;
-	 ())
-      else
-	(LOG "The two expansions differ" LEVEL TRACE;
-	 ()) in
-    res'
+    res
 			   
 
   let unfold t sg = Lambda.normalize (expand_term t sg)

@@ -60,3 +60,6 @@ tag_syntax tag_yields  tag_semantics realize C_liked ( C_said (C_does_think I_s 
 
 # And we can recover this term from its semantic realization:
 tag_semantics parse WHO (lambda y. think p (say j (like b y))) : S;
+
+tag_semantics parse  All x. (dog x) > (Ex x'. (cat x') & (chase x x')) :S;
+
