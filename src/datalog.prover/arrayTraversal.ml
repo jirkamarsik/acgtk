@@ -56,21 +56,29 @@ end
 
 module Make2 (E:Evaluator_TYPE2)=
   struct
+    exception Failed
     type row = E.CellSet.t
     type array = row list
 
     let rec fold_on_array f acc state = function
       | [] -> f acc state
       | row::remaining ->
-	E.CellSet.fold
-	  (fun elt l_acc ->
-	    match E.update state elt with
-	    | Some new_state -> fold_on_array f l_acc new_state remaining
-	    | None -> l_acc)
-	  row
-	  acc
-	  
-    let collect_results f acc init array = fold_on_array f acc init array
+	if E.CellSet.is_empty row then
+	  raise Failed
+	else
+	  E.CellSet.fold
+	    (fun elt l_acc ->
+	      match E.update state elt with
+	      | Some new_state -> fold_on_array f l_acc new_state remaining
+	      | None -> l_acc)
+	    row
+	    acc
+	    
+    let collect_results f acc init array = 
+      try
+	fold_on_array f acc init array
+      with
+      | Failed -> acc
 end
 
       

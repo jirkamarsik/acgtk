@@ -854,7 +854,7 @@ struct
 	
   (* TODO: if a set of facts for a predicate of the rhs is empty, we
      can stop the computation *)
-    let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table cst_table =
+    let temp_facts r e_facts previous_step_facts facts delta_facts agg_function start pred_table cst_table=
       LOG "Scanning the rule: %s" (ASRule.to_string (Rule.to_abstract r r.Rule.content pred_table) pred_table cst_table) LEVEL TRACE;
       (* We first collect all the contents compatible with the facts of
 	 the intensional database. They depend on the intensional
@@ -863,11 +863,19 @@ struct
 	 ([pred_lst]). This triple correspond to a {!Focused_list.t}
 	 type. *)
       let make_search_array_i_pred (rev_pred_lst,delta_position,pred_lst) =
+	LOG "Looking for facts for predicate %s in the following facts" (ASPred.to_string {ASPred.p_id=delta_position.Predicate.p_id;ASPred.arity=0;ASPred.arguments=[]} pred_table cst_table) LEVEL TRACE;
+	Utils.log_iteration
+	  (fun s -> LOG s LEVEL DEBUG)
+	  (Predicate.facts_to_string delta_facts pred_table cst_table);
 	let facts_at_delta_position=
 	  try
-	    Predicate.PredMap.find delta_position.Predicate.p_id delta_facts
+	    let res =Predicate.PredMap.find delta_position.Predicate.p_id delta_facts in
+	    LOG "Found some" LEVEL DEBUG;
+	    res
 	  with
-	  | Not_found -> Predicate.FactSet.empty in
+	  | Not_found -> 
+	    LOG "Found none" LEVEL DEBUG;
+	    Predicate.FactSet.empty in
 	let end_pred_facts =
 	  List.map
 	    (fun pred -> 
@@ -881,7 +889,7 @@ struct
 	    try
 	      (Predicate.PredMap.find pred.Predicate.p_id facts)::acc
 	    with
-	    | Not_found -> acc)
+	    | Not_found -> Predicate.FactSet.empty::acc)
 	  (facts_at_delta_position::end_pred_facts)
 	  rev_pred_lst in
       (* We define the function to be run on each reached end state of
@@ -1281,7 +1289,7 @@ struct
 	Predicate.PredMap.iter
 	  (fun _ facts ->
 	    Predicate.FactSet.iter
-	      (fun fact -> Printf.bprintf buff "%s\n" (ASPred.to_string fact prog.pred_table prog.const_table))
+	      (fun fact -> Printf.bprintf buff "%s.\n" (ASPred.to_string fact prog.pred_table prog.const_table))
 	      facts)
 	  prog.edb_facts in
       buff
