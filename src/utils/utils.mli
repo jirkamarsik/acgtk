@@ -37,6 +37,8 @@ module IntSet : Set.S with type elt = int
     length greater than 2) *)
 val string_of_list : string -> ('a -> string) -> ('a list) -> string
 
+val format_of_list : string -> ('a -> string) -> ('a list) -> unit
+
 (** [string_of_list_rev sep to_string [a_1;...;a_n]] returns a string
     made of the strings [to_string a_n] ... [to_string a_1]
     concatenated with the separator [sep] between each of the elements

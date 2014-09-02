@@ -459,6 +459,7 @@ let format = fun format ->
       | Some ns,_ -> List.map (fun (n,l) -> get_lex (Some n) "realize" e l) ns in
     let _ = List.fold_left
       (fun (first,last_abs_sg) lex -> 
+	let _ = Format.flush_str_formatter () in
 	let abs,obj=E.Lexicon.get_sig lex in
 	let () =
 	  match last_abs_sg with
@@ -471,12 +472,24 @@ let format = fun format ->
 	| None -> false,Some abs
 	| Some (t,ty) -> 
 	  let t',ty' = E.Lexicon.interpret t ty lex in
-	  let () = Format.printf
+	  let () =
+	    Format.fprintf
+	      Format.str_formatter
+	      "@[<v5>Interpreted by %s in %s as:@[" 
+	      (fst (E.Lexicon.name lex))
+	      (fst (E.Signature1.name obj)) in
+	  let () = E.Signature1.term_to_formatted_string t' obj in
+	  let () = Format.fprintf Format.str_formatter " :@ " in
+	  let () = E.Signature1.type_to_formatted_string ty' obj in
+	  let () = Format.fprintf Format.str_formatter "@]@]@." in
+	  let s = Format.flush_str_formatter () in
+	  let () = Format.printf "%s@?" s in
+(*	  let () = Format.printf
 	    "Interpreted by %s in %s as:\n\t%s : %s\n%!"
 	    (fst (E.Lexicon.name lex))
 	    (fst (E.Signature1.name obj))
 	    (E.Signature1.term_to_string t' obj)
-	    (E.Signature1.type_to_string ty' obj) in
+	    (E.Signature1.type_to_string ty' obj) in *)
 	  false,Some abs)
       (true,None)
       lexicons in
@@ -522,7 +535,15 @@ let format = fun format ->
     let abs_sig,_=E.Lexicon.get_sig lex in
     match E.Lexicon.get_analysis resume lex with
     | Some t,resume -> 
-      let () = Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string t abs_sig) (E.Signature1.type_to_string abs_ty abs_sig) in
+      let _ = Format.flush_str_formatter () in
+      let () = Format.fprintf Format.str_formatter "@[@[" in
+      let () = E.Signature1.term_to_formatted_string t abs_sig in
+      let () = Format.fprintf Format.str_formatter "@] :@ @[" in
+      let () = E.Signature1.type_to_formatted_string abs_ty abs_sig in
+      let () = Format.fprintf Format.str_formatter "@]@]" in
+      let s = Format.flush_str_formatter () in
+      let () = Format.printf "%s@?" s in
+(*      let () = Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string t abs_sig) (E.Signature1.type_to_string abs_ty abs_sig) in *)
       Some resume
     | None,_ -> None
       

@@ -84,6 +84,10 @@ sig
       signature [sg] *)
     val term_to_string : term -> t -> string 
 
+
+  val type_to_formatted_string : stype -> t -> unit
+  val term_to_formatted_string : term -> t -> unit
+
   (** [unfold_type_definition id t] returns the actual type for the
       type defined by [id] as the identifier of a type definition in
       the signature [t]. Fails with "Bug" if [id] does not correspond

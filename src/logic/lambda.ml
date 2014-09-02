@@ -126,6 +126,17 @@ module Lambda =
 
 
 
+
+     let left_paren = function
+       | true -> "("
+       | false -> ""
+
+     let right_paren = function
+       | true -> ")"
+       | false -> ""
+
+
+
      let type_to_string ty id_to_sym =
        let rec type_to_string_aux ty =
 	   match ty with
@@ -151,7 +162,130 @@ module Lambda =
 	     let k_str = kind_to_string_aux k' in
 	       Printf.sprintf "(%s)%s" (type_to_string ty id_to_sym) k_str in
 	 kind_to_string_aux k
+
+
+
+     let type_to_formatted_string ty id_to_sym =
+       let rec type_to_string_aux ty paren =
+	   match ty with
+	     | Atom i -> Format.fprintf Format.str_formatter "@[%s@]" (snd (id_to_sym i))
+	     | DAtom i -> Format.fprintf Format.str_formatter "@[%s@]" (snd (id_to_sym i))
+	     | LFun (ty1,ty2) ->
+	       let () = Format.fprintf Format.str_formatter "@[%s@[" (left_paren paren) in
+	       let () = type_to_string_aux ty1 true in
+	       let () = Format.fprintf Format.str_formatter " ->@ @[" in
+	       let () = type_to_string_aux ty2 true in
+	       Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	     | Fun (ty1,ty2) ->
+	       let () = Format.fprintf Format.str_formatter "@[%s@[" (left_paren paren) in
+	       let () = type_to_string_aux ty1 true in
+	       let () = Format.fprintf Format.str_formatter " =>@ @[" in
+	       let () = type_to_string_aux ty2 true in
+	       Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	     | _ -> failwith "Not yet implemented" in
+       let _ = Format.flush_str_formatter () in
+       let () = Format.fprintf Format.str_formatter "@[" in
+       let () = type_to_string_aux ty false in
+       Format.fprintf Format.str_formatter "@]"
+       
+       
+
+     let kind_to_formatted_string k id_to_sym =
+       let rec kind_to_string_aux = function
+	 | Type -> Format.fprintf Format.str_formatter "@[type@]"
+	 | Depend (ty,k') -> 
+	   let () = Format.fprintf Format.str_formatter "@[(" in
+	   let () = type_to_formatted_string ty id_to_sym in
+	   let () = Format.fprintf Format.str_formatter ")@]" in
+	   kind_to_string_aux k' in
+	 kind_to_string_aux k
 		   
+
+
+
+
+     let term_to_formatted_string t id_to_sym =
+       let rec term_to_string_aux t paren l_level level (l_env,env) =
+	 match t with
+	   | Var i -> Format.fprintf Format.str_formatter "@[%s@]" (List.assoc (level - 1  - i) env)
+	   | LVar i ->Format.fprintf Format.str_formatter "@[%s@]" (List.assoc (l_level - 1  - i) l_env)
+	   | Const i -> 
+	     let _,x = id_to_sym i in
+	     Format.fprintf Format.str_formatter "@[%s@]" x
+	   | DConst i ->
+	     let _,x = id_to_sym i in
+	     Format.fprintf Format.str_formatter "@[%s@]" x
+	   | Abs (x,t) ->
+	     let x' = generate_var_name x env in
+	     let vars,l,u=unfold_abs [level,x'] (level+1) ((level,x')::env) t in
+	     let () = Format.fprintf Format.str_formatter "@[<hov7>%s@[Lambda " (left_paren paren) in
+	     let () = Utils.format_of_list " " (fun (_,x) -> x) (List.rev vars) in
+	     let () = Format.fprintf Format.str_formatter ".@ @[" in
+	     let _ = term_to_string_aux u false l_level l (l_env,vars@env) in
+	     Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	   | LAbs (x,t) ->
+	     let x' = generate_var_name x l_env in
+	     let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env) t in
+	     let () = Format.fprintf Format.str_formatter "@[<hov7>%s@[lambda " (left_paren paren) in
+	     let () = Utils.format_of_list " " (fun (_,x) -> x) (List.rev vars) in
+	     let () = Format.fprintf Format.str_formatter ".@ @[" in
+	     let () = term_to_string_aux u false l level ((vars@l_env),env) in
+	     Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	   | App((Const s|DConst s),Abs(x,u)) when is_binder s id_to_sym ->
+	     let x' = generate_var_name x env in
+	     let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] ((level,x')::env) u in
+	     let new_env=
+	       List.fold_right
+		 (fun  (l,(x,abs)) (l_acc,acc) ->
+		   match abs with
+		   | Abstract_syntax.Non_linear -> l_acc,(l,x)::acc
+		   | Abstract_syntax.Linear -> (l,x)::l_acc,acc)
+		 vars
+		 (l_env,env) in
+	     let () = Format.fprintf Format.str_formatter "@[%s@[%s " (left_paren paren) (let _,const = id_to_sym s in const) in
+	     let () = Utils.format_of_list " " (fun (_,(x,_)) -> x) (List.rev vars) in
+	     let () = Format.fprintf Format.str_formatter ".@ @[" in
+	     let _ = term_to_string_aux u false l_l l new_env in
+	     Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	   | App((Const s|DConst s),LAbs(x,u)) when is_binder s id_to_sym ->
+	     let x' = generate_var_name x l_env in
+	     let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env) u in
+	     let new_env=
+	       List.fold_right
+		 (fun  (l,(x,abs)) (l_acc,acc) ->
+		   match abs with
+		   | Abstract_syntax.Non_linear -> l_acc,(l,x)::acc
+		   | Abstract_syntax.Linear -> (l,x)::l_acc,acc)
+		 vars
+		 (l_env,env) in
+	     let () = Format.fprintf Format.str_formatter "@[%s@[%s " (left_paren paren) (let _,const = id_to_sym s in const) in
+	     let () = Utils.format_of_list " " (fun (_,(x,_)) -> x) (List.rev vars) in
+	     let () = Format.fprintf Format.str_formatter ".@ @[" in
+	     let _ = term_to_string_aux u false l_l l new_env in
+	     Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	   | App(App((Const s|DConst s),t1),t2) when is_infix s id_to_sym ->
+	     let () = Format.fprintf Format.str_formatter "@[%s@[" (left_paren paren) in
+	     let () = term_to_string_aux t1 true l_level level (l_env,env) in
+	     let () = Format.fprintf Format.str_formatter "@[@ %s@]@ @[" (let _,const=id_to_sym s in const) in
+	     let () = term_to_string_aux t2 true l_level level (l_env,env) in
+	     Format.fprintf Format.str_formatter "@]@]%s@]" (right_paren paren)
+	   | App(t1,t2) ->
+	     let args,t11 = unfold_app [t2] t1 in
+	     let () = Format.fprintf Format.str_formatter "@[%s@[" (left_paren paren) in
+	     let () = term_to_string_aux t11 true l_level level (l_env,env) in
+	     let () = 
+	       List.iter
+		 (fun arg -> 
+		   let () = Format.fprintf Format.str_formatter "@ @[" in
+		   let () = term_to_string_aux arg true l_level level (l_env,env) in
+		   Format.fprintf Format.str_formatter "@]")
+		 args in
+	     Format.fprintf Format.str_formatter "@]%s@]" (right_paren paren)
+	   | _ -> failwith "Not yet implemented" in
+       let () = Format.fprintf Format.str_formatter "@[" in
+       let () = term_to_string_aux t false 0 0 ([],[]) in
+       Format.fprintf Format.str_formatter "@]"
+
 
 
      let term_to_string t id_to_sym =
@@ -225,8 +359,9 @@ module Lambda =
 		 (parenthesize (term_to_string_aux t11 l_level level (l_env,env)))
 		 (Utils.string_of_list " " (fun x -> parenthesize (term_to_string_aux x l_level level (l_env,env))) args),false 
 	   | _ -> failwith "Not yet implemented" in
-	 fst (term_to_string_aux t 0 0 ([],[]))
-
+       let s = fst (term_to_string_aux t 0 0 ([],[])) in
+       let _ = term_to_formatted_string t id_to_sym in
+       s
 
 
     let rec raw_to_string_aux = function

@@ -47,6 +47,7 @@ struct
 	let eta_long = Sg.eta_long_form c (fun_type_from_id abstract_type_or_cst_id) sg  in
 	  Printf.sprintf "\t%s [eta-long form: %s {%s}]" (Sg.term_to_string c sg) (Sg.term_to_string eta_long sg ) (Lambda.raw_to_string eta_long)
 
+
   module Datalog=Datalog.Datalog
 
   module RuleToCstMap=Utils.IntMap

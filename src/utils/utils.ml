@@ -38,6 +38,15 @@ let string_of_list sep to_string = function
 	Buffer.contents buf
 
 
+let format_of_list sep to_string = function
+  | [] -> ()
+  | [a] -> Format.fprintf Format.str_formatter "@[%s@]" (to_string a)
+  | a::tl ->
+    let () = Format.fprintf Format.str_formatter "@[%s@]" (to_string a) in
+    List.iter
+      (fun s -> Format.fprintf Format.str_formatter "%s@,@[%s@]" sep (to_string s))
+      tl
+
 let string_of_list_rev sep to_string lst =
   let buf = Buffer.create 16 in
   let rec string_of_list_rev_rec k = function
