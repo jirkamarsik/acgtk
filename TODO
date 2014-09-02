@@ -1,11 +1,5 @@
 ; -*-org-*-
 
-* BUG
-+ BUG dans le parsing (essayer avec dstag-discourse-grammar.acg r540
-  et dstag-clausal-grammar.acg r539 et dstag-tag-discourse-script
-  r541):
-  + tag_discourse parse Fred + est + de +mauvaise + humeur + parce + que + Fred + a +perdu + les+clefs:DU;
-
 * Général
 
 ** Avant Prochaine release
@@ -16,6 +10,7 @@
 + [X] modifier la documentation
 + [ ] remove useless reduction.* files (hint: the useful one is in the
   acg-data directory)
++ [ ] améliorer le pretty-printing des termes
 
 ** DONE Faire un Bolt package
 

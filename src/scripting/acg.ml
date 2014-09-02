@@ -44,7 +44,7 @@ module P = Script_parser.Make(E)
 
 let welcome_msg = 
   Printf.sprintf
-    "\n\t\t\tWelcome to the ACG toplevel\n\t\t\t    Version %s\n\t\t\t\t©INRIA 2008\nPlease send your comments or bug reports or featrure requests to sylvain.pogodalla@loria.fr\n\n\nType\n\t\thelp ;\nto get help.\n\n\n\n"
+    "\n\t\t\tWelcome to the ACG toplevel\n\t\t\t    Version %s\n\t\t\t\tÂ©INRIA 2008-2014\nPlease send your comments or bug reports or featrure requests to sylvain.pogodalla@inria.fr\n\n\nType\n\t\thelp ;\nto get help.\n\n\n\n"
     Version.version
 
 
@@ -53,16 +53,22 @@ let env = ref E.empty
 let anon_fun s = env := P.parse_file  s !dirs !env
   
 let _ =
-  let () = Arg.parse options anon_fun usg_msg in
   let () = Printf.printf "%s%!" welcome_msg in
+  (* ANSITerminal get the size info from stdin In case of redirection,
+     the latter may not be set. That's why it is first duplicated and
+     stdin is then duplicated from stdout *)
+  let stdin_tmp=Unix.dup Unix.stdin in
+  let stdin_tmp_in_ch = Unix.in_channel_of_descr stdin_tmp in
+  let () = Unix.dup2 Unix.stdout Unix.stdin in
+  let () = Arg.parse options anon_fun usg_msg in
   let continue = ref true in
   let () = 
     while !continue do
       try
-	env := P.parse_entry !dirs !env
+	env := P.parse_entry stdin_tmp_in_ch !dirs !env
       with
-	| End_of_file
-	| Sys.Break -> continue := false
+      | End_of_file
+      | Sys.Break -> continue := false
     done in
-    Printf.printf "\n%!"
-  
+  Printf.printf "\n%!"
+    

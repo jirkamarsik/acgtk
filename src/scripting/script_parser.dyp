@@ -58,13 +58,19 @@
   HELP
 <Abstract_syntax.Abstract_syntax.location>PRINT
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ANALYSE
+  ANALYSE_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>CHECK
+  CHECK_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>REALIZE
+  REALIZE_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>PARSE
+  PARSE_HELP
 <Abstract_syntax.Abstract_syntax.location>IDB
 <(string*Abstract_syntax.Abstract_syntax.location*string)>QUERY
+QUERY_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>ADD
   COMPOSE
+  ADD_HELP
 <string>SEMICOLONN
   AS
   DONT
@@ -74,6 +80,7 @@
   CREATE_LEX
   CREATE_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>SAVE
+  SAVE_HELP
 
 
 %start <(E.t)> zzcommands
@@ -174,6 +181,18 @@
 | HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help None) in e}
 | all_commands<c> HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some c)) in e}
 | LOAD_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
+
+
+| LOAD_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
+| ANALYSE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Analyse)) in e}
+| REALIZE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Realize)) in e}
+| CHECK_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Check)) in e}
+| PARSE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Parse)) in e}
+| QUERY_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Query)) in e}
+| SAVE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Save)) in e}
+| ADD_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Add)) in e}
+| CREATE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Create)) in e}
+
 | CREATE_SIG IDENTT<n> SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> F.create_sig n e}
 | CREATE_LEX IDENTT<n> IDENTT<n1> IDENTT<n2>  SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> F.create_lex ~abs:n1 ~obj:n2 n e}
 | optional_idents<names> SAVE<filename,l,line>   { let () = echo dyp.global_data line in fun e -> 
@@ -191,9 +210,15 @@
 | DONT TRACE {F.Dont_trace}
 | PRINT {F.Print}
 | ANALYSE {F.Analyse}
+| CHECK {F.Check}
+| REALIZE {F.Realize}
+| PARSE {F.Parse}
+| IDB {F.Idb}
+| QUERY {F.Query}
 | ADD {F.Add}
 | COMPOSE {F.Compose}
 | HELP {F.Help None}
+| SAVE {F.Save}
 
 
       optional_ident :
@@ -243,13 +268,18 @@
 
   let is_fully_commented_line s = Str.string_match commented_regexp s 0
 
-  let bufferize () =
+  let read_line_from_in_ch in_ch =
+    let () = flush stdout in
+    input_line in_ch
+    
+
+  let bufferize in_ch =
     let () = Printf.printf "# " in
     let buf = Buffer.create 16 in
     let no_semi_colon=ref true in
     let () =
       while !no_semi_colon do
-	let input = read_line () in
+	let input = read_line_from_in_ch in_ch in
 	  if not (is_fully_commented_line input) then
 	    try
 	      let semi_colon_index=String.index input ';' in
@@ -267,8 +297,8 @@
 	
 
 	
-  let parse_entry ?(verbose=true) includes env =
-    let in_str = bufferize () in
+  let parse_entry ?(verbose=true) in_ch includes env =
+    let in_str = bufferize in_ch in
     let lexbuf = Lexing.from_string in_str in
     let new_env=
       try
@@ -301,7 +331,7 @@ end}
 
     val parse_file : ?verbose:bool -> string -> string list -> E.t -> E.t
 
-    val parse_entry : ?verbose:bool -> string list -> E.t -> E.t
+    val parse_entry : ?verbose:bool -> in_channel -> string list -> E.t -> E.t
   }
 
 %mli{end}

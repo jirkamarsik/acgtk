@@ -162,6 +162,15 @@ fi
 AC_MSG_RESULT(Bolt log level is $BOLT_LEVEL.)
 
 
+# Look for ANSITerminal with ocamlfind
+AC_ARG_VAR(ANSITerminal_PATH,[Directory where to find the ANSITerminal library if not in a standard location])
+AC_LIB_CHECKING(ANSITerminal,ANSITerminal,ANSITerminal,ANSITerminal,ANSITerminal,ANSITerminal,"unix.cma",true,$ANSITerminal_PATH)
+
+if test "$FOUND_LIB" != "no" ; then
+   AC_SUBST(ANSITerminal_INCLUDE,$LIB_INCLUDE)
+fi
+
+
 # What is the OCAML version  ?
 # we extract Ocaml version number
 OCAML_VERSION=`$OCAMLC -version`

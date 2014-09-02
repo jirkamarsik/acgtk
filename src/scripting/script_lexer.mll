@@ -38,12 +38,18 @@ type token =
   | TRACE
   | PRINT   of Abstract_syntax.location
   | ANALYSE  of (string*Abstract_syntax.location*string)
+  | ANALYSE_HELP
   | CHECK  of (string*Abstract_syntax.location*string)
+  | CHECK_HELP
   | REALIZE  of (string*Abstract_syntax.location*string)
+  | REALIZE_HELP
   | PARSE  of (string*Abstract_syntax.location*string)
+  | PARSE_HELP
   | IDB   of Abstract_syntax.location
   | QUERY  of (string*Abstract_syntax.location*string)
+  | QUERY_HELP
   | ADD of (string*Abstract_syntax.location*string)
+  | ADD_HELP
   | COMPOSE
   | SEMICOLONN of string
   | AS
@@ -55,6 +61,7 @@ type token =
   | CREATE_LEX
   | CREATE_HELP
   | SAVE  of (string*Abstract_syntax.location*string)
+  | SAVE_HELP
 
 
   let loc lexbuf = Lexing.lexeme_start_p lexbuf,Lexing.lexeme_end_p lexbuf
@@ -72,6 +79,10 @@ type token =
       Str.matched_group 1 s
     else
       failwith "Bug: matched string expected"
+
+  let extract = function
+    | None -> "help"
+    | Some x -> x
 
   let add_space () =
     let () = if !space_added then () else Buffer.add_char echo_content ' ' in
@@ -92,6 +103,8 @@ let newline = ('\010' | '\013' | "\013\010")
 let letter = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 let string = (letter|digit|'_')*
+  let skip_space = ([' ' '\t' '\n'])*
+  let help_command = skip_space "help" skip_space ";"
 
 
   rule lexer =
@@ -110,36 +123,60 @@ let string = (letter|digit|'_')*
     | "help"  as c {let () = echo_str c in HELP}
     | "print"  as c {let () = echo_str c in PRINT (loc lexbuf)}
     | "analyse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string (fun x l -> ANALYSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		optional_string (fun x l -> match x with
+		| None -> ANALYSE_HELP
+		| Some x -> ANALYSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "check"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string (fun x l -> CHECK (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		optional_string (fun x l -> match x with
+		| None -> CHECK_HELP
+		| Some x -> CHECK (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "realize"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string (fun x l -> REALIZE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		optional_string (fun x l -> match x with
+		| None -> REALIZE_HELP
+		| Some x -> REALIZE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "parse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string (fun x l -> PARSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		optional_string (fun x l -> match x with
+		| None -> PARSE_HELP
+		| Some x -> PARSE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "idb"  as c {let () = echo_str c in IDB (loc lexbuf)}
     | "query"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string (fun x l -> QUERY (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		optional_string (fun x l -> match x with
+		| None -> QUERY_HELP
+		| Some x -> QUERY (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "add"  as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> ADD (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		optional_string_wo_space (fun x l -> match x with
+		| None -> ADD_HELP
+		| Some x -> ADD (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "compose"  as c {let () = echo_str c in COMPOSE}
     | "don't"  as c {let () = echo_str c in DONT}
     | "wait"  as c {let () = echo_str c in WAIT}
     | "as"  as c {let () = echo_str c in AS}
     | "save" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		     string_wo_space (fun x l -> SAVE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		     optional_string_wo_space (fun x l -> match x with
+		| None -> SAVE_HELP
+		| Some x -> SAVE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | letter string  as c {let () = echo_str c in IDENTT (Lexing.lexeme lexbuf,loc lexbuf)}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Command_expected,loc lexbuf))}
   and comment f_parser = parse
     | newline {let () = Error.update_loc lexbuf None in f_parser lexbuf}
     | _ {comment f_parser lexbuf}
+  and optional_string f = parse
+      | [' ' '\t'] {optional_string f lexbuf} 
+      | "help" {let () = echo_str ("help") in
+		 f None (loc lexbuf)}
+      | _ as c {let () = Buffer.add_char string_content c in string f lexbuf} 
   and string f = parse
-    | ";" {f (Buffer.contents string_content) (loc lexbuf)}
+    | ";" {f (Some (Buffer.contents string_content)) (loc lexbuf)}
     | "#" {comment (string f) lexbuf}
     | newline {let () = Error.update_loc lexbuf None in string f lexbuf}
     | _ as c {let () = Buffer.add_char string_content c in string f lexbuf}
+  and optional_string_wo_space f = parse
+      | [' ' '\t'] {optional_string f lexbuf} 
+      | "help" {let () = echo_str ("help") in
+		f None (loc lexbuf)}
+    | _ as c {let () = Buffer.add_char string_content c in string_wo_space f lexbuf}
   and string_wo_space f = parse
-    | ";" {f (Buffer.contents string_content) (loc lexbuf)}
+    | ";" {f (Some (Buffer.contents string_content)) (loc lexbuf)}
     | "#" {comment (string_wo_space f) lexbuf}
     | [' ' '\t'] {string_wo_space f lexbuf}
     | newline {let () = Error.update_loc lexbuf None in string_wo_space f lexbuf}
@@ -151,23 +188,29 @@ let string = (letter|digit|'_')*
     | "help" {LOAD_HELP}
     | "#" {comment load_options lexbuf}
     | "data" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> 
+		  let x = extract x in LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "d" as c {let () = echo_chr c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> 
+		  let x = extract x in LOAD_DATA (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "object" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_OBJECT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> 
+		  let x = extract x in LOAD_OBJECT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "o" as c {let () = echo_chr c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_OBJECT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> 
+		  let x = extract x in LOAD_OBJECT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "script" as c {let () = echo_str c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> 
+		  let x = extract x in LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "s" as c {let () = echo_chr c in let () = Buffer.reset string_content in
-		string_wo_space (fun x l -> LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+		string_wo_space (fun x l -> 
+		  let x = extract x in LOAD_SCRIPT (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | _ {raise (Scripting_errors.Error (Scripting_errors.Missing_option Scripting_errors.Load,loc lexbuf))}
   and create_options = parse
     | [' ' '\t'] {create_options lexbuf}
+    | "help" {CREATE_HELP}
     | newline {let () = Error.update_loc lexbuf None in create_options lexbuf}
     | eof {EOII}
-    | "help" {CREATE_HELP}
     | "#" {comment create_options lexbuf}
     | "s" as c {let () = echo_chr c in let () = Buffer.reset string_content in CREATE_SIG}
     | "sig" as c {let () = echo_str c in let () = Buffer.reset string_content in CREATE_SIG}

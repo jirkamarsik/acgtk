@@ -19,6 +19,10 @@
 
 open Environment
 
+val info : Unix.file_descr -> string -> unit
+
+
+
 module type Action_sig = 
 sig
 
