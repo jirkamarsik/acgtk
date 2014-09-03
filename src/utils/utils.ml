@@ -37,15 +37,45 @@ let string_of_list sep to_string = function
 	  tl in
 	Buffer.contents buf
 
+let f_set_size formatter = 
+  try
+    let terminal_width,_= ANSITerminal.size () in
+    LOG "Setting the size of the formatter to %i" terminal_width LEVEL TRACE;
+    Format.pp_set_margin formatter terminal_width
+  with
+  | Failure "ANSITerminal.size" ->  ()
 
-let format_of_list sep to_string = function
+let sterm_set_size () = f_set_size Format.str_formatter
+
+let term_set_size () = f_set_size Format.std_formatter
+
+let fterm_set_size formatter = f_set_size formatter
+    
+let fformat formatter = fun format ->
+  Format.fprintf formatter format
+
+let format format = fformat Format.std_formatter format
+
+let sformat format = fformat Format.str_formatter format
+
+let format_of_list fmter sep to_string = function
   | [] -> ()
-  | [a] -> Format.fprintf Format.str_formatter "@[%s@]" (to_string a)
+  | [a] -> fformat fmter "@[%s@]" (to_string a)
   | a::tl ->
-    let () = Format.fprintf Format.str_formatter "@[%s@]" (to_string a) in
+    let () = fformat fmter "@[%s@]" (to_string a) in
     List.iter
-      (fun s -> Format.fprintf Format.str_formatter "%s@,@[%s@]" sep (to_string s))
+      (fun s -> fformat fmter "%s@ @,@[%s@]" sep (to_string s))
       tl
+
+let color c s = ANSITerminal.sprintf [ANSITerminal.Bold;c] "%s" s
+
+let blue s = color ANSITerminal.blue s
+let red s = color ANSITerminal.red s
+let green s = color ANSITerminal.green s
+
+
+
+
 
 let string_of_list_rev sep to_string lst =
   let buf = Buffer.create 16 in

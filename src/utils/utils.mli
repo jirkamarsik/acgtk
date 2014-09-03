@@ -37,7 +37,19 @@ module IntSet : Set.S with type elt = int
     length greater than 2) *)
 val string_of_list : string -> ('a -> string) -> ('a list) -> string
 
-val format_of_list : string -> ('a -> string) -> ('a list) -> unit
+val term_set_size : unit -> unit
+val sterm_set_size : unit -> unit
+val fterm_set_size : Format.formatter -> unit
+
+val fformat : Format.formatter -> ('a, Format.formatter, unit) format -> 'a
+val format : ('a, Format.formatter, unit) format -> 'a
+val sformat : ('a, Format.formatter, unit) format -> 'a
+
+val format_of_list : Format.formatter -> string -> ('a -> string) -> ('a list) -> unit
+
+val blue : string -> string
+val red : string -> string
+val green : string -> string
 
 (** [string_of_list_rev sep to_string [a_1;...;a_n]] returns a string
     made of the strings [to_string a_n] ... [to_string a_1]

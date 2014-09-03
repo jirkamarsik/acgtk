@@ -26,12 +26,12 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += str.cma
+LIBS += str.cma ANSITerminal.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
 # ex.  +campl4
-LIBDIR +=
+LIBDIR +=  @ANSITerminal_INCLUDE@
 
 # Directories to which the current source files depend on
 PREVIOUS_DIRS =

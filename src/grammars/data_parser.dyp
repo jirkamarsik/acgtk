@@ -1,3 +1,4 @@
+/*-*- mode: tuareg -*-*/
 /**************************************************************************/
 /*                                                                        */
 /*                 ACG development toolkit                                */
@@ -390,7 +391,7 @@ sig_entries :
 	  
 	  term_alone :
 | term<t> COLON type_expression<ty> EOI {let sg = (get_sig_value dyp.last_local_data) in
-					   E.Signature1.convert_term (fst (t Env.empty [])) (fst (ty sg)) sg (*(E.Signature1.empty ("fake signature",(Lexing.dummy_pos,Lexing.dummy_pos)))*)}	  
+					   E.Signature1.convert_term (fst (t Env.empty [])) (fst (ty sg)) sg }	  
 
 
 	      heterogenous_term_and_type :
@@ -584,9 +585,16 @@ let parse_term ?(offset="") ?(output=false) t sg =
     let abs_term,abs_type = 
       try fst (List.hd(term_alone ~global_data:false ~local_data:(Some (Signature sg)) Data_lexer.lexer lexbuf)) with
       | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin") in
-    let () = match output with
-      | true -> let () = Printf.printf "%s : %s\n%!" (E.Signature1.term_to_string abs_term sg) (E.Signature1.type_to_string abs_type sg) in
-		Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string (E.Signature1.unfold abs_term sg) sg) (E.Signature1.type_to_string abs_type sg) 
+    let () = 
+      match output with
+      | true -> 
+	let () = Utils.sformat "@[" in
+	let () = E.Signature1.term_to_formatted_string Format.str_formatter abs_term sg in
+	let () = Utils.sformat "@] : @[" in
+	let () = E.Signature1.type_to_formatted_string Format.str_formatter abs_type sg in
+	let () = Utils.sformat "@]" in
+	()
+      (*	Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string (E.Signature1.unfold abs_term sg) sg) (E.Signature1.type_to_string abs_type sg) *)
       | false -> () in
     Some (abs_term,abs_type)
   with

@@ -69,9 +69,9 @@ sig
   val type_to_string : stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> string
   val term_to_string : term -> (int -> Abstract_syntax.syntactic_behavior * string) -> string
 
-  val kind_to_formatted_string :  kind -> (int -> Abstract_syntax.syntactic_behavior * string ) -> unit
-  val type_to_formatted_string : stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> unit
-  val term_to_formatted_string : term -> (int -> Abstract_syntax.syntactic_behavior * string) -> unit
+  val kind_to_formatted_string :  Format.formatter -> kind -> (int -> Abstract_syntax.syntactic_behavior * string ) -> unit
+  val type_to_formatted_string : Format.formatter -> stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> unit
+  val term_to_formatted_string : Format.formatter -> term -> (int -> Abstract_syntax.syntactic_behavior * string) -> unit
 
 
   val raw_to_string : term -> string

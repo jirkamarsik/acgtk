@@ -166,11 +166,11 @@ struct
   let actions = [Help None;Load;List;Print;Check;Realize;Parse;Idb;Query;Compose;Analyse;Wait;Dont_wait;Select;Unselect;Create;Add;Save;Trace;Dont_trace;]
 
 
-let format = fun format ->
+(*let format = fun format ->
   let terminal_width,_=ANSITerminal.size () in
   let () = Format.set_margin terminal_width in
   Format.printf format
-
+*)
 
   let rec action_to_string = function
     | Load -> "load"
@@ -209,39 +209,39 @@ let format = fun format ->
   let messages = function
     | Load as command ->
       let options = bold_string "d|data|s|script|o|object" in
-      format "@[<v5>%s %s file;@ @[loads@ the@ file@ \"file\"@ as@ data@ (\"d\"@ or@ \"data\"@ option),@ as@ an@ object@ (compiled@ data,@ \"o\"@ or@ \"object\"@ option),@ or@ as@ a@ script@ (\"s\"@ or@ \"script\"@ option)@ @]@]@." (action_to_string command) options
-    | List as command -> format "@[<v5>%s;@ @[lists@ the@ signatures@ and@ the@ lexicons@ of@ the@ current@ environment@ @]@]@." (action_to_string command)
-    | Select as command -> format "@[<v5>%s name;@ @[selects@ the@ \"name\"@ signature@ or@ lexicon@ in@ the@ current@ environment@ and@ make@ it@ an@ implicit@ context@ for@ the@ following@ commands@ @]@]@." (action_to_string command)
-    | Unselect as command -> format "@[<v5>%s name;@ @[removes@ any@ selected@ signature@ or@ lexicon@ from@ the@ context@ @]@]@." (action_to_string command)
-    | Trace as command -> format "@[<v5>%s;@ @[traces@ the@ interpretation@ (if@ a@ command@ is@ used@ in@ a@ context@ of@ a@ lexicon)@ and@ the@ beta-reduction@ process@ @]@]@." (action_to_string command)
-    | Dont_trace as command -> format "@[<v5>%s;@ @[stops@ tracing@ @]@]@." (action_to_string command)
-    | Wait as command -> format "@[<v5>%s;@ @[waits@ a@ keyboard@ return@ event@ before@ going@ on@ in@ executing@ a@ script@ @]@]@." (action_to_string command)
-    | Dont_wait as command -> format "@[<v5>%s;@ @[stops@ waiting@ a@ keyboard@ return@ event@ before@ going@ on@ in@ executing@ a@ script@ @]@]@." (action_to_string command)
-    | Print as command -> format "@[<v5>[name] %s;@ @[outputs@ the@ content@ of@ the@ \"name\"@ signature@ or@ lexicon@ of@ the@ current@ environment.@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
-    | Analyse as command -> format "@[<v5>[name1 name2 ...] %s term:type;@ @[*DEPRECATED*@]@ @[analyses@ the@ given@ \"term:type\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment.@ In@ the@ context@ of@ a@ signature,@ this@ command@ just@ typechecks@ the@ given@ entry.@ In@ the@ context@ of@ a@ lexicon,@ it@ typechecks@ it@ and@ interprets@ it@ with@ respect@ to@ this@ lexicon@ @]@]@." (action_to_string command)
-    | Check as command -> format "@[<v5>[name1 name2 ...] %s term:type;@ @[check@ whether@ the@ given@ \"term:type\"@ typechecks@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment,@ provided@ it@ is@ a@ signature.@]@]@." (action_to_string command)
-    | Realize as command -> format "@[<v5>[name1 name2 ...] %s term:type;@ @[check@ whether@ the@ given@ \"term:type\"@ typechecks@ with@ respect@ to@ the@ abstract@ signatures@ of@ the@ \"name1\"@ ...@ lexicons,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment,@ provided@ it@ is@ a@ lexicon.@ Then@ the@ interrpretetion@ of@ the@ input@ term@ by@ each@ lexicon@ is@ computed.@]@]@." (action_to_string command)
-    | Parse as command -> format "@[<v5>[name] %s term:type;@ @[parse@ the@ object@ term@ \"term\"@ as@ the@ image@ of@ some@ abstract@ term@ of@ type@ \"type\"@ according@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
-    | Idb as command -> format "@[<v5>[name] %s;@ @[outputs@ the@ datalog@ program@ (intensional@ database)@ corresponding@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
-    | Query as command -> format "@[<v5>[name] %s term:type;@ @[outputs@ the@ facts@ (extensional@ database)@ and@ the@ query@ associated@ to@ the@ term@ \"term\"@ of@ distinguished@ type@ \"type\"@ with@ respect@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
-    | Add as command -> format "@[<v5>[name1 name2 ...] %s expression;@ @[adds@ the@ given@ \"expression\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons@ to@ those@ signature@ or@ lexicons.@ \"expression\"@ must@ respect@ the@ syntax@ of@ signatures@ or@ lexicons@ @]@]@." (action_to_string command)
+      Utils.format "@[<v5>%s %s file;@ @[loads@ the@ file@ \"file\"@ as@ data@ (\"d\"@ or@ \"data\"@ option),@ as@ an@ object@ (compiled@ data,@ \"o\"@ or@ \"object\"@ option),@ or@ as@ a@ script@ (\"s\"@ or@ \"script\"@ option)@ @]@]@." (action_to_string command) options
+    | List as command -> Utils.format "@[<v5>%s;@ @[lists@ the@ signatures@ and@ the@ lexicons@ of@ the@ current@ environment@ @]@]@." (action_to_string command)
+    | Select as command -> Utils.format "@[<v5>%s name;@ @[selects@ the@ \"name\"@ signature@ or@ lexicon@ in@ the@ current@ environment@ and@ make@ it@ an@ implicit@ context@ for@ the@ following@ commands@ @]@]@." (action_to_string command)
+    | Unselect as command -> Utils.format "@[<v5>%s name;@ @[removes@ any@ selected@ signature@ or@ lexicon@ from@ the@ context@ @]@]@." (action_to_string command)
+    | Trace as command -> Utils.format "@[<v5>%s;@ @[traces@ the@ interpretation@ (if@ a@ command@ is@ used@ in@ a@ context@ of@ a@ lexicon)@ and@ the@ beta-reduction@ process@ @]@]@." (action_to_string command)
+    | Dont_trace as command -> Utils.format "@[<v5>%s;@ @[stops@ tracing@ @]@]@." (action_to_string command)
+    | Wait as command -> Utils.format "@[<v5>%s;@ @[waits@ a@ keyboard@ return@ event@ before@ going@ on@ in@ executing@ a@ script@ @]@]@." (action_to_string command)
+    | Dont_wait as command -> Utils.format "@[<v5>%s;@ @[stops@ waiting@ a@ keyboard@ return@ event@ before@ going@ on@ in@ executing@ a@ script@ @]@]@." (action_to_string command)
+    | Print as command -> Utils.format "@[<v5>[name] %s;@ @[outputs@ the@ content@ of@ the@ \"name\"@ signature@ or@ lexicon@ of@ the@ current@ environment.@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
+    | Analyse as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[*DEPRECATED*@]@ @[analyses@ the@ given@ \"term:type\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment.@ In@ the@ context@ of@ a@ signature,@ this@ command@ just@ typechecks@ the@ given@ entry.@ In@ the@ context@ of@ a@ lexicon,@ it@ typechecks@ it@ and@ interprets@ it@ with@ respect@ to@ this@ lexicon@ @]@]@." (action_to_string command)
+    | Check as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[check@ whether@ the@ given@ \"term:type\"@ typechecks@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment,@ provided@ it@ is@ a@ signature.@]@]@." (action_to_string command)
+    | Realize as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[check@ whether@ the@ given@ \"term:type\"@ typechecks@ with@ respect@ to@ the@ abstract@ signatures@ of@ the@ \"name1\"@ ...@ lexicons,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment,@ provided@ it@ is@ a@ lexicon.@ Then@ the@ interrpretetion@ of@ the@ input@ term@ by@ each@ lexicon@ is@ computed.@]@]@." (action_to_string command)
+    | Parse as command -> Utils.format "@[<v5>[name] %s term:type;@ @[parse@ the@ object@ term@ \"term\"@ as@ the@ image@ of@ some@ abstract@ term@ of@ type@ \"type\"@ according@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
+    | Idb as command -> Utils.format "@[<v5>[name] %s;@ @[outputs@ the@ datalog@ program@ (intensional@ database)@ corresponding@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
+    | Query as command -> Utils.format "@[<v5>[name] %s term:type;@ @[outputs@ the@ facts@ (extensional@ database)@ and@ the@ query@ associated@ to@ the@ term@ \"term\"@ of@ distinguished@ type@ \"type\"@ with@ respect@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
+    | Add as command -> Utils.format "@[<v5>[name1 name2 ...] %s expression;@ @[adds@ the@ given@ \"expression\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons@ to@ those@ signature@ or@ lexicons.@ \"expression\"@ must@ respect@ the@ syntax@ of@ signatures@ or@ lexicons@ @]@]@." (action_to_string command)
     | Compose as command -> let as_str = red_bold_string "as" in
-			    format "@[<v5>%s name1 name2 %s name3; @ @[ creates@ a@ new@ lexicon@ with@ name@ \"name3\"@ by@ composing@ the@ \"name1\"@ and@ \"name2\"@ lexicons@ @]@]@." (action_to_string command) as_str
-    | Help _ as command -> format "@[<v5>%s ;@ @[prints@ the@ help@ message@ @]@]@." (action_to_string command)
-    | Create as command -> format "@[<v5>%s s|sig|l|lex name [name1 name2];@ @[creates@ a@ new@ empty@ signature@ or@ lexicon@ (according@ to@ the@ s@ or@ sig,@ or@ l@ or@ lex@ option)@ with@ name@ \"name\"@ in@ the@ current@ environment.\"name1\"@ and@ \"name2\"@ are@ mandatory@ in@ case@ of@ creating@ a@ lexicon:@ they@ are@ respectively@ the@ abstract@ and@ the@ object@ signature.@ They@ of@ course@ are@ forbidden@ in@ case@ of@ creating@ a@ signature@ @]@]@." (action_to_string command)
-    | Save as command -> format "@[<v5>[name1 name2 ...] %s filename;@ @[outputs@ the@ content@ of@ \"name1\",@ \"name2\"...@ into@ the@ same@ file@ \"filename\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
+			    Utils.format "@[<v5>%s name1 name2 %s name3; @ @[ creates@ a@ new@ lexicon@ with@ name@ \"name3\"@ by@ composing@ the@ \"name1\"@ and@ \"name2\"@ lexicons@ @]@]@." (action_to_string command) as_str
+    | Help _ as command -> Utils.format "@[<v5>%s ;@ @[prints@ the@ help@ message@ @]@]@." (action_to_string command)
+    | Create as command -> Utils.format "@[<v5>%s s|sig|l|lex name [name1 name2];@ @[creates@ a@ new@ empty@ signature@ or@ lexicon@ (according@ to@ the@ s@ or@ sig,@ or@ l@ or@ lex@ option)@ with@ name@ \"name\"@ in@ the@ current@ environment.\"name1\"@ and@ \"name2\"@ are@ mandatory@ in@ case@ of@ creating@ a@ lexicon:@ they@ are@ respectively@ the@ abstract@ and@ the@ object@ signature.@ They@ of@ course@ are@ forbidden@ in@ case@ of@ creating@ a@ signature@ @]@]@." (action_to_string command)
+    | Save as command -> Utils.format "@[<v5>[name1 name2 ...] %s filename;@ @[outputs@ the@ content@ of@ \"name1\",@ \"name2\"...@ into@ the@ same@ file@ \"filename\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
 
 
 
   let rec help = function
     | Help (Some (Help a)) -> help (Help a)
     | Help (Some a) -> 
-      let () = format "Usage:" in
+      let () = Utils.format "Usage:" in
       let () = print_newline () in
       let () = messages a in
       print_newline ()
     | Help None -> 
-      let () = format "@[<v5>Commands:@[ For@ any@ command,@ its@ usage@ can@ be@ reminded@ by@ running@ the@ following@ command:@]@ @[command help;@]@ @[The@ following@ commands@ are@ available.@]@]@]@." in
+      let () = Utils.format "@[<v5>Commands:@[ For@ any@ command,@ its@ usage@ can@ be@ reminded@ by@ running@ the@ following@ command:@]@ @[command help;@]@ @[The@ following@ commands@ are@ available.@]@]@]@." in
       let () = print_newline () in
       List.iter
 	(fun a -> 
@@ -249,7 +249,7 @@ let format = fun format ->
 	  print_newline ())
 	actions
     | _ as a -> 
-      let () = format "Usage:" in
+      let () = Utils.format "Usage:" in
       let () = print_newline () in
       let () = messages a in
       print_newline ()
@@ -443,6 +443,9 @@ let format = fun format ->
       
       
   let realize ?names e ?offset data l =
+    let () = Printf.printf "\n%!" in
+    let _ = Format.flush_str_formatter () in
+    let () = Utils.sterm_set_size () in
     let additional_offset = "\t" in
     let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
     let lexicons =
@@ -459,31 +462,29 @@ let format = fun format ->
       | Some ns,_ -> List.map (fun (n,l) -> get_lex (Some n) "realize" e l) ns in
     let _ = List.fold_left
       (fun (first,last_abs_sg) lex -> 
-	let _ = Format.flush_str_formatter () in
 	let abs,obj=E.Lexicon.get_sig lex in
 	let () =
 	  match last_abs_sg with
 	  | None  -> 
-	    Format.printf "In %s:\n%s%!" (fst (E.Signature1.name abs)) additional_offset
+	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (fst (E.Signature1.name abs))
 	  | Some previous_sg when (E.Signature1.name abs) <> (E.Signature1.name previous_sg)  ->
-	    Format.printf "In %s:\n%s%!" (fst (E.Signature1.name abs)) additional_offset
-	  | _ -> () in
+	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (fst (E.Signature1.name abs))
+	  | _ -> Utils.sformat "@[@[<3>" in
 	match Data_parser.parse_term ~output:first ~offset:actual_offset data abs with
 	| None -> false,Some abs
 	| Some (t,ty) -> 
-	  let t',ty' = E.Lexicon.interpret t ty lex in
-	  let () =
-	    Format.fprintf
-	      Format.str_formatter
-	      "@[<v5>Interpreted by %s in %s as:@[" 
-	      (fst (E.Lexicon.name lex))
-	      (fst (E.Signature1.name obj)) in
-	  let () = E.Signature1.term_to_formatted_string t' obj in
-	  let () = Format.fprintf Format.str_formatter " :@ " in
-	  let () = E.Signature1.type_to_formatted_string ty' obj in
-	  let () = Format.fprintf Format.str_formatter "@]@]@." in
+	  let () = Utils.sformat "@." in
 	  let s = Format.flush_str_formatter () in
-	  let () = Format.printf "%s@?" s in
+	  let () = Utils.format "%s" s in
+	  let t',ty' = E.Lexicon.interpret t ty lex in
+	  let () = Utils.sformat "@[<3>Interpreted by %s in %s as:@\n" 
+	    (fst (E.Lexicon.name lex))
+	    (fst (E.Signature1.name obj)) in
+	let () = Utils.sformat "@[<3>" in
+	  let () = E.Signature1.term_to_formatted_string Format.str_formatter t' obj in
+	  let () = Utils.sformat "@] : @[" in
+	  let () = E.Signature1.type_to_formatted_string Format.str_formatter  ty' obj in
+	  let () = Utils.sformat "@]@]@\n" in
 (*	  let () = Format.printf
 	    "Interpreted by %s in %s as:\n\t%s : %s\n%!"
 	    (fst (E.Lexicon.name lex))
@@ -493,7 +494,9 @@ let format = fun format ->
 	  false,Some abs)
       (true,None)
       lexicons in
-    Format.printf "\n%!"
+    let () = Utils.sformat "@." in
+    let s = Format.flush_str_formatter () in
+    Utils.format "%s" s
       
   type inputs =
   | Stop
@@ -536,11 +539,11 @@ let format = fun format ->
     match E.Lexicon.get_analysis resume lex with
     | Some t,resume -> 
       let _ = Format.flush_str_formatter () in
-      let () = Format.fprintf Format.str_formatter "@[@[" in
-      let () = E.Signature1.term_to_formatted_string t abs_sig in
-      let () = Format.fprintf Format.str_formatter "@] :@ @[" in
-      let () = E.Signature1.type_to_formatted_string abs_ty abs_sig in
-      let () = Format.fprintf Format.str_formatter "@]@]" in
+      let () = Utils.sformat "@[@[" in
+      let () = E.Signature1.term_to_formatted_string  Format.str_formatter t abs_sig in
+      let () = Utils.sformat "@] :@ @[" in
+      let () = E.Signature1.type_to_formatted_string  Format.str_formatter abs_ty abs_sig in
+      let () = Utils.sformat "@]@]" in
       let s = Format.flush_str_formatter () in
       let () = Format.printf "%s@?" s in
 (*      let () = Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string t abs_sig) (E.Signature1.type_to_string abs_ty abs_sig) in *)

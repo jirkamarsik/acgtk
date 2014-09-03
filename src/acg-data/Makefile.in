@@ -26,12 +26,12 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma str.cma
+LIBS += dyp.cma str.cma  ANSITerminal.cma 
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
 # ex. -I  +campl4
-LIBDIR += @DYPGEN_INCLUDE@
+LIBDIR += @DYPGEN_INCLUDE@ @ANSITerminal_INCLUDE@
 
 # Directories to which the current source files depend on
 PREVIOUS_DIRS = ../utils ../logic ../grammars ../datalog.prover

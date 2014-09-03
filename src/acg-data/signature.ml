@@ -80,9 +80,9 @@ struct
   let term_to_string t sg = Lambda.term_to_string t (id_to_string sg)
 
 
-  let type_to_formatted_string ty sg = Lambda.type_to_formatted_string ty (id_to_string sg)
+  let type_to_formatted_string fmt ty sg = Lambda.type_to_formatted_string fmt ty (id_to_string sg)
     
-  let term_to_formatted_string t sg = Lambda.term_to_formatted_string t (id_to_string sg)
+  let term_to_formatted_string fmt t sg = Lambda.term_to_formatted_string fmt t (id_to_string sg)
 
 
   let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty;is_2nd_order=true}
@@ -286,32 +286,60 @@ struct
     | Abstract_syntax.Binder -> "binder "
 	
   let entry_to_string f decl = 
-    let _ = Format.flush_str_formatter () in
+    let buff=Buffer.create 10 in
+    let temp_str_formatter = Format.formatter_of_buffer buff in
+    let () = Utils.fterm_set_size temp_str_formatter in
     let () =
       match decl with
       | Type_declaration(s,_,k) -> 
-	let () = Format.fprintf Format.str_formatter "@[<hov 4>%s :@ @[" s in
-	let () = Lambda.kind_to_formatted_string k f in
-	Format.fprintf Format.str_formatter "@];@]"
-    | Type_definition(s,_,k,ty) -> 
-	let () = Format.fprintf Format.str_formatter "@[<hov 4>%s =@ @[" s in
-	let () = Lambda.type_to_formatted_string ty f in
-	let () = Format.fprintf Format.str_formatter " :@ @[" in
-	let () = Lambda.kind_to_formatted_string k f in
-	Format.fprintf Format.str_formatter "@];@]@]"
+	let () = Utils.fformat temp_str_formatter "@[<hov 4>%s :@ @[%s" s (Lambda.kind_to_string k f) in
+	Utils.fformat temp_str_formatter "@];@]"
+      | Type_definition(s,_,k,ty) -> 
+	let () = Utils.fformat temp_str_formatter "@[<hov 4>%s =@ @[" s in
+	let () = Lambda.type_to_formatted_string temp_str_formatter ty f in
+	let () = Utils.fformat temp_str_formatter " :@ @[" in
+	let () = Lambda.kind_to_formatted_string  temp_str_formatter k f in
+	Utils.fformat temp_str_formatter "@];@]@]"
     | Term_declaration(s,_,behavior,ty) -> 
-	let () = Format.fprintf Format.str_formatter "@[<hov 4>%s%s :@ @[" (behavior_to_string behavior) s in
-	let () = Lambda.type_to_formatted_string ty f in
-	Format.fprintf Format.str_formatter "@];@]"
+	let () = Utils.fformat temp_str_formatter "@[<hov 4>%s%s :@ @[" (behavior_to_string behavior) s in
+	let () = Lambda.type_to_formatted_string  temp_str_formatter ty f in
+	Utils.fformat temp_str_formatter "@];@]"
     | Term_definition(s,_,behavior,ty,t) -> 
-	let () = Format.fprintf Format.str_formatter "@[<hov 4>%s%s =@ @[" (behavior_to_string behavior) s in
-	let () = Lambda.term_to_formatted_string t f in
-	let () = Format.fprintf Format.str_formatter " :@ @[" in
-	let () = Lambda.type_to_formatted_string ty f in
-	Format.fprintf Format.str_formatter "@];@]@]" in
-    let s = Format.flush_str_formatter () in
-    Format.sprintf "%s" s
-	
+	let () = Utils.fformat temp_str_formatter "@[<hov 4>%s%s =@ @[" (behavior_to_string behavior) s in
+	let () = Lambda.term_to_formatted_string  temp_str_formatter t f in
+	let () = Utils.fformat temp_str_formatter " :@ @[" in
+	let () = Lambda.type_to_formatted_string  temp_str_formatter ty f in
+	Utils.fformat temp_str_formatter "@];@]@]" in
+    let () = Format.pp_print_flush temp_str_formatter () in
+    Buffer.contents buff
+
+
+  let entry_to_formatted_string f decl = 
+    let () =
+      match decl with
+      | Type_declaration(s,_,k) -> 
+	let () = Utils.sformat "@[<hov 4>%s :@ @[" s in
+	let () = Lambda.kind_to_formatted_string Format.str_formatter k f in
+	Utils.sformat "@];@]"
+    | Type_definition(s,_,k,ty) -> 
+	let () = Utils.sformat "@[<hov 4>%s =@ @[" s in
+	let () = Lambda.type_to_formatted_string  Format.str_formatter ty f in
+	let () = Utils.sformat " :@ @[" in
+	let () = Lambda.kind_to_formatted_string  Format.str_formatter k f in
+	Utils.sformat "@];@]@]"
+    | Term_declaration(s,_,behavior,ty) -> 
+	let () = Utils.sformat "@[<hov 4>%s%s :@ @[" (behavior_to_string behavior) s in
+	let () = Lambda.type_to_formatted_string  Format.str_formatter ty f in
+	Utils.sformat "@];@]"
+    | Term_definition(s,_,behavior,ty,t) -> 
+	let () = Utils.sformat "@[<hov 4>%s%s =@ @[" (behavior_to_string behavior) s in
+	let () = Lambda.term_to_formatted_string  Format.str_formatter t f in
+	let () = Utils.sformat " :@ @[" in
+	let () = Lambda.type_to_formatted_string  Format.str_formatter ty f in
+	Utils.sformat "@];@]@]" in
+    ()
+
+
   let to_string ({name=n;ids=ids} as sg) =
     Printf.sprintf "signature %s = \n%send\n"
       (fst n)
