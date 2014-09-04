@@ -71,19 +71,19 @@ sig
 
   val print : ?name:string -> env -> (Lexing.position * Lexing.position) -> unit
 
-  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val parse : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val parse : ?name:string -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val idb : ?name:string -> env ->  ?offset:string -> (Lexing.position * Lexing.position) -> unit
+  val idb : ?name:string -> env ->  (Lexing.position * Lexing.position) -> unit
 
-  val query : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val query : ?name:string -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
+  val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> env
 
   val compose : 
     string * (Lexing.position * Lexing.position) ->

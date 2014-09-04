@@ -171,17 +171,17 @@ module Lambda =
 	     | Atom i -> Utils.fformat fmter "@[%s@]" (snd (id_to_sym i))
 	     | DAtom i -> Utils.fformat fmter "@[%s@]" (snd (id_to_sym i))
 	     | LFun (ty1,ty2) ->
-	       let () = Utils.fformat fmter "@[<2>%s" (left_paren paren) in
+	       let () = Utils.fformat fmter "@[<2>@[%s" (left_paren paren) in
 	       let () = type_to_string_aux ty1 true in
-	       let () = Utils.fformat fmter " ->@ @[<2>" in
+	       let () = Utils.fformat fmter " ->@[<2>@ @[<2>@[" in
 	       let () = type_to_string_aux ty2 true in
-	       Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	       Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	     | Fun (ty1,ty2) ->
-	       let () = Utils.fformat fmter "@[<2>%s" (left_paren paren) in
+	       let () = Utils.fformat fmter "@[<2>%s@[" (left_paren paren) in
 	       let () = type_to_string_aux ty1 true in
-	       let () = Utils.fformat fmter " =>@ @[<2>" in
+	       let () = Utils.fformat fmter " =>@[<2>@ @[<2>@[" in
 	       let () = type_to_string_aux ty2 true in
-	       Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	       Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	     | _ -> failwith "Not yet implemented" in
        let () = type_to_string_aux ty false in
        ()
@@ -217,19 +217,19 @@ module Lambda =
 	   | Abs (x,t) ->
 	     let x' = generate_var_name x env in
 	     let vars,l,u=unfold_abs [level,x'] (level+1) ((level,x')::env) t in
-	     let () = Utils.fformat fmter "@[<3>%sLambda " (left_paren paren) in
+	     let () = Utils.fformat fmter "@[@[%s@[<3>Lambda " (left_paren paren) in
 	     let () = Utils.format_of_list fmter " " (fun (_,x) -> x) (List.rev vars) in
-	     let () = Utils.fformat fmter ".@ @[<2>" in
+	     let () = Utils.fformat fmter ".@ @[@[" in
 	     let _ = term_to_string_aux u false l_level l (l_env,vars@env) in
-	     Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | LAbs (x,t) ->
 	     let x' = generate_var_name x l_env in
 	     let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env) t in
-	     let () = Utils.fformat fmter "@[<3>%slambda " (left_paren paren) in
+	     let () = Utils.fformat fmter "@[@[%s@[<3>lambda " (left_paren paren) in
 	     let () = Utils.format_of_list fmter " " (fun (_,x) -> x) (List.rev vars) in
-	     let () = Utils.fformat fmter ".@ @[<2>" in
+	     let () = Utils.fformat fmter ".@ @[@[" in
 	     let () = term_to_string_aux u false l level ((vars@l_env),env) in
-	     Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | App((Const s|DConst s),Abs(x,u)) when is_binder s id_to_sym ->
 	     let x' = generate_var_name x env in
 	     let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] ((level,x')::env) u in
@@ -241,11 +241,11 @@ module Lambda =
 		   | Abstract_syntax.Linear -> (l,x)::l_acc,acc)
 		 vars
 		 (l_env,env) in
-	     let () = Utils.fformat fmter "@[<3>%s%s " (left_paren paren) (let _,const = id_to_sym s in const) in
+	     let () = Utils.fformat fmter "@[@[%s@[<3>%s " (left_paren paren) (let _,const = id_to_sym s in const) in
 	     let () = Utils.format_of_list fmter " " (fun (_,(x,_)) -> x) (List.rev vars) in
-	     let () = Utils.fformat fmter ".@ @[<2>" in
+	     let () = Utils.fformat fmter ".@ @[@[" in
 	     let _ = term_to_string_aux u false l_l l new_env in
-	     Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | App((Const s|DConst s),LAbs(x,u)) when is_binder s id_to_sym ->
 	     let x' = generate_var_name x l_env in
 	     let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env) u in
@@ -257,34 +257,35 @@ module Lambda =
 		   | Abstract_syntax.Linear -> (l,x)::l_acc,acc)
 		 vars
 		 (l_env,env) in
-	     let () = Utils.fformat fmter "@[<3>%s%s " (left_paren paren) (let _,const = id_to_sym s in const) in
+	     let () = Utils.fformat fmter "@[@[%s@[<3>%s " (left_paren paren) (let _,const = id_to_sym s in const) in
 	     let () = Utils.format_of_list fmter " " (fun (_,(x,_)) -> x) (List.rev vars) in
-	     let () = Utils.fformat fmter ".@ @[<2>" in
+	     let () = Utils.fformat fmter ".@ @[@[" in
 	     let _ = term_to_string_aux u false l_l l new_env in
-	     Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | App(App((Const s|DConst s),t1),t2) when is_infix s id_to_sym ->
-	     let () = Utils.fformat fmter "@[<2>%s" (left_paren paren) in
+	     let () = Utils.fformat fmter "@[<2>@[%s@[" (left_paren paren) in
 	     let () = term_to_string_aux t1 true l_level level (l_env,env) in
-	     let () = Utils.fformat fmter "@ %s@ @[<2>" (let _,const=id_to_sym s in const) in
+	     let () = Utils.fformat fmter "@]@ %s@ @[<2>@[" (let _,const=id_to_sym s in const) in
 	     let () = term_to_string_aux t2 true l_level level (l_env,env) in
-	     Utils.fformat fmter "@]@,%s@]" (right_paren paren)
+	     Utils.fformat fmter "@]@]@,%s@]@]" (right_paren paren)
 	   | App(t1,t2) ->
 	     let args,t11 = unfold_app [t2] t1 in
-	     let () = Utils.fformat fmter "@[<2>%s@[" (left_paren paren) in
+	     let () = Utils.fformat fmter "@[@[%s@[<2>@[" (left_paren paren) in
 	     let () = term_to_string_aux t11 true l_level level (l_env,env) in
-	     let () = Utils.fformat fmter "@]" in
+	     let () = Utils.fformat fmter "@]@[" in
 	     let () = 
 	       List.iter
 		 (fun arg -> 
-		   let () = Utils.fformat fmter "@ @[<2>@[" in
+		   let () = Utils.fformat fmter "@ @[" in
 		   let () = term_to_string_aux arg true l_level level (l_env,env) in
-		   Utils.fformat fmter "@]@]")
+		   Utils.fformat fmter "@]")
 		 args in
-	     Utils.fformat fmter "@,%s@]" (right_paren paren)
+	     Utils.fformat fmter "@]@]@,%s@]@]" (right_paren paren)
 	   | _ -> failwith "Not yet implemented" in
        let () = term_to_string_aux t false 0 0 ([],[]) in
        (* FIXME: I can't see where I forgot to close this box! *)
-       Utils.fformat fmter "@]"
+(*       let () = Utils.fformat fmter "@]" in *)
+       ()
 
 
 

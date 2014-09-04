@@ -85,17 +85,17 @@ sig
 
   val print : ?name:string -> env -> (Lexing.position * Lexing.position) -> unit
 
-  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
-  val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
-  val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
+  val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
+  val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val parse : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val parse : ?name:string -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val idb : ?name:string -> env ->  ?offset:string -> (Lexing.position * Lexing.position) -> unit
+  val idb : ?name:string -> env ->  (Lexing.position * Lexing.position) -> unit
 
-  val query : ?name:string -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> unit
+  val query : ?name:string -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
-  val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> ?offset:string -> string -> (Lexing.position * Lexing.position) -> env
+  val add : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> env
 
   val compose : 
     string * (Lexing.position * Lexing.position) ->
@@ -166,12 +166,6 @@ struct
   let actions = [Help None;Load;List;Print;Check;Realize;Parse;Idb;Query;Compose;Analyse;Wait;Dont_wait;Select;Unselect;Create;Add;Save;Trace;Dont_trace;]
 
 
-(*let format = fun format ->
-  let terminal_width,_=ANSITerminal.size () in
-  let () = Format.set_margin terminal_width in
-  Format.printf format
-*)
-
   let rec action_to_string = function
     | Load -> "load"
     | List -> "list"
@@ -196,19 +190,13 @@ struct
     | Idb -> "idb"
     | Query -> "query"
 
-  let red_bold_string s = 
-    ANSITerminal.sprintf [ANSITerminal.Bold;ANSITerminal.red] "%s" s
-
-  let bold_string s = 
-    ANSITerminal.sprintf [ANSITerminal.Bold] "%s" s
-
   let action_to_string s =
-    red_bold_string (action_to_string s)
+    Utils.red (action_to_string s)
 
 
   let messages = function
     | Load as command ->
-      let options = bold_string "d|data|s|script|o|object" in
+      let options = ANSITerminal.sprintf [ANSITerminal.Bold] "d|data|s|script|o|object" in
       Utils.format "@[<v5>%s %s file;@ @[loads@ the@ file@ \"file\"@ as@ data@ (\"d\"@ or@ \"data\"@ option),@ as@ an@ object@ (compiled@ data,@ \"o\"@ or@ \"object\"@ option),@ or@ as@ a@ script@ (\"s\"@ or@ \"script\"@ option)@ @]@]@." (action_to_string command) options
     | List as command -> Utils.format "@[<v5>%s;@ @[lists@ the@ signatures@ and@ the@ lexicons@ of@ the@ current@ environment@ @]@]@." (action_to_string command)
     | Select as command -> Utils.format "@[<v5>%s name;@ @[selects@ the@ \"name\"@ signature@ or@ lexicon@ in@ the@ current@ environment@ and@ make@ it@ an@ implicit@ context@ for@ the@ following@ commands@ @]@]@." (action_to_string command)
@@ -225,7 +213,7 @@ struct
     | Idb as command -> Utils.format "@[<v5>[name] %s;@ @[outputs@ the@ datalog@ program@ (intensional@ database)@ corresponding@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
     | Query as command -> Utils.format "@[<v5>[name] %s term:type;@ @[outputs@ the@ facts@ (extensional@ database)@ and@ the@ query@ associated@ to@ the@ term@ \"term\"@ of@ distinguished@ type@ \"type\"@ with@ respect@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
     | Add as command -> Utils.format "@[<v5>[name1 name2 ...] %s expression;@ @[adds@ the@ given@ \"expression\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons@ to@ those@ signature@ or@ lexicons.@ \"expression\"@ must@ respect@ the@ syntax@ of@ signatures@ or@ lexicons@ @]@]@." (action_to_string command)
-    | Compose as command -> let as_str = red_bold_string "as" in
+    | Compose as command -> let as_str = Utils.red "as" in
 			    Utils.format "@[<v5>%s name1 name2 %s name3; @ @[ creates@ a@ new@ lexicon@ with@ name@ \"name3\"@ by@ composing@ the@ \"name1\"@ and@ \"name2\"@ lexicons@ @]@]@." (action_to_string command) as_str
     | Help _ as command -> Utils.format "@[<v5>%s ;@ @[prints@ the@ help@ message@ @]@]@." (action_to_string command)
     | Create as command -> Utils.format "@[<v5>%s s|sig|l|lex name [name1 name2];@ @[creates@ a@ new@ empty@ signature@ or@ lexicon@ (according@ to@ the@ s@ or@ sig,@ or@ l@ or@ lex@ option)@ with@ name@ \"name\"@ in@ the@ current@ environment.\"name1\"@ and@ \"name2\"@ are@ mandatory@ in@ case@ of@ creating@ a@ lexicon:@ they@ are@ respectively@ the@ abstract@ and@ the@ object@ signature.@ They@ of@ course@ are@ forbidden@ in@ case@ of@ creating@ a@ signature@ @]@]@." (action_to_string command)
@@ -283,28 +271,27 @@ struct
 
 
   let list e =
-    Format.printf "Available data:\n%s\n%!"
-      (Utils.string_of_list
-	 "\n"
-	 (fun x -> x)
-	 (E.fold
-	    (fun d a -> 
-	       match d with
-		 | E.Signature sg -> (Format.sprintf "\tSignature\t%s%!" (fst (E.Signature1.name sg)))::a
-		 | E.Lexicon lx -> 
-		     let abs_name,obj_name =
-		       let abs,obj = E.Lexicon.get_sig lx in
-			 fst (E.Signature1.name abs),fst (E.Signature1.name obj) in
-		       (Format.sprintf
-			  "\tLexicon\t\t%s\t(%s --> %s)%!"
-			  (fst (E.Lexicon.name lx))
-			  abs_name
-			  obj_name)
-		       ::a)
-	    []
-	    e))
-
-
+    let _ = Format.flush_str_formatter () in
+    let () = Utils.sterm_set_size () in
+    let () = Utils.sformat "@[<v3>Available data:@," in
+    let () =
+      E.iter
+	(function 
+	| E.Signature sg -> Utils.sformat "@[%9s @[%s@]@]@," "Signature" (Utils.green (fst (E.Signature1.name sg)))
+	| E.Lexicon lx -> 
+	  let abs_name,obj_name =
+	    let abs,obj = E.Lexicon.get_sig lx in
+	    fst (E.Signature1.name abs),fst (E.Signature1.name obj) in
+	  Utils.sformat 
+	    "@[<b>@[%9s @[<3>@[%s@]@ @[(@[%s -->@ %s@])@]@]@]@]@," "Lexicon"
+	    (Utils.red (fst (E.Lexicon.name lx)))
+	    (Utils.green abs_name)
+	    (Utils.green obj_name))
+	e in
+    let () = Utils.sformat "@." in
+    let s = Format.flush_str_formatter () in
+    Utils.format "%s" s
+   
   let select n l e =
     try
 	E.select n e
@@ -361,13 +348,14 @@ struct
 
 
 
-  let in_sg sg = Format.fprintf Format.err_formatter "in signature %s\n%!" (fst (E.Signature1.name sg))
+  let in_sg sg = Printf.fprintf stderr "in signature %s\n%!" (Utils.green (fst (E.Signature1.name sg)))
 
     
-  let analyse ?names e ?offset data l =
+  let analyse ?names e data l =
     try
-      let additional_offset = "\t" in
-      let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
+      let () = Printf.printf "\n%!" in
+      let _ = Format.flush_str_formatter () in
+      let () = Utils.sterm_set_size () in
       let entries =
 	match names,E.focus e with
 	| None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -381,34 +369,57 @@ struct
 	      | E.Entry_not_found s -> raise (Scripting_errors.Error (Scripting_errors.Not_in_environment s,l)))
 	    ns in
       let _ = List.fold_left
-	(fun (first,last_abs_sg) entry -> match entry with
-	| E.Signature sg -> 
-	  (match last_abs_sg with
-	  | Some previous_sg when (E.Signature1.name sg) = (E.Signature1.name previous_sg) -> (false,last_abs_sg)
-	  | _ ->
-	    let () = if first then Format.printf "In %s:\n%s%!" (fst (E.Signature1.name sg)) additional_offset else () in
-	    (match Data_parser.parse_term ~output:true ~offset:actual_offset data sg with
-	    | None -> let () = in_sg sg in false, Some sg
-	    | Some _ -> false,None))
-	| E.Lexicon lex -> 
-	  let abs,obj=E.Lexicon.get_sig lex in
-	  match last_abs_sg with
-	  |  Some previous_sg when (E.Signature1.name abs) = (E.Signature1.name previous_sg) -> (false,last_abs_sg)
-	  | _ -> let () = if first then Format.printf "In %s:\n%s%!" (fst (E.Signature1.name abs)) additional_offset else () in
-		 match Data_parser.parse_term ~output:first ~offset:actual_offset data abs with
-		 | None -> false,Some abs
-		 | Some (t,ty) -> 
-		   let t',ty' = E.Lexicon.interpret t ty lex in
-		   let () = Format.printf
-		     "Interpreted by %s in %s as:\n\t%s : %s\n%!"
-		     (fst (E.Lexicon.name lex))
-		     (fst (E.Signature1.name obj))
-		     (E.Signature1.term_to_string t' obj)
-		     (E.Signature1.type_to_string ty' obj) in
-		   false,None)
+	(fun (first,last_abs_sg) entry -> 
+	  match entry with
+	  | E.Signature sg -> 
+	    (match last_abs_sg with
+	    | Some previous_sg when (E.Signature1.name sg) = (E.Signature1.name previous_sg) -> (false,last_abs_sg)
+	    | _ ->
+	      let () = 
+		if first then
+		  Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name sg)))
+		else
+		  Utils.sformat "@[@["
+	      in
+	      (match Data_parser.parse_term ~output:true  data sg with
+	      | None -> let () = in_sg sg in false, Some sg
+	      | Some _ -> 
+		let () = Utils.sformat "@]@]@." in
+		let s = Format.flush_str_formatter () in
+		let () = Utils.format "%s" s in
+		false,None))
+	  | E.Lexicon lex -> 
+	    let abs,obj=E.Lexicon.get_sig lex in
+	    match last_abs_sg with
+	    |  Some previous_sg when (E.Signature1.name abs) = (E.Signature1.name previous_sg) -> (false,last_abs_sg)
+	    | _ ->
+	      let () =
+		if first then
+		  Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name abs)))
+		else
+		  Utils.sformat "@[@["
+	      in
+	      match Data_parser.parse_term ~output:first  data abs with
+	      | None -> false,Some abs
+	      | Some (t,ty) -> 
+		let () = Utils.sformat "@]@]@." in
+		let s = Format.flush_str_formatter () in
+		let () = Utils.format "%s" s in
+		let t',ty' = E.Lexicon.interpret t ty lex in
+		let () = Utils.sformat "@[<3>Interpreted by %s in %s as:@\n" 
+		  (Utils.red (fst (E.Lexicon.name lex)))
+		  (Utils.green (fst (E.Signature1.name obj))) in
+		let () = Utils.sformat "@[" in
+		let () = E.Signature1.term_to_formatted_string Format.str_formatter t' obj in
+		let () = Utils.sformat "@] : @[" in
+		let () = E.Signature1.type_to_formatted_string Format.str_formatter  ty' obj in
+		let () = Utils.sformat "@]@]@." in
+		false,None)
 	(true,None)
 	entries in
-      Format.printf "\n%!"
+      let () = Utils.sformat "@." in
+      let s = Format.flush_str_formatter () in
+      Utils.format "%s" s
     with
     | E.Signature_not_found n
     | E.Lexicon_not_found n
@@ -416,9 +427,10 @@ struct
       
 	
       
-  let check ?names e ?offset data l =
-    let additional_offset = "\t" in
-    let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
+  let check ?names e data l =
+    let () = Printf.printf "\n%!" in
+    let _ = Format.flush_str_formatter () in
+    let () = Utils.sterm_set_size () in
     let signatures =
       match names,E.focus e with
       | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -431,23 +443,21 @@ struct
 	    "check"),
 	  l))
       | Some ns,_ -> List.map (fun (n,l) -> get_sig (Some n) "check" e l) ns in
-    let () = 
-      List.iter
-	(fun sg -> 
-	  let () = Format.printf "In @[%s:@ \n@[%s@]@]%!" (fst (E.Signature1.name sg)) additional_offset in
-	  let _ = Data_parser.parse_term ~output:true ~offset:actual_offset data sg in
-	  ())
-	signatures in
-    Format.printf "\n%!"
+    List.iter
+      (fun sg -> 
+	let () = Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name sg))) in
+	let _ = Data_parser.parse_term ~output:true data sg in
+	let () = Utils.sformat "@]@]@." in
+	let s = Format.flush_str_formatter () in
+	Utils.format "%s" s)
+      signatures
       
       
       
-  let realize ?names e ?offset data l =
+  let realize ?names e data l =
     let () = Printf.printf "\n%!" in
     let _ = Format.flush_str_formatter () in
     let () = Utils.sterm_set_size () in
-    let additional_offset = "\t" in
-    let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
     let lexicons =
       match names,E.focus e with
       | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -466,31 +476,25 @@ struct
 	let () =
 	  match last_abs_sg with
 	  | None  -> 
-	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (fst (E.Signature1.name abs))
+	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name abs)))
 	  | Some previous_sg when (E.Signature1.name abs) <> (E.Signature1.name previous_sg)  ->
-	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (fst (E.Signature1.name abs))
-	  | _ -> Utils.sformat "@[@[<3>" in
-	match Data_parser.parse_term ~output:first ~offset:actual_offset data abs with
+	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name abs)))
+	  | _ -> Utils.sformat "@[@[" in
+	match Data_parser.parse_term ~output:first data abs with
 	| None -> false,Some abs
 	| Some (t,ty) -> 
-	  let () = Utils.sformat "@." in
+	  let () = Utils.sformat "@]@]@." in
 	  let s = Format.flush_str_formatter () in
 	  let () = Utils.format "%s" s in
 	  let t',ty' = E.Lexicon.interpret t ty lex in
 	  let () = Utils.sformat "@[<3>Interpreted by %s in %s as:@\n" 
-	    (fst (E.Lexicon.name lex))
-	    (fst (E.Signature1.name obj)) in
-	let () = Utils.sformat "@[<3>" in
+	    (Utils.red (fst (E.Lexicon.name lex)))
+	    (Utils.green (fst (E.Signature1.name obj))) in
+	let () = Utils.sformat "@[" in
 	  let () = E.Signature1.term_to_formatted_string Format.str_formatter t' obj in
 	  let () = Utils.sformat "@] : @[" in
 	  let () = E.Signature1.type_to_formatted_string Format.str_formatter  ty' obj in
-	  let () = Utils.sformat "@]@]@\n" in
-(*	  let () = Format.printf
-	    "Interpreted by %s in %s as:\n\t%s : %s\n%!"
-	    (fst (E.Lexicon.name lex))
-	    (fst (E.Signature1.name obj))
-	    (E.Signature1.term_to_string t' obj)
-	    (E.Signature1.type_to_string ty' obj) in *)
+	  let () = Utils.sformat "@]@]@." in
 	  false,Some abs)
       (true,None)
       lexicons in
@@ -535,27 +539,25 @@ struct
       
 
   let get_parse_tree resume abs_ty lex =
+    let _ = Format.flush_str_formatter () in
     let abs_sig,_=E.Lexicon.get_sig lex in
     match E.Lexicon.get_analysis resume lex with
     | Some t,resume -> 
-      let _ = Format.flush_str_formatter () in
+      let () = Utils.sformat "@[<v>@[An@ antecedent@ by@ %s@ in@ %s@ is:@]@,@[" (Utils.red (fst (E.Lexicon.name lex))) (Utils.green (fst (E.Signature1.name abs_sig))) in
       let () = Utils.sformat "@[@[" in
       let () = E.Signature1.term_to_formatted_string  Format.str_formatter t abs_sig in
       let () = Utils.sformat "@] :@ @[" in
       let () = E.Signature1.type_to_formatted_string  Format.str_formatter abs_ty abs_sig in
-      let () = Utils.sformat "@]@]" in
+      let () = Utils.sformat "@]@]@]@]@." in
       let s = Format.flush_str_formatter () in
       let () = Format.printf "%s@?" s in
-(*      let () = Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string t abs_sig) (E.Signature1.type_to_string abs_ty abs_sig) in *)
       Some resume
     | None,_ -> None
       
-  let parse ?name e ?offset data l =
-    let additional_offset = "\t" in
-    let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
+  let parse ?name e data l =
     let lex = get_lex name "parse" e l in
     let abs,obj=E.Lexicon.get_sig lex in
-    match Data_parser.parse_heterogenous_term ~output:false ~offset:actual_offset data lex with
+    match Data_parser.parse_heterogenous_term ~output:false data lex with
     | None -> ()
     | Some (obj_t,abs_ty) -> 
       let resume = get_parse_tree (E.Lexicon.parse obj_t abs_ty lex) abs_ty lex in
@@ -565,9 +567,7 @@ struct
 	ask_for_next_parse (fun res -> get_parse_tree res abs_ty lex) resume
 	  
 	  
-  let idb ?name e ?offset l =
-    let additional_offset = "\t" in
-    let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
+  let idb ?name e l =
     let lex = get_lex name "query" e l in
     let buff=E.Lexicon.program_to_buffer lex in
     Printf.printf
@@ -576,12 +576,10 @@ struct
       (Buffer.contents buff)      
 	
       
-  let query ?name e ?offset data l =
-    let additional_offset = "\t" in
-    let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
+  let query ?name e data l =
     let lex = get_lex name "idb" e l in
     let abs,obj=E.Lexicon.get_sig lex in
-    match Data_parser.parse_heterogenous_term ~output:false ~offset:actual_offset data lex with
+    match Data_parser.parse_heterogenous_term ~output:false data lex with
     | None -> ()
     | Some (obj_t,abs_ty) -> 
       let buff=E.Lexicon.query_to_buffer obj_t abs_ty lex in
@@ -597,10 +595,8 @@ struct
     | E.Signature sg -> fst (E.Signature1.name sg)
     | E.Lexicon lex -> fst (E.Lexicon.name lex)
 
-  let add ?names e ?offset data l =
+  let add ?names e data l =
     try
-      let additional_offset = "" in
-      let actual_offset = Printf.sprintf "%s%s" (match offset with | None -> "" | Some s -> s) additional_offset in
       let entries,update_focus,foc_name =
 	match names,E.focus e with
 	  | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -625,11 +621,11 @@ struct
 	List.fold_left
 	  (fun acc entry -> match entry with
 	     | E.Signature sg -> 
-		 (match Data_parser.parse_sig_entry ~offset:actual_offset data sg with
+		 (match Data_parser.parse_sig_entry data sg with
 		    | None -> acc
 		    | Some new_sg -> E.insert ~override:true (E.Signature new_sg) acc)
 	     | E.Lexicon lex -> 
-		 (match Data_parser.parse_lex_entry ~offset:actual_offset data lex with
+		 (match Data_parser.parse_lex_entry data lex with
 		    | None -> acc
 		    | Some new_lex -> E.insert ~override:true (E.Lexicon new_lex) acc))
 	  e

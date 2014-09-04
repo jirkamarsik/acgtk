@@ -43,7 +43,7 @@ let f_set_size formatter =
     LOG "Setting the size of the formatter to %i" terminal_width LEVEL TRACE;
     Format.pp_set_margin formatter terminal_width
   with
-  | Failure "ANSITerminal.size" ->  ()
+  | Failure "ANSITerminal.size" ->  Format.pp_set_margin formatter (max_int-1)
 
 let sterm_set_size () = f_set_size Format.str_formatter
 
@@ -64,7 +64,7 @@ let format_of_list fmter sep to_string = function
   | a::tl ->
     let () = fformat fmter "@[%s@]" (to_string a) in
     List.iter
-      (fun s -> fformat fmter "%s@ @,@[%s@]" sep (to_string s))
+      (fun s -> fformat fmter "%s@,@[%s@]" sep (to_string s))
       tl
 
 let color c s = ANSITerminal.sprintf [ANSITerminal.Bold;c] "%s" s

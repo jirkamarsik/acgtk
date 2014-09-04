@@ -578,7 +578,19 @@ sig_entries :
 	  let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e filename) in
 	  None
 	      
-let parse_term ?(offset="") ?(output=false) t sg = 
+let pp_error er t = 
+  let () = Utils.sformat "@." in    
+  let _ = Format.flush_str_formatter () in
+  let s,e = Error.get_loc_error er in
+  let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
+  let t_init = String.sub t 0 s' in
+  let t_error = Utils.red (String.sub t s' (e'-s')) in
+  let end_start_index  = (s' + (e'-s')) in
+  let t_end = String.sub t end_start_index ((String.length t) - end_start_index) in
+  let () = Printf.fprintf stderr "%s%s%s\n" t_init t_error t_end in
+  Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg er "stdin")
+
+let parse_term ?(output=false) t sg = 
   let lexbuf = Lexing.from_string t in
   try 
     let () = Data_lexer.set_to_term () in
@@ -590,31 +602,21 @@ let parse_term ?(offset="") ?(output=false) t sg =
       | true -> 
 	let () = Utils.sformat "@[" in
 	let () = E.Signature1.term_to_formatted_string Format.str_formatter abs_term sg in
-	let () = Utils.sformat "@] : @[" in
+	let () = Utils.sformat "@] :@ @[" in
 	let () = E.Signature1.type_to_formatted_string Format.str_formatter abs_type sg in
 	let () = Utils.sformat "@]" in
 	()
-      (*	Printf.printf "%s : %s \n%!" (E.Signature1.term_to_string (E.Signature1.unfold abs_term sg) sg) (E.Signature1.type_to_string abs_type sg) *)
       | false -> () in
     Some (abs_term,abs_type)
   with
   | Error.Error er -> 
-    let s,e = Error.get_loc_error er in
-    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
-    let () = Printf.fprintf 
-      stderr
-      "%s\n%s%s%s\nError: %s\n%!"
-      t
-      offset
-      (String.make s' ' ') 
-      (String.make (e'-s') '^')
-      (Error.error_msg er "stdin") in
+    let () = pp_error er t in
     None
   | End_of_file -> None
 
 
 
-let parse_heterogenous_term ?(offset="") ?(output=false) t lex = 
+let parse_heterogenous_term  ?(output=false) t lex = 
   let lexbuf = Lexing.from_string t in
   let abs,obj=E.Lexicon.get_sig lex in
   try 
@@ -626,22 +628,23 @@ let parse_heterogenous_term ?(offset="") ?(output=false) t lex =
     let obj_type=E.Lexicon.interpret_type abs_type lex in
     let obj_term=E.Signature1.typecheck obj_term obj_type obj in
     let () = match output with
-      | true -> let () = Printf.printf "%s : %s (as image of %s)\n%!" (E.Signature1.term_to_string obj_term obj) (E.Signature1.type_to_string obj_type obj) (E.Signature1.type_to_string abs_type abs) in
-		Printf.printf "%s : %s (as image of %s)\n%!" (E.Signature1.term_to_string (E.Signature1.unfold obj_term obj) obj) (E.Signature1.type_to_string obj_type obj) (E.Signature1.type_to_string abs_type abs)
+      | true -> 
+	let () = 
+	  Printf.printf
+	    "%s : %s (as image of %s)\n%!"
+	    (E.Signature1.term_to_string obj_term obj)
+	    (E.Signature1.type_to_string obj_type obj)
+	    (E.Signature1.type_to_string abs_type abs) in
+	Printf.printf
+	  "%s : %s (as image of %s)\n%!"
+	  (E.Signature1.term_to_string (E.Signature1.unfold obj_term obj) obj)
+	  (E.Signature1.type_to_string obj_type obj)
+	  (E.Signature1.type_to_string abs_type abs)
       | false -> () in
     Some (obj_term,abs_type)
   with
   | Error.Error er -> 
-    let s,e = Error.get_loc_error er in
-    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
-    let () = Printf.fprintf 
-      stderr
-      "%s\n%s%s%s\nError: %s\n%!"
-      t
-      offset
-      (String.make s' ' ') 
-      (String.make (e'-s') '^')
-      (Error.error_msg er "stdin") in
+    let () = pp_error er t in
     None
   | End_of_file -> None
 
@@ -651,7 +654,7 @@ let parse_heterogenous_term ?(offset="") ?(output=false) t lex =
     
     
 	    
-  let parse_sig_entry ?(offset="") t sg = 
+  let parse_sig_entry t sg = 
     let lexbuf = Lexing.from_string t in
       try 
 	let () = Data_lexer.set_to_sig_entry () in
@@ -659,21 +662,12 @@ let parse_heterogenous_term ?(offset="") ?(output=false) t lex =
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Error.Error er -> 
-	    let s,e = Error.get_loc_error er in
-	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
-	    let () = Printf.fprintf 
-	      stderr
-	      "%s\n%s%s%s\nError: %s\n%!"
-	      t
-	      offset
-	      (String.make s' ' ') 
-	      (String.make (e'-s') '^')
-	      (Error.error_msg er "stdin") in
+	  let () = pp_error er t in
 	      None
 	| End_of_file -> None
 
 
-  let parse_lex_entry ?(offset="") t lex = 
+  let parse_lex_entry t lex = 
     let lexbuf = Lexing.from_string t in
       try 
 	let () = Data_lexer.set_to_lex_entry () in
@@ -681,16 +675,7 @@ let parse_heterogenous_term ?(offset="") ?(output=false) t lex =
 	    | Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
       with
 	| Error.Error er -> 
-	    let s,e = Error.get_loc_error er in
-	    let s',e' = s.Lexing.pos_cnum - s.Lexing.pos_bol,e.Lexing.pos_cnum - e.Lexing.pos_bol in
-	    let () = Printf.fprintf 
-	      stderr
-	      "%s\n%s%s%s\nError: %s\n%!"
-	      t
-	      offset
-	      (String.make s' ' ') 
-	      (String.make (e'-s') '^')
-	      (Error.error_msg er "stdin") in
+	  let () = pp_error er t in
 	      None
 	| End_of_file -> None
 
@@ -724,14 +709,14 @@ end}
     (** [term s sg] returns [Some t] with [t] being an
 	{!Abstract_syntax.Abstract_syntax..Abstract_syntax.Abstract_syntax.term} if [s] is parsable,
 	and [None] otherwise *)
-    val parse_term : ?offset:string -> ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
+    val parse_term : ?output:bool -> string -> E.Signature1.t -> (E.Signature1.term*E.Signature1.stype) option
 
-    val parse_heterogenous_term : ?offset:string -> ?output:bool -> string -> E.Lexicon.t -> (E.Signature1.term*E.Signature1.stype) option
+    val parse_heterogenous_term : ?output:bool -> string -> E.Lexicon.t -> (E.Signature1.term*E.Signature1.stype) option
 
       
-    val parse_sig_entry : ?offset:string -> string -> E.Signature1.t -> E.Signature1.t option
+    val parse_sig_entry : string -> E.Signature1.t -> E.Signature1.t option
 
-    val parse_lex_entry : ?offset:string -> string -> E.Lexicon.t -> E.Lexicon.t option
+    val parse_lex_entry : string -> E.Lexicon.t -> E.Lexicon.t option
       
       
     type local_data =
