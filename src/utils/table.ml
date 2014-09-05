@@ -47,7 +47,8 @@ module Make_table (Base : BASE)=
 
     type key = int
 
-    let create () = T (Array.create Base.b (None, Nil))
+(*    let create () = T (Array.create Base.b (None, Nil)) *)
+    let create () = T (Array.make Base.b (None, Nil)) 
 
     let empty =  Nil
 
