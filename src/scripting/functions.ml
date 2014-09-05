@@ -71,6 +71,7 @@ sig
   | Object
   | Script of (string -> string list -> env -> env)
 
+  val color_output : bool -> unit
 
   val load : file_type -> string -> string list -> env -> env
 
@@ -133,6 +134,10 @@ struct
 
   let interactive = ref false
 
+  let color = ref true
+
+  let color_output b = color:=b
+
   type file_type =
   | Data
   | Object
@@ -190,13 +195,28 @@ struct
     | Idb -> "idb"
     | Query -> "query"
 
+
+  let colored_string f s =
+    if !color then
+      f s
+    else
+      s
+	
+  let red s = colored_string Utils.red s
+  let green s = colored_string Utils.green s
+  let bold s = 
+    if !color then
+      ANSITerminal.sprintf [ANSITerminal.Bold] "%s" s
+    else
+      s
+
   let action_to_string s =
-    Utils.red (action_to_string s)
+    red (action_to_string s)
 
 
   let messages = function
     | Load as command ->
-      let options = ANSITerminal.sprintf [ANSITerminal.Bold] "d|data|s|script|o|object" in
+      let options = bold "d|data|s|script|o|object" in
       Utils.format "@[<v5>%s %s file;@ @[loads@ the@ file@ \"file\"@ as@ data@ (\"d\"@ or@ \"data\"@ option),@ as@ an@ object@ (compiled@ data,@ \"o\"@ or@ \"object\"@ option),@ or@ as@ a@ script@ (\"s\"@ or@ \"script\"@ option)@ @]@]@." (action_to_string command) options
     | List as command -> Utils.format "@[<v5>%s;@ @[lists@ the@ signatures@ and@ the@ lexicons@ of@ the@ current@ environment@ @]@]@." (action_to_string command)
     | Select as command -> Utils.format "@[<v5>%s name;@ @[selects@ the@ \"name\"@ signature@ or@ lexicon@ in@ the@ current@ environment@ and@ make@ it@ an@ implicit@ context@ for@ the@ following@ commands@ @]@]@." (action_to_string command)
@@ -213,7 +233,7 @@ struct
     | Idb as command -> Utils.format "@[<v5>[name] %s;@ @[outputs@ the@ datalog@ program@ (intensional@ database)@ corresponding@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
     | Query as command -> Utils.format "@[<v5>[name] %s term:type;@ @[outputs@ the@ facts@ (extensional@ database)@ and@ the@ query@ associated@ to@ the@ term@ \"term\"@ of@ distinguished@ type@ \"type\"@ with@ respect@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
     | Add as command -> Utils.format "@[<v5>[name1 name2 ...] %s expression;@ @[adds@ the@ given@ \"expression\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons@ to@ those@ signature@ or@ lexicons.@ \"expression\"@ must@ respect@ the@ syntax@ of@ signatures@ or@ lexicons@ @]@]@." (action_to_string command)
-    | Compose as command -> let as_str = Utils.red "as" in
+    | Compose as command -> let as_str = red "as" in
 			    Utils.format "@[<v5>%s name1 name2 %s name3; @ @[ creates@ a@ new@ lexicon@ with@ name@ \"name3\"@ by@ composing@ the@ \"name1\"@ and@ \"name2\"@ lexicons@ @]@]@." (action_to_string command) as_str
     | Help _ as command -> Utils.format "@[<v5>%s ;@ @[prints@ the@ help@ message@ @]@]@." (action_to_string command)
     | Create as command -> Utils.format "@[<v5>%s s|sig|l|lex name [name1 name2];@ @[creates@ a@ new@ empty@ signature@ or@ lexicon@ (according@ to@ the@ s@ or@ sig,@ or@ l@ or@ lex@ option)@ with@ name@ \"name\"@ in@ the@ current@ environment.\"name1\"@ and@ \"name2\"@ are@ mandatory@ in@ case@ of@ creating@ a@ lexicon:@ they@ are@ respectively@ the@ abstract@ and@ the@ object@ signature.@ They@ of@ course@ are@ forbidden@ in@ case@ of@ creating@ a@ signature@ @]@]@." (action_to_string command)
@@ -272,25 +292,24 @@ struct
 
   let list e =
     let _ = Format.flush_str_formatter () in
-    let () = Utils.sterm_set_size () in
     let () = Utils.sformat "@[<v3>Available data:@," in
     let () =
       E.iter
 	(function 
-	| E.Signature sg -> Utils.sformat "@[%9s @[%s@]@]@," "Signature" (Utils.green (fst (E.Signature1.name sg)))
+	| E.Signature sg -> Utils.sformat "@[%9s @[%s@]@]@," "Signature" (green (fst (E.Signature1.name sg)))
 	| E.Lexicon lx -> 
 	  let abs_name,obj_name =
 	    let abs,obj = E.Lexicon.get_sig lx in
 	    fst (E.Signature1.name abs),fst (E.Signature1.name obj) in
 	  Utils.sformat 
 	    "@[<b>@[%9s @[<3>@[%s@]@ @[(@[%s -->@ %s@])@]@]@]@]@," "Lexicon"
-	    (Utils.red (fst (E.Lexicon.name lx)))
-	    (Utils.green abs_name)
-	    (Utils.green obj_name))
+	    (red (fst (E.Lexicon.name lx)))
+	    (green abs_name)
+	    (green obj_name))
 	e in
     let () = Utils.sformat "@." in
     let s = Format.flush_str_formatter () in
-    Utils.format "%s" s
+    Utils.format "%s@?" s
    
   let select n l e =
     try
@@ -348,14 +367,13 @@ struct
 
 
 
-  let in_sg sg = Printf.fprintf stderr "in signature %s\n%!" (Utils.green (fst (E.Signature1.name sg)))
+  let in_sg sg = Printf.fprintf stderr "in signature %s\n%!" (green (fst (E.Signature1.name sg)))
 
     
   let analyse ?names e data l =
     try
       let () = Printf.printf "\n%!" in
       let _ = Format.flush_str_formatter () in
-      let () = Utils.sterm_set_size () in
       let entries =
 	match names,E.focus e with
 	| None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -377,7 +395,7 @@ struct
 	    | _ ->
 	      let () = 
 		if first then
-		  Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name sg)))
+		  Utils.sformat "@[<v3>@[In@ %s:@]@,@[" (green (fst (E.Signature1.name sg)))
 		else
 		  Utils.sformat "@[@["
 	      in
@@ -386,7 +404,7 @@ struct
 	      | Some _ -> 
 		let () = Utils.sformat "@]@]@." in
 		let s = Format.flush_str_formatter () in
-		let () = Utils.format "%s" s in
+		let () = Utils.format "%s@?" s in
 		false,None))
 	  | E.Lexicon lex -> 
 	    let abs,obj=E.Lexicon.get_sig lex in
@@ -395,31 +413,31 @@ struct
 	    | _ ->
 	      let () =
 		if first then
-		  Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name abs)))
+		  Utils.sformat "@[<v3>@[In@ %s:@]@,@[" (green (fst (E.Signature1.name abs)))
 		else
 		  Utils.sformat "@[@["
 	      in
 	      match Data_parser.parse_term ~output:first  data abs with
 	      | None -> false,Some abs
 	      | Some (t,ty) -> 
-		let () = Utils.sformat "@]@]@." in
+		let () = Utils.sformat "@]@]@.@." in
 		let s = Format.flush_str_formatter () in
 		let () = Utils.format "%s" s in
 		let t',ty' = E.Lexicon.interpret t ty lex in
-		let () = Utils.sformat "@[<3>Interpreted by %s in %s as:@\n" 
-		  (Utils.red (fst (E.Lexicon.name lex)))
-		  (Utils.green (fst (E.Signature1.name obj))) in
+		let () = Utils.sformat "@[<v3>@[Interpreted@ by@ %s@ in@ %s@ as:@]@,@[" 
+		  (red (fst (E.Lexicon.name lex)))
+		  (green (fst (E.Signature1.name obj))) in
 		let () = Utils.sformat "@[" in
 		let () = E.Signature1.term_to_formatted_string Format.str_formatter t' obj in
-		let () = Utils.sformat "@] : @[" in
+		let () = Utils.sformat "@] :@ @[" in
 		let () = E.Signature1.type_to_formatted_string Format.str_formatter  ty' obj in
-		let () = Utils.sformat "@]@]@." in
+		let () = Utils.sformat "@]@]@]@." in
 		false,None)
 	(true,None)
 	entries in
       let () = Utils.sformat "@." in
       let s = Format.flush_str_formatter () in
-      Utils.format "%s" s
+      Utils.format "%s@?" s
     with
     | E.Signature_not_found n
     | E.Lexicon_not_found n
@@ -430,7 +448,6 @@ struct
   let check ?names e data l =
     let () = Printf.printf "\n%!" in
     let _ = Format.flush_str_formatter () in
-    let () = Utils.sterm_set_size () in
     let signatures =
       match names,E.focus e with
       | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -445,7 +462,7 @@ struct
       | Some ns,_ -> List.map (fun (n,l) -> get_sig (Some n) "check" e l) ns in
     List.iter
       (fun sg -> 
-	let () = Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name sg))) in
+	let () = Utils.sformat "@[<v3>@[In@ %s:@]@,@[" (green (fst (E.Signature1.name sg))) in
 	let _ = Data_parser.parse_term ~output:true data sg in
 	let () = Utils.sformat "@]@]@." in
 	let s = Format.flush_str_formatter () in
@@ -457,7 +474,6 @@ struct
   let realize ?names e data l =
     let () = Printf.printf "\n%!" in
     let _ = Format.flush_str_formatter () in
-    let () = Utils.sterm_set_size () in
     let lexicons =
       match names,E.focus e with
       | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
@@ -476,9 +492,9 @@ struct
 	let () =
 	  match last_abs_sg with
 	  | None  -> 
-	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name abs)))
+	    Utils.sformat "@[<v3>@[In@ %s:@]@,@[" (green (fst (E.Signature1.name abs)))
 	  | Some previous_sg when (E.Signature1.name abs) <> (E.Signature1.name previous_sg)  ->
-	    Utils.sformat "@[<v3>@[In %s:@]@,@[" (Utils.green (fst (E.Signature1.name abs)))
+	    Utils.sformat "@[<v3>@[In@ %s:@]@,@[" (green (fst (E.Signature1.name abs)))
 	  | _ -> Utils.sformat "@[@[" in
 	match Data_parser.parse_term ~output:first data abs with
 	| None -> false,Some abs
@@ -487,20 +503,20 @@ struct
 	  let s = Format.flush_str_formatter () in
 	  let () = Utils.format "%s" s in
 	  let t',ty' = E.Lexicon.interpret t ty lex in
-	  let () = Utils.sformat "@[<3>Interpreted by %s in %s as:@\n" 
-	    (Utils.red (fst (E.Lexicon.name lex)))
-	    (Utils.green (fst (E.Signature1.name obj))) in
+	  let () = Utils.sformat "@[<v3>@[Interpreted@ by@ %s@ in@ %s@ as:@]@,@[" 
+	    (red (fst (E.Lexicon.name lex)))
+	    (green (fst (E.Signature1.name obj))) in
 	let () = Utils.sformat "@[" in
 	  let () = E.Signature1.term_to_formatted_string Format.str_formatter t' obj in
-	  let () = Utils.sformat "@] : @[" in
+	  let () = Utils.sformat "@] :@ @[" in
 	  let () = E.Signature1.type_to_formatted_string Format.str_formatter  ty' obj in
-	  let () = Utils.sformat "@]@]@." in
+	  let () = Utils.sformat "@]@]@]@." in
 	  false,Some abs)
       (true,None)
       lexicons in
     let () = Utils.sformat "@." in
     let s = Format.flush_str_formatter () in
-    Utils.format "%s" s
+    Utils.format "%s@?" s
       
   type inputs =
   | Stop
@@ -543,14 +559,14 @@ struct
     let abs_sig,_=E.Lexicon.get_sig lex in
     match E.Lexicon.get_analysis resume lex with
     | Some t,resume -> 
-      let () = Utils.sformat "@[<v>@[An@ antecedent@ by@ %s@ in@ %s@ is:@]@,@[" (Utils.red (fst (E.Lexicon.name lex))) (Utils.green (fst (E.Signature1.name abs_sig))) in
+      let () = Utils.sformat "@[<v>@[An@ antecedent@ by@ %s@ in@ %s@ is:@]@,@[" (red (fst (E.Lexicon.name lex))) (green (fst (E.Signature1.name abs_sig))) in
       let () = Utils.sformat "@[@[" in
       let () = E.Signature1.term_to_formatted_string  Format.str_formatter t abs_sig in
       let () = Utils.sformat "@] :@ @[" in
       let () = E.Signature1.type_to_formatted_string  Format.str_formatter abs_ty abs_sig in
       let () = Utils.sformat "@]@]@]@]@." in
       let s = Format.flush_str_formatter () in
-      let () = Format.printf "%s@?" s in
+      let () = Utils.format "%s@?" s in
       Some resume
     | None,_ -> None
       

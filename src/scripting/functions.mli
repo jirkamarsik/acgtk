@@ -58,6 +58,8 @@ sig
   | Object
   | Script of (string -> string list -> env -> env)
 
+  val color_output : bool -> unit
+
   val load : file_type -> string -> string list -> env -> env
 
   val list : env -> unit

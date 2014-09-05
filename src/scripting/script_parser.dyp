@@ -298,25 +298,31 @@ QUERY_HELP
 	
 
 	
-  let parse_entry ?(verbose=true) in_ch includes env =
+  let parse_entry ~resize ?(verbose=true) in_ch includes env =
     let in_str = bufferize in_ch in
     let lexbuf = Lexing.from_string in_str in
-    let new_env=
-      try
-	try (fst (List.hd (zzcommands ~global_data:(false,verbose,includes) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
-	  |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
-      with
-	| F.Stop -> env
-	| Failure "lexing: empty token" -> env
-	| Error.Error e -> 
-	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
-	    let _ = Script_lexer.reset_echo () in
-	      env
-	| Scripting_errors.Error (e,p) ->
-	    let () = Printf.fprintf stderr "Error: %s\n%!" (Scripting_errors.error_msg e p) in
-	    let _ = Script_lexer.reset_echo () in
-	      env in
-      new_env
+    let () = 
+      if resize then
+	let () = Utils.sterm_set_size () in
+	Utils.term_set_size ()
+      else
+	() in
+  let new_env=
+    try
+      try (fst (List.hd (zzcommands ~global_data:(false,verbose,includes) ~local_data:(env,parse_file ~verbose)  Script_lexer.lexer lexbuf))) with
+      |  Dyp.Syntax_error -> raise (Error.dyp_error lexbuf "stdin")
+    with
+    | F.Stop -> env
+    | Failure "lexing: empty token" -> env
+    | Error.Error e -> 
+      let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg e "stdin") in
+      let _ = Script_lexer.reset_echo () in
+      env
+    | Scripting_errors.Error (e,p) ->
+      let () = Printf.fprintf stderr "Error: %s\n%!" (Scripting_errors.error_msg e p) in
+      let _ = Script_lexer.reset_echo () in
+      env in
+  new_env
 	
 
 end}
@@ -332,7 +338,7 @@ end}
 
     val parse_file : ?verbose:bool -> string -> string list -> E.t -> E.t
 
-    val parse_entry : ?verbose:bool -> in_channel -> string list -> E.t -> E.t
+    val parse_entry : resize:bool -> ?verbose:bool -> in_channel -> string list -> E.t -> E.t
   }
 
 %mli{end}

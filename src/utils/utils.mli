@@ -41,6 +41,8 @@ val term_set_size : unit -> unit
 val sterm_set_size : unit -> unit
 val fterm_set_size : Format.formatter -> unit
 
+val no_pp : unit -> unit
+
 val fformat : Format.formatter -> ('a, Format.formatter, unit) format -> 'a
 val format : ('a, Format.formatter, unit) format -> 'a
 val sformat : ('a, Format.formatter, unit) format -> 'a

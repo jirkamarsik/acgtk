@@ -50,6 +50,11 @@ let sterm_set_size () = f_set_size Format.str_formatter
 let term_set_size () = f_set_size Format.std_formatter
 
 let fterm_set_size formatter = f_set_size formatter
+
+let no_pp () = 
+  List.iter
+    (fun formatter -> Format.pp_set_margin formatter (max_int-1))
+    [Format.std_formatter;Format.str_formatter]
     
 let fformat formatter = fun format ->
   Format.fprintf formatter format
