@@ -115,11 +115,15 @@ tar: superclean
 version :
 	sed -i 's/\(VERSION *= *\)".*"/\1"$(VERSION)"/' $(VERSION_FILE) config/configure.ac
 
-www: opam
+www:
 	cp acg-$(VERSION).tar.gz ~/www-acg/software/.
+	scp acg-$(VERSION).tar.gz pogodall@loria.loria.fr:www-acg/software/.
+	scp INSTALL pogodall@loria.loria.fr:www-acg/software/.
+	scp README pogodall@loria.loria.fr:www-acg/software/.
 	cp INSTALL ~/www-acg/software/.
 	cp README ~/www-acg/software/.
 	sed -i -e 's/acg-[^-]*-[0-9]*\.tar\.gz/acg-$(VERSION).tar.gz/' ~/www-acg/index.html
+	scp ~/www-acg/index.html pogodall@loria.loria.fr:www-acg/.
 
 release : version tar www
 	if svn status -q -u | grep -v "^Status against" | grep -q -v "opam-package/url" | grep -q -v "^\?" ; \
@@ -143,7 +147,7 @@ opam-package/url: tar
 test-www-acg:
 	cd $(OPAM_ACG_REPO_DIR) && opam-admin make && scp -r . pogodall@loria.loria.fr:$(OPAM_ACG_REPO_DIR)
 
-opam:opam-package/url
+opam:opam-package/url www
 	cp -rT opam-package $(OPAM_TESTING_DIR)/acgtk/acgtk.$(VERSION_BASENAME)
 	cp -rT opam-package $(OPAM_GIT_REPO_DIR)/acgtk/acgtk.$(VERSION_BASENAME)
-	cd $(OPAM_ACG_REPO_DIR) && opam-admin make && scp -r . pogodall@loria.loria.fr:$(OPAM_ACG_REPO_DIR)
+	cp -rT opam-package $(OPAM_ACG_REPO_DIR)/packages/acgtk/acgtk.$(VERSION_BASENAME) && cd $(OPAM_ACG_REPO_DIR) && opam-admin make && scp -r . pogodall@loria.loria.fr:$(OPAM_ACG_REPO_DIR)
