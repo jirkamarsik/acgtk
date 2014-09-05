@@ -1,6 +1,6 @@
 ; -*-org-*-
 
-* Version 1.0
+* Version 1.1
 ** The acgc.opt/acgc compiler and the acg.opt/acg interpreter:
 + Fixed severe bug that prevented finding some parses and sometimes
   caused a Fatal Error
