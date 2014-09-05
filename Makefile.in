@@ -22,7 +22,7 @@
 BINARIES=acg acg.opt acgc acgc.opt
 
 VERSION_FILE = src/utils/version.ml
-VERSION_BASENAME=1.0b
+VERSION_BASENAME=1.0
 VERSION = $(VERSION_BASENAME)-$(shell date "+%Y%m%d")
 RELEASE = acg-$(VERSION)
 
