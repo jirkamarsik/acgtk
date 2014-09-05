@@ -1,3 +1,6 @@
+(* Requires the dstag-clausal-grammar.acg compilation first: *)
+(* command: acgc.opt dstag-clausal-grammar.acg dstag-discourse-grammar.acg *)
+
 signature discourse_grammar =
     DU,DUa,DU_v,T:type;
     NP,NP_cl,N,Adj,Det,S:type;

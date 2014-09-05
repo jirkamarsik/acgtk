@@ -1,3 +1,8 @@
+# Requires that the dstag-clause-grammar.acgo includes the compilation
+# of both dstag-clausal-grammar.acg and dstag-discourse-grammar.acg
+# for instance running the command:
+# acgc.opt dstag-clausal-grammar.acg dstag-discourse-grammar.acg
+
 load o dstag-clausal-grammar.acgo;
 
 disc_to_sent tag_discourse_derivation tag_discourse realize d_anchor_s (d_etre Is Iv Iv d_fred (d_mauvaise_humeur Iadj)) I_DU : DU;
@@ -38,5 +43,4 @@ disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize
 
 disc_to_sent tag_discourse_derivation  tag_discourse discourse_semantics realize d_anchor_s C1 (d_parce_que (d_empty_comment I_DU I_DU I_DU (d_anchor_s C10 I_DU)) I_DU  I_DU (d_anchor_s C9 I_DU)) : DU;
 
-
-
+tag_discourse parse lambda z. Fred (est (de (mauvaise (humeur (parce (que (sa (femme (est (beaucoup (absente (le (semaine (ceci (prouve (que (il (l (aime (beaucoup z)))))))))))))))))))) : DU;
