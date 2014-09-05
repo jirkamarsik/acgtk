@@ -83,6 +83,9 @@ type env_error =
   | Duplicated_lexicon of string
   | Duplicated_entry of string
 
+type version_error =  Outdated_version of (string*string)
+    
+
 
 type lexicon_error =
   | Missing_interpretations of (string * string * (string list))
@@ -93,6 +96,7 @@ type error =
   | Lexer_error of lex_error * (Lexing.position * Lexing.position)
   | Type_error of type_error * (Lexing.position * Lexing.position)
   | Env_error of env_error * (Lexing.position * Lexing.position)
+  | Version_error of version_error
   | Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
   | System_error of string
 
@@ -168,6 +172,9 @@ let lexicon_error_to_string = function
   | Missing_interpretations (lex_name,abs_name,missing_inters) ->
       Printf.sprintf "Lexicon definition error: Lexicon \"%s\" is missing the interpretations of the following terms of the abstract signature \"%s\":\n%s" lex_name abs_name (Utils.string_of_list "\n" (fun x -> Printf.sprintf"\t%s" x) missing_inters)
 
+let version_error_to_string = function
+  | Outdated_version (old_v,current_v) -> Printf.sprintf "You are trying to use an object file that was generated with a former version of the acgc compiler (version %s) while the current version of the compiler is %s" old_v current_v
+
 let warning_to_string w = 
   match w with
     | Variable_or_constant (s,pos1,pos2) -> Printf.sprintf "\"%s\" is a variable here, but is also declared as constant in the signature" s
@@ -179,6 +186,7 @@ let error_msg e input_file =
       | Lexer_error (er,(s,e))  -> lex_error_to_string er,Some (compute_comment_for_position s e)
       | Type_error (er,(s,e)) -> type_error_to_string er,Some (compute_comment_for_position s e)
       | Env_error (er,(s,e)) -> env_error_to_string er,Some (compute_comment_for_position s e)
+      | Version_error er ->  version_error_to_string er,None
       | Lexicon_error (er,(s,e)) -> lexicon_error_to_string er,Some (compute_comment_for_position s e)
       | System_error s -> Printf.sprintf "System error: \"%s\"" s,None in
     match location_msg with
@@ -219,4 +227,4 @@ let get_loc_error = function
   | Type_error (_,(s,e))
   | Env_error (_,(s,e))
   | Lexicon_error (_,(s,e)) -> (s,e)
-  | System_error _ -> failwith "Bug: should not occur"
+  | (Version_error _ | System_error _) -> failwith "Bug: should not occur"

@@ -70,20 +70,23 @@ type lexicon_error =
 (** The types for errors raised by the environment. Names should be
     explicit *)
 type env_error =
-  | Duplicated_signature of string
-  | Duplicated_lexicon of string
-  | Duplicated_entry of string
-
-
+| Duplicated_signature of string
+| Duplicated_lexicon of string
+| Duplicated_entry of string
+    
+type version_error =  Outdated_version of (string*string)
+    
+    
 (** The type for errors *)
 type error = 
-  | Parse_error of parse_error * (Lexing.position * Lexing.position)
-  | Lexer_error of lex_error * (Lexing.position * Lexing.position)
-  | Type_error of type_error * (Lexing.position * Lexing.position)
-  | Env_error of env_error * (Lexing.position * Lexing.position)
-  | Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
-  | System_error of string
-
+| Parse_error of parse_error * (Lexing.position * Lexing.position)
+| Lexer_error of lex_error * (Lexing.position * Lexing.position)
+| Type_error of type_error * (Lexing.position * Lexing.position)
+| Env_error of env_error * (Lexing.position * Lexing.position)
+| Version_error of version_error
+| Lexicon_error of lexicon_error * (Lexing.position * Lexing.position)
+| System_error of string
+    
 (** The type for warnings *)
 type warning =
   | Variable_or_constant of (string * Lexing.position * Lexing.position)

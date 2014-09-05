@@ -277,19 +277,19 @@ struct
 	    let in_ch = open_in file in
 	    let () = Printf.printf "Loading \"%s\"...\n" file in
 	    let new_env = input_value in_ch in
-	    let () = Printf.printf "Done.\n" in
-	    let () = close_in in_ch in
+	    let () = Printf.printf "Done.\n%!" in
+	    let () = close_in in_ch in	    
 	    E.append e new_env
-	  with
-	  | Utils.No_file(f,msg) -> 
-	    let err = Error.System_error (Printf.sprintf "No such file \"%s\" in %s" f msg) in
-	    let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg err filename) in
-	    e)
+	   with
+	   | Utils.No_file(f,msg) -> 
+	     let err = Error.System_error (Printf.sprintf "No such file \"%s\" in %s" f msg) in
+	     let () = Printf.fprintf stderr "Error: %s\n%!" (Error.error_msg err filename) in
+	     e)
 	| Script f  -> f filename dirs e
     with
-      | Stop -> e
-
-
+    | Stop -> e
+      
+      
   let list e =
     let _ = Format.flush_str_formatter () in
     let () = Utils.sformat "@[<v3>Available data:@," in

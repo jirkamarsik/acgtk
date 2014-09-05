@@ -101,6 +101,11 @@ sig
       environment [e] *)
   val choose_signature : t -> Signature1.t option
 
+  (** [compatible_version e] returns [true] if the environment [e]
+      was created with the current versions of the compilers and/or
+      interpreter *)
+  val compatible_version : t -> bool
+
   val select : string -> t -> t
 
   val unselect : t -> t

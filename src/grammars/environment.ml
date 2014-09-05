@@ -49,7 +49,10 @@ sig
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
   val sig_number : t -> int
   val lex_number : t -> int
-  val choose_signature : t -> Signature1.t option 
+  val choose_signature : t -> Signature1.t option
+
+  val compatible_version : t -> bool
+
 
   val select : string -> t -> t
 
@@ -75,11 +78,20 @@ struct
     | Signature of Sg.t
     | Lexicon of Lex.t
 
-  type t = {map:entry Env.t;sig_number:int;lex_number:int;focus:entry option}
+  type t = {map:entry Env.t;sig_number:int;lex_number:int;focus:entry option;version:string}
 
-  let empty = {map=Env.empty;sig_number=0;lex_number=0;focus=None}
+  let empty = {map=Env.empty;sig_number=0;lex_number=0;focus=None;version=Version.version}
+
+  let check_version e =
+    let v=e.version in
+    if (v <> Version.version) then
+      raise (Error.Error (Error.Version_error (Error.Outdated_version (v,Version.version))))
+    else
+      ()
 
   let append ?(override=false) e1 e2 =
+    let () = check_version e1 in
+    let () = check_version e2 in
     let erased_sig = ref 0 in
     let erased_lex = ref 0 in
     let new_map =
@@ -108,9 +120,10 @@ struct
     {map=new_map;
      sig_number=e1.sig_number + e2.sig_number - !erased_sig;
      lex_number=e1.lex_number + e2.lex_number - !erased_lex;
-     focus = match e2.focus with
+     focus = (match e2.focus with
      | Some e -> Some e
-     | None -> e1.focus}
+     | None -> e1.focus);
+    version=Version.version}
     
 
   let insert ?(override=false) d e = match d with
@@ -156,6 +169,9 @@ struct
       Env.find s e 
     with
       | Not_found -> raise (Entry_not_found s)
+
+
+  let compatible_version {version} = version = Version.version
 
   let select name e =
     {e with focus=Some (get name e)}
