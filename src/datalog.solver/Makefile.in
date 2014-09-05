@@ -33,6 +33,8 @@ LIBS +=
 # ex. -I  +campl4
 LIBDIR +=
 
+WARNINGS = -w yzd -warn-error A
+
 # Directories to which the current source files depend on
 PREVIOUS_DIRS = 
 

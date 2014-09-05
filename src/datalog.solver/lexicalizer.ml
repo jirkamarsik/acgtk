@@ -3,7 +3,8 @@ struct
   (* The string buffering machinery *)
   (* copied from genlex.ml*)
   
-  let initial_buffer = String.create 32
+(*  let initial_buffer = String.create 32 *)
+  let initial_buffer = String.make 32 ' '
     
   let buffer = ref initial_buffer
   let bufpos = ref 0
@@ -13,7 +14,7 @@ struct
   let store c =
     if !bufpos >= String.length !buffer then
       begin
-        let newbuffer = String.create (2 * !bufpos) in
+        let newbuffer = String.make (2 * !bufpos) ' ' in
           String.blit !buffer 0 newbuffer 0 !bufpos; buffer := newbuffer
       end;
     String.set !buffer !bufpos c;
