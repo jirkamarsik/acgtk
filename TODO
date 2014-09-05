@@ -8,9 +8,9 @@
 + [X] réfléchir si changement de construction des numéros de version
 + [X] renommer s_datalog et datalog en datalog.prover et datalog.solver
 + [X] modifier la documentation
-+ [ ] remove useless reduction.* files (hint: the useful one is in the
++ [X] remove useless reduction.* files (hint: the useful one is in the
   acg-data directory)
-+ [ ] améliorer le pretty-printing des termes
++ [X] améliorer le pretty-printing des termes
 
 ** DONE Faire un Bolt package
 
@@ -40,7 +40,7 @@
   + [X] une commande "realise"
 + [X] mettre une commande "idb"
 + [X] mettre une commande "query"
-+ [ ] vérifier que tous les "help cmd" fonctionnent
++ [X] vérifier que tous les "help cmd" fonctionnent
 
 ** lexer and parser
 + [ ] change the compilation order and the token emission
@@ -82,6 +82,10 @@
 * lambda.ml
 + [ ] Vérifier les passages de paramètres dans les
   unfold_{labs|abs|binder} pour l'affichage, et simplifier
++ [ ] reprendre partout l'utilisation des fonctions Format.printf, et
+  les unifier pour les utiliser même quand simple "string" (si
+  formattés, peut causer un problème d'assert dans la réduction à
+  cause sans doute d'un "\n" qui reste)
 
 * typeInference.ml
 + [ ] change or add inference (possibly with a signature) to principal

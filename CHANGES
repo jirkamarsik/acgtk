@@ -1,5 +1,28 @@
 ; -*-org-*-
 
+* Version 1.0
+** The acgc.opt/acgc compiler and the acg.opt/acg interpreter:
++ Fixed severe bug that prevented finding some parses and sometimes
+  caused a Fatal Error
++ Added a control on the compiler version that generated the object
+  (.acgo) files. The version has to be the same as the current version
+  of the compiler or of the interpreter that is being used.
+
+** The acgc.opt/acgc compiler:
++ added a "nl_lexicon" keyword that causes the interpretation of any
+  functional type ("->" or "=>") of the abstract signature to be
+  interpreted by the intuitionistic arrow "=>" in the object signature.
+
+  Accordingly, the interpretation should use "Lambda".
+
+** The acg.opt/acg interpreter:
++ Improved terminal output (colors and formatting)
++ added a "-nc" option to disable colored outputs
++ added a "-npp" option to disable formatting on the output
+
+** The acg emacs mode
++ improved handling of long files
+
 * Version 1.0b
 ** The acgc.opt/acgc compiler:
 + Now outputs an "file.acgo" file when compilation is successful
