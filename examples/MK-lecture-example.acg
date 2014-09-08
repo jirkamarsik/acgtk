@@ -1,5 +1,9 @@
 (* This signature correspond to the example of figure 3.2 p5 of the *)
 (* lecture notes of the 3rd lecture of Makoto Kanazawa on Formal *)
+(* The later elaborates on an example given in *)
+(* "Speech and Language Processing, by Daniel Jurafsky *)
+(* and James H. Martin, (Fig. 10.2), *)
+
 (* Grammar. *)
 (* See http://research.nii.ac.jp/~kanazawa/FormalGrammar/index.html *)
 
