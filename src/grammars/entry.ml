@@ -23,7 +23,14 @@ struct
   and dec = 
     | No_dec
     | Sig of sig_dec_id
-    | Lex of lex_id
+    | Lex of lex_id 
+    | Extend of extension
+  and extension =
+    | No_ext_type
+    | Ext_sig_name
+    | Ext_lex_name
+    | Ext_sig_with
+    | Ext_lex_with
   and sig_dec_id =
     | No_sig_dec_id
     | Sig_dec_id of sig_dec_equal
@@ -65,6 +72,8 @@ struct
     | EOI
     | Sig_kwd
     | Lex_kwd
+    | Ext_kwd
+    | With_kwd
     | Id
     | Equal
     | Compose
@@ -113,6 +122,8 @@ struct
     | EOI -> "End of input"
     | Sig_kwd -> "\"signature\" kwd"
     | Lex_kwd -> "\"lexicon\" kwd"
+    | Ext_kwd -> "\"extend\" kwd"
+    | With_kwd -> "\"with\" kwd"
     | Id -> "Identifier"
     | Equal -> "\"=\""
     | Compose -> "\"<<\""
@@ -209,13 +220,40 @@ let build_expectation lst =
 
   let data_expectation = function
     | No_dec ->
-	let l = [EOI;Sig_kwd;Lex_kwd] in
-	  l , (function
-		 | EOI -> No_dec
-		 | Sig_kwd -> Sig No_sig_dec_id
-		 | Lex_kwd -> Lex No_lex_dec
-		 | _ -> raise (Expect l))
-	    
+       let () = Printf.fprintf stderr "Current state is No_dec\n" in
+       let l = [EOI;Sig_kwd;Lex_kwd;Ext_kwd] in
+       l , (function
+	     | EOI -> No_dec
+	     | Sig_kwd -> Sig No_sig_dec_id
+	     | Lex_kwd -> Lex No_lex_dec
+	     | Ext_kwd -> Extend No_ext_type
+	     | _ -> raise (Expect l))
+    | Extend No_ext_type ->
+       let l = [Sig_kwd;Lex_kwd] in
+       l, (function
+	    | Sig_kwd -> Extend Ext_sig_name
+	    | Lex_kwd -> Extend Ext_lex_name
+	    | _ -> raise (Expect l))
+    | Extend Ext_sig_name ->
+       let l = [Id] in
+       l, (function
+	    | Id -> Extend Ext_sig_with
+	    | _ -> raise (Expect l))
+    | Extend Ext_lex_name ->
+       let l = [Id] in
+       l, (function
+	    | Id -> Extend Ext_lex_with
+	    | _ -> raise (Expect l))
+    | Extend Ext_sig_with ->
+       let l = [With_kwd] in
+       l, (function
+	    | With_kwd -> Sig (Sig_dec_id (Sig_dec_equal No_entry))
+	    | _ -> raise (Expect l))
+    | Extend Ext_lex_with ->
+       let l = [With_kwd] in
+       l, (function
+	    | With_kwd -> Lex (Lex_def No_lex_entry)
+	    | _ -> raise (Expect l))
     | Sig No_sig_dec_id -> let l = [Id] in
 	l,(function
 	     | Id -> Sig (Sig_dec_id No_sig_dec_equal)
@@ -500,6 +538,7 @@ let build_expectation lst =
 	
 	
   let data_transition q v =
+    let () = Printf.fprintf stderr "Will test transition on \"%s\"\n" (valuation_to_string v) in
     let _,result = data_expectation q in
       result v 
 

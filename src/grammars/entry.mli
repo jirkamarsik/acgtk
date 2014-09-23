@@ -45,6 +45,8 @@ sig
     | EOI
     | Sig_kwd
     | Lex_kwd
+    | Ext_kwd
+    | With_kwd
     | Id
     | Equal
     | Compose

@@ -213,7 +213,24 @@ EOI
       signature : 
 | SIG_OPEN sig_ident EQUAL sig_entries {$4}
 | SIG_OPEN sig_ident EQUAL sig_entries {$4}
-
+| IDENT<extend_kwd,extend_loc>
+		     SIG_OPEN
+		       IDENT<name,loc> IDENT<with_kwd,with_loc>
+				       ...@{
+					 let () =
+					   if (extend_kwd<>"extend")&&(with_kwd<>"with")  then
+					     raise Dyp.Giveup
+					   else
+					     () in
+					 let env = get_env_value dyp.last_local_data in
+					 let signature = 
+					   try
+					     E.get_signature name env
+					   with
+					   | E.Signature_not_found _ -> raise Dyp.Giveup in
+					 signature,[Local_data (Some (Signature (signature)))]}
+				       sig_entries {$5}
+				       
       sig_ident :
 | IDENT<n> @{n,[Local_data (Some (Signature (E.Signature1.empty n)))]}
 	  

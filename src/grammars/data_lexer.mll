@@ -159,8 +159,14 @@ let string = (letter|digit|'_')*'\''*
 		Token.ARROW(loc lexbuf)}
       | ":=" {let () = update_data Entry.Colon_equal (loc lexbuf) in
 		Token.COLON_EQUAL(loc lexbuf)}
-      | letter string {let () = update_data Entry.Id (loc lexbuf) in
-			 Token.IDENT (Lexing.lexeme lexbuf,loc lexbuf)}
+      | letter string {
+		       let id = Lexing.lexeme lexbuf in
+		       let () = Printf.fprintf stderr "Found the ID \"%s\"\n" id in
+		       let () = match id with
+			 | "extend" -> update_data Entry.Ext_kwd (loc lexbuf)
+			 | "with" -> update_data Entry.With_kwd (loc lexbuf)
+			 | _ -> update_data Entry.Id (loc lexbuf) in
+		       Token.IDENT (id,loc lexbuf)}
       | symbol {let () = update_data Entry.Sym (loc lexbuf) in
 		  Token.SYMBOL (Lexing.lexeme lexbuf,loc lexbuf)}
       | _ as c {raise (Error.Error (Error.Lexer_error (Error.Bad_token,loc lexbuf)))}
