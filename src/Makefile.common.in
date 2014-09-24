@@ -61,12 +61,12 @@ byte_mli : $(PRELIMINARY) $(LOCAL_MLI:%.mli=%.cmi)
 opt : $(PRELIMINARY) $(LOCAL_CMX) $(EXEOPT)
 
 ifdef EXE_SOURCES
-$(EXE) : $(CMO)
+$(EXE) : % : $(CMO) %.cmo
 	@OCAMLC@ -o $@ $(LIBDIR) $(LIBS) $(BYTEFLAGS) $^
 endif
 
 ifdef EXE_SOURCES
-$(EXEOPT) : $(CMX)
+$(EXEOPT) : % : $(CMX) %.cmx
 	@OCAMLCOPT@ -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
 endif
 
