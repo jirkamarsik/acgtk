@@ -37,11 +37,11 @@ LIBDIR +=  @ANSITerminal_INCLUDE@
 PREVIOUS_DIRS =
 
 # Source files in the right order of dependance
-ML = utils.ml table.ml tries.ml version.ml focused_list.ml sharedForest.ml idGenerator.ml
+ML = utils.ml table.ml tries.ml version.ml focused_list.ml sharedForest.ml idGenerator.ml dependencyManager.ml
 
 # Uncomment the next line and put the name of the exe of this directory, if relevant
 
-EXE_SOURCES =test_sharedForest.ml
+EXE_SOURCES =test_sharedForest.ml test_dependencyManager.ml
 
 ####################################
 #                                  #
