@@ -40,10 +40,21 @@ module type Manager_sig =
     val add_dependency : elt -> elt -> t -> t
 
     (** [dependencies elt m] returns an ordered list of the elements
-    that are dependant from [elt] according to the manager [m]. This
-    list is such that if [i_k] and [i_j] belong to the list and [k<j]
-    then there is no dependency on [i_j] for [i_k].*)
+        that are dependant from [elt] according to the manager
+        [m]. This list is such that if [i_k] and [i_j] belong to the
+        list and [k<j] then there is no dependency on [i_j] for
+        [i_k].*)
     val dependencies : elt -> t -> elt list
+
+    (** [merge m1 m2] returns a new dependency manager that take into
+        accounts all the dependencies in [m1] and in [m2]. If some
+        element has dependencies in [m1] and in [m2] then all the
+        dependencies remain*)
+    val merge : t -> t -> t 
+
+    (** [roots m] returns the list of elements that depend on no other
+        element *)
+    val roots : t -> elt list
   end
 
 

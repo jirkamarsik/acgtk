@@ -52,13 +52,26 @@ struct
 
   module RuleToCstMap=Utils.IntMap
 
+  type 'a build = 
+    | Interpret of (Sg.t*Sg.t)
+    | Compose of ('a*'a)
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
 	    non_linear_interpretation:bool;
 	    abstract_sig:Sg.t;
 	    object_sig:Sg.t;
-	    datalog_prog:(Datalog.Program.program * Lambda.term RuleToCstMap.t) option}
+	    datalog_prog:(Datalog.Program.program * Lambda.term RuleToCstMap.t) option;
+	   build:t build}
 
+
+  type dependency =
+    | Signatures of (signature*signature)
+    | Lexicons of (t*t)
+
+  let get_dependencies lex = 
+    match lex.build with
+    | Interpret s -> Signatures s
+    | Compose l -> Lexicons l
 
   let name {name=n}=n
 
@@ -66,7 +79,13 @@ struct
 
   let empty name  ?(non_linear=false) ~abs ~obj = 
     let prog = if (Sg.is_2nd_order abs) && (not non_linear) then Some (Datalog.Program.empty,RuleToCstMap.empty) else None in
-    {name=name;dico=Dico.empty;abstract_sig=abs;object_sig=obj;datalog_prog=prog;non_linear_interpretation=non_linear}
+    {name=name;
+     dico=Dico.empty;
+     abstract_sig=abs;
+     object_sig=obj;
+     datalog_prog=prog;
+     non_linear_interpretation=non_linear;
+     build = Interpret (abs,obj)}
 
   let interpret_linear_arrow_as_non_linear {non_linear_interpretation} = non_linear_interpretation
 
@@ -296,9 +315,10 @@ struct
 	    | None -> Some (Printf.sprintf "\t%s := %s;" k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg))
 	    | Some a -> Some (Printf.sprintf "%s\n\t%s := %s;" a k (interpretation_to_string k (fun id -> interpret_type (Sg.type_of_constant id abs_sg) lex) i obj_sg)))
 	    d
-	    None with
-	    | None -> ""
-	    | Some s -> Printf.sprintf "%s\n" s) in
+	    None
+	with
+	| None -> ""
+	| Some s -> Printf.sprintf "%s\n" s) in
     let () = Printf.bprintf buff "\n************************\n" in
     let () = match lex.datalog_prog with
       | None -> Printf.bprintf buff "This lexicon was not recognized as having a 2nd order abstract signature\n" 
@@ -341,7 +361,8 @@ struct
        abstract_sig = lex2.abstract_sig;
        object_sig=lex1.object_sig;
        datalog_prog=lex2.datalog_prog;
-       non_linear_interpretation=(interpret_linear_arrow_as_non_linear lex1) || (interpret_linear_arrow_as_non_linear lex2)} in
+       non_linear_interpretation=(interpret_linear_arrow_as_non_linear lex1) || (interpret_linear_arrow_as_non_linear lex2);
+      build = Compose (lex1,lex2)} in
     rebuild_prog temp_lex
 
   let program_to_buffer lex =

@@ -186,6 +186,11 @@ sig
   module Signature:Signature_sig with type term=Lambda.term
   type signature = Signature.t
   type resume
+  type dependency =
+    | Signatures of (signature*signature)
+    | Lexicons of (t*t)
+
+  val get_dependencies : t -> dependency
 
   val empty : (string*Abstract_syntax.location) -> ?non_linear:bool -> abs:signature -> obj:signature -> t 
   val name : t -> (string*Abstract_syntax.location)

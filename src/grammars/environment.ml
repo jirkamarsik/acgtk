@@ -78,9 +78,30 @@ struct
     | Signature of Sg.t
     | Lexicon of Lex.t
 
-  type t = {map:entry Env.t;sig_number:int;lex_number:int;focus:entry option;version:string}
+  module Dep = 
+    DependencyManager.Make (
+	struct
+	  type t = entry
+	  let to_string = function
+	    | Signature s -> fst (Sg.name s)
+	    | Lexicon l -> fst (Lex.name l)
+	  let compare e1 e2 =
+	    String.compare (to_string e1) (to_string e2)
+	end)
 
-  let empty = {map=Env.empty;sig_number=0;lex_number=0;focus=None;version=Version.version}
+  type t = {map:entry Env.t;
+	    sig_number:int;
+	    lex_number:int;
+	    focus:entry option;
+	    version:string;
+	    dependencies:Dep.t}
+
+  let empty = {map=Env.empty;
+	       sig_number=0;
+	       lex_number=0;
+	       focus=None;
+	       version=Version.version;
+	       dependencies=Dep.empty}
 
   let check_version e =
     let v=e.version in
@@ -123,25 +144,47 @@ struct
      focus = (match e2.focus with
      | Some e -> Some e
      | None -> e1.focus);
-    version=Version.version}
+    version=Version.version;
+    dependencies=Dep.merge e1.dependencies e2.dependencies}
     
 
-  let insert ?(override=false) d e = match d with
-    | Signature s -> let name,(p1,p2) = Sg.name s in
-	if (not (Env.mem name e.map))||override
-	then
-	  {e with map=Env.add name d e.map ;sig_number=e.sig_number+1}
-	else
-	  raise (Error.Error (Error.Env_error (Error.Duplicated_signature name,(p1,p2))))
-    | Lexicon l -> let name,(p1,p2) = Lex.name l in
-	if not (Env.mem name e.map)||override
-	then
-	  {e with map=Env.add name d e.map ;lex_number=e.lex_number+1}
-	else
-	  raise (Error.Error (Error.Env_error (Error.Duplicated_lexicon name,(p1,p2))))
+  let update_dependencies lex m =
+    match Lex.get_dependencies lex with
+    | Lex.Signatures (s1,s2) -> 
+       Dep.add_dependency
+	 (Lexicon lex)
+	 (Signature s1) 
+	 (Dep.add_dependency (Lexicon lex) (Signature s2) m)
+    | Lex.Lexicons (l1,l2) -> 
+       Dep.add_dependency
+	 (Lexicon lex)
+	 (Lexicon l1) 
+	 (Dep.add_dependency (Lexicon lex) (Lexicon l2) m)
 
+  let insert ?(override=false) d e =
+    match d with
+    | Signature s ->
+       let name,(p1,p2) = Sg.name s in
+       if (not (Env.mem name e.map))||override
+       then
+	 {e with
+	   map=Env.add name d e.map ;
+	   sig_number=e.sig_number+1}
+       else
+	 raise (Error.Error (Error.Env_error (Error.Duplicated_signature name,(p1,p2))))
+    | Lexicon l ->
+       let name,(p1,p2) = Lex.name l in
+       if not (Env.mem name e.map)||override
+       then
+	 {e with
+	   map=Env.add name d e.map ;
+	   lex_number=e.lex_number+1;
+	   dependencies = update_dependencies l e.dependencies}
+       else
+	 raise (Error.Error (Error.Env_error (Error.Duplicated_lexicon name,(p1,p2))))
+	       
   let iter f {map=e} =  Env.iter (fun _ d -> f d) e
-
+				 
   let fold f a {map=e} = Env.fold (fun _ d acc -> f d acc) e a
 
   let sig_number {sig_number=n} = n

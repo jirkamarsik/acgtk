@@ -7,6 +7,8 @@ module type Manager_sig =
     val empty : t
     val add_dependency : elt -> elt -> t -> t
     val dependencies : elt -> t -> elt list
+    val merge : t -> t -> t 
+    val roots : t -> elt list
   end
 
 
@@ -71,7 +73,7 @@ struct
 	 | Not_found -> IntMap.add depth [elt] acc)
 	depthMap
 	IntMap.empty in
-    let () =
+(*    let () =
       IntMap.iter
 	(fun depth elts ->
 	 Printf.printf
@@ -80,15 +82,41 @@ struct
 	   (O.to_string elt)
 	   (string_of_list " " O.to_string elts))
 	orderedElt
-    in
+    in *)
     List.rev
       (IntMap.fold
 	 (fun _ elts acc -> elts@acc)
 	 orderedElt
 	 [])
    
+  let set_merge elt dep map =
+    let new_set =
+      try
+	EltSet.union dep (EltMap.find elt map)
+      with
+      | Not_found -> dep in
+    EltMap.add elt new_set map
+
       
+  let merge m1 m2 =
+    {depends_on=EltMap.fold set_merge m1.depends_on m2.depends_on;
+     dependants=EltMap.fold set_merge m1.dependants m2.dependants}
 
 
+  let roots m =
+    let rec roots_rec elt roots =
+      try
+	let depends_on = EltMap.find elt m.depends_on in
+	EltSet.fold
+	  (fun elt acc -> roots_rec elt acc)
+	  depends_on
+	  (EltSet.remove elt roots)
+      with
+      | Not_found -> EltSet.add elt roots in
+    EltSet.elements 
+      (EltMap.fold
+	 (fun elt _ acc -> roots_rec elt acc)
+	 m.depends_on
+	 EltSet.empty)
 
 end

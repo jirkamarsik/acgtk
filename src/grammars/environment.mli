@@ -76,7 +76,7 @@ sig
   (** [append e1 e2] merges the two environment [e1] and [e2]. If an
       entry appears in both environment then the one of [e2] is kept
       if the [override] parameter is set to [true] (default is
-      [false]). If set to [false], if an enrtry appears in both
+      [false]). If set to [false], if an entry appears in both
       environment, an error is emitted. *)
   val append : ?override:bool -> t -> t -> t
 
