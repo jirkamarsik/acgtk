@@ -61,12 +61,19 @@ struct
 	    abstract_sig:Sg.t;
 	    object_sig:Sg.t;
 	    datalog_prog:(Datalog.Program.program * Lambda.term RuleToCstMap.t) option;
-	   build:t build}
+	   build:t build;
+	   timestamp:float}
 
 
   type dependency =
     | Signatures of (signature*signature)
     | Lexicons of (t*t)
+
+  type data =
+    | Signature of signature
+    | Lexicon of t
+
+
 
   let get_dependencies lex = 
     match lex.build with
@@ -345,6 +352,31 @@ struct
 	| [] -> ()
 	| lst -> emit_missing_inter lex lst
 	    
+(*
+  let rebuild lex =
+      Signature.fold
+	(fun e acc ->
+	 match Sg.is_declared e lex.abstract_sig with
+	 | Some s ->
+	    (match Sg.extract e lex.abstract_sig with
+	     | Sg.Type ty ->
+		let interpreted_type = Sg.convert_type ty lex.object_sig in
+		let interpreted_type = 
+		  if lex.non_linear_interpretation then
+		    Lambda.unlinearize_type interpreted_type 
+		  else
+		    interpreted_type in
+	    
+	    (try
+		let _ = Dico.find s d in
+		acc
+	      with
+	      | Not_found -> s::acc) 
+	 | None -> acc
+	)
+	[]
+	abs in
+ *)  
 
   let compose lex1 lex2 n =
     LOG "Compose %s(%s) as %s" (fst(name lex1)) (fst(name lex2)) (fst n) LEVEL TRACE;
@@ -410,7 +442,10 @@ struct
 	Printf.bprintf buff "Parsing is not yet implemented for non atomic distinguished type\n%!" in
       buff
     
-	
+
+  let timestamp lex = {lex with timestamp=Unix.time ()}
+
+  let update lex e = failwith "Not yet implemented"
 
 end
 

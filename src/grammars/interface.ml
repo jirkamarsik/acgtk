@@ -32,9 +32,14 @@ sig
 
   type term
   type stype
+  type data =
+    | Type of stype
+    | Term of (term*stype)
+
   val empty : (string*Abstract_syntax.location) -> t
   val name : t -> (string*Abstract_syntax.location)
   val add_entry : Abstract_syntax.sig_entry -> t -> t
+  val find_type : string -> t -> stype
   val find_term : string -> t -> term * stype
   val is_type : string -> t -> bool
   val is_constant : string -> t -> bool*Abstract_syntax.syntactic_behavior option
@@ -58,11 +63,13 @@ sig
   val type_of_constant : string -> t -> stype
   val typecheck : Abstract_syntax.term -> stype -> t -> term
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
+  val extract : entry -> t -> data
   val get_binder_argument_functional_type : string -> t -> Abstract_syntax.abstraction option
   val is_declared : entry -> t -> string option
   val eta_long_form : term -> stype -> t -> term
   val unfold : term -> t -> term
   val is_2nd_order : t -> bool
+  val timestamp : t -> unit
 
 end
 
@@ -78,6 +85,10 @@ sig
   type dependency =
     | Signatures of (signature*signature)
     | Lexicons of (t*t)
+
+  type data =
+    | Signature of signature
+    | Lexicon of t
 
   val get_dependencies : t -> dependency
   val empty : (string*Abstract_syntax.location) -> ?non_linear:bool -> abs:signature -> obj:signature -> t
@@ -96,4 +107,6 @@ sig
   val program_to_buffer : t -> Buffer.t
   val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
   val interpret_linear_arrow_as_non_linear : t -> bool
+  val timestamp : t -> unit
+  val update : t -> (string -> data) -> t
 end

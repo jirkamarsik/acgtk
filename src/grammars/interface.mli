@@ -48,6 +48,10 @@ sig
   (** The (ocaml) type for the types of the signature *)
   type stype
 
+  type data =
+    | Type of stype
+    | Term of (term*stype)
+
     
   (** [empty name] returns the empty signature of name [name] *)
   val empty : (string*Abstract_syntax.location) -> t
@@ -58,6 +62,12 @@ sig
   (** [add_entry e s] returns a signature where the entry [e] has been
       added *)
   val add_entry : Abstract_syntax.sig_entry -> t -> t
+
+  (** [find_type id s] returns the type as declared or defined in the
+      signature [s], corresponding to the symbol [id] in [s] if it
+      exists. Raise [Not_found] otherwise*)
+  val find_type : string -> t -> stype
+
 
   (** [find_term id s] returns the term together with its type, as
       declared or defined in the signature [s], corresponding to the
@@ -151,6 +161,10 @@ sig
       have been inserted. *)
   val fold : (entry -> 'a -> 'a) -> 'a -> t -> 'a
 
+  (** [extract e sig] returns a data depending of the content of the
+      entry [e] *)
+  val extract : entry -> t -> data
+
   (** [get_binder_argument_functionnal_type s sg] returns [None] if
       the constant [s] is not defined in [sg] as a binder (that is
       something of type [ ('a ?> 'b) ?> 'c ]) and returns [Some abs]
@@ -174,6 +188,10 @@ sig
       order and [false] otherwise. *)
   val is_2nd_order : t -> bool
 
+  (** [timestamp s] tags with signature [s] with a time information
+      for update and dependency checks *)
+  val timestamp : t -> unit
+
 end
 
 (** This module signature describes the interface for modules implementing lexicons *)
@@ -189,6 +207,10 @@ sig
   type dependency =
     | Signatures of (signature*signature)
     | Lexicons of (t*t)
+
+  type data =
+    | Signature of signature
+    | Lexicon of t
 
   val get_dependencies : t -> dependency
 
@@ -209,4 +231,7 @@ sig
   val program_to_buffer : t -> Buffer.t
   val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
   val interpret_linear_arrow_as_non_linear : t -> bool
+  val timestamp : t -> unit
+  val update : t -> (string -> data) -> t
+
 end

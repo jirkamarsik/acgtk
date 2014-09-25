@@ -49,7 +49,8 @@ struct
 	    terms:entry Symbols.t;
 	    types:entry Symbols.t;
 	    ids:entry Id.t;
-	    is_2nd_order:bool}
+	    is_2nd_order:bool;
+	    timestamp:float}
 
   type term = Lambda.term
 
@@ -378,6 +379,8 @@ struct
       | _ -> None
 
   let is_2nd_order {is_2nd_order} = is_2nd_order
+
+  let timestamp sg = {sg with timestamp=Unix.time ()}
 
 end	  
   
