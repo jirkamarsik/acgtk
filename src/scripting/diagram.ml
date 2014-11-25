@@ -337,6 +337,11 @@ let text_ ?(face : toy_font = default_font) ?(size : float = 10.)
          face = face;
          size = size; }
 
+let get_font_extents (face : toy_font) (size : float) : font_extents =
+  with_phony_cr (fun cr ->
+    Font_face.set cr face;
+    set_font_size cr size;
+    font_extents cr)
 
 (* Diagrams of basic shapes *)
 
