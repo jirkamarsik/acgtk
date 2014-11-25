@@ -24,7 +24,12 @@
 In order to compile the ACG toolkit, you need:
 	+ ocaml (>=3.07) installed (http://caml.inria.fr/)
 	+ dypgen (>=20080925) installed (http://dypgen.free.fr/)
-	+ bolt (>=1.4) installed (http://bolt.x9c.fr/downloads.html
+	+ bolt (>=1.4) installed (http://bolt.x9c.fr/downloads.html)
+        + ANSITerminal (>=0.6.5) installed (https://forge.ocamlcore.org/projects/ansiterminal/)
+        + cairo2 (>=0.4.6) installed (http://forge.ocamlcore.org/projects/cairo/)
+
+For best results (correct rendering of symbols in the graphical output),
+please also install the free DejaVu fonts (http://dejavu-fonts.org).
 
 
 =======
@@ -36,10 +41,8 @@ to use "opam" (http://opam.ocaml.org/).
 The installation typically goes that way:
     + first install OCaml using your prefered distribution/packaging mode
     + then install opam
-    + then install dypgen with the command
-      	   opam install dypgen
-    + then install bolt with the command
-      	   opam install bolt
+    + then install the required libraries with the command
+      	   opam install dypgen bolt ANSITerminal cairo2
     + don't forget to add the required library in your path
       (look at "Initializing opam" at 
       http://opam.ocaml.org/doc/Advanced_Install.html)
