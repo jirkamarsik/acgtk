@@ -38,7 +38,7 @@ PREVIOUS_DIRS = ../utils ../datalog.prover ../logic ../grammars ../acg-data
 
 # Source files in the right order of dependance
 
-ML = scripting_errors.ml diagram.ml functions.ml script_lexer.ml script_parser.ml
+ML = scripting_errors.ml diagram.ml tree.ml show.ml functions.ml script_lexer.ml script_parser.ml
 
 DYP = script_parser.dyp
 CAMLLEX = script_lexer.mll

@@ -146,6 +146,7 @@ struct
   | Script of (string -> string list -> env -> env)
 
   module Data_parser = Data_parser.Make(E)
+  module Show = Show.Make(E)
 
   type action =
     | Load
@@ -347,6 +348,19 @@ struct
     | E.Lexicon lex -> raise (Scripting_errors.Error (Scripting_errors.Accept_only ((Scripting_errors.Sg (fst (E.Lexicon.name lex))),cmd),l))
     | E.Signature sg ->  sg
       
+  let get_lexicons names cmd e l =
+    match names,E.focus e with
+    | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
+    | None,Some (E.Lexicon lex) -> [lex]
+    | None,Some (E.Signature sg) -> 
+      raise (Scripting_errors.Error (
+	Scripting_errors.Accept_only (
+          Scripting_errors.Lex (
+            fst (E.Signature1.name sg)),
+          cmd),
+        l)) 
+    | Some ns,_ -> List.map (fun (n,l) -> get_lex (Some n) cmd e l) ns
+
 
 
 
@@ -480,19 +494,6 @@ struct
     let _ = Format.flush_str_formatter () in
     ()
 
-  let toplevel_get_lexicons names e action l =
-    match names,E.focus e with
-    | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
-    | None,Some (E.Lexicon lex) -> [lex]
-    | None,Some (E.Signature sg) -> 
-      raise (Scripting_errors.Error (
-	Scripting_errors.Accept_only (
-          Scripting_errors.Lex (
-            fst (E.Signature1.name sg)),
-          action),
-        l)) 
-    | Some ns,_ -> List.map (fun (n,l) -> get_lex (Some n) action e l) ns
-
   let toplevel_flush_newline () =
     let () = Utils.sformat "@." in
     let s = Format.flush_str_formatter () in
@@ -500,7 +501,7 @@ struct
  
   let realize ?names e data l =
     toplevel_newline ();
-    let lexicons = toplevel_get_lexicons names e "realize" l in
+    let lexicons = get_lexicons names "realize" e l in
     let _ = List.fold_left
       (fun (first,last_abs_sg) lex -> 
 	let abs,obj=E.Lexicon.get_sig lex in
@@ -533,18 +534,13 @@ struct
 
   let realize_show ?names e data l =
     toplevel_newline ();
-    let lexicons = toplevel_get_lexicons names e "realize_show" l in
+    let lexicons = get_lexicons names "realize_show" e l in
     let abs, _ = E.Lexicon.get_sig (List.hd lexicons) in
     match Data_parser.parse_term data abs with
     | None -> ()
     | Some (abs_term, abs_type) ->
-      (* This is defined in Diagram as well, but we cannot open the whole
-         module wholesale. Maybe it would be better off inside some
-         utility module that is opened in every source file. *)
-      let (>>) f g x = g (f x) in
-      let obj_terms = List.map (E.Lexicon.interpret abs_term abs_type >> fst)
-                               lexicons in
-   ()
+      let d = Show.realize_diagram abs_term lexicons in
+      Diagram.to_svg "realize.svg" d
  
   type inputs =
   | Stop
