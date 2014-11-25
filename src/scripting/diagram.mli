@@ -74,3 +74,4 @@ val fill : Cairo.Path.t -> diagram
 
 val to_svg : string -> diagram -> unit
 val show_origin : diagram -> diagram
+val show_extents : diagram -> diagram

@@ -458,3 +458,12 @@ let show_origin (d : diagram) : diagram =
           circle_outline 1.5
             |> color black
             |> setup (fun cr -> set_line_width cr 0.3); ]
+
+let show_extents (d : diagram) : diagram =
+  let exts = extents d in
+  blend [ d;
+          rectangle_outline exts.w exts.h
+            |> translate (exts.x +. exts.w /. 2., exts.y +. exts.h /. 2.)
+            |> color red
+            |> setup (fun cr -> set_line_width cr 0.5) ]
+    |> reframe (fun _ -> exts)
