@@ -171,6 +171,15 @@ if test "$FOUND_LIB" != "no" ; then
 fi
 
 
+# Look for the OCaml Cairo bindings with ocamlfind
+AC_ARG_VAR(OCamlCairo2_PATH,[Directory where to find the OCaml Cairo bindings if not in a standard location])
+AC_LIB_CHECKING(ocaml-cairo2,cairo2,cairo2,cairo2,cairo2,Cairo,"bigarray.cma",true,$OCamlCairo2_PATH)
+
+if test "$FOUND_LIB" != "no" ; then
+   AC_SUBST(OCamlCairo2_INCLUDE,$LIB_INCLUDE)
+fi
+
+
 # What is the OCAML version  ?
 # we extract Ocaml version number
 OCAML_VERSION=`$OCAMLC -version`
