@@ -70,7 +70,9 @@ module Lambda =
     | Unknown of int            (* meta-variable - used in higher-order  *)
                                 (* matching                              *) 
 
+    type env = (int * string) list
 
+    type consts = int -> Abstract_syntax.syntactic_behavior * string
 
 
     let rec generate_var_name x (l_env, env) =

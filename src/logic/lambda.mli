@@ -65,13 +65,25 @@ sig
     | Unknown of int            (* meta-variable - used in higher-order  *)
         (* matching                              *) 
 
-  val kind_to_string :  kind -> (int -> Abstract_syntax.syntactic_behavior * string ) -> string
-  val type_to_string : stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> string
-  val term_to_string : term -> (int -> Abstract_syntax.syntactic_behavior * string) -> string
+  type env = (int * string) list
+  type consts = int -> Abstract_syntax.syntactic_behavior * string
 
-  val kind_to_formatted_string :  Format.formatter -> kind -> (int -> Abstract_syntax.syntactic_behavior * string ) -> unit
-  val type_to_formatted_string : Format.formatter -> stype -> (int -> Abstract_syntax.syntactic_behavior * string ) -> unit
-  val term_to_formatted_string : Format.formatter -> term -> (int -> Abstract_syntax.syntactic_behavior * string) -> unit
+  val generate_var_name : string -> env * env -> string
+  val unfold_labs : env -> int -> env * env -> term -> env * int * term
+  val unfold_abs : env -> int -> env * env -> term -> env * int * term
+  val unfold_app : term list -> term -> term list * term
+  val is_binder : int -> consts -> bool
+  val is_infix : int -> consts -> bool
+  val is_prefix : int -> consts -> bool
+  val unfold_binder : int -> int -> int -> consts -> (int * (string * Abstract_syntax.abstraction)) list -> env * env -> term -> (int * (string * Abstract_syntax.abstraction)) list * int * int * term
+
+  val kind_to_string :  kind -> consts -> string
+  val type_to_string : stype -> consts -> string
+  val term_to_string : term -> consts -> string
+
+  val kind_to_formatted_string :  Format.formatter -> kind -> consts -> unit
+  val type_to_formatted_string : Format.formatter -> stype -> consts -> unit
+  val term_to_formatted_string : Format.formatter -> term -> consts -> unit
 
 
   val raw_to_string : term -> string
@@ -84,7 +96,7 @@ sig
 
   val unlinearize_term : term -> term
   val unlinearize_type : stype -> stype
-    
+
 
   (** [eta_long_form t ty type_of_cst] returns the eta-long form of
       [t] with respect of type [ty]. [t] is supposed to be in
