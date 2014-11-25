@@ -51,6 +51,7 @@ val circle_outline : float -> diagram
 val circle_full : float -> diagram
 
 val color : color -> diagram -> diagram
+val bg_color : color -> diagram -> diagram
 val empty_color : color
 val black : color
 val blue : color

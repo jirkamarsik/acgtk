@@ -366,7 +366,14 @@ let circle_full (radius : float) : diagram =
 (* Coloring diagrams *)
 
 let color ((r, g, b, a) : color) (d : diagram) : diagram =
-  Setup ((fun cr -> set_source_rgba cr r g b a), d)
+  setup (fun cr -> set_source_rgba cr r g b a) d
+
+let bg_color (c : color) (d : diagram) : diagram =
+  let exts = extents d in
+  blend [ rectangle_full exts.w exts.h
+            |> translate (exts.x +. exts.w /. 2., exts.y +. exts.h /. 2.)
+            |> color c;
+          d ]
 
 let empty_color : color =
   (0., 0., 0., 0.)
