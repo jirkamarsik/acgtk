@@ -47,6 +47,11 @@ val intersperse : 'a -> 'a list -> 'a list
     [xs] is empty. *)
 val cycle : int -> 'a list -> 'a list
 
+(** [fold_left1 plus elems] sums up the elements in [elems] using [plus]. A
+    generalization of List.fold_left from monoids to semigroups, where we
+    don't have any neutral element. Assumes [elems] is non-empty. *)
+val fold_left1 : ('a -> 'a -> 'a) -> 'a list -> 'a
+
 val term_set_size : unit -> unit
 val sterm_set_size : unit -> unit
 val fterm_set_size : Format.formatter -> unit

@@ -73,5 +73,6 @@ val stroke : Cairo.Path.t -> diagram
 val fill : Cairo.Path.t -> diagram
 
 val to_svg : string -> diagram -> unit
+val frame : diagram -> diagram
 val show_origin : diagram -> diagram
 val show_extents : diagram -> diagram

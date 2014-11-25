@@ -146,7 +146,10 @@ struct
   | Script of (string -> string list -> env -> env)
 
   module Data_parser = Data_parser.Make(E)
-  module Show = Show.Make(E)
+  module ShowI = Show.Make(E)
+                          (Show_text_dejavu)
+                          (Show_colors_solarized_dark)
+                          (Show_embellish_examples.Make(Show_text_dejavu))
 
   type action =
     | Load
@@ -539,7 +542,7 @@ struct
     match Data_parser.parse_term data abs with
     | None -> ()
     | Some (abs_term, abs_type) ->
-      let d = Show.realize_diagram abs_term lexicons in
+      let d = ShowI.realize_diagram abs_term lexicons in
       Diagram.to_svg "realize.svg" d
  
   type inputs =

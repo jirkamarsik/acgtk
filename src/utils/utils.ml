@@ -52,6 +52,11 @@ let cycle (n : int) (xs : 'a list) : 'a list =
   | [] -> []
   | _ -> List.rev @@ cycle_aux n xs []
 
+let fold_left1 (f : 'a -> 'a -> 'a) (xs : 'a list) : 'a =
+  match xs with
+  | [] -> failwith "Empty list passed to fold_left1"
+  | head :: tail -> List.fold_left f head tail
+
 let f_set_size formatter = 
   try
     let terminal_width,_= ANSITerminal.size () in

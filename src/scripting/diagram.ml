@@ -450,6 +450,13 @@ let to_svg (filename : string) (d : diagram) : unit =
   let d_repositioned = translate (-. exts.x, -. exts.y) d in
   draw cr d_repositioned;
   Surface.finish surface
+
+let frame (d : diagram) : diagram =
+  let exts = extents d in
+  blend [ d;
+          rectangle_outline exts.w exts.h
+            |> translate (exts.x +. exts.w /. 2., exts.y +. exts.h /. 2.)
+        ]
   
 let show_origin (d : diagram) : diagram =
   blend [ d;
