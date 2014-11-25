@@ -12,6 +12,7 @@ type text_opts = { contents : string;
 
 type diagram = Blend of diagram * diagram
              | Setup of (context -> unit) * diagram
+             | Reframe of rectangle * diagram
              | Draw of Path.t * draw_op
              | Text of text_opts
 
@@ -161,6 +162,7 @@ let rec draw (cr : context) (d : diagram) : unit =
   | Setup (setup_fn, d_) -> with_cr cr (fun cr ->
                               setup_fn cr;
                               draw cr d_)
+  | Reframe (exts, d_) -> draw cr d_
   | Draw (p, op) -> with_cr cr (fun cr ->
                       set_path cr p;
                       match op with
@@ -178,6 +180,8 @@ let rec extents (d : diagram) : rectangle =
   | Setup (setup_fn, d_) -> with_phony_cr (fun cr ->
                               setup_fn cr;
                               extents d_)
+  | Reframe (exts, d_) -> with_phony_cr (fun cr ->
+                            transform_rectangle (get_matrix cr) exts)
   | Draw (p, op) -> with_phony_cr (fun cr ->
                       set_path cr p;
                       let user_space_rect = match op with
@@ -199,6 +203,7 @@ let rec tighten_text (d : diagram) : diagram =
   match d with
   | Blend (d1, d2) -> Blend (tighten_text d1, tighten_text d2)
   | Setup (setup_fn, d_) -> Setup (setup_fn, tighten_text d_)
+  | Reframe (exts, d_) -> Reframe (exts, tighten_text d_)
   | Draw (p, op) -> Draw (p, op)
   | Text opts -> Draw (path_of_text opts, Fill)
 
@@ -216,6 +221,9 @@ let blend (ds : diagram list) : diagram =
 
 let setup (setup_fn : context -> unit) (d : diagram) : diagram =
   Setup (setup_fn, d)
+
+let reframe (reframe_fn : rectangle -> rectangle) (d : diagram) : diagram =
+  Reframe (reframe_fn (extents d), d)
 
 
 (* Transforming diagrams *)
