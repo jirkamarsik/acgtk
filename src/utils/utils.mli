@@ -37,6 +37,16 @@ module IntSet : Set.S with type elt = int
     length greater than 2) *)
 val string_of_list : string -> ('a -> string) -> ('a list) -> string
 
+(** [intersperse sep [a_1;...;a_n]] returns a list where elements of
+    the input list are interspersed with [sep] as in [a_1; sep; a_2;
+    sep; ...; sep; a_n]. *)
+val intersperse : 'a -> 'a list -> 'a list
+
+(** [cycle n xs] returns the first [n] elements of the infinite list formed
+    by cyclically repeating the elements of [xs]. Returns the empty list if
+    [xs] is empty. *)
+val cycle : int -> 'a list -> 'a list
+
 val term_set_size : unit -> unit
 val sterm_set_size : unit -> unit
 val fterm_set_size : Format.formatter -> unit

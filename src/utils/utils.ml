@@ -37,6 +37,21 @@ let string_of_list sep to_string = function
 	  tl in
 	Buffer.contents buf
 
+let rec intersperse (sep : 'a) : 'a list -> 'a list = function
+  | [] -> []
+  | a_1 :: [] -> a_1 :: []
+  | a_1 :: a_2 :: tl -> a_1 :: sep :: intersperse sep (a_2 :: tl)
+
+let cycle (n : int) (xs : 'a list) : 'a list =
+  let rec cycle_aux n ys acc =
+    match (n, ys) with
+    | (0, _) -> acc
+    | (_, []) -> cycle_aux n xs acc
+    | (_, hd :: tl) -> cycle_aux (n - 1) tl (hd :: acc) in
+  match xs with
+  | [] -> []
+  | _ -> List.rev @@ cycle_aux n xs []
+
 let f_set_size formatter = 
   try
     let terminal_width,_= ANSITerminal.size () in
