@@ -388,13 +388,11 @@ let setup_bounds_for_invisible_lines (d : diagram) : diagram =
 
 let hspace (size : float) : diagram =
   line (0., 0.) (size, 0.)
-  |> centerX
   |> setup_bounds_for_invisible_lines
   |> color empty_color
 
 let vspace (size : float) : diagram =
   line (0., 0.) (0., size)
-  |> centerY
   |> setup_bounds_for_invisible_lines
   |> color empty_color
 
