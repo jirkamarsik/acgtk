@@ -26,19 +26,19 @@ include ../Makefile.master
 ###############################
 
 # Used libraries
-LIBS += dyp.cma str.cma ANSITerminal.cma
+LIBS += dyp.cma str.cma ANSITerminal.cma bigarray.cma cairo2.cma
 
 # The corresponding directories
 # (if not in the main ocaml lib directory,
 # ex. -I  +campl4
-LIBDIR += @DYPGEN_INCLUDE@ @ANSITerminal_INCLUDE@
+LIBDIR += @DYPGEN_INCLUDE@ @ANSITerminal_INCLUDE@ @OCamlCairo2_INCLUDE@
 
 # Directories to which the current source files depend on
 PREVIOUS_DIRS = ../utils ../datalog.prover ../logic ../grammars ../acg-data
 
 # Source files in the right order of dependance
 
-ML = scripting_errors.ml functions.ml script_lexer.ml script_parser.ml 
+ML = scripting_errors.ml diagram.ml functions.ml script_lexer.ml script_parser.ml
 
 DYP = script_parser.dyp
 CAMLLEX = script_lexer.mll
