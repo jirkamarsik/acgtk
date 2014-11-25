@@ -94,6 +94,11 @@ sig
       signature [sg] *)
     val term_to_string : term -> t -> string 
 
+  (** [id_to_string sg id] looks up a constant defined or declared in a
+      signature by its id and returns a pair of its syntactic behavior and
+      name. *)
+  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
+
 
   val type_to_formatted_string : Format.formatter -> stype -> t -> unit
   val term_to_formatted_string : Format.formatter -> term -> t -> unit

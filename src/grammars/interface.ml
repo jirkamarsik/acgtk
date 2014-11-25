@@ -45,6 +45,7 @@ sig
   val is_constant : string -> t -> bool*Abstract_syntax.syntactic_behavior option
   val type_to_string : stype -> t -> string
   val term_to_string : term -> t -> string
+  val id_to_string : t -> int -> Abstract_syntax.syntactic_behavior*string
   val type_to_formatted_string : Format.formatter -> stype -> t -> unit
   val term_to_formatted_string : Format.formatter -> term -> t -> unit
 (*  val type_to_string : stype -> t -> string*)
