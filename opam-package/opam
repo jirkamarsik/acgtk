@@ -13,6 +13,7 @@ depends: [
   "dypgen"
   "bolt"
   "ANSITerminal"
+  "cairo2"
 ]
 
 ocaml-version: [ >= "4.00.0" ]
