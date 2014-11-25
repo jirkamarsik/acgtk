@@ -54,6 +54,7 @@ sig
     | Analyse
     | Check
     | Realize
+    | RealizeShow
     | Add
     | Compose
     | Dont_wait
@@ -89,6 +90,7 @@ sig
   val analyse : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
   val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
   val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
+  val realize_show : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
   val parse : ?name:string -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
@@ -156,6 +158,7 @@ struct
     | Analyse
     | Check
     | Realize
+    | RealizeShow
     | Add
     | Compose
     | Dont_wait
@@ -168,7 +171,7 @@ struct
     | Query
 
 
-  let actions = [Help None;Load;List;Print;Check;Realize;Parse;Idb;Query;Compose;Analyse;Wait;Dont_wait;Select;Unselect;Create;Add;Save;Trace;Dont_trace;]
+  let actions = [Help None;Load;List;Print;Check;Realize;RealizeShow;Parse;Idb;Query;Compose;Analyse;Wait;Dont_wait;Select;Unselect;Create;Add;Save;Trace;Dont_trace;]
 
 
   let rec action_to_string = function
@@ -182,6 +185,7 @@ struct
     | Analyse -> "analyse"
     | Check -> "check"
     | Realize -> "realize"
+    | RealizeShow -> "realize_show"
     | Add -> "add"
     | Compose -> "compose"
     | Dont_wait -> "don't wait"
@@ -229,6 +233,7 @@ struct
     | Analyse as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[*DEPRECATED*@]@ @[analyses@ the@ given@ \"term:type\"@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures@ or@ lexicons,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment.@ In@ the@ context@ of@ a@ signature,@ this@ command@ just@ typechecks@ the@ given@ entry.@ In@ the@ context@ of@ a@ lexicon,@ it@ typechecks@ it@ and@ interprets@ it@ with@ respect@ to@ this@ lexicon@ @]@]@." (action_to_string command)
     | Check as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[check@ whether@ the@ given@ \"term:type\"@ typechecks@ with@ respect@ to@ the@ given@ \"name1\"@ ...@ signatures,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment,@ provided@ it@ is@ a@ signature.@]@]@." (action_to_string command)
     | Realize as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[check@ whether@ the@ given@ \"term:type\"@ typechecks@ with@ respect@ to@ the@ abstract@ signatures@ of@ the@ \"name1\"@ ...@ lexicons,@ or@ if@ no@ such@ name@ is@ given,@ with@ respect@ to@ the@ selected@ data@ in@ the@ environment,@ provided@ it@ is@ a@ lexicon.@ Then@ the@ interrpretetion@ of@ the@ input@ term@ by@ each@ lexicon@ is@ computed.@]@]@." (action_to_string command)
+    | RealizeShow as command -> Utils.format "@[<v5>[name1 name2 ...] %s term:type;@ @[same@ as@ realize,@ but@ with@ graphical@ output.@]@]@." (action_to_string command)
     | Parse as command -> Utils.format "@[<v5>[name] %s term:type;@ @[parse@ the@ object@ term@ \"term\"@ as@ the@ image@ of@ some@ abstract@ term@ of@ type@ \"type\"@ according@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
     | Idb as command -> Utils.format "@[<v5>[name] %s;@ @[outputs@ the@ datalog@ program@ (intensional@ database)@ corresponding@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
     | Query as command -> Utils.format "@[<v5>[name] %s term:type;@ @[outputs@ the@ facts@ (extensional@ database)@ and@ the@ query@ associated@ to@ the@ term@ \"term\"@ of@ distinguished@ type@ \"type\"@ with@ respect@ to@ the@ lexicon@ \"name\".@ If@ no@ \"name\"@ is@ specified,@ check@ whether@ there@ is@ a@ selected@ data@ in@ the@ environment@ @]@]@." (action_to_string command)
@@ -469,23 +474,33 @@ struct
 	Utils.format "%s" s)
       signatures
       
-      
-      
-  let realize ?names e data l =
+
+  let toplevel_newline () =
     let () = Printf.printf "\n%!" in
     let _ = Format.flush_str_formatter () in
-    let lexicons =
-      match names,E.focus e with
-      | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
-      | None,Some (E.Lexicon lex) -> [lex]
-      | None,Some (E.Signature sg) -> 
-	raise (Scripting_errors.Error (
-	  Scripting_errors.Accept_only (
-	    Scripting_errors.Lex (
-	      fst (E.Signature1.name sg)),
-	    "realize"),
-	  l)) 
-      | Some ns,_ -> List.map (fun (n,l) -> get_lex (Some n) "realize" e l) ns in
+    ()
+
+  let toplevel_get_lexicons names e action l =
+    match names,E.focus e with
+    | None,None -> raise (Scripting_errors.Error (Scripting_errors.No_focus,l))
+    | None,Some (E.Lexicon lex) -> [lex]
+    | None,Some (E.Signature sg) -> 
+      raise (Scripting_errors.Error (
+	Scripting_errors.Accept_only (
+          Scripting_errors.Lex (
+            fst (E.Signature1.name sg)),
+          action),
+        l)) 
+    | Some ns,_ -> List.map (fun (n,l) -> get_lex (Some n) action e l) ns
+
+  let toplevel_flush_newline () =
+    let () = Utils.sformat "@." in
+    let s = Format.flush_str_formatter () in
+    Utils.format "%s@?" s
+ 
+  let realize ?names e data l =
+    toplevel_newline ();
+    let lexicons = toplevel_get_lexicons names e "realize" l in
     let _ = List.fold_left
       (fun (first,last_abs_sg) lex -> 
 	let abs,obj=E.Lexicon.get_sig lex in
@@ -514,10 +529,23 @@ struct
 	  false,Some abs)
       (true,None)
       lexicons in
-    let () = Utils.sformat "@." in
-    let s = Format.flush_str_formatter () in
-    Utils.format "%s@?" s
-      
+    toplevel_flush_newline ()
+
+  let realize_show ?names e data l =
+    toplevel_newline ();
+    let lexicons = toplevel_get_lexicons names e "realize_show" l in
+    let abs, _ = E.Lexicon.get_sig (List.hd lexicons) in
+    match Data_parser.parse_term data abs with
+    | None -> ()
+    | Some (abs_term, abs_type) ->
+      (* This is defined in Diagram as well, but we cannot open the whole
+         module wholesale. Maybe it would be better off inside some
+         utility module that is opened in every source file. *)
+      let (>>) f g x = g (f x) in
+      let obj_terms = List.map (E.Lexicon.interpret abs_term abs_type >> fst)
+                               lexicons in
+   ()
+ 
   type inputs =
   | Stop
   | Next

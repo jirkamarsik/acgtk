@@ -64,6 +64,8 @@
   CHECK_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>REALIZE
   REALIZE_HELP
+<(string*Abstract_syntax.Abstract_syntax.location*string)>REALIZE_SHOW
+  REALIZE_SHOW_HELP
 <(string*Abstract_syntax.Abstract_syntax.location*string)>PARSE
   PARSE_HELP
 <Abstract_syntax.Abstract_syntax.location>IDB
@@ -155,6 +157,11 @@ QUERY_HELP
     match names with
     | [] -> let () = F.realize e t l in e
     | _ -> let () = F.realize  ~names e t l in e}
+| optional_idents<names> REALIZE_SHOW<t,l,line>   { 
+  let () = echo dyp.global_data line in fun e -> 
+    match names with
+    | [] -> let () = F.realize_show e t l in e
+    | _ -> let () = F.realize_show  ~names e t l in e}
 | optional_ident<name> PARSE<t,l,line>   {
   let () = echo dyp.global_data line in fun e -> 
     match name with
@@ -187,6 +194,7 @@ QUERY_HELP
 | LOAD_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Load)) in e}
 | ANALYSE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Analyse)) in e}
 | REALIZE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Realize)) in e}
+| REALIZE_SHOW_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.RealizeShow)) in e}
 | CHECK_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Check)) in e}
 | PARSE_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Parse)) in e}
 | QUERY_HELP SEMICOLONN<l> {let () = echo dyp.global_data l in fun e -> let () = F.help (F.Help (Some F.Query)) in e}
@@ -213,6 +221,7 @@ QUERY_HELP
 | ANALYSE {F.Analyse}
 | CHECK {F.Check}
 | REALIZE {F.Realize}
+| REALIZE_SHOW {F.RealizeShow}
 | PARSE {F.Parse}
 | IDB {F.Idb}
 | QUERY {F.Query}

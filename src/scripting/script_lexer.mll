@@ -43,6 +43,8 @@ type token =
   | CHECK_HELP
   | REALIZE  of (string*Abstract_syntax.location*string)
   | REALIZE_HELP
+  | REALIZE_SHOW  of (string*Abstract_syntax.location*string)
+  | REALIZE_SHOW_HELP
   | PARSE  of (string*Abstract_syntax.location*string)
   | PARSE_HELP
   | IDB   of Abstract_syntax.location
@@ -134,6 +136,10 @@ let string = (letter|digit|'_')*
 		optional_string (fun x l -> match x with
 		| None -> REALIZE_HELP
 		| Some x -> REALIZE (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
+    | "realize_show"  as c {let () = echo_str c in let () = Buffer.reset string_content in
+		optional_string (fun x l -> match x with
+		| None -> REALIZE_SHOW_HELP
+		| Some x -> REALIZE_SHOW (strip_trailing_space x,l,let () = echo_str (x^";") in reset_echo ())) lexbuf}
     | "parse"  as c {let () = echo_str c in let () = Buffer.reset string_content in
 		optional_string (fun x l -> match x with
 		| None -> PARSE_HELP

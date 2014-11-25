@@ -42,6 +42,7 @@ sig
     | Analyse
     | Check
     | Realize
+    | RealizeShow
     | Add
     | Compose
     | Dont_wait
@@ -78,6 +79,8 @@ sig
   val check : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
   val realize : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
+
+  val realize_show : ?names:(string * (Lexing.position * Lexing.position)) list -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
   val parse : ?name:string -> env -> string -> (Lexing.position * Lexing.position) -> unit
 
