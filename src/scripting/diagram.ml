@@ -26,9 +26,6 @@ type color = float * float * float * float
 
 let pi = 4. *. atan 1.
 
-let (|>) (x : 'a) (f : 'a -> 'b) : 'b =
-  f x
-
 let (>>) (f : 'a -> 'b) (g : 'b -> 'c) : 'a -> 'c =
   fun x -> g (f x)
 
