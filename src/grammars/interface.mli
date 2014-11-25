@@ -66,7 +66,8 @@ sig
   (** [find_type id s] returns the type as declared or defined in the
       signature [s], corresponding to the symbol [id] in [s] if it
       exists. Raise [Not_found] otherwise*)
-  val find_type : string -> t -> stype
+  (* REVIEW: Commented out because of still missing impl. *)
+  (* val find_type : string -> t -> stype *)
 
 
   (** [find_term id s] returns the term together with its type, as
@@ -168,7 +169,8 @@ sig
 
   (** [extract e sig] returns a data depending of the content of the
       entry [e] *)
-  val extract : entry -> t -> data
+  (* REVIEW: Commented out because of still missing impl. *)
+  (* val extract : entry -> t -> data *)
 
   (** [get_binder_argument_functionnal_type s sg] returns [None] if
       the constant [s] is not defined in [sg] as a binder (that is
@@ -195,7 +197,12 @@ sig
 
   (** [timestamp s] tags with signature [s] with a time information
       for update and dependency checks *)
-  val timestamp : t -> unit
+  (* REVIEW: Commented out because it does not match the type of the
+     timestamp function in the implementation. The type of the
+     implementation is t -> t, a pure function. However, given the
+     nature of the function, a mutable implementation of type t -> unit
+      would make sense as well.  *)
+  (* val timestamp : t -> unit *)
 
 end
 
@@ -236,7 +243,10 @@ sig
   val program_to_buffer : t -> Buffer.t
   val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
   val interpret_linear_arrow_as_non_linear : t -> bool
-  val timestamp : t -> unit
+  (* REVIEW: Commented out because of type mismatch breaking
+     compilation. See the timestamp function in Signature_sig for more
+     details. *)
+  (* val timestamp : t -> unit *)
   val update : t -> (string -> data) -> t
 
 end

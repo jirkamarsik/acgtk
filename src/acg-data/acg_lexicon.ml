@@ -92,7 +92,9 @@ struct
      object_sig=obj;
      datalog_prog=prog;
      non_linear_interpretation=non_linear;
-     build = Interpret (abs,obj)}
+     build = Interpret (abs,obj);
+     (* REVIEW: Added the timestamp field whose absence was breaking compilation. *)
+     timestamp = Unix.time ()}
 
   let interpret_linear_arrow_as_non_linear {non_linear_interpretation} = non_linear_interpretation
 
@@ -394,7 +396,9 @@ struct
        object_sig=lex1.object_sig;
        datalog_prog=lex2.datalog_prog;
        non_linear_interpretation=(interpret_linear_arrow_as_non_linear lex1) || (interpret_linear_arrow_as_non_linear lex2);
-      build = Compose (lex1,lex2)} in
+      build = Compose (lex1,lex2);
+      (* REVIEW: Added the timestamp field whose absence was breaking compilation. *)
+      timestamp = Unix.time ()} in
     rebuild_prog temp_lex
 
   let program_to_buffer lex =

@@ -55,7 +55,12 @@ struct
   type term = Lambda.term
 
   type stype = Lambda.stype
-      
+
+  (* REVIEW: Added here because it was required by the interface. *)
+  type data =
+    | Type of stype
+    | Term of (term*stype)
+
   let find_term sym {terms=syms} =
     try
       match Symbols.find sym syms with
@@ -86,7 +91,8 @@ struct
   let term_to_formatted_string fmt t sg = Lambda.term_to_formatted_string fmt t (id_to_string sg)
 
 
-  let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty;is_2nd_order=true}
+  (* REVIEW: Added the timestamp field whose absence was breaking compilation. *)
+  let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty;is_2nd_order=true;timestamp=Unix.time ()}
 
   let name {name=n} = n
 
