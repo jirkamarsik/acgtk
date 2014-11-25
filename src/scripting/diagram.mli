@@ -4,7 +4,6 @@ type vector = float * float
 type point = vector
 type color = float * float * float * float
 
-val (|>) : 'a -> ('a -> 'b) -> 'b
 val (>>) : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c
 
 val empty_diagram : diagram
@@ -18,6 +17,7 @@ val draw : Cairo.context -> diagram -> unit
 val extents : diagram -> Cairo.rectangle
 
 val setup : (Cairo.context -> unit) -> diagram -> diagram
+val reframe : (Cairo.rectangle -> Cairo.rectangle) -> diagram -> diagram
 
 val transform : Cairo.Matrix.t -> diagram -> diagram
 val translate : vector -> diagram -> diagram
@@ -42,6 +42,7 @@ val default_font : toy_font
 val text : ?face:toy_font -> ?size:float -> string -> diagram
 val text_ : ?face:toy_font -> ?size:float -> string -> diagram
 val tighten_text : diagram -> diagram
+val get_font_extents : toy_font -> float -> Cairo.font_extents
 
 val line : point -> point -> diagram
 val rectangle_outline : float -> float -> diagram
