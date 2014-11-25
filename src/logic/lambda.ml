@@ -72,23 +72,24 @@ module Lambda =
 
 
 
-    let rec generate_var_name x env =
-      if List.exists (fun (_,s) -> x=s) env then
-	generate_var_name (Printf.sprintf "%s'" x) env
+
+    let rec generate_var_name x (l_env, env) =
+      if List.exists (fun (_,s) -> x=s) (l_env @ env) then
+	generate_var_name (Printf.sprintf "%s'" x) (l_env, env)
       else
 	x
 
 
-     let rec unfold_labs acc level env = function
+     let rec unfold_labs acc level (l_env, env) = function
        | LAbs (x,t) ->
-	   let x' = generate_var_name x env in
-	     unfold_labs ((level,x')::acc) (level+1) ((level,x')::env) t
+	   let x' = generate_var_name x (l_env, env) in
+	     unfold_labs ((level,x')::acc) (level+1) ((level,x')::l_env,env) t
        | t -> acc,level,t
 
-     let rec unfold_abs acc level env = function
+     let rec unfold_abs acc level (l_env, env) = function
        | Abs (x,t) -> 
-	   let x' = generate_var_name x env in
-	     unfold_abs ((level,x')::acc) (level+1) ((level,x')::env) t
+	   let x' = generate_var_name x (l_env, env) in
+	     unfold_abs ((level,x')::acc) (level+1) (l_env,(level,x')::env) t
        | t -> acc,level,t
 
      let rec unfold_app acc = function
@@ -111,13 +112,13 @@ module Lambda =
 	 | _ -> false
 
 
-     let rec unfold_binder binder l_level level id_to_sym acc env = function
+     let rec unfold_binder binder l_level level id_to_sym acc (l_env, env) = function
        | App (Const i,(LAbs(x,u) as t)) when (is_binder i id_to_sym)&&(i=binder) ->
-	   let x' = generate_var_name x env in
-	     unfold_binder binder (l_level+1) level id_to_sym ((l_level,(x',Abstract_syntax.Linear))::acc) ((l_level,x')::env) u
+	   let x' = generate_var_name x (l_env, env) in
+	     unfold_binder binder (l_level+1) level id_to_sym ((l_level,(x',Abstract_syntax.Linear))::acc) ((l_level,x')::l_env,env) u
        | App (Const i,(Abs(x,u) as t)) when (is_binder i id_to_sym)&&(i=binder) -> 
-	   let x' = generate_var_name x env in
-	     unfold_binder binder l_level (level+1) id_to_sym ((level,(x',Abstract_syntax.Non_linear))::acc) ((level,x')::env) u
+	   let x' = generate_var_name x (l_env, env) in
+	     unfold_binder binder l_level (level+1) id_to_sym ((level,(x',Abstract_syntax.Non_linear))::acc) (l_env,(level,x')::env) u
        | t -> acc,l_level,level,t
 	   
      let parenthesize (s,b) = match b with
@@ -215,24 +216,24 @@ module Lambda =
 	     let _,x = id_to_sym i in
 	     Utils.fformat fmter "@[%s@]" x
 	   | Abs (x,t) ->
-	     let x' = generate_var_name x env in
-	     let vars,l,u=unfold_abs [level,x'] (level+1) ((level,x')::env) t in
+	     let x' = generate_var_name x (l_env, env) in
+	     let vars,l,u=unfold_abs [level,x'] (level+1) (l_env,(level,x')::env) t in
 	     let () = Utils.fformat fmter "@[@[%s@[<3>Lambda " (left_paren paren) in
 	     let () = Utils.format_of_list fmter " " (fun (_,x) -> x) (List.rev vars) in
 	     let () = Utils.fformat fmter ".@ @[@[" in
 	     let _ = term_to_string_aux u false l_level l (l_env,vars@env) in
 	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | LAbs (x,t) ->
-	     let x' = generate_var_name x l_env in
-	     let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env) t in
+	     let x' = generate_var_name x (l_env, env) in
+	     let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env,env) t in
 	     let () = Utils.fformat fmter "@[@[%s@[<3>lambda " (left_paren paren) in
 	     let () = Utils.format_of_list fmter " " (fun (_,x) -> x) (List.rev vars) in
 	     let () = Utils.fformat fmter ".@ @[@[" in
 	     let () = term_to_string_aux u false l level ((vars@l_env),env) in
 	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | App((Const s|DConst s),Abs(x,u)) when is_binder s id_to_sym ->
-	     let x' = generate_var_name x env in
-	     let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] ((level,x')::env) u in
+	     let x' = generate_var_name x (l_env, env) in
+	     let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] (l_env,(level,x')::env) u in
 	     let new_env=
 	       List.fold_right
 		 (fun  (l,(x,abs)) (l_acc,acc) ->
@@ -247,8 +248,8 @@ module Lambda =
 	     let _ = term_to_string_aux u false l_l l new_env in
 	     Utils.fformat fmter "@]@]@]@,%s@]@]" (right_paren paren)
 	   | App((Const s|DConst s),LAbs(x,u)) when is_binder s id_to_sym ->
-	     let x' = generate_var_name x l_env in
-	     let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env) u in
+	     let x' = generate_var_name x (l_env, env) in
+	     let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env,env) u in
 	     let new_env=
 	       List.fold_right
 		 (fun  (l,(x,abs)) (l_acc,acc) ->
@@ -297,24 +298,24 @@ module Lambda =
 	   | Const i -> let _,x = id_to_sym i in x,true
 	   | DConst i -> let _,x = id_to_sym i in x,true
 	   | Abs (x,t) ->
-	       let x' = generate_var_name x env in
-	       let vars,l,u=unfold_abs [level,x'] (level+1) ((level,x')::env) t in
+	       let x' = generate_var_name x (l_env, env) in
+	       let vars,l,u=unfold_abs [level,x'] (level+1) (l_env,(level,x')::env) t in
 		 Printf.sprintf
 		   "Lambda %s. %s"
 		   (Utils.string_of_list " " (fun (_,x) -> x) (List.rev vars))
 		   (let str,_ = term_to_string_aux u l_level l (l_env,(vars@env)) in str),
 	       false
 	   | LAbs (x,t) ->
-	       let x' = generate_var_name x l_env in
-	       let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env) t in
+	       let x' = generate_var_name x (l_env, env) in
+	       let vars,l,u=unfold_labs [l_level,x'] (l_level+1) ((l_level,x')::l_env,env) t in
 		 Printf.sprintf
 		   "lambda %s. %s"
 		   (Utils.string_of_list " " (fun (_,x) -> x) (List.rev vars))
 		   (let str,_ = term_to_string_aux u l level ((vars@l_env),env) in str),
 	       false
 	   | App((Const s|DConst s),Abs(x,u)) when is_binder s id_to_sym ->
-	       let x' = generate_var_name x env in
-	       let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] ((level,x')::env) u in
+	       let x' = generate_var_name x (l_env, env) in
+	       let vars,l_l,l,u = unfold_binder s l_level (level+1) id_to_sym [level,(x',Abstract_syntax.Non_linear)] (l_env,(level,x')::env) u in
 	       let new_env=
 		 List.fold_right
 		   (fun  (l,(x,abs)) (l_acc,acc) ->
@@ -330,8 +331,8 @@ module Lambda =
 		   (let str,_ = term_to_string_aux u l_l l new_env in str),
 	       false
 	   | App((Const s|DConst s),LAbs(x,u)) when is_binder s id_to_sym ->
-	       let x' = generate_var_name x l_env in
-	       let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env) u in
+	       let x' = generate_var_name x (l_env, env) in
+	       let vars,l_l,l,u = unfold_binder s (l_level+1) level id_to_sym [l_level,(x',Abstract_syntax.Linear)] ((l_level,x')::l_env,env) u in
 	       let new_env=
 		 List.fold_right
 		   (fun  (l,(x,abs)) (l_acc,acc) ->
