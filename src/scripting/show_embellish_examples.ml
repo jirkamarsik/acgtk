@@ -43,13 +43,14 @@ module Make (T : Show_text_sig) : Show_embellish_sig = struct
     let name = match name with
                | "Ex" -> "∃"
                | "All" -> "∀"
+               | "The" -> "ι"
                | "&" -> "∧"
                | ">" -> "⇒"
                | _ -> name in
     match name with
-    | "∃" | "∀" -> n name
-                   |> reframe (fun exts ->
-                                { exts with w = exts.w -. (extents (n " ")).w })
+    | "∃" | "∀" | "ι" -> n name
+                         |> reframe (fun exts ->
+                                       { exts with w = exts.w -. (extents (n " ")).w })
     | "∧" | "⇒" -> n name
     | _ -> b name
 
@@ -100,8 +101,11 @@ module Make (T : Show_text_sig) : Show_embellish_sig = struct
 
   let embellishments = function
     | "Strings"
+    | "anglais"
+    | "francais"
     | "strings" -> simplify_cats >> render_constants_with i
     | "logic"
+    | "logique"
     | "semantics" -> render_constants_with logic_const
     | "Derivation_trees"
     | "derivation_trees"

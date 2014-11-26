@@ -1,0 +1,185 @@
+(* This files gives an example of how to use the ACG toolkit to illustrate Montague's semantics *)
+
+
+(* First we define the syntactic categories and the syntactic terms *)
+signature syntax =
+	(* the np, s and n tpes *)
+	np,n,s:type;
+
+	(* the syntactic constants that correspond to John and mary *)
+	JEAN,MARIE:np;
+
+	(* the one for loves *)
+	AIMER:np -> np -> s;
+        VOULOIR:(np -> s) -> np => s;
+
+	(* the one for every and the one for some *)
+
+	CHAQUE,UN,UNE : n -> (np -> s) -> s;
+
+	(* and the ones for man and woman *)
+
+	HOMME,FEMME : n;
+        PERE,MERE : n;
+
+        (* possessives *)
+        POSS_M : np -> n -> np;
+        POSS_F : np -> n -> np;
+end
+
+
+(* Then we define the signature contains the strings that will be used
+*)
+
+signature francais =
+	string : type;
+	
+	(* the infix concatenation operator + *)
+	infix + : string -> string -> string;
+
+	(* the empty string e *)
+	e : string;
+
+	(* all the other strings *)
+	Jean, Marie, aime, chaque, un, une, homme, femme, pere, mere, le, la, de, veut:string;
+end
+
+
+(* The lexicon that associates the string to the syntactic terms *)
+
+lexicon realisation_francais (syntax) : francais =
+	(* all the syntactic types are interpreted as strings *)
+	np,n,s:=string;
+
+	JEAN := Jean;
+	MARIE := Marie;
+
+	(* LOVE is interpreted as a function taking two arguments. The first one is the object and the second one is the subject. It returns the concatenation subject+loves+object *)
+	AIMER := lambda o s.s + aime + o;
+        VOULOIR := lambda vp. Lambda s. s + veut + vp e;
+
+	CHAQUE := lambda n P. P (chaque + n);
+	UN := lambda n P.P(un + n);
+	UNE := lambda n P.P(une + n);
+	
+	HOMME := homme;
+	FEMME := femme;
+
+        PERE := pere;
+        MERE := mere;
+
+        POSS_M := lambda np n. le + n + de + np;
+        POSS_F := lambda np n. la + n + de + np;
+end
+	
+
+(* Then we define the signature contains the strings that will be used
+*)
+
+signature anglais =
+	string : type;
+	
+	(* the infix concatenation operator + *)
+	infix + : string -> string -> string;
+
+	(* the empty string e *)
+	e : string;
+
+	(* all the other strings *)
+	John, Mary, loves, every, some, man, woman, father, mother, s, wants, to:string;
+
+
+        poss = lambda np n. np + s + n : string -> string -> string;
+end
+
+
+(* The lexicon that associates the string to the syntactic terms *)
+
+lexicon realisation_anglais (syntax) : anglais =
+	(* all the syntactic types are interpreted as strings *)
+	np,n,s:=string;
+
+	JEAN := John;
+	MARIE := Mary;
+
+	(* LOVE is interpreted as a function taking two arguments. The first one is the object and the second one is the subject. It returns the concatenation subject+loves+object *)
+	AIMER := lambda o s.s + loves + o;
+        VOULOIR := lambda vp. Lambda s. s + wants + to + vp e;
+
+	CHAQUE := lambda n P. P (every + n);
+	UN := lambda n P.P(some + n);
+	UNE := lambda n P.P(some + n);
+	
+	HOMME := man;
+	FEMME := woman;
+
+        PERE := father;
+        MERE := mother;
+
+        POSS_M := poss;
+        POSS_F := poss;
+end
+	
+
+(* Let's now look at the semantics *)
+
+signature logique =
+
+	(* We define the usual types *)
+
+	e,t:type;
+
+	(* Then few non logical-constants *)
+	aime:e -> e -> t;
+        veut:e -> t -> t;
+	j,m:e;
+	homme,femme : e -> t;
+        pere,mere : e -> t;
+        
+
+	(* And finally, here are the logical constants *)
+
+	(* Cconjunction *)
+	infix & : t -> t -> t;	
+	
+	(* Implications*)
+	infix > : t -> t -> t;
+
+	(* Quantifiers *)
+	binder All : (e=>t) -> t;
+	binder Ex : (e=>t) -> t;
+        binder The : (e=>t) -> e;
+
+        de : (e -> t) -> e -> e -> t;
+
+        poss = lambda ind rel. The x. (de rel x ind) : e -> (e -> t) -> e;
+end
+
+lexicon semantique (syntax) : logique =
+	
+	(* We interpret np as entity, n as properties (s -> t) and of course s as propositions (truth values) *)
+	np := e;
+	n := e -> t;
+	s := t;
+
+	JEAN := j;
+	MARIE := m;
+
+	HOMME := homme;
+	FEMME := femme;
+
+        PERE := pere;
+        MERE := mere;
+	
+	(* Note that we interpret LOVE whose first argument is the object and the second one as a suject using the predicate "love" for which love x y is true whenever x loves y *)
+	AIMER := lambda x y. aime y x ;
+        VOULOIR := lambda vp. Lambda s. veut s (vp s);
+	
+
+	CHAQUE := lambda P Q.All x. (P x) > (Q x); 
+	UN :=  lambda P Q.Ex x. (P x) & (Q x) ;
+	UNE :=  lambda P Q.Ex x. (P x) & (Q x) ;
+
+        POSS_M := poss;
+        POSS_F := poss;
+end
