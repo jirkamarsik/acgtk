@@ -72,9 +72,6 @@ sig
   val eta_long_form : term -> stype -> t -> term
   val unfold : term -> t -> term
   val is_2nd_order : t -> bool
-  (* REVIEW: Commented out because of type mismatch breaking
-     compilation. See interface.mli for more details. *)
-  (* val timestamp : t -> unit *)
 
 end
 
@@ -112,9 +109,5 @@ sig
   val program_to_buffer : t -> Buffer.t
   val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
   val interpret_linear_arrow_as_non_linear : t -> bool
-  (* REVIEW: Commented out because of type mismatch breaking
-     compilation. See the timestamp function in Signature_sig for more
-     details. *)
-  (* val timestamp : t -> unit *)
   val update : t -> (string -> data) -> t
 end

@@ -55,8 +55,10 @@ struct
   type 'a build = 
     | Interpret of (Sg.t*Sg.t)
     | Compose of ('a*'a)
+
   type t = {name:string*Abstract_syntax.location;
 	    dico:interpretation Dico.t;
+	    syntax_dico:Abstract_syntax.lex_entry Dico.t option;
 	    non_linear_interpretation:bool;
 	    abstract_sig:Sg.t;
 	    object_sig:Sg.t;
@@ -85,15 +87,19 @@ struct
   let get_sig {abstract_sig=abs;object_sig=obj} = abs,obj
 
   let empty name  ?(non_linear=false) ~abs ~obj = 
-    let prog = if (Sg.is_2nd_order abs) && (not non_linear) then Some (Datalog.Program.empty,RuleToCstMap.empty) else None in
+    let prog =
+      if (Sg.is_2nd_order abs) && (not non_linear) then
+	Some (Datalog.Program.empty,RuleToCstMap.empty) 
+      else
+	None in
     {name=name;
      dico=Dico.empty;
+     syntax_dico=Some Dico.empty;
      abstract_sig=abs;
      object_sig=obj;
      datalog_prog=prog;
      non_linear_interpretation=non_linear;
      build = Interpret (abs,obj);
-     (* REVIEW: Added the timestamp field whose absence was breaking compilation. *)
      timestamp = Unix.time ()}
 
   let interpret_linear_arrow_as_non_linear {non_linear_interpretation} = non_linear_interpretation
@@ -354,51 +360,44 @@ struct
 	| [] -> ()
 	| lst -> emit_missing_inter lex lst
 	    
-(*
-  let rebuild lex =
-      Signature.fold
-	(fun e acc ->
-	 match Sg.is_declared e lex.abstract_sig with
-	 | Some s ->
-	    (match Sg.extract e lex.abstract_sig with
-	     | Sg.Type ty ->
-		let interpreted_type = Sg.convert_type ty lex.object_sig in
-		let interpreted_type = 
-		  if lex.non_linear_interpretation then
-		    Lambda.unlinearize_type interpreted_type 
-		  else
-		    interpreted_type in
-	    
-	    (try
-		let _ = Dico.find s d in
-		acc
-	      with
-	      | Not_found -> s::acc) 
-	 | None -> acc
-	)
-	[]
-	abs in
- *)  
+
+  let rebuild_interpetation lex =
+    match lex.syntax_dico with
+    | None -> failwith "bug: an rebuild of a lexicon defined as composition was triggered"
+    | Some syntax_dico ->
+       let prog =
+	 if (Sg.is_2nd_order lex.abstract_sig) && (not lex.non_linear_interpretation) then
+	   Some (Datalog.Program.empty,RuleToCstMap.empty) 
+	 else
+	   None in
+       let new_lex =  
+	 Dico.fold
+	   (fun _ abs_syntax_tree lex -> insert abs_syntax_tree lex)
+	   syntax_dico
+	   {lex with
+	     dico=Dico.empty;
+	     datalog_prog=prog}in
+       {new_lex with timestamp=Unix.time ()}
 
   let compose lex1 lex2 n =
     LOG "Compose %s(%s) as %s" (fst(name lex1)) (fst(name lex2)) (fst n) LEVEL TRACE;
     let temp_lex=
       {name=n;
        dico = 
-	  Dico.fold
-	    (fun key inter acc ->
-	      match inter with
-	      | Type (l,stype) -> Dico.add key (Type (l,interpret_type stype lex1)) acc
-	      | Constant (l,t) -> Dico.add key (Constant (l,Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex1.object_sig) (interpret_term t lex1))) acc)
-	    lex2.dico
-	    Dico.empty;
+	 Dico.fold
+	   (fun key inter acc ->
+	    match inter with
+	    | Type (l,stype) -> Dico.add key (Type (l,interpret_type stype lex1)) acc
+	    | Constant (l,t) -> Dico.add key (Constant (l,Lambda.normalize ~id_to_term:(fun i -> Sg.unfold_term_definition i lex1.object_sig) (interpret_term t lex1))) acc)
+	   lex2.dico
+	   Dico.empty;
+       syntax_dico=None;
        abstract_sig = lex2.abstract_sig;
        object_sig=lex1.object_sig;
        datalog_prog=lex2.datalog_prog;
        non_linear_interpretation=(interpret_linear_arrow_as_non_linear lex1) || (interpret_linear_arrow_as_non_linear lex2);
-      build = Compose (lex1,lex2);
-      (* REVIEW: Added the timestamp field whose absence was breaking compilation. *)
-      timestamp = Unix.time ()} in
+       build = Compose (lex1,lex2);
+       timestamp = Unix.time ()} in
     rebuild_prog temp_lex
 
   let program_to_buffer lex =
@@ -447,7 +446,7 @@ struct
       buff
     
 
-  let timestamp lex = {lex with timestamp=Unix.time ()}
+(*  let timestamp lex = {lex with timestamp=Unix.time ()} *)
 
   let update lex e = failwith "Not yet implemented"
 
