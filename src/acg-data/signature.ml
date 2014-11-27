@@ -50,28 +50,27 @@ struct
 	    types:entry Symbols.t;
 	    ids:entry Id.t;
 	    is_2nd_order:bool;
-	    timestamp:float}
+	    extension_timestamp:float;
+	    definition_timestamp:float}
 
   type term = Lambda.term
 
   type stype = Lambda.stype
-
-  (* REVIEW: Added here because it was required by the interface. *)
   type data =
     | Type of stype
     | Term of (term*stype)
 
   let find_term sym {terms=syms} =
+    (* TODO : Replace by an assert within IFDEFDEBUG *)
     try
       match Symbols.find sym syms with
-	| Term_declaration (x,id,_,const_type) as t when sym=x-> Lambda.Const id,const_type
-	| Term_declaration _ -> failwith "Bug in find_term"
-	| Term_definition (x,id,_,const_type,_) as t when sym=x-> Lambda.DConst id,const_type
-	| Term_definition _ -> failwith "Bug in find_term"
-	| _ -> raise Not_found
+      | Term_declaration (x,id,_,const_type) as t when sym=x-> Lambda.Const id,const_type
+      | Term_declaration _ -> failwith "Bug in find_term" (* x should match the symbol *)
+      | Term_definition (x,id,_,const_type,_) as t when sym=x-> Lambda.DConst id,const_type
+      | Term_definition _ -> failwith "Bug in find_term"  (* x should match the symbol *)
+      | _ -> failwith "Bug in find_term"  (* x should return a Term, not a type *)
     with
-      | Symbols.Not_found -> raise Not_found
-
+    | Symbols.Not_found -> raise Not_found
 
   let id_to_string {ids=ids} i =
     match Id.find i ids with
@@ -91,23 +90,33 @@ struct
   let term_to_formatted_string fmt t sg = Lambda.term_to_formatted_string fmt t (id_to_string sg)
 
 
-  (* REVIEW: Added the timestamp field whose absence was breaking compilation. *)
-  let empty n = {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty;is_2nd_order=true;timestamp=Unix.time ()}
+  let empty n = 
+    let timestamp = Unix.time () in
+    {name=n;size=0;terms=Symbols.empty;types=Symbols.empty;ids=Id.empty;is_2nd_order=true;definition_timestamp=timestamp;extension_timestamp=timestamp}
 
   let name {name=n} = n
 
   let find_atomic_type s ({types=syms} as sg) = 
+    (* TODO : Replace by an assert within IFDEFDEBUG *)
     try
       match Symbols.find s syms with
-	| Type_declaration (x,id,_) when x=s -> Lambda.Atom id
-	| Type_declaration _ -> failwith "Bug in find_atomic_type"
-	| Type_definition (x,id,_,_) when x=s -> Lambda.DAtom id
-	| Type_definition _ -> failwith "Bug in find_atomic_type"
-	| Term_declaration _ -> failwith "Bug in find_atomic_type"
-	| Term_definition _ -> failwith "Bug in find_atomic_type"
+      | Type_declaration (x,id,_) when x=s -> Lambda.Atom id
+      | Type_declaration _ -> failwith "Bug in find_atomic_type" (* x and s should match if something is returned *)
+      | Type_definition (x,id,_,_) when x=s -> Lambda.DAtom id
+      | Type_definition _ -> failwith "Bug in find_atomic_type"   (* x and s should match if something is returned *)
+      | _ -> failwith "Bug in find_atomic_type" (* A type, not a term should be returned *)
     with
-      | Not_found -> failwith "Bug in find_atomic_type"
-
+    | Symbols.Not_found -> failwith "Bug in find_atomic_type"
+				    
+  let find_type s sg = 
+    (* TODO : Replace by an assert within IFDEFDEBUG *)
+    try
+      match Symbols.find s sg.types with
+      | Type_declaration (x,id,_) when x=s -> Lambda.Atom id
+      | Type_definition (x,id,_,_) when x=s -> Lambda.DAtom id
+      | _ -> failwith "Bug in find_type" (* A type, not a term should be returned and x and s should match  *)
+    with
+    | Symbols.Not_found -> raise Not_found
 
   let rec convert_type ty ({types=syms} as sg) = 
     match ty with
@@ -125,7 +134,11 @@ struct
     try
       (* First perform addition on the functional data structure *)
       let new_symbols = Symbols.add t e syms in
-      {sg with size=s+1;types=new_symbols;ids=Id.add s e ids}
+      (* timestamps modified at add_entry function *)
+      {sg with
+	size=s+1;
+	types=new_symbols;
+	ids=Id.add s e ids;}
     with
       | Symbols.Conflict -> raise Duplicate_type_definition
       | Id.Conflict  -> raise Duplicate_type_definition
@@ -134,6 +147,7 @@ struct
     try
       (* First perform addition on the functional data structure *)
       let new_symbols = Symbols.add t e syms in
+      (* timestamps modified at add_entry function *)
       {sg with size=s+1;terms= new_symbols;ids=Id.add s e ids}
     with
       | Symbols.Conflict -> raise Duplicate_term_definition
@@ -245,21 +259,24 @@ struct
 
   let typecheck=Type_System.typecheck
 	  
+  let stamp_declaration sg = {sg with extension_timestamp = Unix.time ()}
+
+  let stamp_definition sg = {sg with definition_timestamp = Unix.time ()}
 			   
   let add_entry e ({size=s} as sg) =
     match e with
       | Abstract_syntax.Type_decl (t,_,Abstract_syntax.K k) -> 
-	  add_sig_type t (Type_declaration (t,s,abstract_on_dependent_types k sg)) sg
+	  stamp_declaration (add_sig_type t (Type_declaration (t,s,abstract_on_dependent_types k sg)) sg)
       | Abstract_syntax.Type_def (t,_,ty,Abstract_syntax.K k) ->
-	  add_sig_type t (Type_definition (t,s,abstract_on_dependent_types k sg,convert_type ty sg)) sg
+	  stamp_definition (add_sig_type t (Type_definition (t,s,abstract_on_dependent_types k sg,convert_type ty sg)) sg)
       | Abstract_syntax.Term_decl (t,behavior,_,ty) ->
 	  let t_type = convert_type ty sg in
 	  let sg_is_2nd_order = sg.is_2nd_order && (Lambda.is_2nd_order t_type (fun i -> unfold_type_definition i sg)) in
-	  add_sig_term t (Term_declaration (t,s,behavior,convert_type ty sg)) {sg with is_2nd_order=sg_is_2nd_order}
+	  stamp_declaration (add_sig_term t (Term_declaration (t,s,behavior,convert_type ty sg)) {sg with is_2nd_order=sg_is_2nd_order})
       | Abstract_syntax.Term_def (t,behavior,_,term,ty) ->
 	  let t_type = convert_type ty sg in
 	  let t_term = typecheck term t_type sg in
-	    add_sig_term t (Term_definition (t,s,behavior,t_type,t_term)) sg
+	    stamp_definition (add_sig_term t (Term_definition (t,s,behavior,t_type,t_term)) sg)
 				     
   let is_type s {types=syms} =
     try
@@ -386,7 +403,13 @@ struct
 
   let is_2nd_order {is_2nd_order} = is_2nd_order
 
-  let timestamp sg = {sg with timestamp=Unix.time ()}
+
+  let extract e s = 
+    match e with 
+    | Type_declaration (_,id,_) -> Type(Lambda.Atom id)
+    | Type_definition (_,_,_,stype) -> Type stype
+    | Term_declaration (_,id,_,stype) -> Term(Lambda.Const id,stype)
+    | Term_definition (_,_,_,stype,term) -> Term (term,stype)
 
 end	  
   

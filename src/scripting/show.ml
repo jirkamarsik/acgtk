@@ -30,7 +30,7 @@ module Lambda_show (T : Show_text_sig) = struct
       : diagram * bool =
     let recurse t l_level level (l_env,env) =
       recur_fn t l_level level (l_env,env) id_to_sym in
-    match t with
+    let d, b = match t with
     | Var i -> n @@ List.assoc (level - 1 - i) env, true
     | LVar i -> n @@ List.assoc (l_level - 1 - i) l_env, true
     | Const id | DConst id -> n @@ snd @@ id_to_sym id, true
@@ -102,9 +102,10 @@ module Lambda_show (T : Show_text_sig) = struct
                     n " "; ]
                   @ Utils.intersperse (n " ") @@
                       List.map (fun x -> parenthesize_d @@
-                                 recurse x l_level level (l_env, env)) args,
+                                  recurse x l_level level (l_env, env)) args,
           false
-    | _ -> failwith "Not yet implemented"
+    | _ -> failwith "Not yet implemented" in
+    centerX d, b
 
   let term_to_diagram (t : term) (id_to_sym : consts) : diagram =
     fst @@ fix term_to_diagram_open t 0 0 ([], []) id_to_sym
@@ -197,14 +198,6 @@ module Make (E : Environment_sig)
     Tree.T (render_term term l_level level (l_env, env), children_d)
 
 
-  let concat_lines_in_node (lines : diagram list) : diagram =
-    lines
-    |> List.map (pad_rel ~all:0.05)
-    |> List.map2 color @@ Utils.cycle (List.length lines) C.lines
-    |> List.map centerX
-    |> vcat
-
-
   let term_to_diagram_in (sg : signature) (t : term)
                          (l_level : int) (level : int)
                          ((l_env, env) : env * env) : diagram =
@@ -214,6 +207,36 @@ module Make (E : Environment_sig)
     let consts = E.Signature1.id_to_string sg in
     fst @@ ttd t l_level level (l_env, env) consts
  
+
+  let merge_trees : 'a tree list -> 'a list tree =
+    List.map (Tree.map (fun x -> [x]))
+    >> Utils.fold_left1 (Tree.map2 (@))
+
+  let decorate_lines (lines : diagram list) : diagram list =
+    lines
+    |> List.map (pad_abs ~vertical:0.25 ~horizontal:1.5)
+    |> List.map2 color @@ Utils.cycle (List.length lines) C.lines
+
+  let rec align_sister_lines (tree : diagram list tree) : diagram list tree =
+    match tree with
+    | Tree.T (lines, []) -> tree
+    | Tree.T (lines, children) ->
+        let children = List.map align_sister_lines children in
+        let heights = List.map (fun (Tree.T (c_lines, _)) ->
+                        List.map (fun c_line -> (extents c_line).h)
+                                 c_lines)
+                               children in
+        let max_heights = Utils.fold_left1 (List.map2 max) heights in
+        let children = List.map (fun (Tree.T (c_lines, c_children)) ->
+                         Tree.T (List.map2 (fun c_line new_height ->
+                                   let height_diff = new_height -.
+                                                     (extents c_line).h in
+                                   pad_abs ~vertical:(height_diff /. 2.) c_line)
+                                           c_lines max_heights,
+                                 c_children))
+                         children in
+        Tree.T (lines, children)
+
 
   let realize_diagram (abs_term : term) (lexs : lexicon list) : diagram =
 
@@ -239,13 +262,12 @@ module Make (E : Environment_sig)
                                                        term_graph)
                                   lexs in
 
-    let merge_trees =
-      List.map (Tree.map (fun x -> [x]))
-      >> Utils.fold_left1 (Tree.map2 (@)) in
 
     abs_term_tree :: obj_term_trees
     |> merge_trees
-    |> Tree.map concat_lines_in_node
+    |> Tree.map decorate_lines
+    |> align_sister_lines
+    |> Tree.map (List.map centerX >> vcat)
     |> Tree.map (bg_color C.node_background)
     |> Tree.to_diagram
     |> setup (fun cr -> set_line_width cr 1.5)

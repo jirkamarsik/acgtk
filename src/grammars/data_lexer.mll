@@ -161,7 +161,7 @@ let string = (letter|digit|'_')*'\''*
 		Token.COLON_EQUAL(loc lexbuf)}
       | letter string {
 		       let id = Lexing.lexeme lexbuf in
-		       let () = Printf.fprintf stderr "Found the ID \"%s\"\n" id in
+		       LOG "Found the ID \"%s\"\n" id LEVEL TRACE;
 		       let () = match id with
 			 | "extend" -> update_data Entry.Ext_kwd (loc lexbuf)
 			 | "with" -> update_data Entry.With_kwd (loc lexbuf)

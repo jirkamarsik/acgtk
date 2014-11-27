@@ -220,7 +220,7 @@ let build_expectation lst =
 
   let data_expectation = function
     | No_dec ->
-       let () = Printf.fprintf stderr "Current state is No_dec\n" in
+       LOG "Current state is No_dec\n" LEVEL TRACE ;
        let l = [EOI;Sig_kwd;Lex_kwd;Ext_kwd] in
        l , (function
 	     | EOI -> No_dec
@@ -538,7 +538,7 @@ let build_expectation lst =
 	
 	
   let data_transition q v =
-    let () = Printf.fprintf stderr "Will test transition on \"%s\"\n" (valuation_to_string v) in
+    LOG  "Will test transition on \"%s\"\n" (valuation_to_string v) LEVEL TRACE ;
     let _,result = data_expectation q in
       result v 
 

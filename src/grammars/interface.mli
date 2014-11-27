@@ -195,15 +195,6 @@ sig
       order and [false] otherwise. *)
   val is_2nd_order : t -> bool
 
-  (** [timestamp s] tags with signature [s] with a time information
-      for update and dependency checks *)
-  (* REVIEW: Commented out because it does not match the type of the
-     timestamp function in the implementation. The type of the
-     implementation is t -> t, a pure function. However, given the
-     nature of the function, a mutable implementation of type t -> unit
-      would make sense as well.  *)
-  (* val timestamp : t -> unit *)
-
 end
 
 (** This module signature describes the interface for modules implementing lexicons *)
@@ -243,10 +234,6 @@ sig
   val program_to_buffer : t -> Buffer.t
   val query_to_buffer : Signature.term -> Signature.stype -> t -> Buffer.t
   val interpret_linear_arrow_as_non_linear : t -> bool
-  (* REVIEW: Commented out because of type mismatch breaking
-     compilation. See the timestamp function in Signature_sig for more
-     details. *)
-  (* val timestamp : t -> unit *)
   val update : t -> (string -> data) -> t
 
 end

@@ -194,8 +194,6 @@ let error_msg e input_file =
       | Some loc -> Printf.sprintf "File \"%s\", %s\n%s" input_file loc msg
 
 let dyp_error lexbuf input_file =
-(*  let pos1=Lexing.lexeme_start_p lexbuf in
-  let pos2=lexbuf.Lexing.lex_curr_p in *)
   let pos1=Lexing.lexeme_start_p lexbuf in
   let pos2=Lexing.lexeme_end_p lexbuf in
     match bad_infix_usage () with

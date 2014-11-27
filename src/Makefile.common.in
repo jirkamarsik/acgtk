@@ -66,7 +66,7 @@ $(EXE) : % : $(CMO) %.cmo
 endif
 
 ifdef EXE_SOURCES
-$(EXEOPT) : % : $(CMX) %.cmx
+$(EXEOPT) : %.opt : $(CMX) %.cmx
 	@OCAMLCOPT@ -o $@ $(LIBDIR) $(LIBSOPT) $(OPTFLAGS) $^
 endif
 
