@@ -58,6 +58,7 @@ val blue : color
 val green : color
 val lightgrey : color
 val red : color
+val white : color
 
 val hspace : float -> diagram
 val vspace : float -> diagram

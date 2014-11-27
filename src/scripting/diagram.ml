@@ -393,6 +393,9 @@ let lightgrey : color =
 let red : color =
   (1., 0., 0., 1.)
 
+let white : color =
+  (1., 1., 1., 1.)
+
 
 (* Whitespace diagrams *)
 
