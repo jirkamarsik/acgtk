@@ -4,7 +4,7 @@
 (* First we define the syntactic categories and the syntactic terms *)
 signature syntax =
 	(* the np, s and n tpes *)
-	np,n,s:type;
+	np,n,s,sc:type;
 
 	(* the syntactic constants that correspond to John and mary *)
 	JEAN,MARIE:np;
@@ -12,6 +12,10 @@ signature syntax =
 	(* the one for loves *)
 	AIMER:np -> np -> s;
         VOULOIR:(np -> s) -> np => s;
+        VOULOIR2:(np -> s) -> np -> s;
+
+        VOULOIR3 : sc -> np -> s;
+        VOULOIR4 : sc -> np -> s;
 
 	(* the one for every and the one for some *)
 
@@ -21,6 +25,8 @@ signature syntax =
 
 	HOMME,FEMME : n;
         PERE,MERE : n;
+
+        QUE : s -> sc;
 
         (* possessives *)
         POSS_M : np -> n -> np;
@@ -41,7 +47,7 @@ signature francais =
 	e : string;
 
 	(* all the other strings *)
-	Jean, Marie, aime, chaque, un, une, homme, femme, pere, mere, le, la, de, veut:string;
+	Jean, Marie, aime, chaque, un, une, homme, femme, pere, mere, le, la, de, veut, que:string;
 end
 
 
@@ -49,7 +55,7 @@ end
 
 lexicon realisation_francais (syntax) : francais =
 	(* all the syntactic types are interpreted as strings *)
-	np,n,s:=string;
+	np,n,s,sc:=string;
 
 	JEAN := Jean;
 	MARIE := Marie;
@@ -57,6 +63,9 @@ lexicon realisation_francais (syntax) : francais =
 	(* LOVE is interpreted as a function taking two arguments. The first one is the object and the second one is the subject. It returns the concatenation subject+loves+object *)
 	AIMER := lambda o s.s + aime + o;
         VOULOIR := lambda vp. Lambda s. s + veut + vp e;
+        VOULOIR2 := lambda vp s. s + veut + vp e;
+        VOULOIR3 := lambda sc s. s + veut + sc;
+        VOULOIR4 := lambda sc s. s + veut + sc;
 
 	CHAQUE := lambda n P. P (chaque + n);
 	UN := lambda n P.P(un + n);
@@ -65,6 +74,8 @@ lexicon realisation_francais (syntax) : francais =
 	HOMME := homme;
 	FEMME := femme;
 
+        QUE := lambda s. que + s;
+    
         PERE := pere;
         MERE := mere;
 
@@ -76,6 +87,7 @@ end
 (* Then we define the signature contains the strings that will be used
 *)
 
+
 signature anglais =
 	string : type;
 	
@@ -86,7 +98,7 @@ signature anglais =
 	e : string;
 
 	(* all the other strings *)
-	John, Mary, loves, every, some, man, woman, father, mother, s, wants, to:string;
+	John, Mary, loves, every, some, man, woman, father, mother, s, wants, to, that:string;
 
 
         poss = lambda np n. np + s + n : string -> string -> string;
@@ -97,7 +109,7 @@ end
 
 lexicon realisation_anglais (syntax) : anglais =
 	(* all the syntactic types are interpreted as strings *)
-	np,n,s:=string;
+	np,n,s,sc:=string;
 
 	JEAN := John;
 	MARIE := Mary;
@@ -105,6 +117,9 @@ lexicon realisation_anglais (syntax) : anglais =
 	(* LOVE is interpreted as a function taking two arguments. The first one is the object and the second one is the subject. It returns the concatenation subject+loves+object *)
 	AIMER := lambda o s.s + loves + o;
         VOULOIR := lambda vp. Lambda s. s + wants + to + vp e;
+        VOULOIR2 := lambda vp s. s + wants + to + vp e;
+        VOULOIR3 := lambda sc s. s + wants + sc;
+        VOULOIR4 := lambda sc s. s + wants + sc;
 
 	CHAQUE := lambda n P. P (every + n);
 	UN := lambda n P.P(some + n);
@@ -112,7 +127,7 @@ lexicon realisation_anglais (syntax) : anglais =
 	
 	HOMME := man;
 	FEMME := woman;
-
+        QUE := lambda s. that + s;
         PERE := father;
         MERE := mother;
 
@@ -132,6 +147,7 @@ signature logique =
 	(* Then few non logical-constants *)
 	aime:e -> e -> t;
         veut:e -> t -> t;
+        veut2: e -> (e => t) -> t;
 	j,m:e;
 	homme,femme : e -> t;
         pere,mere : e -> t;
@@ -160,7 +176,7 @@ lexicon semantique (syntax) : logique =
 	(* We interpret np as entity, n as properties (s -> t) and of course s as propositions (truth values) *)
 	np := e;
 	n := e -> t;
-	s := t;
+	s,sc := t;
 
 	JEAN := j;
 	MARIE := m;
@@ -174,11 +190,16 @@ lexicon semantique (syntax) : logique =
 	(* Note that we interpret LOVE whose first argument is the object and the second one as a suject using the predicate "love" for which love x y is true whenever x loves y *)
 	AIMER := lambda x y. aime y x ;
         VOULOIR := lambda vp. Lambda s. veut s (vp s);
+        VOULOIR2 := lambda vp s. veut2 s (Lambda x. vp x);
 	
+        VOULOIR3 := lambda sc s. veut s sc;
+        VOULOIR4 := lambda sc s. veut2 s (Lambda x. sc);
 
 	CHAQUE := lambda P Q.All x. (P x) > (Q x); 
 	UN :=  lambda P Q.Ex x. (P x) & (Q x) ;
 	UNE :=  lambda P Q.Ex x. (P x) & (Q x) ;
+
+        QUE := lambda s. s;
 
         POSS_M := poss;
         POSS_F := poss;
