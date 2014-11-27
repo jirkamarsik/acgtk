@@ -1,4 +1,5 @@
 *.o
+*.opt
 src/datalog.prover/db_lexer.ml
 src/datalog.prover/db_parser.ml
 src/datalog.prover/db_parser.mli
