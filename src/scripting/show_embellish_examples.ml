@@ -82,20 +82,21 @@ module Make (T : Show_text_sig) : Show_embellish_sig = struct
                                     args in
           (match fn with
           | Const _ | DConst _ ->
-              Tree.T (centerX @@ parenthesize_d @@
+              Tree.T (parenthesize_d @@
                         recurse fn l_level level (l_env, env),
-                      List.map (centerX >> Tree.singleton) arg_diagrams)
+                      List.map Tree.singleton arg_diagrams)
               |> Tree.to_diagram ~vgap:10.
-              |> center
+              |> centerY
               |> setup (fun cr -> set_line_width cr 1.),
               true
           | Var _ | LVar _ ->
               hcat [ parenthesize_d @@ recurse fn l_level level (l_env, env);
-                     big_parens @@ hcat @@ Utils.intersperse (n ", ") arg_diagrams; ],
+                     big_parens @@ hcat @@ Utils.intersperse (n ", ") arg_diagrams; ]
+              |> centerX,
               false
           | _ -> default_fn recur_fn t l_level level (l_env, env) id_to_sym)
     | _ -> default_fn recur_fn t l_level level (l_env, env) id_to_sym
-  
+ 
 
 
   let embellishments = function

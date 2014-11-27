@@ -30,7 +30,7 @@ module Lambda_show (T : Show_text_sig) = struct
       : diagram * bool =
     let recurse t l_level level (l_env,env) =
       recur_fn t l_level level (l_env,env) id_to_sym in
-    match t with
+    let d, b = match t with
     | Var i -> n @@ List.assoc (level - 1 - i) env, true
     | LVar i -> n @@ List.assoc (l_level - 1 - i) l_env, true
     | Const id | DConst id -> n @@ snd @@ id_to_sym id, true
@@ -102,9 +102,10 @@ module Lambda_show (T : Show_text_sig) = struct
                     n " "; ]
                   @ Utils.intersperse (n " ") @@
                       List.map (fun x -> parenthesize_d @@
-                                 recurse x l_level level (l_env, env)) args,
+                                  recurse x l_level level (l_env, env)) args,
           false
-    | _ -> failwith "Not yet implemented"
+    | _ -> failwith "Not yet implemented" in
+    centerX d, b
 
   let term_to_diagram (t : term) (id_to_sym : consts) : diagram =
     fst @@ fix term_to_diagram_open t 0 0 ([], []) id_to_sym
@@ -213,7 +214,7 @@ module Make (E : Environment_sig)
 
   let decorate_lines (lines : diagram list) : diagram list =
     lines
-    |> List.map (pad_rel ~all:0.05)
+    |> List.map (pad_abs ~vertical:0.25 ~horizontal:1.5)
     |> List.map2 color @@ Utils.cycle (List.length lines) C.lines
 
   let rec align_sister_lines (tree : diagram list tree) : diagram list tree =
