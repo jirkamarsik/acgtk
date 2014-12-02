@@ -214,7 +214,8 @@ module Make (E : Environment_sig)
 
   let decorate_lines (lines : diagram list) : diagram list =
     lines
-    |> List.map (pad_abs ~vertical:0.25 ~horizontal:1.5)
+    |> List.map (pad_abs ~horizontal:2.0)
+    |> List.map (pad_rel ~vertical:0.05)
     |> List.map2 color @@ Utils.cycle (List.length lines) C.lines
 
   let rec align_sister_lines (tree : diagram list tree) : diagram list tree =
