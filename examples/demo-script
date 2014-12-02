@@ -40,6 +40,9 @@ realisation_francais semantique realisation_anglais realize_show CHAQUE HOMME (l
 # During the demo, we also developed control verbs such as "vouloir".
 realisation_francais semantique realize_show VOULOIR_CV (AIMER MARIE) JEAN : s;
 
+# "vouloir" used as a verb expecting a sentential complement.
+realisation_francais semantique realize_show VOULOIR_SC (QUE (AIMER MARIE JEAN)) JEAN : s;
+
  
 
 # Now we look at the TAG examples.
