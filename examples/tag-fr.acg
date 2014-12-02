@@ -41,7 +41,7 @@ signature derivation_trees =
     C_jean, C_paul, C_marie, C_francois : N;
     C_qui : WH;
     C_est_ce_que_aime : Sa -> VPa -> WH -> N -> S;
-    C_croit_que : Sa -> VPa -> N -> Sa;
+    C_est_ce_que_croit_que : Sa -> VPa -> N -> Sa;
 
     (* Dummy element to specify the end of adjunctions. *)
     I_vp : VPa;
@@ -224,7 +224,7 @@ lexicon tag_semantics (derivation_trees) : semantics =
     C_francois := lambda P. P f;
     C_qui := QUI;
     C_est_ce_que_aime := lambda sa a w S. w (lambda y. sa (S (a (lambda x. aime x y))));
-    C_croit_que := lambda sa a S comp. sa (S (a (lambda x. croit x comp)));
+    C_est_ce_que_croit_que := lambda sa a S comp. sa (S (a (lambda x. croit x comp)));
     I_vp := lambda x. x;
     I_n := lambda x. x;
     I_s := lambda x. x;
@@ -260,7 +260,7 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
 
     C_qui := WH1 qui;
     C_est_ce_que_aime := lambda s adv wh subj. S2 wh (S2 est_ce_que (s (S2 subj (adv (VP1 aime)))));
-    C_croit_que := lambda s_root a subj s_foot. s_root (S2 subj (a (VP2 croit (S2 que s_foot))));
+    C_est_ce_que_croit_que := lambda s_root a subj s_foot. s_root (S2 est_ce_que (S2 subj (a (VP2 croit (S2 que s_foot)))));
 
     I_n, I_vp, I_s := lambda x. x;
 end
