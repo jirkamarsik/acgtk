@@ -61,7 +61,9 @@ lexicon realisation_francais (syntax) : francais =
 	JEAN := Jean;
 	MARIE := Marie;
 
-	(* LOVE is interpreted as a function taking two arguments. The first one is the object and the second one is the subject. It returns the concatenation subject+loves+object *)
+	(* LOVE is interpreted as a function taking two arguments. The
+	   first one is the object and the second one is the subject. It
+	   returns the concatenation subject+loves+object *)
 	AIMER := lambda o s.s + aime + o;
 
         VOULOIR_CV := lambda vp. Lambda s. s + veut + vp e;
@@ -149,7 +151,7 @@ signature logique =
 	(* Conjunction *)
 	infix & : t -> t -> t;	
 	
-	(* Implications*)
+	(* Implication *)
 	infix > : t -> t -> t;
 
 	(* Quantifiers *)

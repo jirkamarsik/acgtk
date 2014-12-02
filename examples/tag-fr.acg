@@ -21,7 +21,7 @@
 
 signature derivation_trees =
 
-    (* Types with an "a" index (such as "Sa") are meant
+    (* Types "Xa" with an "a" index (such as "Sa") are meant
        for adjunction. See https://hal.inria.fr/inria-00141913 for further
        explanation of the encoding of TAG to ACG. *)
 
@@ -29,7 +29,7 @@ signature derivation_trees =
 
     (* Declaration of abstract constants together with their
        types. -> stands for the linear implication and => (not used in this
-       signature) stands for the intuiotionistic implication. *)
+       signature) stands for the intuitionistic implication. *)
 
     C_chien, C_chat : Na_d -> Na-> N;
     C_dort : Sa -> VPa -> N -> S;
@@ -117,7 +117,8 @@ signature strings =
 end
 
 
-(* Ok. Now is our first lexicon. It translates derived trees into strings. *)
+(* Ok. Now we look at our first lexicon. It translates derived trees into
+   strings. *)
 
 lexicon tag_strings (derived_trees) : strings =
 
