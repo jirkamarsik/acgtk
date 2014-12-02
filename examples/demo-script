@@ -24,6 +24,9 @@ realisation_francais semantique realize_show CHAQUE HOMME (AIMER MARIE) : s;
 # Making it more complicated: two quantifiers.
 realisation_francais semantique realize_show CHAQUE HOMME (lambda x. UNE FEMME (lambda y. AIMER y x)) : s;
 
+# Generating a different reading of the same sentence.
+realisation_francais semantique realize_show UNE FEMME (lambda y. CHAQUE HOMME (lambda x. AIMER y x)) : s;
+
 # We can translate not only to the French language and to the logical
 # language, but also to the English language.
 realisation_francais semantique realisation_anglais realize_show CHAQUE HOMME (lambda x. UNE FEMME (lambda y. AIMER y x)) : s;
