@@ -53,6 +53,10 @@ module Make (T : Show_text_sig) : Show_embellish_sig = struct
     | "∧" | "⇒" -> n name
     | _ -> b name
 
+  let string_const = function
+    | "e" -> n "ε"
+    | name -> i name
+
   let render_with_color c default_fn recur_fn t l_level level (l_env, env) id_to_sym =
     let d, b = default_fn recur_fn t l_level level (l_env, env) id_to_sym in
     color c d, b
@@ -101,8 +105,11 @@ module Make (T : Show_text_sig) : Show_embellish_sig = struct
 
   let embellishments = function
     | "Strings"
-    | "strings" -> simplify_cats >> render_constants_with i
+    | "strings"
+    | "anglais"
+    | "francais" -> simplify_cats >> render_constants_with string_const
     | "logic"
+    | "logique"
     | "semantics" -> render_constants_with logic_const
     | "Derivation_trees"
     | "derivation_trees"
