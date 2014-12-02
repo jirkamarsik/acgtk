@@ -43,14 +43,18 @@ module Make (T : Show_text_sig) : Show_embellish_sig = struct
     let name = match name with
                | "Ex" -> "∃"
                | "All" -> "∀"
+               | "The" -> "ι"
                | "&" -> "∧"
                | ">" -> "⇒"
                | _ -> name in
     match name with
-    | "∃" | "∀" -> n name
-                   |> reframe (fun exts ->
-                                { exts with w = exts.w -. (extents (n " ")).w })
-    | "∧" | "⇒" -> n name
+    | "∃"
+    | "∀"
+    | "ι" -> n name
+             |> reframe (fun exts ->
+                           { exts with w = exts.w -. (extents (n " ")).w })
+    | "∧"
+    | "⇒" -> n name
     | _ -> b name
 
   let string_const = function
