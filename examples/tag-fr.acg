@@ -41,7 +41,7 @@ signature derivation_trees =
     C_jean, C_paul, C_marie, C_francois : N;
     C_qui : WH;
     C_est_ce_que_aime : Sa -> VPa -> WH -> N -> S;
-    C_est_ce_que_croit_que : Sa -> VPa -> N -> Sa;
+    C_croit_que : Sa -> VPa -> N -> Sa;
 
     (* Dummy element to specify the end of adjunctions. *)
     I_vp : VPa;
@@ -67,7 +67,7 @@ signature derived_trees =
 
     chaque, chien, chasse, un, une, chat, dort, lentement, nouveau, grand,
     noir, semble, jean, marie, francois, paul, affirme, aime, aimer,
-    qui, que, a_dit, est_ce_que, croit_que : tree;
+    qui, que, a, dit, est_ce_que, croit : tree;
 
     (* We define a few constants that will make the lexicon definitions
        easier. *)
@@ -80,6 +80,8 @@ signature derived_trees =
        : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree;
     ph_arg_v = lambda v. lambda s_root a np0 s_foot. s_root (S2 np0 (a (VP2 v (S2 que s_foot))))
              : tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree;
+    ph_arg_v_aux = lambda aux v. lambda s_root a np0 s_foot. s_root (S2 np0 (a (VP2 aux (VP2 v (S2 que s_foot)))))
+             : tree -> tree -> (tree -> tree) -> (tree -> tree) -> tree -> tree -> tree;
     det = lambda d. lambda n. N2 d n
         : tree -> (tree -> tree);
     adv = lambda adv. lambda a v. a (VP2 v adv)
@@ -144,9 +146,10 @@ lexicon tag_strings (derived_trees) : strings =
     aimer := aimer;
     qui := qui;
     que := que;
-    a_dit := a + dit;
+    a := a;
+    dit := dit;
     est_ce_que := est + ce + que;
-    croit_que:=croit + que;
+    croit := croit;
 
 
     WH1, N1, VP1 := lambda f. f;
@@ -220,14 +223,14 @@ lexicon tag_semantics (derivation_trees) : semantics =
     C_francois := lambda P. P f;
     C_qui := QUI;
     C_est_ce_que_aime := lambda sa a w S. w (lambda y. sa (S (a (lambda x. aime x y))));
-    C_est_ce_que_croit_que := lambda sa a S comp. sa (S (a (lambda x. croit x comp)));
+    C_croit_que := lambda sa a S comp. sa (S (a (lambda x. croit x comp)));
     I_vp := lambda x. x;
     I_n := lambda x. x;
     I_s := lambda x. x;
 end
 
 
-(* And a lexicon from derivation trees to derived trees *)
+(* And a lexicon from derivation trees to derived trees. *)
 
 lexicon tag_syntax (derivation_trees) : derived_trees =
 
@@ -245,7 +248,7 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
     C_dort := iv dort;
     C_semble := ctrl_v semble;
     C_affirme_que := ph_arg_v affirme;
-    C_a_dit_que := ph_arg_v a_dit;
+    C_a_dit_que := ph_arg_v_aux a dit;
     C_chaque := det chaque;
     C_un := det un;
     C_une := det une;
@@ -255,8 +258,8 @@ lexicon tag_syntax (derivation_trees) : derived_trees =
     C_noir := r_adj noir;
 
     C_qui := WH1 qui;
-    C_est_ce_que_aime := lambda s adv wh subj. S2 wh (s (S2 est_ce_que (S2 subj (adv (VP1 aime)))));
-    C_est_ce_que_croit_que := lambda s_root a subj s_foot. s_root (S2 est_ce_que (S2 subj (a (VP2 croit_que s_foot))));
+    C_est_ce_que_aime := lambda s adv wh subj. S2 wh (S2 est_ce_que (s (S2 subj (adv (VP1 aime)))));
+    C_croit_que := lambda s_root a subj s_foot. s_root (S2 subj (a (VP2 croit (S2 que s_foot))));
 
     I_n, I_vp, I_s := lambda x. x;
 end
